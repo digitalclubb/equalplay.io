@@ -1,96 +1,73 @@
 import type {
   Game,
   Player,
-  PlayerWithStatus,
+  RotationEvent,
   RotationPlan,
   ReplacementSuggestion,
 } from "../types/index.js";
 import { getReplacements } from "../logic/rotation.js";
 
-/** Lookup map from player ID to Player for rendering names */
 type PlayerMap = Map<string, Player>;
 
+/** Callback fired when user marks a player via chip interaction */
+export type OnPlayerAction = (event: RotationEvent) => void;
+
 /**
- * Renders the full rotation plan with player chips and live replacement support.
+ * Renders the full rotation plan. Chips are tappable — tapping opens
+ * an inline action bar with Late/Injured options.
  */
 export function renderResults(
   container: HTMLElement,
   plan: RotationPlan,
   playerMap: PlayerMap,
   playersPerTeam: number,
+  events: RotationEvent[],
+  onAction: OnPlayerAction,
 ): void {
   container.innerHTML = "";
 
-  const totalPlayers = playerMap.size;
+  const activePlayerCount = playerMap.size - countLateEvents(events);
   const header = document.createElement("div");
   header.innerHTML = `
     <h2>Rotation Plan</h2>
     <p class="subtitle">
-      ${totalPlayers} players, ${playersPerTeam} per team,
+      ${activePlayerCount} active players, ${playersPerTeam} per team,
       ${plan.games.length} game(s)
     </p>
   `;
   container.appendChild(header);
 
+  // Build sets for quick status lookup
+  const lateIds = new Set<string>();
+  const injuredIds = new Map<string, number>(); // playerId → gameNumber
+  for (const e of events) {
+    if (e.type === "late") lateIds.add(e.playerId);
+    else injuredIds.set(e.playerId, e.gameNumber);
+  }
+
+  const unavailableIds = new Set([...lateIds, ...injuredIds.keys()]);
+
   for (const game of plan.games) {
-    const card = renderGameCard(game, playerMap);
+    const card = renderGameCard(
+      game,
+      playerMap,
+      lateIds,
+      injuredIds,
+      unavailableIds,
+      onAction,
+    );
     container.appendChild(card);
   }
 }
 
-/**
- * Live-updates all game cards with current player statuses.
- * Updates chip styles and replacement suggestions.
- */
-export function updateResultsLive(
-  container: HTMLElement,
-  plan: RotationPlan,
-  currentPlayers: PlayerWithStatus[],
-): void {
-  const playerMap = new Map(currentPlayers.map((p) => [p.id, p]));
-  const unavailableIds = new Set(
-    currentPlayers.filter((p) => p.status !== "active").map((p) => p.id),
-  );
-
-  const cards = container.querySelectorAll<HTMLElement>(".game-card");
-
-  for (let i = 0; i < cards.length && i < plan.games.length; i++) {
-    const card = cards[i];
-    const game = plan.games[i];
-
-    // Update on-field chip styles
-    const fieldChips = card.querySelectorAll<HTMLElement>(
-      ".game-section:first-of-type .chip",
-    );
-    for (const chip of fieldChips) {
-      const pid = chip.dataset.playerId;
-      if (!pid) continue;
-      const player = playerMap.get(pid);
-      chip.classList.remove("chip-injured", "chip-late");
-      if (player?.status === "injured") chip.classList.add("chip-injured");
-      if (player?.status === "late") chip.classList.add("chip-late");
-    }
-
-    // Update replacement slot
-    const slot = card.querySelector<HTMLElement>(".replacement-slot");
-    if (!slot) continue;
-
-    const suggestions = getReplacements(game, unavailableIds);
-    if (suggestions.length === 0) {
-      slot.innerHTML = "";
-      continue;
-    }
-
-    slot.innerHTML = `
-      <div class="replacement-card">
-        <span class="replacement-title">Suggested Replacements</span>
-        ${suggestions.map((s) => renderReplacementRow(s, playerMap)).join("")}
-      </div>
-    `;
-  }
-}
-
-function renderGameCard(game: Game, playerMap: PlayerMap): HTMLElement {
+function renderGameCard(
+  game: Game,
+  playerMap: PlayerMap,
+  lateIds: Set<string>,
+  injuredIds: Map<string, number>,
+  unavailableIds: Set<string>,
+  onAction: OnPlayerAction,
+): HTMLElement {
   const card = document.createElement("div");
   card.className = "game-card";
   card.dataset.gameNumber = String(game.gameNumber);
@@ -109,7 +86,10 @@ function renderGameCard(game: Game, playerMap: PlayerMap): HTMLElement {
   const fieldChips = document.createElement("div");
   fieldChips.className = "chip-list";
   for (const id of game.onField) {
-    fieldChips.appendChild(createChip(id, playerMap, "field"));
+    const status = getPlayerStatus(id, game.gameNumber, lateIds, injuredIds);
+    fieldChips.appendChild(
+      createInteractiveChip(id, playerMap, "field", status, game.gameNumber, onAction),
+    );
   }
   fieldSection.appendChild(fieldChips);
   card.appendChild(fieldSection);
@@ -130,31 +110,153 @@ function renderGameCard(game: Game, playerMap: PlayerMap): HTMLElement {
     benchChips.appendChild(none);
   } else {
     for (const id of game.bench) {
-      benchChips.appendChild(createChip(id, playerMap, "bench"));
+      const status = getPlayerStatus(id, game.gameNumber, lateIds, injuredIds);
+      benchChips.appendChild(
+        createInteractiveChip(id, playerMap, "bench", status, game.gameNumber, onAction),
+      );
     }
   }
   benchSection.appendChild(benchChips);
   card.appendChild(benchSection);
 
-  // Replacement slot (populated live)
-  const replacementSlot = document.createElement("div");
-  replacementSlot.className = "replacement-slot";
-  card.appendChild(replacementSlot);
+  // Replacement suggestions
+  const suggestions = getReplacements(game, unavailableIds);
+  if (suggestions.length > 0) {
+    const replacementCard = document.createElement("div");
+    replacementCard.className = "replacement-card";
+    replacementCard.innerHTML = `
+      <span class="replacement-title">Suggested Replacements</span>
+      ${suggestions.map((s) => renderReplacementRow(s, playerMap)).join("")}
+    `;
+    card.appendChild(replacementCard);
+  }
 
   return card;
 }
 
-function createChip(
+type ChipStatus = "active" | "late" | "injured";
+
+function getPlayerStatus(
+  playerId: string,
+  gameNumber: number,
+  lateIds: Set<string>,
+  injuredIds: Map<string, number>,
+): ChipStatus {
+  if (lateIds.has(playerId)) return "late";
+  const injuredAt = injuredIds.get(playerId);
+  if (injuredAt !== undefined && gameNumber >= injuredAt) return "injured";
+  return "active";
+}
+
+/**
+ * Creates a tappable chip. Tapping toggles an inline action bar below it.
+ * Only one action bar is visible across the entire results area at a time.
+ */
+function createInteractiveChip(
   playerId: string,
   playerMap: PlayerMap,
   role: "field" | "bench",
+  status: ChipStatus,
+  gameNumber: number,
+  onAction: OnPlayerAction,
 ): HTMLElement {
-  const chip = document.createElement("span");
+  const wrapper = document.createElement("div");
+  wrapper.className = "chip-wrapper";
+
+  const chip = document.createElement("button");
+  chip.type = "button";
   chip.className = `chip chip-${role}`;
   chip.dataset.playerId = playerId;
+
+  if (status === "injured") chip.classList.add("chip-injured");
+  if (status === "late") chip.classList.add("chip-late");
+
   const player = playerMap.get(playerId);
   chip.textContent = player?.name ?? playerId;
-  return chip;
+
+  chip.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleActionBar(wrapper, playerId, status, gameNumber, onAction);
+  });
+
+  wrapper.appendChild(chip);
+  return wrapper;
+}
+
+/** Closes any open action bar in the document */
+function closeAllActionBars(): void {
+  document.querySelectorAll(".chip-actions").forEach((el) => el.remove());
+  document.querySelectorAll(".chip-active").forEach((el) => {
+    el.classList.remove("chip-active");
+  });
+}
+
+function toggleActionBar(
+  wrapper: HTMLElement,
+  playerId: string,
+  status: ChipStatus,
+  gameNumber: number,
+  onAction: OnPlayerAction,
+): void {
+  const existing = wrapper.querySelector(".chip-actions");
+  const chip = wrapper.querySelector(".chip")!;
+
+  // If this chip's bar is already open, close it
+  if (existing) {
+    existing.remove();
+    chip.classList.remove("chip-active");
+    return;
+  }
+
+  // Close any other open bar first
+  closeAllActionBars();
+  chip.classList.add("chip-active");
+
+  const bar = document.createElement("div");
+  bar.className = "chip-actions";
+
+  if (status === "active") {
+    // Show Late / Injured options
+    const lateBtn = document.createElement("button");
+    lateBtn.type = "button";
+    lateBtn.className = "chip-action chip-action-late";
+    lateBtn.textContent = "Late";
+    lateBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllActionBars();
+      onAction({ type: "late", playerId });
+    });
+
+    const injuredBtn = document.createElement("button");
+    injuredBtn.type = "button";
+    injuredBtn.className = "chip-action chip-action-injured";
+    injuredBtn.textContent = "Injured";
+    injuredBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllActionBars();
+      onAction({ type: "injured", playerId, gameNumber });
+    });
+
+    bar.appendChild(lateBtn);
+    bar.appendChild(injuredBtn);
+  } else {
+    // Player is already late or injured — offer to clear
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "chip-action chip-action-clear";
+    clearBtn.textContent = `Clear ${status}`;
+    clearBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllActionBars();
+      // Remove matching event — fire a synthetic "clear" by removing from events
+      // We signal this by re-dispatching without this player's event
+      onAction({ type: "late", playerId: `__clear__${playerId}` });
+    });
+
+    bar.appendChild(clearBtn);
+  }
+
+  wrapper.appendChild(bar);
 }
 
 function renderReplacementRow(
@@ -181,6 +283,10 @@ function renderReplacementRow(
       <span class="replacement-none">No available replacement</span>
     </div>
   `;
+}
+
+function countLateEvents(events: RotationEvent[]): number {
+  return events.filter((e) => e.type === "late").length;
 }
 
 function escapeHtml(text: string): string {

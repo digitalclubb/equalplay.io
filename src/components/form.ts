@@ -1,21 +1,19 @@
 import { SubstitutionType } from "../types/index.js";
-import type { PlayerWithStatus, ValidationErrors } from "../types/index.js";
+import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
-import type { PlayerListHandle } from "./playerList.js";
 
 export interface FormHandle {
   element: HTMLElement;
-  getPlayers: () => PlayerWithStatus[];
+  getPlayers: () => Player[];
   getPlayersPerTeam: () => number;
   getNumberOfGames: () => number;
   getSubstitutionType: () => SubstitutionType;
   showErrors: (errors: ValidationErrors) => void;
   clearErrors: () => void;
   setLoading: (loading: boolean) => void;
-  playerList: PlayerListHandle;
 }
 
-/** Builds the input form with dynamic player list and status toggles */
+/** Builds the input form — player names + game config, no status toggles */
 export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const section = document.createElement("section");
   const form = document.createElement("form");
@@ -67,7 +65,6 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const handle: FormHandle = {
     element: section,
     getPlayers: playerList.getPlayers,
-    playerList,
 
     getPlayersPerTeam() {
       return parseInt(

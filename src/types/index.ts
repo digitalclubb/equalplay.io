@@ -32,12 +32,6 @@ export interface ReplacementSuggestion {
 
 // ---- UI-layer types ----
 
-export type PlayerStatus = "active" | "late" | "injured";
-
-export interface PlayerWithStatus extends Player {
-  status: PlayerStatus;
-}
-
 export enum SubstitutionType {
   None = "none",
   Halftime = "halftime",
