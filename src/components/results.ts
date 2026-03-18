@@ -299,7 +299,7 @@ function showActionSheet(
       <div class="action-sheet-actions">
         <button type="button" class="action-btn action-btn-joined" data-action="joined">
           Mark Joined
-          <span class="action-desc">Available immediately for selection</span>
+          <span class="action-desc">Added to bench, available for replacement</span>
         </button>
         <button type="button" class="action-btn action-btn-clear" data-action="clear">
           Clear Status

@@ -26,17 +26,11 @@ export function generateInitialPlan(config: RotationConfig): RotationPlan {
 
 /**
  * Resolves events into availability sets for efficient per-game lookups.
- *
- * Late: player unavailable for all games.
- * Joined: cancels a late event — player is immediately available
- *         for current and future games.
- * Injured: player stays in their injury game (UI shows replacement),
- *          unavailable for all subsequent games.
  */
 interface ResolvedAvailability {
   /** Players who are late and have NOT joined */
   lateIds: Set<string>;
-  /** Players who were late but have now joined (available immediately) */
+  /** Players who were late but have now joined */
   joinedIds: Set<string>;
   /** Player ID → game number where injury occurred */
   injuredFrom: Map<string, number>;
@@ -63,17 +57,15 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
   return { lateIds, joinedIds, injuredFrom };
 }
 
-/** Check if a player is available for a specific game given resolved events */
+/** Check if a player is available for a specific game */
 function isAvailable(
   id: string,
   gameNumber: number,
   resolved: ResolvedAvailability,
 ): boolean {
-  // Late and not joined = unavailable
   if (resolved.lateIds.has(id) && !resolved.joinedIds.has(id)) {
     return false;
   }
-  // Injured in a previous game = unavailable
   const injAt = resolved.injuredFrom.get(id);
   if (injAt !== undefined && gameNumber > injAt) {
     return false;
@@ -83,12 +75,17 @@ function isAvailable(
 
 /**
  * Applies events to a plan and returns a new plan.
+ *
+ * Current game lineup is locked: joined players go to bench (available
+ * for injury replacements) but do NOT displace anyone already on field.
+ * Future games are fully recalculated to include joined players.
  */
 export function applyEvents(
   plan: RotationPlan,
   events: RotationEvent[],
   allPlayerIds: string[],
   playersPerTeam: number,
+  currentGame: number,
 ): RotationPlan {
   if (events.length === 0) return plan;
 
@@ -97,14 +94,24 @@ export function applyEvents(
   const games: Game[] = [];
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
-    const gameAvailable = allPlayerIds.filter((id) =>
-      isAvailable(id, gameNumber, resolved),
-    );
 
-    const effectivePerTeam = Math.min(playersPerTeam, gameAvailable.length);
-    const onField = pickIds(gameAvailable, effectivePerTeam, i * effectivePerTeam);
+    // For on-field selection: exclude joined players from current/past games.
+    // This prevents a late arrival from displacing someone already playing.
+    const fieldAvailable = allPlayerIds.filter((id) => {
+      if (gameNumber <= currentGame && resolved.joinedIds.has(id)) return false;
+      return isAvailable(id, gameNumber, resolved);
+    });
+
+    const effectivePerTeam = Math.min(playersPerTeam, fieldAvailable.length);
+    const onField = pickIds(fieldAvailable, effectivePerTeam, i * effectivePerTeam);
     const onFieldSet = new Set(onField);
-    const bench = gameAvailable.filter((id) => !onFieldSet.has(id));
+
+    // For bench: include ALL available players not on field (including joined).
+    // This means joined players land on bench for the current game and are
+    // available as injury replacements immediately.
+    const bench = allPlayerIds.filter(
+      (id) => isAvailable(id, gameNumber, resolved) && !onFieldSet.has(id),
+    );
 
     games.push({ gameNumber, onField, bench });
   }

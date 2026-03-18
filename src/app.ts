@@ -53,6 +53,7 @@ export function mountApp(root: HTMLElement): void {
           state.events,
           state.originalPlayerIds,
           state.playersPerTeam,
+          state.currentGame,
         )
       : state.initialPlan;
 
@@ -94,6 +95,7 @@ export function mountApp(root: HTMLElement): void {
       state.events,
       state.originalPlayerIds,
       state.playersPerTeam,
+      state.currentGame,
     );
     const game = plan.games.find((g) => g.gameNumber === gameNumber);
     if (!game) return null;
@@ -137,10 +139,9 @@ export function mountApp(root: HTMLElement): void {
     onMarkJoined(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        // Keep the late event, add joined on top — player is immediately available
         state!.events.push({ type: "joined", playerId });
       });
-      showToast(`${name} joined! Available immediately.`, undo);
+      showToast(`${name} is now available and on the bench.`, undo);
     },
 
     onClearStatus(playerId) {
