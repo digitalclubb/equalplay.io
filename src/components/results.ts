@@ -27,15 +27,11 @@ export interface ResultsCallbacks {
 
 type ChipStatus = "active" | "late" | "injured" | "joined";
 
-/**
- * Renders the rotation plan with a sticky current game, inline quick
- * actions, a prominent "Next sub" button, and scrollable future games.
- */
 export function renderResults(
   container: HTMLElement,
   plan: RotationPlan,
   playerMap: PlayerMap,
-  playersPerTeam: number,
+  _playersPerTeam: number,
   events: RotationEvent[],
   allPlayerIds: string[],
   currentGame: number,
@@ -45,70 +41,53 @@ export function renderResults(
   container.innerHTML = "";
 
   const lookup = buildEventLookup(events);
-  const unavailableCount = allPlayerIds.filter((id) => {
-    if (lookup.lateIds.has(id) && !lookup.joinedIds.has(id)) return true;
-    if (lookup.injuredAt.has(id)) return true;
-    return false;
-  }).length;
-  const activePlayerCount = playerMap.size - unavailableCount;
-
-  const header = document.createElement("div");
-  header.innerHTML = `
-    <h2>Rotation plan</h2>
-    <p class="subtitle">
-      ${activePlayerCount} players available, ${playersPerTeam} per team,
-      ${plan.games.length} game(s)
-    </p>
-    <p class="results-hint">Tap a player to update their availability during the match</p>
-  `;
-  container.appendChild(header);
-
   const nextGameNum = currentGame + 1;
 
-  // Current game: sticky at top
+  // Current game — sticky
   const currentGameData = plan.games.find((g) => g.gameNumber === currentGame);
   if (currentGameData) {
     const unavailable = getUnavailableForGame(currentGame, allPlayerIds, events);
 
-    const stickyWrapper = document.createElement("div");
-    stickyWrapper.className = "sticky-current";
+    const sticky = document.createElement("div");
+    sticky.className = "sticky-current";
 
     const card = renderGameCard(
       currentGameData, playerMap, lookup, unavailable,
-      true, false, false,
-      gameLabels, callbacks,
+      "current", gameLabels, callbacks,
     );
-    stickyWrapper.appendChild(card);
 
-    // Prominent "Next sub" button — outside the card, always visible
+    // Primary action: "Next sub" at bottom of current game card
     const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
     if (subSuggestion) {
       const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
       const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
 
-      const subBar = document.createElement("div");
-      subBar.className = "sticky-sub-bar";
-      subBar.innerHTML = `
-        <span class="sticky-sub-text">
-          <span class="chip chip-replacement chip-mini">${esc(inName)}</span>
-          on for
-          <span class="chip chip-bench chip-mini">${esc(outName)}</span>
-        </span>
+      const subAction = document.createElement("div");
+      subAction.className = "sub-action";
+
+      const subText = document.createElement("div");
+      subText.className = "sub-action-text";
+      subText.innerHTML = `
+        <span class="chip chip-field chip-sm">${esc(inName)}</span>
+        <span class="sub-action-arrow">&rarr;</span>
+        <span class="chip chip-bench chip-sm">${esc(outName)}</span>
       `;
+      subAction.appendChild(subText);
 
       const subBtn = document.createElement("button");
       subBtn.type = "button";
       subBtn.className = "btn-next-sub";
-      subBtn.textContent = "Next sub";
+      subBtn.textContent = "Make sub";
       subBtn.addEventListener("click", () => {
         callbacks.onMakeSub(currentGame, subSuggestion.playerOut, subSuggestion.playerIn);
       });
-      subBar.appendChild(subBtn);
+      subAction.appendChild(subBtn);
 
-      stickyWrapper.appendChild(subBar);
+      card.appendChild(subAction);
     }
 
-    container.appendChild(stickyWrapper);
+    sticky.appendChild(card);
+    container.appendChild(sticky);
   }
 
   // Remaining games
@@ -117,30 +96,26 @@ export function renderResults(
 
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const isNext = game.gameNumber === nextGameNum;
-    const isFuture = game.gameNumber > currentGame;
+    const emphasis = isNext ? "next" : "future";
 
-    const card = renderGameCard(
-      game, playerMap, lookup, unavailable,
-      false, isNext, isFuture,
-      gameLabels, callbacks,
+    container.appendChild(
+      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks),
     );
-    container.appendChild(card);
   }
 
   // Fairness breakdown
   const stats = getPlayerStats(plan, allPlayerIds);
   container.appendChild(renderFairnessSummary(stats, playerMap));
 
-  // Start new session
+  // Reset
   const resetBtn = document.createElement("button");
   resetBtn.type = "button";
   resetBtn.className = "btn-start-new";
   resetBtn.textContent = "Start new session";
   resetBtn.addEventListener("click", () => {
-    const confirmed = window.confirm(
-      "This will clear all players, games and events. Are you sure?",
-    );
-    if (confirmed) callbacks.onStartNew();
+    if (window.confirm("This will clear all players, games and events. Are you sure?")) {
+      callbacks.onStartNew();
+    }
   });
   container.appendChild(resetBtn);
 
@@ -176,33 +151,27 @@ function getChipStatus(
 ): ChipStatus {
   const injAt = lookup.injuredAt.get(playerId);
   if (injAt !== undefined && gameNumber >= injAt) return "injured";
-
   if (lookup.lateIds.has(playerId)) {
-    if (lookup.joinedIds.has(playerId)) return "joined";
-    return "late";
+    return lookup.joinedIds.has(playerId) ? "joined" : "late";
   }
-
   return "active";
 }
 
 // ---- Game card ----
+
+type GameEmphasis = "current" | "next" | "future";
 
 function renderGameCard(
   game: Game,
   playerMap: PlayerMap,
   lookup: EventLookup,
   unavailable: Set<string>,
-  isCurrent: boolean,
-  isNext: boolean,
-  isFuture: boolean,
+  emphasis: GameEmphasis,
   gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const card = document.createElement("div");
-  card.className = "game-card";
-  if (isCurrent) card.classList.add("game-card-current");
-  else if (isNext) card.classList.add("game-card-next");
-  else if (isFuture) card.classList.add("game-card-future");
+  card.className = `game-card game-card-${emphasis}`;
 
   // Header
   const headerRow = document.createElement("div");
@@ -210,13 +179,11 @@ function renderGameCard(
 
   const title = document.createElement("h3");
   title.textContent = `Game ${game.gameNumber}`;
-
-  if (isCurrent) {
+  if (emphasis === "current") {
     title.appendChild(createBadge("Now", "game-badge-current"));
-  } else if (isNext) {
+  } else if (emphasis === "next") {
     title.appendChild(createBadge("Next", "game-badge-next"));
   }
-
   headerRow.appendChild(title);
 
   const labelInput = document.createElement("input");
@@ -231,11 +198,11 @@ function renderGameCard(
 
   card.appendChild(headerRow);
 
-  // Content — collapsible for distant future games
+  // Content — collapsible for distant future
   const content = document.createElement("div");
   content.className = "game-content";
 
-  if (isFuture && !isNext) {
+  if (emphasis === "future") {
     content.classList.add("game-content-collapsed");
     headerRow.classList.add("game-header-collapsible");
     headerRow.addEventListener("click", (e) => {
@@ -244,41 +211,22 @@ function renderGameCard(
     });
   }
 
-  // On field — current game gets quick actions
-  content.appendChild(
-    renderSection(
-      "On field", game.onField, "field", game.gameNumber,
-      playerMap, lookup, isCurrent, callbacks,
-    ),
-  );
+  // Sections
+  content.appendChild(renderSection("On field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks));
 
-  // Bench
   if (game.bench.length > 0) {
-    content.appendChild(
-      renderSection(
-        "On the bench", game.bench, "bench", game.gameNumber,
-        playerMap, lookup, isCurrent, callbacks,
-      ),
-    );
+    content.appendChild(renderSection("On the bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks));
   }
 
-  // Not available
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
-    content.appendChild(
-      renderSection(
-        "Not available", unavailableIds, "unavailable", game.gameNumber,
-        playerMap, lookup, false, callbacks,
-      ),
-    );
+    content.appendChild(renderSection("Not available", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks));
   }
 
   // Replacement suggestions
-  const onFieldUnavailable = new Set(
-    game.onField.filter((id) => unavailable.has(id)),
-  );
+  const onFieldUnavailable = new Set(game.onField.filter((id) => unavailable.has(id)));
   if (onFieldUnavailable.size > 0) {
     const suggestions = getReplacements(game, unavailable);
     if (suggestions.length > 0) {
@@ -304,7 +252,6 @@ function renderSection(
   gameNumber: number,
   playerMap: PlayerMap,
   lookup: EventLookup,
-  showQuickActions: boolean,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const section = document.createElement("div");
@@ -319,21 +266,13 @@ function renderSection(
   chipList.className = "chip-list";
   for (const id of playerIds) {
     const status = getChipStatus(id, gameNumber, lookup);
-    if (showQuickActions && status !== "injured") {
-      chipList.appendChild(
-        createChipWithQuickActions(id, playerMap, role, status, gameNumber, lookup, callbacks),
-      );
-    } else {
-      chipList.appendChild(
-        createChip(id, playerMap, role, status, gameNumber, lookup, callbacks),
-      );
-    }
+    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, callbacks));
   }
   section.appendChild(chipList);
   return section;
 }
 
-// ---- Chips ----
+// ---- Chips (display-only, tap opens action sheet) ----
 
 function createChip(
   playerId: string,
@@ -346,7 +285,6 @@ function createChip(
 ): HTMLElement {
   const chip = document.createElement("button");
   chip.type = "button";
-  chip.dataset.playerId = playerId;
 
   const player = playerMap.get(playerId);
   const name = player?.name ?? playerId;
@@ -354,11 +292,10 @@ function createChip(
 
   if (status === "late") {
     chip.className = "chip chip-late";
-    chip.innerHTML = `${esc(name)} <span class="chip-label">Not here</span>`;
+    chip.innerHTML = `${esc(name)}<span class="chip-status-dot"></span>`;
   } else if (status === "injured") {
-    const injAt = lookup.injuredAt.get(playerId);
     chip.className = "chip chip-injured";
-    chip.innerHTML = `${esc(name)} <span class="chip-label">Injured game ${injAt}</span>`;
+    chip.textContent = name;
   } else if (status === "joined") {
     chip.className = `chip chip-${chipRole} chip-joined`;
     chip.textContent = name;
@@ -369,69 +306,10 @@ function createChip(
 
   chip.addEventListener("click", (e) => {
     e.stopPropagation();
-    showActionSheet(playerId, name, status, gameNumber, callbacks);
+    showActionSheet(playerId, name, status, gameNumber, lookup, callbacks);
   });
 
   return chip;
-}
-
-/**
- * Creates a chip with inline quick-action buttons for the current game.
- * Active/joined chips get "Late" + "Injured" buttons.
- * Late chips get an "Arrived" button.
- */
-function createChipWithQuickActions(
-  playerId: string,
-  playerMap: PlayerMap,
-  role: "field" | "bench" | "unavailable",
-  status: ChipStatus,
-  gameNumber: number,
-  lookup: EventLookup,
-  callbacks: ResultsCallbacks,
-): HTMLElement {
-  const wrapper = document.createElement("div");
-  wrapper.className = "chip-quick-wrap";
-
-  const chip = createChip(playerId, playerMap, role, status, gameNumber, lookup, callbacks);
-  wrapper.appendChild(chip);
-
-  const actions = document.createElement("div");
-  actions.className = "chip-quick-actions";
-
-  if (status === "active" || status === "joined") {
-    const lateBtn = document.createElement("button");
-    lateBtn.type = "button";
-    lateBtn.className = "chip-quick-btn chip-quick-late";
-    lateBtn.textContent = "Late";
-    lateBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      callbacks.onMarkLate(playerId);
-    });
-    actions.appendChild(lateBtn);
-
-    const injBtn = document.createElement("button");
-    injBtn.type = "button";
-    injBtn.className = "chip-quick-btn chip-quick-injured";
-    injBtn.textContent = "Injured";
-    injBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      callbacks.onMarkInjured(playerId, gameNumber);
-    });
-    actions.appendChild(injBtn);
-  } else if (status === "late") {
-    const joinBtn = document.createElement("button");
-    joinBtn.type = "button";
-    joinBtn.className = "chip-quick-btn chip-quick-joined";
-    joinBtn.textContent = "Arrived";
-    joinBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      callbacks.onMarkJoined(playerId);
-    });
-    actions.appendChild(joinBtn);
-  }
-
-  wrapper.appendChild(actions);
-  return wrapper;
 }
 
 // ---- Action Sheet ----
@@ -449,6 +327,7 @@ function showActionSheet(
   playerName: string,
   status: ChipStatus,
   gameNumber: number,
+  lookup: EventLookup,
   callbacks: ResultsCallbacks,
 ): void {
   const sheet = document.getElementById("action-sheet");
@@ -472,51 +351,52 @@ function showActionSheet(
   }
   backdrop.hidden = false;
 
+  // Build status line for header
+  let statusBadge = "";
+  if (status === "late") {
+    statusBadge = `<span class="action-sheet-status action-sheet-status-late">Not here yet</span>`;
+  } else if (status === "injured") {
+    const injAt = lookup.injuredAt.get(playerId);
+    statusBadge = `<span class="action-sheet-status action-sheet-status-injured">Injured${injAt ? ` game ${injAt}` : ""}</span>`;
+  }
+
+  let actionsHTML = "";
+
   if (status === "active" || status === "joined") {
-    sheet.innerHTML = `
-      <div class="action-sheet-header">${esc(playerName)}</div>
-      <div class="action-sheet-actions">
-        <button type="button" class="action-btn action-btn-late" data-action="late">
-          Not here yet
-          <span class="action-desc">Sit out until they arrive</span>
-        </button>
-        <button type="button" class="action-btn action-btn-injured" data-action="injured">
-          Player injured
-          <span class="action-desc">Replaced from game ${gameNumber}</span>
-        </button>
-      </div>
+    actionsHTML = `
+      <button type="button" class="action-btn action-btn-late" data-action="late">
+        Not here yet
+        <span class="action-desc">Sit out until they arrive</span>
+      </button>
+      <button type="button" class="action-btn action-btn-injured" data-action="injured">
+        Player injured
+        <span class="action-desc">Replaced from game ${gameNumber}</span>
+      </button>
     `;
   } else if (status === "late") {
-    sheet.innerHTML = `
-      <div class="action-sheet-header">
-        ${esc(playerName)}
-        <span class="action-sheet-status action-sheet-status-late">Not here yet</span>
-      </div>
-      <div class="action-sheet-actions">
-        <button type="button" class="action-btn action-btn-joined" data-action="joined">
-          Player has arrived
-          <span class="action-desc">On the bench and ready if needed</span>
-        </button>
-        <button type="button" class="action-btn action-btn-clear" data-action="clear">
-          Reset player
-          <span class="action-desc">Put back into the full rotation</span>
-        </button>
-      </div>
+    actionsHTML = `
+      <button type="button" class="action-btn action-btn-joined" data-action="joined">
+        Player has arrived
+        <span class="action-desc">On the bench and ready if needed</span>
+      </button>
+      <button type="button" class="action-btn action-btn-clear" data-action="clear">
+        Reset player
+        <span class="action-desc">Put back into the full rotation</span>
+      </button>
     `;
   } else {
-    sheet.innerHTML = `
-      <div class="action-sheet-header">
-        ${esc(playerName)}
-        <span class="action-sheet-status action-sheet-status-injured">Injured (game ${gameNumber})</span>
-      </div>
-      <div class="action-sheet-actions">
-        <button type="button" class="action-btn action-btn-clear" data-action="clear">
-          Reset player
-          <span class="action-desc">Put back into the full rotation</span>
-        </button>
-      </div>
+    actionsHTML = `
+      <button type="button" class="action-btn action-btn-clear" data-action="clear">
+        Reset player
+        <span class="action-desc">Put back into the full rotation</span>
+      </button>
     `;
   }
+
+  sheet.innerHTML = `
+    <div class="action-sheet-header">${esc(playerName)}${statusBadge}</div>
+    <div class="action-sheet-actions">${actionsHTML}</div>
+  `;
 
   sheet.querySelectorAll<HTMLButtonElement>(".action-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -568,16 +448,16 @@ function renderReplacementRow(
     const inName = esc(playerMap.get(suggestion.inPlayerId)?.name ?? "?");
     return `
       <div class="replacement-row">
-        <span class="chip chip-injured">${outName}</span>
+        <span class="chip chip-injured chip-sm">${outName}</span>
         <span class="replacement-arrow">&rarr;</span>
-        <span class="chip chip-replacement">${inName}</span>
+        <span class="chip chip-field chip-sm">${inName}</span>
       </div>
     `;
   }
 
   return `
     <div class="replacement-row">
-      <span class="chip chip-injured">${outName}</span>
+      <span class="chip chip-injured chip-sm">${outName}</span>
       <span class="replacement-arrow">&rarr;</span>
       <span class="replacement-none">No replacement available</span>
     </div>
@@ -597,12 +477,9 @@ function renderFairnessSummary(
   const maxPlayed = Math.max(...stats.map((s) => s.gamesPlayed));
   const spread = maxPlayed - minPlayed;
 
-  let headerText = "Playing time breakdown";
-  if (spread === 0) {
-    headerText += " \u2014 perfectly even";
-  } else if (spread === 1) {
-    headerText += " \u2014 within 1 game";
-  }
+  let headerText = "Playing time";
+  if (spread === 0) headerText += " \u2014 even";
+  else if (spread === 1) headerText += " \u2014 within 1 game";
 
   section.innerHTML = `<h4 class="fairness-title">${headerText}</h4>`;
 
