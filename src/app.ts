@@ -8,6 +8,7 @@ import {
   generateInitialPlan,
   applyEvents,
   getReplacements,
+  getUnavailableForGame,
 } from "./logic/rotation.js";
 import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
 import type {
@@ -22,6 +23,7 @@ interface AppState {
   playersPerTeam: number;
   playerMap: Map<string, Player>;
   events: RotationEvent[];
+  currentGame: number;
 }
 
 export function mountApp(root: HTMLElement): void {
@@ -40,8 +42,6 @@ export function mountApp(root: HTMLElement): void {
   resultsContainer.id = "results";
 
   let state: AppState | null = null;
-
-  // Undo: snapshot of events before the last action
   let previousEvents: RotationEvent[] | null = null;
 
   function rerender(): void {
@@ -62,6 +62,8 @@ export function mountApp(root: HTMLElement): void {
       state.playerMap,
       state.playersPerTeam,
       state.events,
+      state.originalPlayerIds,
+      state.currentGame,
       callbacks,
     );
   }
@@ -74,7 +76,6 @@ export function mountApp(root: HTMLElement): void {
     showToast("Action undone");
   }
 
-  /** Saves current events for undo, then applies a mutation */
   function applyAction(mutate: () => void): void {
     if (!state) return;
     previousEvents = [...state.events];
@@ -86,10 +87,8 @@ export function mountApp(root: HTMLElement): void {
     return state?.playerMap.get(playerId)?.name ?? "Player";
   }
 
-  /** Find the replacement name for an injured player, if any */
   function findReplacementName(playerId: string, gameNumber: number): string | null {
     if (!state) return null;
-    // Build the updated plan to check replacements
     const plan = applyEvents(
       state.initialPlan,
       state.events,
@@ -99,10 +98,10 @@ export function mountApp(root: HTMLElement): void {
     const game = plan.games.find((g) => g.gameNumber === gameNumber);
     if (!game) return null;
 
-    const unavailable = new Set(
-      state.events
-        .filter((e) => e.type === "late" || (e.type === "injured" && e.gameNumber <= gameNumber))
-        .map((e) => e.playerId),
+    const unavailable = getUnavailableForGame(
+      gameNumber,
+      state.originalPlayerIds,
+      state.events,
     );
     const suggestions = getReplacements(game, unavailable);
     const match = suggestions.find((s) => s.outPlayerId === playerId);
@@ -133,6 +132,15 @@ export function mountApp(root: HTMLElement): void {
         ? `Replacement: ${replacementName}`
         : "No replacement available";
       showToast(`${name} injured in Game ${gameNumber}. ${detail}`, undo);
+    },
+
+    onMarkJoined(playerId, fromGameNumber) {
+      const name = getName(playerId);
+      applyAction(() => {
+        // Keep the late event, add a joined event on top
+        state!.events.push({ type: "joined", playerId, fromGameNumber });
+      });
+      showToast(`${name} joined! Added from Game ${fromGameNumber}.`, undo);
     },
 
     onClearStatus(playerId) {
@@ -182,6 +190,7 @@ export function mountApp(root: HTMLElement): void {
         playersPerTeam,
         playerMap,
         events: [],
+        currentGame: 1,
       };
 
       rerender();

@@ -33,6 +33,8 @@
   --color-bench-bg: #f1f5f9;
   --color-bench-border: #cbd5e1;
   --color-bench-text: #475569;
+  --color-joined-bg: #ecfdf5;
+  --color-joined-border: #34d399;
   --radius: 8px;
   --touch-min: 44px;
 }
@@ -318,17 +320,46 @@ button[type="submit"]:disabled {
   margin-bottom: 1rem;
 }
 
+/* ---- Game Cards ---- */
+
 .game-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 1rem;
   margin-bottom: 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Current game: highlighted border */
+.game-card-current {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Future games: slightly muted */
+.game-card-future {
+  opacity: 0.75;
 }
 
 .game-card h3 {
   font-size: 0.95rem;
   margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.game-badge-current {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  background: var(--color-summary-bg);
+  border: 1px solid var(--color-summary-border);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
 }
 
 .game-section {
@@ -400,6 +431,22 @@ button[type="submit"]:disabled {
   border-color: var(--color-injured-border);
   color: var(--color-injured-text);
   text-decoration: line-through;
+}
+
+/* Joined: brief green highlight flash */
+.chip-joined {
+  animation: chip-join-flash 1.5s ease-out;
+}
+
+@keyframes chip-join-flash {
+  0% {
+    background: var(--color-joined-bg);
+    border-color: var(--color-joined-border);
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3);
+  }
+  100% {
+    box-shadow: none;
+  }
 }
 
 /* Status label inside chip */
@@ -536,6 +583,16 @@ button[type="submit"]:disabled {
 
 .action-btn-injured:active {
   background: var(--color-injured-bg);
+}
+
+.action-btn-joined {
+  background: var(--color-surface);
+  color: var(--color-field-text);
+  border-color: var(--color-joined-border);
+}
+
+.action-btn-joined:active {
+  background: var(--color-joined-bg);
 }
 
 .action-btn-clear {
