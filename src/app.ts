@@ -1,4 +1,5 @@
 import { createForm } from "./components/form.js";
+import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
 import type { ResultsCallbacks } from "./components/results.js";
@@ -10,6 +11,7 @@ import {
   getReplacements,
   getUnavailableForGame,
 } from "./logic/rotation.js";
+import { saveState, loadState, clearSavedState } from "./logic/storage.js";
 import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
 import type {
   Player,
@@ -24,6 +26,7 @@ interface AppState {
   playerMap: Map<string, Player>;
   events: RotationEvent[];
   currentGame: number;
+  gameLabels: Record<string, string>;
 }
 
 export function mountApp(root: HTMLElement): void {
@@ -43,6 +46,19 @@ export function mountApp(root: HTMLElement): void {
 
   let state: AppState | null = null;
   let previousEvents: RotationEvent[] | null = null;
+
+  function persist(): void {
+    if (!state) return;
+    const players = [...state.playerMap.values()];
+    saveState({
+      players,
+      playersPerTeam: state.playersPerTeam,
+      numberOfGames: state.initialPlan.games.length,
+      events: state.events,
+      currentGame: state.currentGame,
+      gameLabels: state.gameLabels,
+    });
+  }
 
   function rerender(): void {
     if (!state) return;
@@ -65,6 +81,7 @@ export function mountApp(root: HTMLElement): void {
       state.events,
       state.originalPlayerIds,
       state.currentGame,
+      state.gameLabels,
       callbacks,
     );
   }
@@ -74,6 +91,7 @@ export function mountApp(root: HTMLElement): void {
     state.events = previousEvents;
     previousEvents = null;
     rerender();
+    persist();
     showToast("Undone");
   }
 
@@ -82,6 +100,7 @@ export function mountApp(root: HTMLElement): void {
     previousEvents = [...state.events];
     mutate();
     rerender();
+    persist();
   }
 
   function getName(playerId: string): string {
@@ -151,9 +170,19 @@ export function mountApp(root: HTMLElement): void {
       });
       showToast(`${name} is back in the rotation.`, undo);
     },
+
+    onGameLabelChange(gameNumber, label) {
+      if (!state) return;
+      if (label) {
+        state.gameLabels[String(gameNumber)] = label;
+      } else {
+        delete state.gameLabels[String(gameNumber)];
+      }
+      persist();
+    },
   };
 
-  const formHandle = createForm((handle) => {
+  function generateFromForm(handle: FormHandle): void {
     handle.clearErrors();
     clearSummary(summaryContainer);
     resultsContainer.innerHTML = "";
@@ -192,12 +221,62 @@ export function mountApp(root: HTMLElement): void {
         playerMap,
         events: [],
         currentGame: 1,
+        gameLabels: {},
       };
 
       rerender();
+      persist();
       handle.setLoading(false);
     }, 300);
-  });
+  }
+
+  function restoreFromSaved(
+    saved: NonNullable<ReturnType<typeof loadState>>,
+  ): void {
+    const playerMap = new Map<string, Player>(
+      saved.players.map((p) => [p.id, p]),
+    );
+
+    const plan = generateInitialPlan({
+      players: saved.players,
+      playersPerTeam: saved.playersPerTeam,
+      numberOfGames: saved.numberOfGames,
+    });
+
+    const summary = computeSummary(
+      saved.players.length,
+      saved.playersPerTeam,
+      saved.numberOfGames,
+    );
+    renderSummary(summaryContainer, summary);
+
+    state = {
+      initialPlan: plan,
+      originalPlayerIds: saved.players.map((p) => p.id),
+      playersPerTeam: saved.playersPerTeam,
+      playerMap,
+      events: saved.events ?? [],
+      currentGame: saved.currentGame ?? 1,
+      gameLabels: saved.gameLabels ?? {},
+    };
+
+    rerender();
+  }
+
+  const formHandle = createForm(generateFromForm);
+
+  // Try to restore saved state on load
+  const saved = loadState();
+  if (saved) {
+    restoreFromSaved(saved);
+    showToast("Previous session restored", () => {
+      clearSavedState();
+      state = null;
+      resultsContainer.innerHTML = "";
+      clearSummary(summaryContainer);
+      showToast("Session cleared");
+    });
+  }
 
   root.appendChild(formHandle.element);
   root.appendChild(summaryContainer);

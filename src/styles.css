@@ -337,21 +337,40 @@ button[type="submit"]:disabled {
   box-shadow: 0 0 0 1px var(--color-primary);
 }
 
-/* Future games: slightly muted */
-.game-card-future {
-  opacity: 0.75;
+/* Next game: subtle highlight */
+.game-card-next {
+  border-color: var(--color-summary-border);
 }
 
-.game-card h3 {
-  font-size: 0.95rem;
-  margin-bottom: 0.6rem;
+/* Future games (not next): muted */
+.game-card-future:not(.game-card-next) {
+  opacity: 0.7;
+}
+
+/* Game header row */
+.game-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.game-header-collapsible {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-header h3 {
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .game-badge-current {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -360,6 +379,78 @@ button[type="submit"]:disabled {
   border: 1px solid var(--color-summary-border);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
+}
+
+.game-badge-next {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* Editable game label */
+.game-label-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--color-muted);
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.game-label-input:focus {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+}
+
+.game-label-input::placeholder {
+  color: var(--color-border);
+  font-style: italic;
+}
+
+/* Collapsible game content */
+.game-content-collapsed {
+  display: none;
+}
+
+/* Sub suggestion */
+.sub-suggestion {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-summary-bg);
+  border: 1px solid var(--color-summary-border);
+  border-radius: var(--radius);
+  margin-bottom: 0.6rem;
+}
+
+.sub-suggestion-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.25rem;
+}
+
+.sub-suggestion-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  flex-wrap: wrap;
 }
 
 .game-section {

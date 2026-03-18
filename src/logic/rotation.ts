@@ -168,6 +168,50 @@ export function getReplacements(
   return suggestions;
 }
 
+/**
+ * Suggests the next fair substitution for the current game.
+ * Picks the bench player who has played the fewest games so far
+ * to replace the on-field player who has played the most.
+ * Returns null if bench is empty or all players have equal time.
+ */
+export function getNextSubSuggestion(
+  plan: RotationPlan,
+  currentGameNumber: number,
+  unavailableIds: Set<string>,
+): { playerIn: string; playerOut: string } | null {
+  const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
+  if (!currentGame) return null;
+
+  const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
+  const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
+  if (availableBench.length === 0 || availableField.length === 0) return null;
+
+  // Count games played up to (not including) current game
+  const gamesPlayed = new Map<string, number>();
+  for (const game of plan.games) {
+    if (game.gameNumber >= currentGameNumber) break;
+    for (const id of game.onField) {
+      gamesPlayed.set(id, (gamesPlayed.get(id) ?? 0) + 1);
+    }
+  }
+
+  // Bench player with fewest games → comes on
+  const playerIn = availableBench.reduce((best, id) => {
+    const bestCount = gamesPlayed.get(best) ?? 0;
+    const thisCount = gamesPlayed.get(id) ?? 0;
+    return thisCount < bestCount ? id : best;
+  });
+
+  // On-field player with most games → comes off
+  const playerOut = availableField.reduce((best, id) => {
+    const bestCount = gamesPlayed.get(best) ?? 0;
+    const thisCount = gamesPlayed.get(id) ?? 0;
+    return thisCount > bestCount ? id : best;
+  });
+
+  return { playerIn, playerOut };
+}
+
 /** Pick `count` IDs starting at `offset`, wrapping around */
 function pickIds(ids: string[], count: number, offset: number): string[] {
   const result: string[] = [];

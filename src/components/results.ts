@@ -5,7 +5,11 @@ import type {
   RotationPlan,
   ReplacementSuggestion,
 } from "../types/index.js";
-import { getReplacements, getUnavailableForGame } from "../logic/rotation.js";
+import {
+  getReplacements,
+  getUnavailableForGame,
+  getNextSubSuggestion,
+} from "../logic/rotation.js";
 
 type PlayerMap = Map<string, Player>;
 
@@ -14,13 +18,14 @@ export interface ResultsCallbacks {
   onMarkInjured: (playerId: string, gameNumber: number) => void;
   onMarkJoined: (playerId: string) => void;
   onClearStatus: (playerId: string) => void;
+  onGameLabelChange: (gameNumber: number, label: string) => void;
 }
 
 type ChipStatus = "active" | "late" | "injured" | "joined";
 
 /**
- * Renders the full rotation plan with current-game focus,
- * unavailable player visibility, and interactive chips.
+ * Renders the full rotation plan with current/next game focus,
+ * collapsible future games, sub suggestions, and editable labels.
  */
 export function renderResults(
   container: HTMLElement,
@@ -30,12 +35,12 @@ export function renderResults(
   events: RotationEvent[],
   allPlayerIds: string[],
   currentGame: number,
+  gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
 ): void {
   container.innerHTML = "";
 
   const lookup = buildEventLookup(events);
-  // Active = total minus (late who haven't joined) minus injured
   const unavailableCount = allPlayerIds.filter((id) => {
     if (lookup.lateIds.has(id) && !lookup.joinedIds.has(id)) return true;
     if (lookup.injuredAt.has(id)) return true;
@@ -45,7 +50,7 @@ export function renderResults(
 
   const header = document.createElement("div");
   header.innerHTML = `
-    <h2>Rotation Plan</h2>
+    <h2>Rotation plan</h2>
     <p class="subtitle">
       ${activePlayerCount} players available, ${playersPerTeam} per team,
       ${plan.games.length} game(s)
@@ -54,13 +59,18 @@ export function renderResults(
   `;
   container.appendChild(header);
 
+  const nextGame = currentGame + 1;
+
   for (const game of plan.games) {
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const isCurrent = game.gameNumber === currentGame;
+    const isNext = game.gameNumber === nextGame;
     const isFuture = game.gameNumber > currentGame;
 
     const card = renderGameCard(
-      game, playerMap, lookup, unavailable, isCurrent, isFuture, callbacks,
+      game, plan, playerMap, lookup, unavailable,
+      isCurrent, isNext, isFuture,
+      currentGame, gameLabels, callbacks,
     );
     container.appendChild(card);
   }
@@ -99,7 +109,6 @@ function getChipStatus(
   if (injAt !== undefined && gameNumber >= injAt) return "injured";
 
   if (lookup.lateIds.has(playerId)) {
-    // Joined cancels late — player is immediately available
     if (lookup.joinedIds.has(playerId)) return "joined";
     return "late";
   }
@@ -111,46 +120,103 @@ function getChipStatus(
 
 function renderGameCard(
   game: Game,
+  plan: RotationPlan,
   playerMap: PlayerMap,
   lookup: EventLookup,
   unavailable: Set<string>,
   isCurrent: boolean,
+  isNext: boolean,
   isFuture: boolean,
+  currentGame: number,
+  gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const card = document.createElement("div");
   card.className = "game-card";
   if (isCurrent) card.classList.add("game-card-current");
-  if (isFuture) card.classList.add("game-card-future");
+  else if (isNext) card.classList.add("game-card-next");
+  else if (isFuture) card.classList.add("game-card-future");
+
+  // Header row: title + badge + label
+  const headerRow = document.createElement("div");
+  headerRow.className = "game-header";
 
   const title = document.createElement("h3");
   title.textContent = `Game ${game.gameNumber}`;
+
   if (isCurrent) {
-    const badge = document.createElement("span");
-    badge.className = "game-badge-current";
-    badge.textContent = "Current";
-    title.appendChild(badge);
+    title.appendChild(createBadge("Now", "game-badge-current"));
+  } else if (isNext) {
+    title.appendChild(createBadge("Next", "game-badge-next"));
   }
-  card.appendChild(title);
+
+  headerRow.appendChild(title);
+
+  // Editable game label (e.g. "vs Tigers")
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.className = "game-label-input";
+  labelInput.placeholder = "e.g. vs Tigers";
+  labelInput.value = gameLabels[String(game.gameNumber)] ?? "";
+  labelInput.addEventListener("change", () => {
+    callbacks.onGameLabelChange(game.gameNumber, labelInput.value.trim());
+  });
+  headerRow.appendChild(labelInput);
+
+  card.appendChild(headerRow);
+
+  // Content wrapper — collapsible for future (non-next) games
+  const content = document.createElement("div");
+  content.className = "game-content";
+
+  if (isFuture && !isNext) {
+    content.classList.add("game-content-collapsed");
+    headerRow.classList.add("game-header-collapsible");
+    headerRow.addEventListener("click", (e) => {
+      // Don't toggle when clicking the label input
+      if ((e.target as HTMLElement).classList.contains("game-label-input")) return;
+      content.classList.toggle("game-content-collapsed");
+    });
+  }
+
+  // Sub suggestion (current game only)
+  if (isCurrent) {
+    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
+    if (subSuggestion) {
+      const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
+      const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
+      const subCard = document.createElement("div");
+      subCard.className = "sub-suggestion";
+      subCard.innerHTML = `
+        <span class="sub-suggestion-label">Next suggested sub</span>
+        <span class="sub-suggestion-detail">
+          <span class="chip chip-replacement">${esc(inName)}</span>
+          on for
+          <span class="chip chip-bench">${esc(outName)}</span>
+        </span>
+      `;
+      content.appendChild(subCard);
+    }
+  }
 
   // On field
-  card.appendChild(
+  content.appendChild(
     renderSection("On field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks),
   );
 
   // Bench
   if (game.bench.length > 0) {
-    card.appendChild(
+    content.appendChild(
       renderSection("On the bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
 
-  // Unavailable players (late/injured not in onField or bench)
+  // Not available
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
-    card.appendChild(
+    content.appendChild(
       renderSection("Not available", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
@@ -162,11 +228,19 @@ function renderGameCard(
   if (onFieldUnavailable.size > 0) {
     const suggestions = getReplacements(game, unavailable);
     if (suggestions.length > 0) {
-      card.appendChild(renderReplacements(suggestions, playerMap));
+      content.appendChild(renderReplacements(suggestions, playerMap));
     }
   }
 
+  card.appendChild(content);
   return card;
+}
+
+function createBadge(text: string, className: string): HTMLElement {
+  const badge = document.createElement("span");
+  badge.className = className;
+  badge.textContent = text;
+  return badge;
 }
 
 function renderSection(
