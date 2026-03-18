@@ -1,6 +1,7 @@
 import { createForm } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
+import type { ResultsCallbacks } from "./components/results.js";
 import { renderSummary, clearSummary } from "./components/summary.js";
 import {
   generateInitialPlan,
@@ -38,7 +39,6 @@ export function mountApp(root: HTMLElement): void {
 
   let state: AppState | null = null;
 
-  /** Re-renders the plan from current state + events */
   function rerender(): void {
     if (!state) return;
 
@@ -57,40 +57,32 @@ export function mountApp(root: HTMLElement): void {
       state.playerMap,
       state.playersPerTeam,
       state.events,
-      handlePlayerAction,
+      callbacks,
     );
   }
 
-  /** Handles chip actions from the rotation view */
-  function handlePlayerAction(event: RotationEvent): void {
-    if (!state) return;
-
-    // Handle "clear" events (prefixed with __clear__)
-    const clearPrefix = "__clear__";
-    if (event.type === "late" && event.playerId.startsWith(clearPrefix)) {
-      const targetId = event.playerId.slice(clearPrefix.length);
-      state.events = state.events.filter((e) => e.playerId !== targetId);
+  const callbacks: ResultsCallbacks = {
+    onMarkLate(playerId) {
+      if (!state) return;
+      // Replace any existing event for this player
+      state.events = state.events.filter((e) => e.playerId !== playerId);
+      state.events.push({ type: "late", playerId });
       rerender();
-      return;
-    }
+    },
 
-    // Don't add duplicate events for the same player
-    const existing = state.events.find((e) => e.playerId === event.playerId);
-    if (existing) {
-      // Replace the existing event
-      state.events = state.events.filter((e) => e.playerId !== event.playerId);
-    }
-    state.events.push(event);
-    rerender();
-  }
+    onMarkInjured(playerId, gameNumber) {
+      if (!state) return;
+      state.events = state.events.filter((e) => e.playerId !== playerId);
+      state.events.push({ type: "injured", playerId, gameNumber });
+      rerender();
+    },
 
-  // Close action bars when tapping outside chips
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".chip-actions").forEach((el) => el.remove());
-    document.querySelectorAll(".chip-active").forEach((el) => {
-      el.classList.remove("chip-active");
-    });
-  });
+    onClearStatus(playerId) {
+      if (!state) return;
+      state.events = state.events.filter((e) => e.playerId !== playerId);
+      rerender();
+    },
+  };
 
   const formHandle = createForm((handle) => {
     handle.clearErrors();

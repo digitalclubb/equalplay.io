@@ -21,9 +21,9 @@
   --color-warning-text: #92400e;
   --color-summary-bg: #f0f7ff;
   --color-summary-border: #bfdbfe;
-  --color-late-bg: #fffbeb;
-  --color-late-border: #fbbf24;
-  --color-late-text: #92400e;
+  --color-late-bg: #f8f5f0;
+  --color-late-border: #d6cfc7;
+  --color-late-text: #78716c;
   --color-injured-bg: #fef2f2;
   --color-injured-border: #fca5a5;
   --color-injured-text: #991b1b;
@@ -133,7 +133,7 @@ select {
   outline-color: var(--color-danger);
 }
 
-/* ---- Dynamic Player List (names only) ---- */
+/* ---- Dynamic Player List ---- */
 
 .player-list {
   display: flex;
@@ -338,37 +338,33 @@ button[type="submit"]:disabled {
   margin-bottom: 0.3rem;
 }
 
-/* ---- Player Chips (interactive) ---- */
+/* ---- Player Chips ---- */
 
 .chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-/* Wrapper enables action bar positioning relative to the chip */
-.chip-wrapper {
-  position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 0.4rem;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0.65rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.12s ease, border-color 0.12s ease,
-    opacity 0.12s ease, box-shadow 0.12s ease;
+  transition: box-shadow 0.12s ease;
+}
+
+.chip:active {
+  box-shadow: 0 0 0 2px var(--color-primary);
 }
 
 .chip-field {
@@ -383,25 +379,28 @@ button[type="submit"]:disabled {
   color: var(--color-bench-text);
 }
 
-/* Selected / active chip (action bar open) */
-.chip-active {
-  box-shadow: 0 0 0 2px var(--color-primary);
-}
-
-/* Late: faded out */
+/* Late: greyed out with label */
 .chip-late {
   background: var(--color-late-bg);
   border-color: var(--color-late-border);
   color: var(--color-late-text);
-  opacity: 0.6;
+  opacity: 0.65;
 }
 
-/* Injured: red + strikethrough */
+/* Injured: red with strikethrough + label */
 .chip-injured {
   background: var(--color-injured-bg);
   border-color: var(--color-injured-border);
   color: var(--color-injured-text);
   text-decoration: line-through;
+}
+
+/* Status label inside chip */
+.chip-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-decoration: none;
+  opacity: 0.8;
 }
 
 .chip-replacement {
@@ -416,64 +415,130 @@ button[type="submit"]:disabled {
   font-size: 0.85rem;
 }
 
-/* ---- Chip Action Bar ---- */
+/* Non-interactive chips in replacement rows */
+.replacement-row .chip {
+  cursor: default;
+}
 
-.chip-actions {
-  display: flex;
-  gap: 0.25rem;
-  margin-top: 0.3rem;
-  padding: 0.2rem;
+/* ---- Action Sheet (bottom panel) ---- */
+
+.action-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 99;
+}
+
+.action-backdrop[hidden] {
+  display: none;
+}
+
+.action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  white-space: nowrap;
+  border-top: 1px solid var(--color-border);
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem;
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-.chip-action {
-  padding: 0.3rem 0.5rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.7rem;
+.action-sheet[hidden] {
+  display: none;
+}
+
+.action-sheet-header {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-sheet-status {
+  font-size: 0.75rem;
   font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.1s ease;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
 }
 
-.chip-action-late {
+.action-sheet-status-late {
   background: var(--color-late-bg);
   color: var(--color-late-text);
   border: 1px solid var(--color-late-border);
 }
 
-.chip-action-late:active {
-  background: var(--color-late-border);
-  color: white;
-}
-
-.chip-action-injured {
+.action-sheet-status-injured {
   background: var(--color-injured-bg);
   color: var(--color-injured-text);
   border: 1px solid var(--color-injured-border);
 }
 
-.chip-action-injured:active {
-  background: var(--color-injured-border);
-  color: white;
+.action-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.chip-action-clear {
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s ease;
+  border: 1.5px solid;
+}
+
+.action-desc {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 0.1rem;
+}
+
+.action-btn-late {
+  background: var(--color-surface);
+  color: var(--color-late-text);
+  border-color: var(--color-late-border);
+}
+
+.action-btn-late:active {
+  background: var(--color-late-bg);
+}
+
+.action-btn-injured {
+  background: var(--color-surface);
+  color: var(--color-injured-text);
+  border-color: var(--color-injured-border);
+}
+
+.action-btn-injured:active {
+  background: var(--color-injured-bg);
+}
+
+.action-btn-clear {
   background: var(--color-surface);
   color: var(--color-primary);
-  border: 1px solid var(--color-primary);
+  border-color: var(--color-primary);
 }
 
-.chip-action-clear:active {
-  background: var(--color-primary);
-  color: white;
+.action-btn-clear:active {
+  background: var(--color-summary-bg);
 }
 
 /* ---- Replacement Suggestions ---- */
@@ -504,11 +569,6 @@ button[type="submit"]:disabled {
 
 .replacement-row:last-child {
   margin-bottom: 0;
-}
-
-/* Non-interactive chips in replacement rows */
-.replacement-row .chip {
-  cursor: default;
 }
 
 .replacement-arrow {
