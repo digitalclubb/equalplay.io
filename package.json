@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "oxlint src/"
+    "lint": "oxlint src/",
+    "generate-icons": "tsx scripts/generate-icons.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,7 @@
   "packageManager": "pnpm@10.30.3",
   "devDependencies": {
     "oxlint": "^1.56.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^8.0.0"
   }

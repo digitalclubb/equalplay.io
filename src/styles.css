@@ -22,6 +22,13 @@
   --color-summary-bg: #f0f7ff;
   --color-summary-border: #bfdbfe;
   --radius: 8px;
+  /* Minimum touch target size per WCAG / Apple HIG */
+  --touch-min: 44px;
+}
+
+html {
+  /* Prevent font-size scaling on orientation change in iOS */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -29,11 +36,15 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
-  padding: 2rem 1rem;
+  /* Safe-area insets for notched devices */
+  padding: 1.5rem calc(1rem + env(safe-area-inset-right)) 2rem
+    calc(1rem + env(safe-area-inset-left));
+  padding-top: calc(1.5rem + env(safe-area-inset-top));
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
 }
 
 #app {
-  max-width: 600px;
+  max-width: 480px;
   margin: 0 auto;
 }
 
@@ -41,18 +52,18 @@ body {
 
 .app-header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .logo {
-  width: 220px;
+  width: 200px;
   height: auto;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .subtitle {
   color: var(--color-muted);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 /* ---- Form ---- */
@@ -75,19 +86,23 @@ label {
 input[type="number"],
 select {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  min-height: var(--touch-min);
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: inherit;
   background: var(--color-surface);
+  /* Prevent iOS zoom on focus for inputs < 16px */
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-/* Side-by-side config fields */
+/* Stack config fields vertically by default (mobile-first) */
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
 /* ---- Validation Errors ---- */
@@ -128,12 +143,15 @@ select {
 
 .player-input {
   flex: 1;
-  padding: 0.5rem 0.75rem;
+  min-height: var(--touch-min);
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: inherit;
   background: var(--color-surface);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .player-input:focus {
@@ -143,8 +161,8 @@ select {
 }
 
 .btn-remove-player {
-  width: 2rem;
-  height: 2rem;
+  width: var(--touch-min);
+  height: var(--touch-min);
   padding: 0;
   display: flex;
   align-items: center;
@@ -153,10 +171,10 @@ select {
   color: var(--color-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   cursor: pointer;
   flex-shrink: 0;
-  margin-top: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-remove-player:hover {
@@ -166,16 +184,17 @@ select {
 }
 
 .btn-add-player {
+  min-height: var(--touch-min);
   background: transparent;
   color: var(--color-primary);
   border: 1px dashed var(--color-primary);
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 0;
   margin-bottom: 0.5rem;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-add-player:hover:not(:disabled) {
@@ -191,16 +210,18 @@ select {
 /* Primary submit button */
 button[type="submit"] {
   width: 100%;
+  min-height: 48px;
   background: var(--color-primary);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 0.5rem;
-  transition: background 0.15s ease;
+  margin-top: 0.75rem;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button[type="submit"]:hover:not(:disabled) {
@@ -222,7 +243,7 @@ button[type="submit"]:disabled {
   background: var(--color-summary-bg);
   border: 1px solid var(--color-summary-border);
   border-radius: var(--radius);
-  padding: 1.25rem;
+  padding: 1rem;
 }
 
 .summary-card h3 {
@@ -232,8 +253,8 @@ button[type="submit"]:disabled {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
 }
 
 .summary-stat {
@@ -244,16 +265,16 @@ button[type="submit"]:disabled {
 }
 
 .summary-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-primary);
   line-height: 1.2;
 }
 
 .summary-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-muted);
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
 }
 
 /* Fairness warning */
@@ -275,7 +296,7 @@ button[type="submit"]:disabled {
 }
 
 #results h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   margin-bottom: 0.25rem;
 }
 
@@ -299,20 +320,27 @@ button[type="submit"]:disabled {
 .game-card p {
   font-size: 0.875rem;
   color: var(--color-muted);
+  /* Prevent long player names from causing horizontal scroll */
+  overflow-wrap: break-word;
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive: larger screens ---- */
 
-@media (max-width: 480px) {
-  .form-row {
-    grid-template-columns: 1fr;
+@media (min-width: 540px) {
+  body {
+    padding: 2.5rem 1.5rem;
   }
 
   .logo {
-    width: 180px;
+    width: 220px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
   }
 
   .summary-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
