@@ -198,6 +198,17 @@ export function mountApp(root: HTMLElement): void {
       showToast(`${inName} on for ${outName}.`, undo);
     },
 
+    onNextGame() {
+      if (!state) return;
+      const totalGames = state.initialPlan.games.length;
+      if (state.currentGame >= totalGames) return;
+      const nextNum = state.currentGame + 1;
+      state.currentGame = nextNum;
+      rerender();
+      persist();
+      showToast(`Game ${nextNum} is now live.`);
+    },
+
     onStartNew() {
       resetSession();
       showToast("Session cleared. Set up a new rotation above.");

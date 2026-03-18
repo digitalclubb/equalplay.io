@@ -22,6 +22,7 @@ export interface ResultsCallbacks {
   onClearStatus: (playerId: string) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
+  onNextGame: () => void;
   onStartNew: () => void;
 }
 
@@ -41,7 +42,30 @@ export function renderResults(
   container.innerHTML = "";
 
   const lookup = buildEventLookup(events);
+  const totalGames = plan.games.length;
   const nextGameNum = currentGame + 1;
+  const hasNextGame = nextGameNum <= totalGames;
+
+  // Reset session — at top, always accessible
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "btn-reset";
+  resetBtn.textContent = "Reset session";
+  resetBtn.addEventListener("click", () => {
+    if (window.confirm("This will clear all players, games and events. Are you sure?")) {
+      callbacks.onStartNew();
+    }
+  });
+  container.appendChild(resetBtn);
+
+  // Completed games (before current) — collapsed
+  for (const game of plan.games) {
+    if (game.gameNumber >= currentGame) break;
+    const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
+    container.appendChild(
+      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks),
+    );
+  }
 
   // Current game — sticky
   const currentGameData = plan.games.find((g) => g.gameNumber === currentGame);
@@ -56,7 +80,7 @@ export function renderResults(
       "current", gameLabels, callbacks,
     );
 
-    // Primary action: "Next sub" at bottom of current game card
+    // Primary action: "Make sub"
     const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
     if (subSuggestion) {
       const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
@@ -86,17 +110,29 @@ export function renderResults(
       card.appendChild(subAction);
     }
 
+    // "Start next game" button
+    if (hasNextGame) {
+      const nextGameBtn = document.createElement("button");
+      nextGameBtn.type = "button";
+      nextGameBtn.className = "btn-next-game";
+      nextGameBtn.textContent = `Start game ${nextGameNum}`;
+      nextGameBtn.addEventListener("click", () => {
+        callbacks.onNextGame();
+      });
+      card.appendChild(nextGameBtn);
+    }
+
     sticky.appendChild(card);
     container.appendChild(sticky);
   }
 
-  // Remaining games
+  // Future games (after current)
   for (const game of plan.games) {
-    if (game.gameNumber === currentGame) continue;
+    if (game.gameNumber <= currentGame) continue;
 
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const isNext = game.gameNumber === nextGameNum;
-    const emphasis = isNext ? "next" : "future";
+    const emphasis: GameEmphasis = isNext ? "next" : "future";
 
     container.appendChild(
       renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks),
@@ -106,18 +142,6 @@ export function renderResults(
   // Fairness breakdown
   const stats = getPlayerStats(plan, allPlayerIds);
   container.appendChild(renderFairnessSummary(stats, playerMap));
-
-  // Reset
-  const resetBtn = document.createElement("button");
-  resetBtn.type = "button";
-  resetBtn.className = "btn-start-new";
-  resetBtn.textContent = "Start new session";
-  resetBtn.addEventListener("click", () => {
-    if (window.confirm("This will clear all players, games and events. Are you sure?")) {
-      callbacks.onStartNew();
-    }
-  });
-  container.appendChild(resetBtn);
 
   container.appendChild(createActionSheet());
 }
@@ -159,7 +183,13 @@ function getChipStatus(
 
 // ---- Game card ----
 
-type GameEmphasis = "current" | "next" | "future";
+type GameEmphasis = "completed" | "current" | "next" | "future";
+
+const BADGE_LABELS: Partial<Record<GameEmphasis, { text: string; className: string }>> = {
+  completed: { text: "Completed", className: "game-badge-completed" },
+  current: { text: "Live", className: "game-badge-current" },
+  next: { text: "Up next", className: "game-badge-next" },
+};
 
 function renderGameCard(
   game: Game,
@@ -179,10 +209,9 @@ function renderGameCard(
 
   const title = document.createElement("h3");
   title.textContent = `Game ${game.gameNumber}`;
-  if (emphasis === "current") {
-    title.appendChild(createBadge("Now", "game-badge-current"));
-  } else if (emphasis === "next") {
-    title.appendChild(createBadge("Next", "game-badge-next"));
+  const badge = BADGE_LABELS[emphasis];
+  if (badge) {
+    title.appendChild(createBadge(badge.text, badge.className));
   }
   headerRow.appendChild(title);
 
@@ -191,18 +220,23 @@ function renderGameCard(
   labelInput.className = "game-label-input";
   labelInput.placeholder = "e.g. vs Tigers";
   labelInput.value = gameLabels[String(game.gameNumber)] ?? "";
-  labelInput.addEventListener("change", () => {
-    callbacks.onGameLabelChange(game.gameNumber, labelInput.value.trim());
-  });
+  if (emphasis === "completed") {
+    labelInput.readOnly = true;
+  } else {
+    labelInput.addEventListener("change", () => {
+      callbacks.onGameLabelChange(game.gameNumber, labelInput.value.trim());
+    });
+  }
   headerRow.appendChild(labelInput);
 
   card.appendChild(headerRow);
 
-  // Content — collapsible for distant future
+  // Content — collapsible for completed and distant future games
   const content = document.createElement("div");
   content.className = "game-content";
 
-  if (emphasis === "future") {
+  const isCollapsible = emphasis === "completed" || emphasis === "future";
+  if (isCollapsible) {
     content.classList.add("game-content-collapsed");
     headerRow.classList.add("game-header-collapsible");
     headerRow.addEventListener("click", (e) => {
