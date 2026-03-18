@@ -25,16 +25,64 @@ export function generateInitialPlan(config: RotationConfig): RotationPlan {
 }
 
 /**
- * Applies events to a plan and returns a new plan.
+ * Resolves events into availability sets for efficient per-game lookups.
  *
- * Late: player excluded from selection for all games.
- * Joined (after late): player re-enters the pool from `fromGameNumber` onward.
+ * Late: player unavailable for all games.
+ * Joined: cancels a late event — player is immediately available
+ *         for current and future games.
  * Injured: player stays in their injury game (UI shows replacement),
- *          removed from all subsequent games.
- *
- * Late players are NOT deleted from the plan — they remain visible in the
- * UI as greyed-out chips. The plan simply doesn't assign them to on-field
- * or bench slots.
+ *          unavailable for all subsequent games.
+ */
+interface ResolvedAvailability {
+  /** Players who are late and have NOT joined */
+  lateIds: Set<string>;
+  /** Players who were late but have now joined (available immediately) */
+  joinedIds: Set<string>;
+  /** Player ID → game number where injury occurred */
+  injuredFrom: Map<string, number>;
+}
+
+function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
+  const lateIds = new Set<string>();
+  const joinedIds = new Set<string>();
+  const injuredFrom = new Map<string, number>();
+
+  for (const event of events) {
+    if (event.type === "late") {
+      lateIds.add(event.playerId);
+    } else if (event.type === "joined") {
+      joinedIds.add(event.playerId);
+    } else {
+      const existing = injuredFrom.get(event.playerId);
+      if (existing === undefined || event.gameNumber < existing) {
+        injuredFrom.set(event.playerId, event.gameNumber);
+      }
+    }
+  }
+
+  return { lateIds, joinedIds, injuredFrom };
+}
+
+/** Check if a player is available for a specific game given resolved events */
+function isAvailable(
+  id: string,
+  gameNumber: number,
+  resolved: ResolvedAvailability,
+): boolean {
+  // Late and not joined = unavailable
+  if (resolved.lateIds.has(id) && !resolved.joinedIds.has(id)) {
+    return false;
+  }
+  // Injured in a previous game = unavailable
+  const injAt = resolved.injuredFrom.get(id);
+  if (injAt !== undefined && gameNumber > injAt) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Applies events to a plan and returns a new plan.
  */
 export function applyEvents(
   plan: RotationPlan,
@@ -44,39 +92,14 @@ export function applyEvents(
 ): RotationPlan {
   if (events.length === 0) return plan;
 
-  // Build per-player availability windows
-  const lateIds = new Set<string>();
-  const joinedFrom = new Map<string, number>(); // playerId → fromGameNumber
-  const injuredFrom = new Map<string, number>(); // playerId → gameNumber
-
-  for (const event of events) {
-    if (event.type === "late") {
-      lateIds.add(event.playerId);
-    } else if (event.type === "joined") {
-      joinedFrom.set(event.playerId, event.fromGameNumber);
-    } else {
-      const existing = injuredFrom.get(event.playerId);
-      if (existing === undefined || event.gameNumber < existing) {
-        injuredFrom.set(event.playerId, event.gameNumber);
-      }
-    }
-  }
+  const resolved = resolveEvents(events);
 
   const games: Game[] = [];
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
-
-    const gameAvailable = allPlayerIds.filter((id) => {
-      // Late and not yet joined
-      if (lateIds.has(id)) {
-        const joinAt = joinedFrom.get(id);
-        if (joinAt === undefined || gameNumber < joinAt) return false;
-      }
-      // Injured in a previous game
-      const injAt = injuredFrom.get(id);
-      if (injAt !== undefined && gameNumber > injAt) return false;
-      return true;
-    });
+    const gameAvailable = allPlayerIds.filter((id) =>
+      isAvailable(id, gameNumber, resolved),
+    );
 
     const effectivePerTeam = Math.min(playersPerTeam, gameAvailable.length);
     const onField = pickIds(gameAvailable, effectivePerTeam, i * effectivePerTeam);
@@ -90,7 +113,7 @@ export function applyEvents(
 }
 
 /**
- * Returns the set of player IDs that are unavailable for a given game.
+ * Returns the set of player IDs unavailable for a given game.
  * Used by the renderer to show greyed-out chips.
  */
 export function getUnavailableForGame(
@@ -98,33 +121,11 @@ export function getUnavailableForGame(
   allPlayerIds: string[],
   events: RotationEvent[],
 ): Set<string> {
+  const resolved = resolveEvents(events);
   const result = new Set<string>();
 
-  const lateIds = new Set<string>();
-  const joinedFrom = new Map<string, number>();
-  const injuredFrom = new Map<string, number>();
-
-  for (const e of events) {
-    if (e.type === "late") lateIds.add(e.playerId);
-    else if (e.type === "joined") joinedFrom.set(e.playerId, e.fromGameNumber);
-    else {
-      const existing = injuredFrom.get(e.playerId);
-      if (existing === undefined || e.gameNumber < existing) {
-        injuredFrom.set(e.playerId, e.gameNumber);
-      }
-    }
-  }
-
   for (const id of allPlayerIds) {
-    if (lateIds.has(id)) {
-      const joinAt = joinedFrom.get(id);
-      if (joinAt === undefined || gameNumber < joinAt) {
-        result.add(id);
-        continue;
-      }
-    }
-    const injAt = injuredFrom.get(id);
-    if (injAt !== undefined && gameNumber > injAt) {
+    if (!isAvailable(id, gameNumber, resolved)) {
       result.add(id);
     }
   }

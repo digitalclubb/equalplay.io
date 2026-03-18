@@ -12,7 +12,7 @@ type PlayerMap = Map<string, Player>;
 export interface ResultsCallbacks {
   onMarkLate: (playerId: string) => void;
   onMarkInjured: (playerId: string, gameNumber: number) => void;
-  onMarkJoined: (playerId: string, fromGameNumber: number) => void;
+  onMarkJoined: (playerId: string) => void;
   onClearStatus: (playerId: string) => void;
 }
 
@@ -34,9 +34,14 @@ export function renderResults(
 ): void {
   container.innerHTML = "";
 
-  const lateCount = events.filter((e) => e.type === "late").length;
-  const joinedCount = events.filter((e) => e.type === "joined").length;
-  const activePlayerCount = playerMap.size - lateCount + joinedCount;
+  const lookup = buildEventLookup(events);
+  // Active = total minus (late who haven't joined) minus injured
+  const unavailableCount = allPlayerIds.filter((id) => {
+    if (lookup.lateIds.has(id) && !lookup.joinedIds.has(id)) return true;
+    if (lookup.injuredAt.has(id)) return true;
+    return false;
+  }).length;
+  const activePlayerCount = playerMap.size - unavailableCount;
 
   const header = document.createElement("div");
   header.innerHTML = `
@@ -49,16 +54,13 @@ export function renderResults(
   `;
   container.appendChild(header);
 
-  // Build event lookup maps
-  const eventLookup = buildEventLookup(events);
-
   for (const game of plan.games) {
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const isCurrent = game.gameNumber === currentGame;
     const isFuture = game.gameNumber > currentGame;
 
     const card = renderGameCard(
-      game, playerMap, eventLookup, unavailable, isCurrent, isFuture, currentGame, callbacks,
+      game, playerMap, lookup, unavailable, isCurrent, isFuture, callbacks,
     );
     container.appendChild(card);
   }
@@ -70,22 +72,22 @@ export function renderResults(
 
 interface EventLookup {
   lateIds: Set<string>;
-  joinedFrom: Map<string, number>;
+  joinedIds: Set<string>;
   injuredAt: Map<string, number>;
 }
 
 function buildEventLookup(events: RotationEvent[]): EventLookup {
   const lateIds = new Set<string>();
-  const joinedFrom = new Map<string, number>();
+  const joinedIds = new Set<string>();
   const injuredAt = new Map<string, number>();
 
   for (const e of events) {
     if (e.type === "late") lateIds.add(e.playerId);
-    else if (e.type === "joined") joinedFrom.set(e.playerId, e.fromGameNumber);
+    else if (e.type === "joined") joinedIds.add(e.playerId);
     else injuredAt.set(e.playerId, e.gameNumber);
   }
 
-  return { lateIds, joinedFrom, injuredAt };
+  return { lateIds, joinedIds, injuredAt };
 }
 
 function getChipStatus(
@@ -93,14 +95,12 @@ function getChipStatus(
   gameNumber: number,
   lookup: EventLookup,
 ): ChipStatus {
-  // Check injured
   const injAt = lookup.injuredAt.get(playerId);
   if (injAt !== undefined && gameNumber >= injAt) return "injured";
 
-  // Check late/joined
   if (lookup.lateIds.has(playerId)) {
-    const joinAt = lookup.joinedFrom.get(playerId);
-    if (joinAt !== undefined && gameNumber >= joinAt) return "joined";
+    // Joined cancels late — player is immediately available
+    if (lookup.joinedIds.has(playerId)) return "joined";
     return "late";
   }
 
@@ -116,7 +116,6 @@ function renderGameCard(
   unavailable: Set<string>,
   isCurrent: boolean,
   isFuture: boolean,
-  currentGame: number,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const card = document.createElement("div");
@@ -136,27 +135,27 @@ function renderGameCard(
 
   // On field
   card.appendChild(
-    renderSection("On Field", game.onField, "field", game.gameNumber, playerMap, lookup, currentGame, callbacks),
+    renderSection("On Field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks),
   );
 
   // Bench
   if (game.bench.length > 0) {
     card.appendChild(
-      renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, currentGame, callbacks),
+      renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
 
-  // Unavailable players (late/injured) — show greyed out so they're not hidden
+  // Unavailable players (late/injured not in onField or bench)
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
     card.appendChild(
-      renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, currentGame, callbacks),
+      renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
 
-  // Replacement suggestions for on-field players who are unavailable
+  // Replacement suggestions
   const onFieldUnavailable = new Set(
     game.onField.filter((id) => unavailable.has(id)),
   );
@@ -177,7 +176,6 @@ function renderSection(
   gameNumber: number,
   playerMap: PlayerMap,
   lookup: EventLookup,
-  currentGame: number,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const section = document.createElement("div");
@@ -191,10 +189,8 @@ function renderSection(
   const chipList = document.createElement("div");
   chipList.className = "chip-list";
   for (const id of playerIds) {
-    const status = role === "unavailable"
-      ? getChipStatus(id, gameNumber, lookup)
-      : getChipStatus(id, gameNumber, lookup);
-    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, currentGame, callbacks));
+    const status = getChipStatus(id, gameNumber, lookup);
+    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, callbacks));
   }
   section.appendChild(chipList);
   return section;
@@ -209,7 +205,6 @@ function createChip(
   status: ChipStatus,
   gameNumber: number,
   lookup: EventLookup,
-  currentGame: number,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const chip = document.createElement("button");
@@ -218,6 +213,7 @@ function createChip(
 
   const player = playerMap.get(playerId);
   const name = player?.name ?? playerId;
+  const chipRole = role === "unavailable" ? "bench" : role;
 
   if (status === "late") {
     chip.className = "chip chip-late";
@@ -227,16 +223,16 @@ function createChip(
     chip.className = "chip chip-injured";
     chip.innerHTML = `${esc(name)} <span class="chip-label">Injured G${injAt}</span>`;
   } else if (status === "joined") {
-    chip.className = `chip chip-${role === "unavailable" ? "bench" : role} chip-joined`;
+    chip.className = `chip chip-${chipRole} chip-joined`;
     chip.textContent = name;
   } else {
-    chip.className = `chip chip-${role === "unavailable" ? "bench" : role}`;
+    chip.className = `chip chip-${chipRole}`;
     chip.textContent = name;
   }
 
   chip.addEventListener("click", (e) => {
     e.stopPropagation();
-    showActionSheet(playerId, name, status, gameNumber, currentGame, callbacks);
+    showActionSheet(playerId, name, status, gameNumber, callbacks);
   });
 
   return chip;
@@ -257,7 +253,6 @@ function showActionSheet(
   playerName: string,
   status: ChipStatus,
   gameNumber: number,
-  currentGame: number,
   callbacks: ResultsCallbacks,
 ): void {
   const sheet = document.getElementById("action-sheet");
@@ -296,7 +291,6 @@ function showActionSheet(
       </div>
     `;
   } else if (status === "late") {
-    const nextGame = currentGame + 1;
     sheet.innerHTML = `
       <div class="action-sheet-header">
         ${esc(playerName)}
@@ -305,7 +299,7 @@ function showActionSheet(
       <div class="action-sheet-actions">
         <button type="button" class="action-btn action-btn-joined" data-action="joined">
           Mark Joined
-          <span class="action-desc">Add back from Game ${nextGame}</span>
+          <span class="action-desc">Available immediately for selection</span>
         </button>
         <button type="button" class="action-btn action-btn-clear" data-action="clear">
           Clear Status
@@ -314,7 +308,6 @@ function showActionSheet(
       </div>
     `;
   } else {
-    // injured
     sheet.innerHTML = `
       <div class="action-sheet-header">
         ${esc(playerName)}
@@ -336,7 +329,7 @@ function showActionSheet(
       dismissActionSheet();
       if (action === "late") callbacks.onMarkLate(playerId);
       else if (action === "injured") callbacks.onMarkInjured(playerId, gameNumber);
-      else if (action === "joined") callbacks.onMarkJoined(playerId, currentGame + 1);
+      else if (action === "joined") callbacks.onMarkJoined(playerId);
       else if (action === "clear") callbacks.onClearStatus(playerId);
     });
   });

@@ -134,13 +134,13 @@ export function mountApp(root: HTMLElement): void {
       showToast(`${name} injured in Game ${gameNumber}. ${detail}`, undo);
     },
 
-    onMarkJoined(playerId, fromGameNumber) {
+    onMarkJoined(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        // Keep the late event, add a joined event on top
-        state!.events.push({ type: "joined", playerId, fromGameNumber });
+        // Keep the late event, add joined on top — player is immediately available
+        state!.events.push({ type: "joined", playerId });
       });
-      showToast(`${name} joined! Added from Game ${fromGameNumber}.`, undo);
+      showToast(`${name} joined! Available immediately.`, undo);
     },
 
     onClearStatus(playerId) {
