@@ -132,6 +132,14 @@ export function mountApp(root: HTMLElement): void {
     return null;
   }
 
+  function resetSession(): void {
+    clearSavedState();
+    state = null;
+    previousEvents = null;
+    resultsContainer.innerHTML = "";
+    clearSummary(summaryContainer);
+  }
+
   const callbacks: ResultsCallbacks = {
     onMarkLate(playerId) {
       const name = getName(playerId);
@@ -188,6 +196,11 @@ export function mountApp(root: HTMLElement): void {
         state!.events.push({ type: "sub", gameNumber, playerOut, playerIn });
       });
       showToast(`${inName} on for ${outName}.`, undo);
+    },
+
+    onStartNew() {
+      resetSession();
+      showToast("Session cleared. Set up a new rotation above.");
     },
   };
 
@@ -274,17 +287,10 @@ export function mountApp(root: HTMLElement): void {
 
   const formHandle = createForm(generateFromForm);
 
-  // Try to restore saved state on load
+  // Auto-restore: seamless, no interaction needed
   const saved = loadState();
   if (saved) {
     restoreFromSaved(saved);
-    showToast("Previous session restored", () => {
-      clearSavedState();
-      state = null;
-      resultsContainer.innerHTML = "";
-      clearSummary(summaryContainer);
-      showToast("Session cleared");
-    });
   }
 
   root.appendChild(formHandle.element);

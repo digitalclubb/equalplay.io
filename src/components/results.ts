@@ -22,6 +22,7 @@ export interface ResultsCallbacks {
   onClearStatus: (playerId: string) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
+  onStartNew: () => void;
 }
 
 type ChipStatus = "active" | "late" | "injured" | "joined";
@@ -81,6 +82,19 @@ export function renderResults(
   // Fairness breakdown
   const stats = getPlayerStats(plan, allPlayerIds);
   container.appendChild(renderFairnessSummary(stats, playerMap));
+
+  // Start new session
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "btn-start-new";
+  resetBtn.textContent = "Start new session";
+  resetBtn.addEventListener("click", () => {
+    const confirmed = window.confirm(
+      "This will clear all players, games and events. Are you sure?",
+    );
+    if (confirmed) callbacks.onStartNew();
+  });
+  container.appendChild(resetBtn);
 
   container.appendChild(createActionSheet());
 }
