@@ -1,14 +1,17 @@
-import type { Player, PlayerStatus } from "../types/index.js";
+import type { PlayerWithStatus, PlayerStatus } from "../types/index.js";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
 
+let nextPlayerId = 1;
+function generateId(): string {
+  return `p${nextPlayerId++}`;
+}
+
 export interface PlayerListHandle {
   element: HTMLElement;
-  /** Returns all players with names (trimmed, non-empty) and their status */
-  getPlayers: () => Player[];
-  /** Returns only names (for backward-compat with validation) */
-  getPlayerNames: () => string[];
+  /** Returns all players with names (trimmed, non-empty), ID, and status */
+  getPlayers: () => PlayerWithStatus[];
   /** Register a callback fired whenever a player status changes */
   onStatusChange: (cb: () => void) => void;
 }
@@ -16,6 +19,7 @@ export interface PlayerListHandle {
 /**
  * Dynamic player input list with status toggles.
  * Each row: [name input] [Late] [Injured] [Remove]
+ * Each row is assigned a stable ID on creation.
  */
 export function createPlayerList(): PlayerListHandle {
   const container = document.createElement("div");
@@ -35,7 +39,7 @@ export function createPlayerList(): PlayerListHandle {
   addBtn.textContent = "+ Add Player";
   container.appendChild(addBtn);
 
-  let statusChangeCallbacks: (() => void)[] = [];
+  const statusChangeCallbacks: (() => void)[] = [];
 
   function notifyStatusChange(): void {
     for (const cb of statusChangeCallbacks) cb();
@@ -51,31 +55,26 @@ export function createPlayerList(): PlayerListHandle {
     appendRow(list, "", "active", notifyStatusChange);
     updateRemoveButtons(list);
     updateAddButton(list, addBtn);
-    // Focus the newly added input
     const inputs = list.querySelectorAll<HTMLInputElement>(".player-input");
     inputs[inputs.length - 1].focus();
   });
 
-  function getPlayers(): Player[] {
+  function getPlayers(): PlayerWithStatus[] {
     const rows = list.querySelectorAll<HTMLElement>(".player-row");
-    const players: Player[] = [];
+    const players: PlayerWithStatus[] = [];
     for (const row of rows) {
       const name = (row.querySelector(".player-input") as HTMLInputElement).value.trim();
       if (!name) continue;
+      const id = row.dataset.playerId!;
       const status = (row.dataset.status as PlayerStatus) || "active";
-      players.push({ name, status });
+      players.push({ id, name, status });
     }
     return players;
-  }
-
-  function getPlayerNames(): string[] {
-    return getPlayers().map((p) => p.name);
   }
 
   return {
     element: container,
     getPlayers,
-    getPlayerNames,
     onStatusChange(cb) {
       statusChangeCallbacks.push(cb);
     },
@@ -91,6 +90,7 @@ function appendRow(
   const row = document.createElement("div");
   row.className = "player-row";
   row.dataset.status = status;
+  row.dataset.playerId = generateId();
 
   const input = document.createElement("input");
   input.type = "text";
@@ -98,7 +98,6 @@ function appendRow(
   input.placeholder = `Player ${list.children.length + 1}`;
   input.value = value;
 
-  // Status toggle buttons
   const statusGroup = document.createElement("div");
   statusGroup.className = "status-toggles";
 
@@ -138,7 +137,6 @@ function createStatusButton(
   btn.className = `btn-status btn-status-${targetStatus}`;
   btn.textContent = label;
   btn.addEventListener("click", () => {
-    // Toggle: if already this status, revert to active
     const current = row.dataset.status as PlayerStatus;
     row.dataset.status = current === targetStatus ? "active" : targetStatus;
     onStatusChange();

@@ -1,12 +1,11 @@
 import { SubstitutionType } from "../types/index.js";
-import type { Player, ValidationErrors } from "../types/index.js";
+import type { PlayerWithStatus, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
 import type { PlayerListHandle } from "./playerList.js";
 
 export interface FormHandle {
   element: HTMLElement;
-  getPlayers: () => Player[];
-  getPlayerNames: () => string[];
+  getPlayers: () => PlayerWithStatus[];
   getPlayersPerTeam: () => number;
   getNumberOfGames: () => number;
   getSubstitutionType: () => SubstitutionType;
@@ -68,7 +67,6 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const handle: FormHandle = {
     element: section,
     getPlayers: playerList.getPlayers,
-    getPlayerNames: playerList.getPlayerNames,
     playerList,
 
     getPlayersPerTeam() {
