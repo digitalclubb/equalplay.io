@@ -1,43 +1,62 @@
 import { SubstitutionType } from "../types/index.js";
+import { createPlayerList } from "./playerList.js";
 
-/** Builds the input form and returns a reference to the container element */
-export function createForm(onSubmit: (form: HTMLFormElement) => void): HTMLElement {
+export interface FormHandle {
+  element: HTMLElement;
+  getPlayerNames: () => string[];
+}
+
+/** Builds the input form with dynamic player list */
+export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const section = document.createElement("section");
-  section.innerHTML = `
-    <form id="rotation-form">
-      <div class="form-group">
-        <label for="players">Player names (one per line)</label>
-        <textarea id="players" placeholder="Alice\nBob\nCharlie\n..."></textarea>
-      </div>
+  const form = document.createElement("form");
+  form.id = "rotation-form";
 
+  // Dynamic player inputs
+  const playerList = createPlayerList();
+  form.appendChild(playerList.element);
+
+  // Remaining config fields rendered as static HTML
+  const configHTML = document.createElement("div");
+  configHTML.innerHTML = `
+    <div class="form-row">
       <div class="form-group">
-        <label for="players-per-team">Players per team on field</label>
+        <label for="players-per-team">Players on field</label>
         <input id="players-per-team" type="number" min="1" value="5" />
       </div>
-
       <div class="form-group">
         <label for="num-games">Number of games</label>
         <input id="num-games" type="number" min="1" value="3" />
       </div>
+    </div>
 
-      <div class="form-group">
-        <label for="sub-type">Substitution type</label>
-        <select id="sub-type">
-          <option value="${SubstitutionType.None}">None</option>
-          <option value="${SubstitutionType.Halftime}">Halftime</option>
-          <option value="${SubstitutionType.Rolling}">Rolling</option>
-        </select>
-      </div>
-
-      <button type="submit">Generate Rotation</button>
-    </form>
+    <div class="form-group">
+      <label for="sub-type">Substitution type</label>
+      <select id="sub-type">
+        <option value="${SubstitutionType.None}">None</option>
+        <option value="${SubstitutionType.Halftime}">Halftime</option>
+        <option value="${SubstitutionType.Rolling}">Rolling</option>
+      </select>
+    </div>
   `;
+  form.appendChild(configHTML);
 
-  const form = section.querySelector("form")!;
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.textContent = "Generate Rotation";
+  form.appendChild(submitBtn);
+
+  section.appendChild(form);
+
+  const handle: FormHandle = {
+    element: section,
+    getPlayerNames: playerList.getPlayerNames,
+  };
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    onSubmit(form);
+    onSubmit(handle);
   });
 
-  return section;
+  return handle;
 }

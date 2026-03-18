@@ -14,7 +14,9 @@
   --color-text: #1e293b;
   --color-muted: #64748b;
   --color-border: #e2e8f0;
-  --radius: 6px;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --radius: 8px;
 }
 
 body {
@@ -26,32 +28,41 @@ body {
 }
 
 #app {
-  max-width: 640px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
-h1 {
-  font-size: 1.75rem;
-  margin-bottom: 0.25rem;
+/* ---- Header / Logo ---- */
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.logo {
+  width: 220px;
+  height: auto;
+  margin-bottom: 0.5rem;
 }
 
 .subtitle {
   color: var(--color-muted);
-  margin-bottom: 2rem;
+  font-size: 1rem;
 }
 
+/* ---- Form ---- */
+
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
   font-size: 0.875rem;
 }
 
-textarea,
 input[type="number"],
 select {
   width: 100%;
@@ -63,16 +74,97 @@ select {
   background: var(--color-surface);
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
+/* Side-by-side config fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
-button {
+/* ---- Dynamic Player List ---- */
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.player-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--color-surface);
+}
+
+.player-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+  border-color: var(--color-primary);
+}
+
+.btn-remove-player {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.btn-remove-player:hover {
+  background: var(--color-danger);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.btn-add-player {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px dashed var(--color-primary);
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.btn-add-player:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-add-player:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Primary submit button */
+button[type="submit"] {
+  width: 100%;
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: 0.6rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--radius);
   font-size: 1rem;
   font-weight: 600;
@@ -80,13 +172,23 @@ button {
   margin-top: 0.5rem;
 }
 
-button:hover {
+button[type="submit"]:hover {
   background: var(--color-primary-hover);
 }
 
-/* Results */
+/* ---- Results ---- */
+
 #results {
   margin-top: 2rem;
+}
+
+#results h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+#results > .subtitle {
+  margin-bottom: 1rem;
 }
 
 .game-card {
@@ -94,15 +196,27 @@ button:hover {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .game-card h3 {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
 }
 
 .game-card p {
   font-size: 0.875rem;
   color: var(--color-muted);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .logo {
+    width: 180px;
+  }
 }
