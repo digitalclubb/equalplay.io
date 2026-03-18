@@ -1,6 +1,7 @@
 import type {
   Game,
   Player,
+  PlayerStats,
   RotationEvent,
   RotationPlan,
   ReplacementSuggestion,
@@ -9,6 +10,7 @@ import {
   getReplacements,
   getUnavailableForGame,
   getNextSubSuggestion,
+  getPlayerStats,
 } from "../logic/rotation.js";
 
 type PlayerMap = Map<string, Player>;
@@ -74,6 +76,10 @@ export function renderResults(
     );
     container.appendChild(card);
   }
+
+  // Fairness breakdown
+  const stats = getPlayerStats(plan, allPlayerIds);
+  container.appendChild(renderFairnessSummary(stats, playerMap));
 
   container.appendChild(createActionSheet());
 }
@@ -460,6 +466,55 @@ function renderReplacementRow(
       <span class="replacement-none">No replacement available</span>
     </div>
   `;
+}
+
+// ---- Fairness summary ----
+
+function renderFairnessSummary(
+  stats: PlayerStats[],
+  playerMap: PlayerMap,
+): HTMLElement {
+  const section = document.createElement("div");
+  section.className = "fairness-summary";
+
+  const minPlayed = Math.min(...stats.map((s) => s.gamesPlayed));
+  const maxPlayed = Math.max(...stats.map((s) => s.gamesPlayed));
+  const spread = maxPlayed - minPlayed;
+
+  let headerText = "Playing time breakdown";
+  if (spread === 0) {
+    headerText += " \u2014 perfectly even";
+  } else if (spread === 1) {
+    headerText += " \u2014 within 1 game";
+  }
+
+  section.innerHTML = `<h4 class="fairness-title">${headerText}</h4>`;
+
+  const list = document.createElement("div");
+  list.className = "fairness-list";
+
+  // Sort by games played descending for easy scanning
+  const sorted = [...stats].sort((a, b) => b.gamesPlayed - a.gamesPlayed);
+
+  for (const stat of sorted) {
+    const name = playerMap.get(stat.playerId)?.name ?? stat.playerId;
+    const totalGames = stat.gamesPlayed + stat.gamesBenched;
+    const pct = totalGames > 0 ? Math.round((stat.gamesPlayed / totalGames) * 100) : 0;
+
+    const row = document.createElement("div");
+    row.className = "fairness-row";
+    row.innerHTML = `
+      <span class="fairness-name">${esc(name)}</span>
+      <span class="fairness-bar-track">
+        <span class="fairness-bar-fill" style="width: ${pct}%"></span>
+      </span>
+      <span class="fairness-count">${stat.gamesPlayed}</span>
+    `;
+    list.appendChild(row);
+  }
+
+  section.appendChild(list);
+  return section;
 }
 
 // ---- Helpers ----

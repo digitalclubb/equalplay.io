@@ -737,6 +737,70 @@ button[type="submit"]:disabled {
   font-style: italic;
 }
 
+/* ---- Fairness Summary ---- */
+
+.fairness-summary {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.fairness-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: var(--color-text);
+}
+
+.fairness-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fairness-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fairness-name {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  width: 5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fairness-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fairness-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.fairness-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  width: 1.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 /* ---- Toast ---- */
 
 .toast {

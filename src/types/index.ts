@@ -31,6 +31,13 @@ export interface ReplacementSuggestion {
   inPlayerId: string | null;
 }
 
+/** Per-player fairness stats computed from a rotation plan */
+export interface PlayerStats {
+  playerId: string;
+  gamesPlayed: number;
+  gamesBenched: number;
+}
+
 // ---- UI-layer types ----
 
 export enum SubstitutionType {
