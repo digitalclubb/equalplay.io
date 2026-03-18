@@ -92,18 +92,27 @@ interface ResolvedAvailability {
   lateIds: Set<string>;
   joinedIds: Set<string>;
   injuredFrom: Map<string, number>;
+  /** Substitutions keyed by game number, in order */
+  subs: Map<number, Array<{ playerOut: string; playerIn: string }>>;
 }
 
 function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
   const lateIds = new Set<string>();
   const joinedIds = new Set<string>();
   const injuredFrom = new Map<string, number>();
+  const subs = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
 
   for (const event of events) {
     if (event.type === "late") {
       lateIds.add(event.playerId);
     } else if (event.type === "joined") {
       joinedIds.add(event.playerId);
+    } else if (event.type === "sub") {
+      if (!subs.has(event.gameNumber)) subs.set(event.gameNumber, []);
+      subs.get(event.gameNumber)!.push({
+        playerOut: event.playerOut,
+        playerIn: event.playerIn,
+      });
     } else {
       const existing = injuredFrom.get(event.playerId);
       if (existing === undefined || event.gameNumber < existing) {
@@ -112,7 +121,7 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
     }
   }
 
-  return { lateIds, joinedIds, injuredFrom };
+  return { lateIds, joinedIds, injuredFrom, subs };
 }
 
 function isAvailable(
@@ -170,6 +179,19 @@ export function applyEvents(
       (id) => isAvailable(id, gameNumber, resolved) && !onFieldSet.has(id),
     );
 
+    // Apply any substitutions recorded for this game
+    const gameSubs = resolved.subs.get(gameNumber);
+    if (gameSubs) {
+      for (const sub of gameSubs) {
+        const outIdx = onField.indexOf(sub.playerOut);
+        const inIdx = bench.indexOf(sub.playerIn);
+        if (outIdx !== -1 && inIdx !== -1) {
+          onField[outIdx] = sub.playerIn;
+          bench[inIdx] = sub.playerOut;
+        }
+      }
+    }
+
     updateTrackers(trackers, onField, gameNumber);
     games.push({ gameNumber, onField, bench });
   }
@@ -222,8 +244,9 @@ export function getReplacements(
 
 /**
  * Suggests the next fair substitution for the current game.
- * Uses the same tracker logic: bench player with fewest games comes on,
- * field player with most games comes off.
+ * Uses the plan's post-sub lineup (subs already applied by applyEvents)
+ * and the fairness tracker to pick who should swap next.
+ * Returns null if bench is empty.
  */
 export function getNextSubSuggestion(
   plan: RotationPlan,
@@ -233,14 +256,16 @@ export function getNextSubSuggestion(
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
+  // These already reflect any subs applied to this game
   const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
-  // Build trackers from games before the current one
+  // Build trackers from all games up to and including current
+  // (since applyEvents already tracked on-field players including subs)
   const trackers = new Map<string, PlayerTracker>();
   for (const game of plan.games) {
-    if (game.gameNumber >= currentGameNumber) break;
+    if (game.gameNumber > currentGameNumber) break;
     for (const id of game.onField) {
       const t = trackers.get(id) ?? { gamesPlayed: 0, lastPlayedGame: 0 };
       t.gamesPlayed++;

@@ -18,7 +18,8 @@ export interface RotationPlan {
 export type RotationEvent =
   | { type: "late"; playerId: string }
   | { type: "joined"; playerId: string }
-  | { type: "injured"; playerId: string; gameNumber: number };
+  | { type: "injured"; playerId: string; gameNumber: number }
+  | { type: "sub"; gameNumber: number; playerOut: string; playerIn: string };
 
 export interface RotationConfig {
   players: Player[];

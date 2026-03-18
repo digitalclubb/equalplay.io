@@ -425,13 +425,17 @@ button[type="submit"]:disabled {
   display: none;
 }
 
-/* Sub suggestion */
+/* Sub suggestion + make sub button */
 .sub-suggestion {
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   background: var(--color-summary-bg);
   border: 1px solid var(--color-summary-border);
   border-radius: var(--radius);
   margin-bottom: 0.6rem;
+}
+
+.sub-suggestion-top {
+  margin-bottom: 0.5rem;
 }
 
 .sub-suggestion-label {
@@ -451,6 +455,30 @@ button[type="submit"]:disabled {
   font-size: 0.8rem;
   color: var(--color-text);
   flex-wrap: wrap;
+}
+
+.sub-suggestion-none {
+  opacity: 0.7;
+}
+
+.btn-make-sub {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0.6rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s ease;
+}
+
+.btn-make-sub:active {
+  background: var(--color-primary-hover);
 }
 
 .game-section {

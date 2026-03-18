@@ -21,6 +21,7 @@ export interface ResultsCallbacks {
   onMarkJoined: (playerId: string) => void;
   onClearStatus: (playerId: string) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
+  onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
 }
 
 type ChipStatus = "active" | "late" | "injured" | "joined";
@@ -100,7 +101,8 @@ function buildEventLookup(events: RotationEvent[]): EventLookup {
   for (const e of events) {
     if (e.type === "late") lateIds.add(e.playerId);
     else if (e.type === "joined") joinedIds.add(e.playerId);
-    else injuredAt.set(e.playerId, e.gameNumber);
+    else if (e.type === "injured") injuredAt.set(e.playerId, e.gameNumber);
+    // sub events don't affect the lookup — they're handled by applyEvents
   }
 
   return { lateIds, joinedIds, injuredAt };
@@ -185,15 +187,19 @@ function renderGameCard(
     });
   }
 
-  // Sub suggestion (current game only)
+  // Match mode: sub suggestion + make sub button (current game only)
   if (isCurrent) {
     const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
     if (subSuggestion) {
       const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
       const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
+
       const subCard = document.createElement("div");
       subCard.className = "sub-suggestion";
-      subCard.innerHTML = `
+
+      const suggestionText = document.createElement("div");
+      suggestionText.className = "sub-suggestion-top";
+      suggestionText.innerHTML = `
         <span class="sub-suggestion-label">Next suggested sub</span>
         <span class="sub-suggestion-detail">
           <span class="chip chip-replacement">${esc(inName)}</span>
@@ -201,7 +207,26 @@ function renderGameCard(
           <span class="chip chip-bench">${esc(outName)}</span>
         </span>
       `;
+      subCard.appendChild(suggestionText);
+
+      const makeSubBtn = document.createElement("button");
+      makeSubBtn.type = "button";
+      makeSubBtn.className = "btn-make-sub";
+      makeSubBtn.textContent = "Make sub";
+      makeSubBtn.addEventListener("click", () => {
+        callbacks.onMakeSub(game.gameNumber, subSuggestion.playerOut, subSuggestion.playerIn);
+      });
+      subCard.appendChild(makeSubBtn);
+
       content.appendChild(subCard);
+    } else if (game.bench.length === 0) {
+      // No bench players — no subs possible
+    } else {
+      // All bench players unavailable or everyone has equal time
+      const noSubCard = document.createElement("div");
+      noSubCard.className = "sub-suggestion sub-suggestion-none";
+      noSubCard.innerHTML = `<span class="sub-suggestion-label">No sub needed right now</span>`;
+      content.appendChild(noSubCard);
     }
   }
 

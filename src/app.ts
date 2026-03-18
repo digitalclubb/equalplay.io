@@ -136,7 +136,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkLate(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         state!.events.push({ type: "late", playerId });
       });
       showToast(`${name} isn't here yet. Rotation updated.`, undo);
@@ -145,7 +145,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkInjured(playerId, gameNumber) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         state!.events.push({ type: "injured", playerId, gameNumber });
       });
       const replacementName = findReplacementName(playerId, gameNumber);
@@ -166,7 +166,7 @@ export function mountApp(root: HTMLElement): void {
     onClearStatus(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
       });
       showToast(`${name} is back in the rotation.`, undo);
     },
@@ -179,6 +179,15 @@ export function mountApp(root: HTMLElement): void {
         delete state.gameLabels[String(gameNumber)];
       }
       persist();
+    },
+
+    onMakeSub(gameNumber, playerOut, playerIn) {
+      const outName = getName(playerOut);
+      const inName = getName(playerIn);
+      applyAction(() => {
+        state!.events.push({ type: "sub", gameNumber, playerOut, playerIn });
+      });
+      showToast(`${inName} on for ${outName}.`, undo);
     },
   };
 
