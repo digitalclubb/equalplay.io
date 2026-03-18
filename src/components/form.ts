@@ -1,9 +1,11 @@
 import { SubstitutionType } from "../types/index.js";
-import type { ValidationErrors } from "../types/index.js";
+import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
+import type { PlayerListHandle } from "./playerList.js";
 
 export interface FormHandle {
   element: HTMLElement;
+  getPlayers: () => Player[];
   getPlayerNames: () => string[];
   getPlayersPerTeam: () => number;
   getNumberOfGames: () => number;
@@ -11,25 +13,23 @@ export interface FormHandle {
   showErrors: (errors: ValidationErrors) => void;
   clearErrors: () => void;
   setLoading: (loading: boolean) => void;
+  playerList: PlayerListHandle;
 }
 
-/** Builds the input form with dynamic player list */
+/** Builds the input form with dynamic player list and status toggles */
 export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const section = document.createElement("section");
   const form = document.createElement("form");
   form.id = "rotation-form";
 
-  // Dynamic player inputs
   const playerList = createPlayerList();
   form.appendChild(playerList.element);
 
-  // Error slot for player-level errors
   const playerError = document.createElement("div");
   playerError.className = "field-error";
   playerError.id = "error-players";
   playerList.element.appendChild(playerError);
 
-  // Config fields
   const configHTML = document.createElement("div");
   configHTML.className = "form-section";
   configHTML.innerHTML = `
@@ -67,7 +67,9 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
   const handle: FormHandle = {
     element: section,
+    getPlayers: playerList.getPlayers,
     getPlayerNames: playerList.getPlayerNames,
+    playerList,
 
     getPlayersPerTeam() {
       return parseInt(
@@ -87,15 +89,11 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
     },
 
     showErrors(errors: ValidationErrors) {
-      // Clear previous errors first
       handle.clearErrors();
-
       for (const [field, message] of Object.entries(errors)) {
         const el = form.querySelector(`#error-${field}`);
         if (el) el.textContent = message;
       }
-
-      // Mark inputs with errors visually
       if (errors.playersPerTeam) {
         form.querySelector("#players-per-team")?.classList.add("input-error");
       }

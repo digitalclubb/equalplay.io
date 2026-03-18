@@ -4,20 +4,20 @@ const MIN_PLAYERS = 2;
 
 /** Validates form inputs, returns errors (empty object = valid) */
 export function validateInputs(
-  names: string[],
+  activePlayerCount: number,
   playersPerTeam: number,
   numberOfGames: number,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  if (names.length < MIN_PLAYERS) {
-    errors.players = `At least ${MIN_PLAYERS} players are required.`;
+  if (activePlayerCount < MIN_PLAYERS) {
+    errors.players = `At least ${MIN_PLAYERS} active players are required.`;
   }
 
   if (!Number.isFinite(playersPerTeam) || playersPerTeam < 1) {
     errors.playersPerTeam = "Must be at least 1.";
-  } else if (names.length >= MIN_PLAYERS && playersPerTeam > names.length) {
-    errors.playersPerTeam = `Cannot exceed total players (${names.length}).`;
+  } else if (activePlayerCount >= MIN_PLAYERS && playersPerTeam > activePlayerCount) {
+    errors.playersPerTeam = `Cannot exceed active players (${activePlayerCount}).`;
   }
 
   if (!Number.isFinite(numberOfGames) || numberOfGames < 1) {

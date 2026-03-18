@@ -1,11 +1,14 @@
+export type PlayerStatus = "active" | "late" | "injured";
+
+export interface Player {
+  name: string;
+  status: PlayerStatus;
+}
+
 export enum SubstitutionType {
   None = "none",
   Halftime = "halftime",
   Rolling = "rolling",
-}
-
-export interface Player {
-  name: string;
 }
 
 /** A single game's lineup and substitutions */

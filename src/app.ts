@@ -1,10 +1,10 @@
 import { createForm } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
-import { renderResults } from "./components/results.js";
+import { renderResults, updateReplacements } from "./components/results.js";
 import { renderSummary, clearSummary } from "./components/summary.js";
 import { generateRotation } from "./logic/generateRotation.js";
 import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
-import type { RotationConfig } from "./types/index.js";
+import type { RotationConfig, RotationResult } from "./types/index.js";
 
 /** Mounts the app into the given root element */
 export function mountApp(root: HTMLElement): void {
@@ -22,42 +22,51 @@ export function mountApp(root: HTMLElement): void {
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
 
+  // Track the last generated result so we can live-update replacements
+  let lastResult: RotationResult | null = null;
+
   const formHandle = createForm((handle) => {
-    // Clear previous output
     handle.clearErrors();
     clearSummary(summaryContainer);
     resultsContainer.innerHTML = "";
+    lastResult = null;
 
-    const names = handle.getPlayerNames();
+    const allPlayers = handle.getPlayers();
+    const activePlayers = allPlayers.filter((p) => p.status === "active");
     const playersPerTeam = handle.getPlayersPerTeam();
     const numberOfGames = handle.getNumberOfGames();
     const substitutionType = handle.getSubstitutionType();
 
-    // Validate
-    const errors = validateInputs(names, playersPerTeam, numberOfGames);
+    // Validate against active players only
+    const errors = validateInputs(activePlayers.length, playersPerTeam, numberOfGames);
     if (hasErrors(errors)) {
       handle.showErrors(errors);
       return;
     }
 
     const config: RotationConfig = {
-      players: names.map((name) => ({ name })),
+      players: activePlayers,
       playersPerTeam,
       numberOfGames,
       substitutionType,
     };
 
-    // Show summary before generating
-    const summary = computeSummary(names.length, playersPerTeam, numberOfGames);
+    const summary = computeSummary(activePlayers.length, playersPerTeam, numberOfGames);
     renderSummary(summaryContainer, summary);
 
-    // Brief loading state so the user sees the button respond
     handle.setLoading(true);
     setTimeout(() => {
-      const result = generateRotation(config);
-      renderResults(resultsContainer, result);
+      lastResult = generateRotation(config);
+      renderResults(resultsContainer, lastResult, () => handle.getPlayers());
       handle.setLoading(false);
     }, 300);
+  });
+
+  // When a player's status changes after generation, live-update replacement suggestions
+  formHandle.playerList.onStatusChange(() => {
+    if (lastResult) {
+      updateReplacements(resultsContainer, () => formHandle.getPlayers());
+    }
   });
 
   root.appendChild(formHandle.element);
