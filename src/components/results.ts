@@ -37,6 +37,7 @@ export function renderResults(
       ${activePlayerCount} active players, ${playersPerTeam} per team,
       ${plan.games.length} game(s)
     </p>
+    <p class="results-hint">Tap a player to update availability during the match</p>
   `;
   container.appendChild(header);
 

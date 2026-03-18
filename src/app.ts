@@ -3,9 +3,11 @@ import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
 import type { ResultsCallbacks } from "./components/results.js";
 import { renderSummary, clearSummary } from "./components/summary.js";
+import { showToast } from "./components/toast.js";
 import {
   generateInitialPlan,
   applyEvents,
+  getReplacements,
 } from "./logic/rotation.js";
 import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
 import type {
@@ -39,6 +41,9 @@ export function mountApp(root: HTMLElement): void {
 
   let state: AppState | null = null;
 
+  // Undo: snapshot of events before the last action
+  let previousEvents: RotationEvent[] | null = null;
+
   function rerender(): void {
     if (!state) return;
 
@@ -61,26 +66,81 @@ export function mountApp(root: HTMLElement): void {
     );
   }
 
+  function undo(): void {
+    if (!state || previousEvents === null) return;
+    state.events = previousEvents;
+    previousEvents = null;
+    rerender();
+    showToast("Action undone");
+  }
+
+  /** Saves current events for undo, then applies a mutation */
+  function applyAction(mutate: () => void): void {
+    if (!state) return;
+    previousEvents = [...state.events];
+    mutate();
+    rerender();
+  }
+
+  function getName(playerId: string): string {
+    return state?.playerMap.get(playerId)?.name ?? "Player";
+  }
+
+  /** Find the replacement name for an injured player, if any */
+  function findReplacementName(playerId: string, gameNumber: number): string | null {
+    if (!state) return null;
+    // Build the updated plan to check replacements
+    const plan = applyEvents(
+      state.initialPlan,
+      state.events,
+      state.originalPlayerIds,
+      state.playersPerTeam,
+    );
+    const game = plan.games.find((g) => g.gameNumber === gameNumber);
+    if (!game) return null;
+
+    const unavailable = new Set(
+      state.events
+        .filter((e) => e.type === "late" || (e.type === "injured" && e.gameNumber <= gameNumber))
+        .map((e) => e.playerId),
+    );
+    const suggestions = getReplacements(game, unavailable);
+    const match = suggestions.find((s) => s.outPlayerId === playerId);
+    if (match?.inPlayerId) {
+      return state.playerMap.get(match.inPlayerId)?.name ?? null;
+    }
+    return null;
+  }
+
   const callbacks: ResultsCallbacks = {
     onMarkLate(playerId) {
-      if (!state) return;
-      // Replace any existing event for this player
-      state.events = state.events.filter((e) => e.playerId !== playerId);
-      state.events.push({ type: "late", playerId });
-      rerender();
+      const name = getName(playerId);
+      applyAction(() => {
+        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+        state!.events.push({ type: "late", playerId });
+      });
+      showToast(`${name} marked as late. Rotation updated.`, undo);
     },
 
     onMarkInjured(playerId, gameNumber) {
-      if (!state) return;
-      state.events = state.events.filter((e) => e.playerId !== playerId);
-      state.events.push({ type: "injured", playerId, gameNumber });
-      rerender();
+      const name = getName(playerId);
+      applyAction(() => {
+        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+        state!.events.push({ type: "injured", playerId, gameNumber });
+      });
+      const replacementName = findReplacementName(playerId, gameNumber);
+      const detail = replacementName
+        ? `Replacement: ${replacementName}`
+        : "No replacement available";
+      showToast(`${name} injured in Game ${gameNumber}. ${detail}`, undo);
     },
 
     onClearStatus(playerId) {
-      if (!state) return;
-      state.events = state.events.filter((e) => e.playerId !== playerId);
-      rerender();
+      const name = getName(playerId);
+      applyAction(() => {
+        state!.events = state!.events.filter((e) => e.playerId !== playerId);
+      });
+      showToast(`${name} restored to active.`, undo);
     },
   };
 
@@ -89,6 +149,7 @@ export function mountApp(root: HTMLElement): void {
     clearSummary(summaryContainer);
     resultsContainer.innerHTML = "";
     state = null;
+    previousEvents = null;
 
     const players = handle.getPlayers();
     const playersPerTeam = handle.getPlayersPerTeam();
