@@ -38,3 +38,20 @@ export interface RotationConfig {
   numberOfGames: number;
   substitutionType: SubstitutionType;
 }
+
+/** Validation errors keyed by field name */
+export interface ValidationErrors {
+  players?: string;
+  playersPerTeam?: string;
+  numberOfGames?: string;
+}
+
+/** Pre-generation summary stats derived from a valid config */
+export interface GameSummary {
+  totalPlayers: number;
+  playersOnField: number;
+  benchPerGame: number;
+  totalSlots: number;
+  avgPlaytime: number;
+  isEvenDistribution: boolean;
+}

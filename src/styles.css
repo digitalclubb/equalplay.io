@@ -16,6 +16,11 @@
   --color-border: #e2e8f0;
   --color-danger: #ef4444;
   --color-danger-hover: #dc2626;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #f59e0b;
+  --color-warning-text: #92400e;
+  --color-summary-bg: #f0f7ff;
+  --color-summary-border: #bfdbfe;
   --radius: 8px;
 }
 
@@ -56,6 +61,10 @@ body {
   margin-bottom: 1.25rem;
 }
 
+.form-section {
+  margin-top: 0.5rem;
+}
+
 label {
   display: block;
   font-weight: 600;
@@ -79,6 +88,27 @@ select {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+/* ---- Validation Errors ---- */
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  min-height: 0;
+  margin-top: 0.25rem;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.input-error {
+  border-color: var(--color-danger) !important;
+}
+
+.input-error:focus {
+  outline-color: var(--color-danger);
 }
 
 /* ---- Dynamic Player List ---- */
@@ -170,16 +200,78 @@ button[type="submit"] {
   font-weight: 600;
   cursor: pointer;
   margin-top: 0.5rem;
+  transition: background 0.15s ease;
 }
 
-button[type="submit"]:hover {
+button[type="submit"]:hover:not(:disabled) {
   background: var(--color-primary-hover);
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ---- Summary Card ---- */
+
+#summary {
+  margin-top: 1.5rem;
+}
+
+.summary-card {
+  background: var(--color-summary-bg);
+  border: 1px solid var(--color-summary-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.summary-card h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-top: 0.15rem;
+}
+
+/* Fairness warning */
+.fairness-warning {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius);
+  color: var(--color-warning-text);
+  font-size: 0.825rem;
+  line-height: 1.4;
 }
 
 /* ---- Results ---- */
 
 #results {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 #results h2 {
@@ -218,5 +310,9 @@ button[type="submit"]:hover {
 
   .logo {
     width: 180px;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }

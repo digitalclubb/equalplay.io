@@ -1,14 +1,13 @@
 import { createForm } from "./components/form.js";
-import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
+import { renderSummary, clearSummary } from "./components/summary.js";
 import { generateRotation } from "./logic/generateRotation.js";
-import { SubstitutionType } from "./types/index.js";
+import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
 import type { RotationConfig } from "./types/index.js";
 
 /** Mounts the app into the given root element */
 export function mountApp(root: HTMLElement): void {
-  // Header with logo + subtitle
   const header = document.createElement("header");
   header.className = "app-header";
   header.innerHTML = `
@@ -17,49 +16,51 @@ export function mountApp(root: HTMLElement): void {
   `;
   root.appendChild(header);
 
+  const summaryContainer = document.createElement("div");
+  summaryContainer.id = "summary";
+
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
 
   const formHandle = createForm((handle) => {
-    const config = parseInputs(handle);
-    if (!config) return;
+    // Clear previous output
+    handle.clearErrors();
+    clearSummary(summaryContainer);
+    resultsContainer.innerHTML = "";
 
-    const result = generateRotation(config);
-    renderResults(resultsContainer, result);
+    const names = handle.getPlayerNames();
+    const playersPerTeam = handle.getPlayersPerTeam();
+    const numberOfGames = handle.getNumberOfGames();
+    const substitutionType = handle.getSubstitutionType();
+
+    // Validate
+    const errors = validateInputs(names, playersPerTeam, numberOfGames);
+    if (hasErrors(errors)) {
+      handle.showErrors(errors);
+      return;
+    }
+
+    const config: RotationConfig = {
+      players: names.map((name) => ({ name })),
+      playersPerTeam,
+      numberOfGames,
+      substitutionType,
+    };
+
+    // Show summary before generating
+    const summary = computeSummary(names.length, playersPerTeam, numberOfGames);
+    renderSummary(summaryContainer, summary);
+
+    // Brief loading state so the user sees the button respond
+    handle.setLoading(true);
+    setTimeout(() => {
+      const result = generateRotation(config);
+      renderResults(resultsContainer, result);
+      handle.setLoading(false);
+    }, 300);
   });
 
   root.appendChild(formHandle.element);
+  root.appendChild(summaryContainer);
   root.appendChild(resultsContainer);
-}
-
-/** Extracts and validates inputs into a typed config */
-function parseInputs(handle: FormHandle): RotationConfig | null {
-  const names = handle.getPlayerNames();
-  const form = handle.element.querySelector("form")!;
-
-  const playersPerTeam = parseInt(
-    (form.querySelector("#players-per-team") as HTMLInputElement).value,
-  );
-  const numberOfGames = parseInt(
-    (form.querySelector("#num-games") as HTMLInputElement).value,
-  );
-  const substitutionType = (form.querySelector("#sub-type") as HTMLSelectElement)
-    .value as SubstitutionType;
-
-  if (names.length === 0) {
-    alert("Enter at least one player name.");
-    return null;
-  }
-
-  if (playersPerTeam < 1 || playersPerTeam > names.length) {
-    alert(`Players per team must be between 1 and ${names.length}.`);
-    return null;
-  }
-
-  return {
-    players: names.map((name) => ({ name })),
-    playersPerTeam,
-    numberOfGames,
-    substitutionType,
-  };
 }
