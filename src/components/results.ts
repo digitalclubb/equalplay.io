@@ -47,10 +47,10 @@ export function renderResults(
   header.innerHTML = `
     <h2>Rotation Plan</h2>
     <p class="subtitle">
-      ${activePlayerCount} active players, ${playersPerTeam} per team,
+      ${activePlayerCount} players available, ${playersPerTeam} per team,
       ${plan.games.length} game(s)
     </p>
-    <p class="results-hint">Tap a player to update availability during the match</p>
+    <p class="results-hint">Tap a player to update their availability during the match</p>
   `;
   container.appendChild(header);
 
@@ -135,13 +135,13 @@ function renderGameCard(
 
   // On field
   card.appendChild(
-    renderSection("On Field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks),
+    renderSection("On field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks),
   );
 
   // Bench
   if (game.bench.length > 0) {
     card.appendChild(
-      renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks),
+      renderSection("On the bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
 
@@ -151,7 +151,7 @@ function renderGameCard(
   );
   if (unavailableIds.length > 0) {
     card.appendChild(
-      renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks),
+      renderSection("Not available", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks),
     );
   }
 
@@ -217,11 +217,11 @@ function createChip(
 
   if (status === "late") {
     chip.className = "chip chip-late";
-    chip.innerHTML = `${esc(name)} <span class="chip-label">Late</span>`;
+    chip.innerHTML = `${esc(name)} <span class="chip-label">Not here</span>`;
   } else if (status === "injured") {
     const injAt = lookup.injuredAt.get(playerId);
     chip.className = "chip chip-injured";
-    chip.innerHTML = `${esc(name)} <span class="chip-label">Injured G${injAt}</span>`;
+    chip.innerHTML = `${esc(name)} <span class="chip-label">Injured game ${injAt}</span>`;
   } else if (status === "joined") {
     chip.className = `chip chip-${chipRole} chip-joined`;
     chip.textContent = name;
@@ -281,12 +281,12 @@ function showActionSheet(
       <div class="action-sheet-header">${esc(playerName)}</div>
       <div class="action-sheet-actions">
         <button type="button" class="action-btn action-btn-late" data-action="late">
-          Mark Late
-          <span class="action-desc">Greyed out in all games</span>
+          Not here yet
+          <span class="action-desc">Sit out until they arrive</span>
         </button>
         <button type="button" class="action-btn action-btn-injured" data-action="injured">
-          Mark Injured
-          <span class="action-desc">Replaced from Game ${gameNumber}</span>
+          Player injured
+          <span class="action-desc">Replaced from game ${gameNumber}</span>
         </button>
       </div>
     `;
@@ -294,16 +294,16 @@ function showActionSheet(
     sheet.innerHTML = `
       <div class="action-sheet-header">
         ${esc(playerName)}
-        <span class="action-sheet-status action-sheet-status-late">Late</span>
+        <span class="action-sheet-status action-sheet-status-late">Not here yet</span>
       </div>
       <div class="action-sheet-actions">
         <button type="button" class="action-btn action-btn-joined" data-action="joined">
-          Mark Joined
-          <span class="action-desc">Added to bench, available for replacement</span>
+          Player has arrived
+          <span class="action-desc">On the bench and ready if needed</span>
         </button>
         <button type="button" class="action-btn action-btn-clear" data-action="clear">
-          Clear Status
-          <span class="action-desc">Restore to active in all games</span>
+          Reset player
+          <span class="action-desc">Put back into the full rotation</span>
         </button>
       </div>
     `;
@@ -311,12 +311,12 @@ function showActionSheet(
     sheet.innerHTML = `
       <div class="action-sheet-header">
         ${esc(playerName)}
-        <span class="action-sheet-status action-sheet-status-injured">Injured (Game ${gameNumber})</span>
+        <span class="action-sheet-status action-sheet-status-injured">Injured (game ${gameNumber})</span>
       </div>
       <div class="action-sheet-actions">
         <button type="button" class="action-btn action-btn-clear" data-action="clear">
-          Clear Status
-          <span class="action-desc">Restore to active</span>
+          Reset player
+          <span class="action-desc">Put back into the full rotation</span>
         </button>
       </div>
     `;
@@ -356,7 +356,7 @@ function renderReplacements(
   const card = document.createElement("div");
   card.className = "replacement-card";
   card.innerHTML = `
-    <span class="replacement-title">Suggested Replacements</span>
+    <span class="replacement-title">Suggested replacements</span>
     ${suggestions.map((s) => renderReplacementRow(s, playerMap)).join("")}
   `;
   return card;
@@ -383,7 +383,7 @@ function renderReplacementRow(
     <div class="replacement-row">
       <span class="chip chip-injured">${outName}</span>
       <span class="replacement-arrow">&rarr;</span>
-      <span class="replacement-none">No available replacement</span>
+      <span class="replacement-none">No replacement available</span>
     </div>
   `;
 }

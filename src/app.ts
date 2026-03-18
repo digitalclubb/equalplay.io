@@ -74,7 +74,7 @@ export function mountApp(root: HTMLElement): void {
     state.events = previousEvents;
     previousEvents = null;
     rerender();
-    showToast("Action undone");
+    showToast("Undone");
   }
 
   function applyAction(mutate: () => void): void {
@@ -120,7 +120,7 @@ export function mountApp(root: HTMLElement): void {
         state!.events = state!.events.filter((e) => e.playerId !== playerId);
         state!.events.push({ type: "late", playerId });
       });
-      showToast(`${name} marked as late. Rotation updated.`, undo);
+      showToast(`${name} isn't here yet. Rotation updated.`, undo);
     },
 
     onMarkInjured(playerId, gameNumber) {
@@ -131,9 +131,9 @@ export function mountApp(root: HTMLElement): void {
       });
       const replacementName = findReplacementName(playerId, gameNumber);
       const detail = replacementName
-        ? `Replacement: ${replacementName}`
+        ? `${replacementName} comes on`
         : "No replacement available";
-      showToast(`${name} injured in Game ${gameNumber}. ${detail}`, undo);
+      showToast(`${name} injured in game ${gameNumber}. ${detail}`, undo);
     },
 
     onMarkJoined(playerId) {
@@ -141,7 +141,7 @@ export function mountApp(root: HTMLElement): void {
       applyAction(() => {
         state!.events.push({ type: "joined", playerId });
       });
-      showToast(`${name} is now available and on the bench.`, undo);
+      showToast(`${name} has arrived and is on the bench.`, undo);
     },
 
     onClearStatus(playerId) {
@@ -149,7 +149,7 @@ export function mountApp(root: HTMLElement): void {
       applyAction(() => {
         state!.events = state!.events.filter((e) => e.playerId !== playerId);
       });
-      showToast(`${name} restored to active.`, undo);
+      showToast(`${name} is back in the rotation.`, undo);
     },
   };
 

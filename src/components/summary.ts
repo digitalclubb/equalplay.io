@@ -8,7 +8,7 @@ export function renderSummary(container: HTMLElement, summary: GameSummary): voi
 
   let html = `
     <div class="summary-card">
-      <h3>Game Summary</h3>
+      <h3>Game summary</h3>
       <div class="summary-grid">
         <div class="summary-stat">
           <span class="summary-value">${summary.totalPlayers}</span>
@@ -20,15 +20,15 @@ export function renderSummary(container: HTMLElement, summary: GameSummary): voi
         </div>
         <div class="summary-stat">
           <span class="summary-value">${summary.benchPerGame}</span>
-          <span class="summary-label">On bench</span>
+          <span class="summary-label">On the bench</span>
         </div>
         <div class="summary-stat">
           <span class="summary-value">${summary.totalSlots}</span>
-          <span class="summary-label">Total play slots</span>
+          <span class="summary-label">Play slots</span>
         </div>
         <div class="summary-stat">
           <span class="summary-value">${avgFormatted}</span>
-          <span class="summary-label">Avg games/player</span>
+          <span class="summary-label">Average per player</span>
         </div>
       </div>
   `;
@@ -36,7 +36,7 @@ export function renderSummary(container: HTMLElement, summary: GameSummary): voi
   if (!summary.isEvenDistribution) {
     html += `
       <div class="fairness-warning">
-        Perfectly equal playtime is not possible with these settings. Some players may play slightly more than others.
+        Perfectly equal playing time isn't possible with these numbers. Some players may play slightly more than others.
       </div>
     `;
   }
