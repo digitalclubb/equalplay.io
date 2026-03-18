@@ -28,8 +28,8 @@ export interface ResultsCallbacks {
 type ChipStatus = "active" | "late" | "injured" | "joined";
 
 /**
- * Renders the full rotation plan with current/next game focus,
- * collapsible future games, sub suggestions, and editable labels.
+ * Renders the rotation plan with a sticky current game, inline quick
+ * actions, a prominent "Next sub" button, and scrollable future games.
  */
 export function renderResults(
   container: HTMLElement,
@@ -63,18 +63,66 @@ export function renderResults(
   `;
   container.appendChild(header);
 
-  const nextGame = currentGame + 1;
+  const nextGameNum = currentGame + 1;
 
+  // Current game: sticky at top
+  const currentGameData = plan.games.find((g) => g.gameNumber === currentGame);
+  if (currentGameData) {
+    const unavailable = getUnavailableForGame(currentGame, allPlayerIds, events);
+
+    const stickyWrapper = document.createElement("div");
+    stickyWrapper.className = "sticky-current";
+
+    const card = renderGameCard(
+      currentGameData, playerMap, lookup, unavailable,
+      true, false, false,
+      gameLabels, callbacks,
+    );
+    stickyWrapper.appendChild(card);
+
+    // Prominent "Next sub" button — outside the card, always visible
+    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
+    if (subSuggestion) {
+      const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
+      const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
+
+      const subBar = document.createElement("div");
+      subBar.className = "sticky-sub-bar";
+      subBar.innerHTML = `
+        <span class="sticky-sub-text">
+          <span class="chip chip-replacement chip-mini">${esc(inName)}</span>
+          on for
+          <span class="chip chip-bench chip-mini">${esc(outName)}</span>
+        </span>
+      `;
+
+      const subBtn = document.createElement("button");
+      subBtn.type = "button";
+      subBtn.className = "btn-next-sub";
+      subBtn.textContent = "Next sub";
+      subBtn.addEventListener("click", () => {
+        callbacks.onMakeSub(currentGame, subSuggestion.playerOut, subSuggestion.playerIn);
+      });
+      subBar.appendChild(subBtn);
+
+      stickyWrapper.appendChild(subBar);
+    }
+
+    container.appendChild(stickyWrapper);
+  }
+
+  // Remaining games
   for (const game of plan.games) {
+    if (game.gameNumber === currentGame) continue;
+
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
-    const isCurrent = game.gameNumber === currentGame;
-    const isNext = game.gameNumber === nextGame;
+    const isNext = game.gameNumber === nextGameNum;
     const isFuture = game.gameNumber > currentGame;
 
     const card = renderGameCard(
-      game, plan, playerMap, lookup, unavailable,
-      isCurrent, isNext, isFuture,
-      currentGame, gameLabels, callbacks,
+      game, playerMap, lookup, unavailable,
+      false, isNext, isFuture,
+      gameLabels, callbacks,
     );
     container.appendChild(card);
   }
@@ -116,7 +164,6 @@ function buildEventLookup(events: RotationEvent[]): EventLookup {
     if (e.type === "late") lateIds.add(e.playerId);
     else if (e.type === "joined") joinedIds.add(e.playerId);
     else if (e.type === "injured") injuredAt.set(e.playerId, e.gameNumber);
-    // sub events don't affect the lookup — they're handled by applyEvents
   }
 
   return { lateIds, joinedIds, injuredAt };
@@ -142,14 +189,12 @@ function getChipStatus(
 
 function renderGameCard(
   game: Game,
-  plan: RotationPlan,
   playerMap: PlayerMap,
   lookup: EventLookup,
   unavailable: Set<string>,
   isCurrent: boolean,
   isNext: boolean,
   isFuture: boolean,
-  currentGame: number,
   gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
@@ -159,7 +204,7 @@ function renderGameCard(
   else if (isNext) card.classList.add("game-card-next");
   else if (isFuture) card.classList.add("game-card-future");
 
-  // Header row: title + badge + label
+  // Header
   const headerRow = document.createElement("div");
   headerRow.className = "game-header";
 
@@ -174,7 +219,6 @@ function renderGameCard(
 
   headerRow.appendChild(title);
 
-  // Editable game label (e.g. "vs Tigers")
   const labelInput = document.createElement("input");
   labelInput.type = "text";
   labelInput.className = "game-label-input";
@@ -187,7 +231,7 @@ function renderGameCard(
 
   card.appendChild(headerRow);
 
-  // Content wrapper — collapsible for future (non-next) games
+  // Content — collapsible for distant future games
   const content = document.createElement("div");
   content.className = "game-content";
 
@@ -195,64 +239,26 @@ function renderGameCard(
     content.classList.add("game-content-collapsed");
     headerRow.classList.add("game-header-collapsible");
     headerRow.addEventListener("click", (e) => {
-      // Don't toggle when clicking the label input
       if ((e.target as HTMLElement).classList.contains("game-label-input")) return;
       content.classList.toggle("game-content-collapsed");
     });
   }
 
-  // Match mode: sub suggestion + make sub button (current game only)
-  if (isCurrent) {
-    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
-    if (subSuggestion) {
-      const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
-      const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
-
-      const subCard = document.createElement("div");
-      subCard.className = "sub-suggestion";
-
-      const suggestionText = document.createElement("div");
-      suggestionText.className = "sub-suggestion-top";
-      suggestionText.innerHTML = `
-        <span class="sub-suggestion-label">Next suggested sub</span>
-        <span class="sub-suggestion-detail">
-          <span class="chip chip-replacement">${esc(inName)}</span>
-          on for
-          <span class="chip chip-bench">${esc(outName)}</span>
-        </span>
-      `;
-      subCard.appendChild(suggestionText);
-
-      const makeSubBtn = document.createElement("button");
-      makeSubBtn.type = "button";
-      makeSubBtn.className = "btn-make-sub";
-      makeSubBtn.textContent = "Make sub";
-      makeSubBtn.addEventListener("click", () => {
-        callbacks.onMakeSub(game.gameNumber, subSuggestion.playerOut, subSuggestion.playerIn);
-      });
-      subCard.appendChild(makeSubBtn);
-
-      content.appendChild(subCard);
-    } else if (game.bench.length === 0) {
-      // No bench players — no subs possible
-    } else {
-      // All bench players unavailable or everyone has equal time
-      const noSubCard = document.createElement("div");
-      noSubCard.className = "sub-suggestion sub-suggestion-none";
-      noSubCard.innerHTML = `<span class="sub-suggestion-label">No sub needed right now</span>`;
-      content.appendChild(noSubCard);
-    }
-  }
-
-  // On field
+  // On field — current game gets quick actions
   content.appendChild(
-    renderSection("On field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks),
+    renderSection(
+      "On field", game.onField, "field", game.gameNumber,
+      playerMap, lookup, isCurrent, callbacks,
+    ),
   );
 
   // Bench
   if (game.bench.length > 0) {
     content.appendChild(
-      renderSection("On the bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks),
+      renderSection(
+        "On the bench", game.bench, "bench", game.gameNumber,
+        playerMap, lookup, isCurrent, callbacks,
+      ),
     );
   }
 
@@ -262,7 +268,10 @@ function renderGameCard(
   );
   if (unavailableIds.length > 0) {
     content.appendChild(
-      renderSection("Not available", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks),
+      renderSection(
+        "Not available", unavailableIds, "unavailable", game.gameNumber,
+        playerMap, lookup, false, callbacks,
+      ),
     );
   }
 
@@ -295,6 +304,7 @@ function renderSection(
   gameNumber: number,
   playerMap: PlayerMap,
   lookup: EventLookup,
+  showQuickActions: boolean,
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const section = document.createElement("div");
@@ -309,7 +319,15 @@ function renderSection(
   chipList.className = "chip-list";
   for (const id of playerIds) {
     const status = getChipStatus(id, gameNumber, lookup);
-    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, callbacks));
+    if (showQuickActions && status !== "injured") {
+      chipList.appendChild(
+        createChipWithQuickActions(id, playerMap, role, status, gameNumber, lookup, callbacks),
+      );
+    } else {
+      chipList.appendChild(
+        createChip(id, playerMap, role, status, gameNumber, lookup, callbacks),
+      );
+    }
   }
   section.appendChild(chipList);
   return section;
@@ -355,6 +373,65 @@ function createChip(
   });
 
   return chip;
+}
+
+/**
+ * Creates a chip with inline quick-action buttons for the current game.
+ * Active/joined chips get "Late" + "Injured" buttons.
+ * Late chips get an "Arrived" button.
+ */
+function createChipWithQuickActions(
+  playerId: string,
+  playerMap: PlayerMap,
+  role: "field" | "bench" | "unavailable",
+  status: ChipStatus,
+  gameNumber: number,
+  lookup: EventLookup,
+  callbacks: ResultsCallbacks,
+): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.className = "chip-quick-wrap";
+
+  const chip = createChip(playerId, playerMap, role, status, gameNumber, lookup, callbacks);
+  wrapper.appendChild(chip);
+
+  const actions = document.createElement("div");
+  actions.className = "chip-quick-actions";
+
+  if (status === "active" || status === "joined") {
+    const lateBtn = document.createElement("button");
+    lateBtn.type = "button";
+    lateBtn.className = "chip-quick-btn chip-quick-late";
+    lateBtn.textContent = "Late";
+    lateBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      callbacks.onMarkLate(playerId);
+    });
+    actions.appendChild(lateBtn);
+
+    const injBtn = document.createElement("button");
+    injBtn.type = "button";
+    injBtn.className = "chip-quick-btn chip-quick-injured";
+    injBtn.textContent = "Injured";
+    injBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      callbacks.onMarkInjured(playerId, gameNumber);
+    });
+    actions.appendChild(injBtn);
+  } else if (status === "late") {
+    const joinBtn = document.createElement("button");
+    joinBtn.type = "button";
+    joinBtn.className = "chip-quick-btn chip-quick-joined";
+    joinBtn.textContent = "Arrived";
+    joinBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      callbacks.onMarkJoined(playerId);
+    });
+    actions.appendChild(joinBtn);
+  }
+
+  wrapper.appendChild(actions);
+  return wrapper;
 }
 
 // ---- Action Sheet ----
@@ -532,7 +609,6 @@ function renderFairnessSummary(
   const list = document.createElement("div");
   list.className = "fairness-list";
 
-  // Sort by games played descending for easy scanning
   const sorted = [...stats].sort((a, b) => b.gamesPlayed - a.gamesPlayed);
 
   for (const stat of sorted) {

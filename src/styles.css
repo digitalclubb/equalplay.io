@@ -320,6 +320,69 @@ button[type="submit"]:disabled {
   margin-bottom: 1rem;
 }
 
+/* ---- Sticky Current Game ---- */
+
+.sticky-current {
+  position: sticky;
+  top: -1px;
+  z-index: 10;
+  background: var(--color-bg);
+  padding-bottom: 0.5rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Sticky sub bar — prominent "Next sub" action */
+.sticky-sub-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-summary-bg);
+  border: 1px solid var(--color-summary-border);
+  border-radius: var(--radius);
+}
+
+.sticky-sub-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.btn-next-sub {
+  flex-shrink: 0;
+  min-height: var(--touch-min);
+  padding: 0.5rem 1.25rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.btn-next-sub:active {
+  transform: scale(0.96);
+  background: var(--color-primary-hover);
+}
+
+/* Mini chips inside the sub bar */
+.chip-mini {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+}
+
 /* ---- Game Cards ---- */
 
 .game-card {
@@ -331,20 +394,20 @@ button[type="submit"]:disabled {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Current game: highlighted border */
+/* Current game: strong emphasis */
 .game-card-current {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 1px var(--color-primary);
 }
 
-/* Next game: subtle highlight */
+/* Next game: medium emphasis */
 .game-card-next {
   border-color: var(--color-summary-border);
 }
 
-/* Future games (not next): muted */
+/* Future (not next): low emphasis */
 .game-card-future:not(.game-card-next) {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 /* Game header row */
@@ -425,60 +488,64 @@ button[type="submit"]:disabled {
   display: none;
 }
 
-/* Sub suggestion + make sub button */
-.sub-suggestion {
-  padding: 0.6rem 0.75rem;
-  background: var(--color-summary-bg);
-  border: 1px solid var(--color-summary-border);
-  border-radius: var(--radius);
-  margin-bottom: 0.6rem;
-}
+/* ---- Quick Action Chips (current game only) ---- */
 
-.sub-suggestion-top {
-  margin-bottom: 0.5rem;
-}
-
-.sub-suggestion-label {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.25rem;
-}
-
-.sub-suggestion-detail {
+.chip-quick-wrap {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--color-text);
-  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
-.sub-suggestion-none {
-  opacity: 0.7;
+.chip-quick-actions {
+  display: flex;
+  gap: 0.15rem;
 }
 
-.btn-make-sub {
-  width: 100%;
-  min-height: var(--touch-min);
-  padding: 0.6rem 1rem;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-family: inherit;
-  font-size: 0.95rem;
+.chip-quick-btn {
+  min-height: 28px;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  border: 1px solid;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.1s ease;
+  transition: transform 0.1s ease, background 0.1s ease;
 }
 
-.btn-make-sub:active {
-  background: var(--color-primary-hover);
+.chip-quick-btn:active {
+  transform: scale(0.92);
+}
+
+.chip-quick-late {
+  background: var(--color-surface);
+  color: var(--color-late-text);
+  border-color: var(--color-late-border);
+}
+
+.chip-quick-late:active {
+  background: var(--color-late-bg);
+}
+
+.chip-quick-injured {
+  background: var(--color-surface);
+  color: var(--color-injured-text);
+  border-color: var(--color-injured-border);
+}
+
+.chip-quick-injured:active {
+  background: var(--color-injured-bg);
+}
+
+.chip-quick-joined {
+  background: var(--color-surface);
+  color: var(--color-field-text);
+  border-color: var(--color-joined-border);
+}
+
+.chip-quick-joined:active {
+  background: var(--color-joined-bg);
 }
 
 .game-section {
@@ -517,10 +584,11 @@ button[type="submit"]:disabled {
   border: 1.5px solid transparent;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  transition: box-shadow 0.12s ease;
+  transition: transform 0.1s ease, box-shadow 0.12s ease;
 }
 
 .chip:active {
+  transform: scale(0.95);
   box-shadow: 0 0 0 2px var(--color-primary);
 }
 
@@ -673,8 +741,12 @@ button[type="submit"]:disabled {
   font-weight: 600;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.1s ease;
+  transition: transform 0.1s ease, background 0.1s ease;
   border: 1.5px solid;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
 }
 
 .action-desc {
