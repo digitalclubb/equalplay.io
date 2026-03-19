@@ -1,15 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#2563eb"/>
+  <rect width="32" height="32" rx="8" fill="#2563eb"/>
   <g transform="translate(16, 16)">
-    <!-- Arc segments connecting 4 nodes on radius 9 at 315°, 45°, 135°, 225° -->
-    <path d="M6.4,-6.4 A9,9 0 0,1 6.4,6.4" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <path d="M6.4,6.4 A9,9 0 0,1 -6.4,6.4" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <path d="M-6.4,6.4 A9,9 0 0,1 -6.4,-6.4" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <path d="M-6.4,-6.4 A9,9 0 0,1 6.4,-6.4" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <!-- Player nodes: 3 white, 1 green (active, top-right) -->
-    <circle cx="6.4" cy="-6.4" r="2.8" fill="#4ade80"/>
-    <circle cx="6.4" cy="6.4" r="2.8" fill="white"/>
-    <circle cx="-6.4" cy="6.4" r="2.8" fill="white"/>
-    <circle cx="-6.4" cy="-6.4" r="2.8" fill="white"/>
+    <!-- Two bold rotation arrows -->
+    <path d="M7,-2.5 A8,8 0 0,0 -7,-2.5" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-5,-6.5 L-8,-2.5 L-4,-1.5" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-7,2.5 A8,8 0 0,0 7,2.5" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M5,6.5 L8,2.5 L4,1.5" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

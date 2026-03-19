@@ -29,8 +29,6 @@ export interface ResultsCallbacks {
 
 type ChipStatus = "active" | "late" | "injured" | "joined" | "leaving";
 
-let _totalGames = 0;
-
 export function renderResults(
   container: HTMLElement,
   plan: RotationPlan,
@@ -43,7 +41,6 @@ export function renderResults(
   callbacks: ResultsCallbacks,
 ): void {
   container.innerHTML = "";
-  _totalGames = plan.games.length;
 
   const lookup = buildEventLookup(events);
   const totalGames = plan.games.length;
@@ -508,26 +505,6 @@ function showActionSheet(
   let actionsHTML = "";
 
   if (status === "active" || status === "joined") {
-    // Build "leaves after" options for games from current onward
-    let leavingHTML = "";
-    if (_totalGames > 1 && gameNumber < _totalGames) {
-      let optionsHTML = "";
-      for (let g = gameNumber; g < _totalGames; g++) {
-        optionsHTML += `<option value="${g}">After game ${g}</option>`;
-      }
-      leavingHTML = `
-        <div class="action-leaving-row">
-          <button type="button" class="action-btn action-btn-leaving" data-action="leaving">
-            Leaving early
-            <span class="action-desc">Won't be available for later games</span>
-          </button>
-          <select class="action-leaving-select" id="leaving-game-select">
-            ${optionsHTML}
-          </select>
-        </div>
-      `;
-    }
-
     actionsHTML = `
       <button type="button" class="action-btn action-btn-late" data-action="late">
         Not here yet
@@ -537,7 +514,10 @@ function showActionSheet(
         Player injured
         <span class="action-desc">Replaced from game ${gameNumber}</span>
       </button>
-      ${leavingHTML}
+      <button type="button" class="action-btn" data-action="leaving">
+        Leaving early
+        <span class="action-desc">Won't be available for later games</span>
+      </button>
     `;
   } else if (status === "late") {
     actionsHTML = `
@@ -574,9 +554,7 @@ function showActionSheet(
       else if (action === "joined") callbacks.onMarkJoined(playerId);
       else if (action === "clear") callbacks.onClearStatus(playerId);
       else if (action === "leaving") {
-        const select = sheet.querySelector<HTMLSelectElement>("#leaving-game-select");
-        const afterGame = select ? parseInt(select.value) : gameNumber;
-        callbacks.onMarkLeaving(playerId, afterGame);
+        callbacks.onMarkLeaving(playerId, gameNumber);
       }
     });
   });

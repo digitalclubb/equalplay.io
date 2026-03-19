@@ -74,9 +74,9 @@ body {
 }
 
 .logo {
-  width: 180px;
-  height: auto;
-  margin-bottom: 4px;
+  height: 28px;
+  width: auto;
+  margin-bottom: 6px;
 }
 
 .subtitle {
@@ -818,31 +818,6 @@ body {
   background: var(--color-injured-bg);
 }
 
-/* Leaving early — button + game picker */
-.action-leaving-row {
-  display: flex;
-  gap: var(--sp-xs);
-}
-
-.action-leaving-row .action-btn-leaving {
-  flex: 1;
-}
-
-.action-leaving-select {
-  min-height: var(--touch-min);
-  padding: var(--sp-xs) var(--sp-sm);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text);
-  background: var(--color-surface);
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  flex-shrink: 0;
-}
 
 /* ---- Replacements ---- */
 
