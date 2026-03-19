@@ -103,109 +103,93 @@ body {
   margin-bottom: var(--sp-xs);
 }
 
-/* Squad chips */
-.squad-chips {
-  margin-bottom: var(--sp-xs);
+/* Player list — stacked inputs */
+.player-list-group {
+  margin-bottom: var(--sp-sm);
 }
 
-.player-chips {
+.player-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--sp-xs);
   margin-bottom: var(--sp-xs);
-  min-height: 4px;
 }
 
-.player-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 40px;
-  padding: 0 12px;
-  background: var(--color-field-bg);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-field-text);
-}
-
-.player-chip-remove {
+.player-row {
   display: flex;
+  gap: var(--sp-xs);
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  margin-left: 2px;
-  background: transparent;
-  border: none;
-  color: var(--color-field-text);
-  font-size: 1.1rem;
-  cursor: pointer;
-  border-radius: 50%;
-  -webkit-tap-highlight-color: transparent;
-  opacity: 0.4;
 }
 
-.player-chip-remove:active {
-  opacity: 1;
-}
-
-/* "+ Add" chip */
-.player-chip-add {
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 14px;
-  background: transparent;
-  border: 2px dashed var(--color-border);
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-secondary);
-  cursor: pointer;
+.player-input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--touch-min);
+  padding: var(--sp-xs) var(--sp-sm);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1rem;
   font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.player-chip-add:active {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.player-chip-add[hidden] {
-  display: none;
-}
-
-/* Inline name input (replaces "+ Add" when active) */
-.player-inline-input {
-  display: inline-flex;
-}
-
-.player-inline-input[hidden] {
-  display: none;
-}
-
-.player-inline-input input {
-  height: 40px;
-  width: 120px;
-  padding: 0 10px;
-  border: 2px solid var(--color-primary);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  color: var(--color-text);
   background: var(--color-surface);
+  color: var(--color-text);
   -webkit-appearance: none;
   appearance: none;
 }
 
-.player-inline-input input:focus {
+.player-input:focus {
   outline: none;
+  border-color: var(--color-primary);
 }
 
-.player-inline-input input::placeholder {
+.player-input::placeholder {
   color: var(--color-muted);
+}
+
+.btn-remove-player {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-muted);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-remove-player:active {
+  background: var(--color-danger);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.btn-add-player {
+  min-height: var(--touch-min);
+  width: 100%;
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px dashed var(--color-border);
+  padding: var(--sp-xs) var(--sp-md);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-add-player:active:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.btn-add-player:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Match settings label */

@@ -1,5 +1,6 @@
 import type { Player } from "../types/index.js";
 
+const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
 
 let nextPlayerId = 1;
@@ -13,104 +14,94 @@ export interface PlayerListHandle {
 }
 
 /**
- * Chip-based squad list. No persistent input field —
- * tap "+ Add" to reveal an inline input, type a name, press Enter.
+ * Stacked text input list. Starts with 2 fields.
+ * "+ Add player" adds more. Remove buttons appear when > 2 rows.
  */
 export function createPlayerList(): PlayerListHandle {
   const container = document.createElement("div");
-  container.className = "squad-chips";
+  container.className = "player-list-group";
 
-  const chipArea = document.createElement("div");
-  chipArea.className = "player-chips";
-  container.appendChild(chipArea);
+  const list = document.createElement("div");
+  list.className = "player-list";
+  container.appendChild(list);
 
-  // "+ Add" chip that turns into an input
-  const addChip = document.createElement("button");
-  addChip.type = "button";
-  addChip.className = "player-chip-add";
-  addChip.textContent = "+ Add";
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "btn-add-player";
+  addBtn.textContent = "+ Add player";
+  container.appendChild(addBtn);
 
-  const inputWrap = document.createElement("div");
-  inputWrap.className = "player-inline-input";
-  inputWrap.hidden = true;
+  // Start with 2 rows
+  appendRow(list, "");
+  appendRow(list, "");
+  updateRemoveButtons(list);
 
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "Name";
-
-  function commitName(): void {
-    const name = input.value.trim();
-    if (name && chipArea.children.length < MAX_PLAYERS) {
-      addPlayerChip(name);
-    }
-    input.value = "";
-  }
-
-  function closeInput(): void {
-    commitName();
-    inputWrap.hidden = true;
-    addChip.hidden = false;
-  }
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitName();
-      // Keep input open for rapid entry
-      input.focus();
-    } else if (e.key === "Escape") {
-      closeInput();
-    }
+  addBtn.addEventListener("click", () => {
+    if (list.children.length >= MAX_PLAYERS) return;
+    appendRow(list, "");
+    updateRemoveButtons(list);
+    updateAddButton(list, addBtn);
+    const inputs = list.querySelectorAll<HTMLInputElement>(".player-input");
+    inputs[inputs.length - 1].focus();
   });
-
-  input.addEventListener("blur", () => {
-    // Small delay to allow chip × clicks to register
-    setTimeout(closeInput, 150);
-  });
-
-  inputWrap.appendChild(input);
-  container.appendChild(inputWrap);
-  container.appendChild(addChip);
-
-  addChip.addEventListener("click", () => {
-    addChip.hidden = true;
-    inputWrap.hidden = false;
-    input.value = "";
-    input.focus();
-  });
-
-  function addPlayerChip(name: string): void {
-    const chip = document.createElement("span");
-    chip.className = "player-chip";
-    chip.dataset.playerId = generateId();
-
-    const nameSpan = document.createElement("span");
-    nameSpan.textContent = name;
-    chip.appendChild(nameSpan);
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "player-chip-remove";
-    removeBtn.textContent = "\u00D7";
-    removeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      chip.remove();
-    });
-    chip.appendChild(removeBtn);
-
-    chipArea.appendChild(chip);
-  }
 
   function getPlayers(): Player[] {
-    const chips = chipArea.querySelectorAll<HTMLElement>(".player-chip");
+    const rows = list.querySelectorAll<HTMLElement>(".player-row");
     const players: Player[] = [];
-    for (const chip of chips) {
-      const name = chip.querySelector("span")?.textContent?.trim();
+    for (const row of rows) {
+      const name = (row.querySelector(".player-input") as HTMLInputElement).value.trim();
       if (!name) continue;
-      players.push({ id: chip.dataset.playerId!, name });
+      players.push({ id: row.dataset.playerId!, name });
     }
     return players;
   }
 
   return { element: container, getPlayers };
+}
+
+function appendRow(list: HTMLElement, value: string): void {
+  const row = document.createElement("div");
+  row.className = "player-row";
+  row.dataset.playerId = generateId();
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "player-input";
+  input.placeholder = `Player ${list.children.length + 1}`;
+  input.value = value;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "btn-remove-player";
+  removeBtn.title = "Remove";
+  removeBtn.textContent = "\u00D7";
+  removeBtn.addEventListener("click", () => {
+    row.remove();
+    updateRemoveButtons(list);
+    renumberPlaceholders(list);
+    const addBtn = list.parentElement?.querySelector<HTMLButtonElement>(".btn-add-player");
+    if (addBtn) updateAddButton(list, addBtn);
+  });
+
+  row.appendChild(input);
+  row.appendChild(removeBtn);
+  list.appendChild(row);
+}
+
+function renumberPlaceholders(list: HTMLElement): void {
+  list.querySelectorAll<HTMLInputElement>(".player-input").forEach((inp, i) => {
+    inp.placeholder = `Player ${i + 1}`;
+  });
+}
+
+function updateRemoveButtons(list: HTMLElement): void {
+  const buttons = list.querySelectorAll<HTMLButtonElement>(".btn-remove-player");
+  const show = list.children.length > MIN_PLAYERS;
+  buttons.forEach((btn) => {
+    btn.style.display = show ? "" : "none";
+  });
+}
+
+function updateAddButton(list: HTMLElement, btn: HTMLButtonElement): void {
+  btn.disabled = list.children.length >= MAX_PLAYERS;
 }
