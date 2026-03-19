@@ -83,7 +83,7 @@ body {
 .header-bar {
   background: var(--color-navy);
   border-radius: var(--radius-lg);
-  padding: var(--sp-md) var(--sp-md) var(--sp-sm);
+  padding: var(--sp-lg) var(--sp-md) var(--sp-sm);
   margin-bottom: var(--sp-sm);
 }
 
@@ -91,40 +91,30 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: var(--sp-sm);
+  margin-bottom: var(--sp-md);
 }
 
 .logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 4px;
-}
-
-.logo-icon-wrap {
-  width: 40px;
-  height: 40px;
-  overflow: hidden;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
-.logo-icon {
-  height: 66px;
+.logo-whistle {
+  height: 60px;
   width: auto;
-  max-width: none;
+  flex-shrink: 0;
 }
 
 .logo-text {
   font-family: 'Outfit', system-ui, sans-serif;
-  font-size: 1.5rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.5px;
   white-space: nowrap;
-  margin-left: -2px;
+  line-height: 1.1;
 }
 
 .logo-text-play {
@@ -132,9 +122,10 @@ body {
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
   font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 /* ---- Team Tabs (inside header bar) ---- */
