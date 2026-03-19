@@ -17,7 +17,7 @@ export interface RotationPlan {
 
 export type RotationEvent =
   | { type: "late"; playerId: string }
-  | { type: "joined"; playerId: string }
+  | { type: "joined"; playerId: string; duringGame: number }
   | { type: "injured"; playerId: string; gameNumber: number }
   | { type: "leaving"; playerId: string; afterGame: number }
   | { type: "sub"; gameNumber: number; playerOut: string; playerIn: string };

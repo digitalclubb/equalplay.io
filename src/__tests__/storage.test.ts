@@ -50,7 +50,7 @@ describe("saveTeams + loadTeams", () => {
     const team = makeTeam("t1", "Team 1");
     team.events = [
       { type: "late", playerId: "p1" },
-      { type: "joined", playerId: "p1" },
+      { type: "joined", playerId: "p1", duringGame: 1 },
     ];
     saveTeams({ teams: [team], activeTeamId: "t1" });
     const loaded = loadTeams()!;

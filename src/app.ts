@@ -278,7 +278,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkJoined(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        getActive().events.push({ type: "joined", playerId });
+        getActive().events.push({ type: "joined", playerId, duringGame: getActive().currentGame });
       });
       showToast(`${name} has arrived and is on the bench.`, undo);
     },

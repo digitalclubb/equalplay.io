@@ -17,7 +17,6 @@ const SUB_APPEARANCE = 0.5;
 interface PlayerTracker {
   playTimeUnits: number;
   lastPlayedGame: number;
-  /** Games this player was in the available pool */
   gamesAvailable: number;
 }
 
@@ -25,22 +24,12 @@ function createTracker(): PlayerTracker {
   return { playTimeUnits: 0, lastPlayedGame: 0, gamesAvailable: 0 };
 }
 
-/**
- * Fairness debt: how far behind a player is from their fair share.
- * Positive debt = underplayed (should be prioritised).
- * Calculated as: (gamesAvailable * fairRate) - playTimeUnits
- * where fairRate is playersPerTeam / totalAvailableInThoseGames (averaged).
- */
 function fairnessDebt(t: PlayerTracker, playersPerTeam: number, avgPoolSize: number): number {
   if (t.gamesAvailable === 0) return 0;
   const fairShare = t.gamesAvailable * (playersPerTeam / Math.max(avgPoolSize, playersPerTeam));
   return fairShare - t.playTimeUnits;
 }
 
-/**
- * Selects the fairest `count` players from `available`.
- * Sorts by: highest fairness debt, then longest since last played.
- */
 function selectOnField(
   available: string[],
   count: number,
@@ -51,10 +40,8 @@ function selectOnField(
   const sorted = [...available].sort((a, b) => {
     const ta = trackers.get(a) ?? createTracker();
     const tb = trackers.get(b) ?? createTracker();
-    // Higher debt = more underplayed = should play first
     const debtDiff = fairnessDebt(tb, playersPerTeam, avgPoolSize) - fairnessDebt(ta, playersPerTeam, avgPoolSize);
     if (Math.abs(debtDiff) > 0.001) return debtDiff;
-    // Tie-break: player who waited longest gets priority
     return ta.lastPlayedGame - tb.lastPlayedGame;
   });
   return sorted.slice(0, Math.min(count, sorted.length));
@@ -81,9 +68,6 @@ function computePlayCredits(
   return credits;
 }
 
-/**
- * Updates trackers after a game.
- */
 function updateTrackers(
   trackers: Map<string, PlayerTracker>,
   credits: Map<string, number>,
@@ -106,7 +90,6 @@ function updateTrackers(
   }
 }
 
-/** Compute average pool size from trackers (for fair rate calculation) */
 function getAvgPoolSize(trackers: Map<string, PlayerTracker>): number {
   let totalAvail = 0;
   let maxGames = 0;
@@ -148,7 +131,8 @@ export function generateInitialPlan(config: RotationConfig): RotationPlan {
 
 interface ResolvedAvailability {
   lateIds: Set<string>;
-  joinedIds: Set<string>;
+  /** Maps playerId → game number they arrived during */
+  joinedDuring: Map<string, number>;
   injuredFrom: Map<string, number>;
   leavingAfter: Map<string, number>;
   subs: Map<number, Array<{ playerOut: string; playerIn: string }>>;
@@ -156,7 +140,7 @@ interface ResolvedAvailability {
 
 function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
   const lateIds = new Set<string>();
-  const joinedIds = new Set<string>();
+  const joinedDuring = new Map<string, number>();
   const injuredFrom = new Map<string, number>();
   const leavingAfter = new Map<string, number>();
   const subs = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
@@ -165,7 +149,7 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
     if (event.type === "late") {
       lateIds.add(event.playerId);
     } else if (event.type === "joined") {
-      joinedIds.add(event.playerId);
+      joinedDuring.set(event.playerId, event.duringGame ?? 1);
     } else if (event.type === "leaving") {
       const existing = leavingAfter.get(event.playerId);
       if (existing === undefined || event.afterGame < existing) {
@@ -185,15 +169,17 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
     }
   }
 
-  return { lateIds, joinedIds, injuredFrom, leavingAfter, subs };
+  return { lateIds, joinedDuring, injuredFrom, leavingAfter, subs };
 }
 
+/** Is a player generally available for a game (ignoring joined timing) */
 function isAvailable(
   id: string,
   gameNumber: number,
   resolved: ResolvedAvailability,
 ): boolean {
-  if (resolved.lateIds.has(id) && !resolved.joinedIds.has(id)) {
+  // Pure late (no joined) = unavailable everywhere
+  if (resolved.lateIds.has(id) && !resolved.joinedDuring.has(id)) {
     return false;
   }
   const injAt = resolved.injuredFrom.get(id);
@@ -207,14 +193,73 @@ function isAvailable(
   return true;
 }
 
-// ---- Apply events (two-phase: locked past + rebalanced future) ----
+/**
+ * Can a player be selected for on-field in a specific game?
+ *
+ * Late+joined players arrived during a specific game (duringGame).
+ * - Games <= duringGame: excluded (they were absent or just arriving)
+ * - Games > duringGame: ELIGIBLE (game starts after they arrived)
+ */
+function isFieldEligible(
+  id: string,
+  gameNumber: number,
+  resolved: ResolvedAvailability,
+): boolean {
+  if (!isAvailable(id, gameNumber, resolved)) return false;
 
+  const arrivedDuring = resolved.joinedDuring.get(id);
+  if (resolved.lateIds.has(id) && arrivedDuring !== undefined) {
+    return gameNumber > arrivedDuring;
+  }
+
+  return true;
+}
+
+/**
+ * Is a player in this game at all (field or bench)?
+ *
+ * Late+joined players are present from the game they arrived in onwards
+ * (on bench for that game, eligible for field from the next one).
+ */
+function isInGame(
+  id: string,
+  gameNumber: number,
+  resolved: ResolvedAvailability,
+): boolean {
+  if (!isAvailable(id, gameNumber, resolved)) return false;
+
+  const arrivedDuring = resolved.joinedDuring.get(id);
+  if (resolved.lateIds.has(id) && arrivedDuring !== undefined) {
+    return gameNumber >= arrivedDuring;
+  }
+
+  return true;
+}
+
+// ---- Apply events ----
+
+/**
+ * Rebuilds the rotation plan with events applied.
+ *
+ * The plan is rebuilt from scratch every time. `currentGame` represents
+ * the game currently being played (or about to be played).
+ *
+ * Late+joined players:
+ * - NOT on field for any game <= currentGame (they were absent)
+ * - ELIGIBLE for games > currentGame (they've arrived, future games)
+ * - On the BENCH for currentGame (available for replacement if needed)
+ *
+ * This ensures:
+ * - Current game lineup is stable (no mid-game displacement)
+ * - Preview of future games shows the joined player correctly
+ * - After advancing, the joined player plays (they're now in a future game)
+ */
 export function applyEvents(
   plan: RotationPlan,
   events: RotationEvent[],
   allPlayerIds: string[],
   playersPerTeam: number,
-  currentGame: number,
+  _currentGame: number,
 ): RotationPlan {
   if (events.length === 0) return plan;
 
@@ -227,32 +272,28 @@ export function applyEvents(
 
   const games: Game[] = [];
 
-  // Phase 1: PAST games only (strictly before currentGame)
-  // These games already happened. Late+joined players were absent.
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
-    if (gameNumber >= currentGame) break;
 
-    const fieldAvailable = allPlayerIds.filter((id) => {
-      if (!isAvailable(id, gameNumber, resolved)) return false;
-      // Late+joined players weren't here for past games
-      if (resolved.lateIds.has(id) && resolved.joinedIds.has(id)) return false;
-      return true;
-    });
+    // Who can be selected for on-field?
+    const fieldEligible = allPlayerIds.filter((id) =>
+      isFieldEligible(id, gameNumber, resolved),
+    );
 
+    // Who is in this game at all (field or bench)?
     const allAvailable = allPlayerIds.filter((id) =>
-      isAvailable(id, gameNumber, resolved),
+      isInGame(id, gameNumber, resolved),
     );
 
     const avgPool = getAvgPoolSize(trackers) || allAvailable.length;
-    const onField = selectOnField(fieldAvailable, playersPerTeam, trackers, playersPerTeam, avgPool);
+    const onField = selectOnField(fieldEligible, playersPerTeam, trackers, playersPerTeam, avgPool);
     const preSubOnField = [...onField];
     const onFieldSet = new Set(onField);
 
-    const bench = allPlayerIds.filter(
-      (id) => isAvailable(id, gameNumber, resolved) && !onFieldSet.has(id),
-    );
+    // Bench: all available players not on field
+    const bench = allAvailable.filter((id) => !onFieldSet.has(id));
 
+    // Apply substitutions
     const gameSubs = resolved.subs.get(gameNumber);
     if (gameSubs) {
       for (const sub of gameSubs) {
@@ -266,27 +307,6 @@ export function applyEvents(
     }
 
     const credits = computePlayCredits(preSubOnField, onField);
-    updateTrackers(trackers, credits, allAvailable, gameNumber);
-    games.push({ gameNumber, onField, bench });
-  }
-
-  // Phase 2: Current game AND future games — fully rebalanced
-  // All available players (including late+joined) are eligible for field.
-  // The fairness debt system ensures underplayed players get prioritised.
-  for (let i = Math.max(0, currentGame - 1); i < plan.games.length; i++) {
-    const gameNumber = i + 1;
-
-    const allAvailable = allPlayerIds.filter((id) =>
-      isAvailable(id, gameNumber, resolved),
-    );
-
-    const avgPool = getAvgPoolSize(trackers) || allAvailable.length;
-    const onField = selectOnField(allAvailable, playersPerTeam, trackers, playersPerTeam, avgPool);
-    const onFieldSet = new Set(onField);
-
-    const bench = allAvailable.filter((id) => !onFieldSet.has(id));
-
-    const credits = computePlayCredits(onField, onField);
     updateTrackers(trackers, credits, allAvailable, gameNumber);
     games.push({ gameNumber, onField, bench });
   }
@@ -349,7 +369,6 @@ export function getNextSubSuggestion(
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
-  // Build trackers from plan history up to current game
   const trackers = new Map<string, PlayerTracker>();
   for (const game of plan.games) {
     if (game.gameNumber > currentGameNumber) break;
@@ -368,26 +387,24 @@ export function getNextSubSuggestion(
   }
 
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
-  const playersPerTeam = availableField.length;
+  const ppt = availableField.length;
 
-  // Bench player with highest debt → comes on
   const playerIn = availableBench.reduce((best, id) => {
     const bestT = trackers.get(best) ?? createTracker();
     const thisT = trackers.get(id) ?? createTracker();
-    const bestDebt = fairnessDebt(bestT, playersPerTeam, avgPool);
-    const thisDebt = fairnessDebt(thisT, playersPerTeam, avgPool);
+    const bestDebt = fairnessDebt(bestT, ppt, avgPool);
+    const thisDebt = fairnessDebt(thisT, ppt, avgPool);
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt > bestDebt ? id : best;
     }
     return thisT.lastPlayedGame < bestT.lastPlayedGame ? id : best;
   });
 
-  // Field player with lowest debt (most overplayed) → comes off
   const playerOut = availableField.reduce((best, id) => {
     const bestT = trackers.get(best) ?? createTracker();
     const thisT = trackers.get(id) ?? createTracker();
-    const bestDebt = fairnessDebt(bestT, playersPerTeam, avgPool);
-    const thisDebt = fairnessDebt(thisT, playersPerTeam, avgPool);
+    const bestDebt = fairnessDebt(bestT, ppt, avgPool);
+    const thisDebt = fairnessDebt(thisT, ppt, avgPool);
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt < bestDebt ? id : best;
     }
@@ -397,9 +414,6 @@ export function getNextSubSuggestion(
   return { playerIn, playerOut };
 }
 
-/**
- * Computes per-player stats with fairness debt.
- */
 export function getPlayerStats(
   plan: RotationPlan,
   allPlayerIds: string[],
@@ -435,7 +449,7 @@ export function getPlayerStats(
       playerId: id,
       playTimeUnits: Math.round(t.playTimeUnits * 10) / 10,
       gamesBenched: Math.max(0, t.gamesAvailable - Math.ceil(t.playTimeUnits)),
-      fairnessScore: Math.round(-debt * 100) / 100, // negative debt = overplayed = positive score
+      fairnessScore: Math.round(-debt * 100) / 100,
     };
   });
 }
