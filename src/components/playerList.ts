@@ -11,13 +11,14 @@ function generateId(): string {
 export interface PlayerListHandle {
   element: HTMLElement;
   getPlayers: () => Player[];
+  getRawNames: () => string[];
 }
 
 /**
  * Stacked text input list. Starts with 2 fields.
  * "+ Add player" adds more. Remove buttons appear when > 2 rows.
  */
-export function createPlayerList(): PlayerListHandle {
+export function createPlayerList(initialNames?: string[]): PlayerListHandle {
   const container = document.createElement("div");
   container.className = "player-list-group";
 
@@ -31,9 +32,11 @@ export function createPlayerList(): PlayerListHandle {
   addBtn.textContent = "+ Add player";
   container.appendChild(addBtn);
 
-  // Start with 2 rows
-  appendRow(list, "");
-  appendRow(list, "");
+  // Prepopulate from saved names, or start with 2 empty rows
+  const names = initialNames && initialNames.length > 0 ? initialNames : ["", ""];
+  for (const name of names) {
+    appendRow(list, name);
+  }
   updateRemoveButtons(list);
 
   addBtn.addEventListener("click", () => {
@@ -56,7 +59,16 @@ export function createPlayerList(): PlayerListHandle {
     return players;
   }
 
-  return { element: container, getPlayers };
+  function getRawNames(): string[] {
+    const rows = list.querySelectorAll<HTMLElement>(".player-row");
+    const raw: string[] = [];
+    for (const row of rows) {
+      raw.push((row.querySelector(".player-input") as HTMLInputElement).value);
+    }
+    return raw;
+  }
+
+  return { element: container, getPlayers, getRawNames };
 }
 
 function appendRow(list: HTMLElement, value: string): void {

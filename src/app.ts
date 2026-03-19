@@ -36,6 +36,8 @@ interface TeamState {
   events: RotationEvent[];
   currentGame: number;
   gameLabels: Record<string, string>;
+  /** Draft player names — saved before generation so they survive tab switches */
+  draftPlayerNames: string[];
 }
 
 function createEmptyTeam(id: string, name: string): TeamState {
@@ -50,6 +52,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     events: [],
     currentGame: 1,
     gameLabels: {},
+    draftPlayerNames: [],
   };
 }
 
@@ -399,10 +402,21 @@ export function mountApp(root: HTMLElement): void {
 
   // Form container — rebuilt on every team switch so inputs are fresh
   const formContainer = document.createElement("div");
+  let currentFormHandle: { getRawNames: () => string[] } | null = null;
+
+  /** Save current form inputs to the active team's draft before switching */
+  function saveDraft(): void {
+    if (currentFormHandle) {
+      getActive().draftPlayerNames = currentFormHandle.getRawNames();
+    }
+  }
 
   function rebuildForm(): void {
+    saveDraft();
     formContainer.innerHTML = "";
-    const form = createForm(generate);
+    const team = getActive();
+    const form = createForm(generate, team.draftPlayerNames);
+    currentFormHandle = form;
     formContainer.appendChild(form.element);
   }
 
@@ -439,6 +453,7 @@ export function mountApp(root: HTMLElement): void {
         events: st.events ?? [],
         currentGame: st.currentGame ?? 1,
         gameLabels: st.gameLabels ?? {},
+        draftPlayerNames: st.players.map((p) => p.name),
       };
     });
 

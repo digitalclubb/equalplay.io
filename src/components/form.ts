@@ -7,12 +7,14 @@ export interface FormHandle {
   getPlayers: () => Player[];
   getPlayersPerTeam: () => number;
   getNumberOfGames: () => number;
+  /** Read all raw input values (including empty ones) */
+  getRawNames: () => string[];
   showErrors: (errors: ValidationErrors) => void;
   clearErrors: () => void;
   setLoading: (loading: boolean) => void;
 }
 
-export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
+export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?: string[]): FormHandle {
   const section = document.createElement("section");
   section.className = "squad-panel";
 
@@ -21,7 +23,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   squadHeader.innerHTML = `<h2>${iconSquad} Team</h2>`;
   section.appendChild(squadHeader);
 
-  const playerList = createPlayerList();
+  const playerList = createPlayerList(initialNames);
   section.appendChild(playerList.element);
 
   const playerError = document.createElement("div");
@@ -64,6 +66,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const handle: FormHandle = {
     element: section,
     getPlayers: playerList.getPlayers,
+    getRawNames: playerList.getRawNames,
 
     getPlayersPerTeam() {
       return parseInt(
