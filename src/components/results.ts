@@ -57,7 +57,6 @@ export function renderResults(
   const nextGameNum = currentGame + 1;
   const hasNextGame = nextGameNum <= totalGames;
 
-  // Reset session — at top, always accessible
   const resetBtn = document.createElement("button");
   resetBtn.type = "button";
   resetBtn.className = "btn-reset";
@@ -71,7 +70,6 @@ export function renderResults(
 
   const isSessionFinished = currentGame > totalGames;
 
-  // Session finished — all games completed
   if (isSessionFinished) {
     const finishedBanner = document.createElement("div");
     finishedBanner.className = "session-finished";
@@ -82,16 +80,16 @@ export function renderResults(
     container.appendChild(finishedBanner);
   }
 
-  // Completed games (before current) — collapsed
+  // Completed games — collapsed
   for (const game of plan.games) {
     if (game.gameNumber >= currentGame) break;
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks),
+      renderGameCard(game, plan, playerMap, lookup, unavailable, "completed", gameLabels, events, callbacks),
     );
   }
 
-  // Current game — sticky (only if session not finished)
+  // Current game — sticky
   const currentGameData = isSessionFinished
     ? undefined
     : plan.games.find((g) => g.gameNumber === currentGame);
@@ -102,27 +100,24 @@ export function renderResults(
     sticky.className = "sticky-current";
 
     const card = renderGameCard(
-      currentGameData, playerMap, lookup, unavailable,
-      "current", gameLabels, callbacks,
+      currentGameData, plan, playerMap, lookup, unavailable,
+      "current", gameLabels, events, callbacks,
     );
 
-    // Primary action: "Make sub"
+    // ---- Actions zone (visually separated) ----
+    const actionsZone = document.createElement("div");
+    actionsZone.className = "game-actions";
+
+    // Substitution control
     const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable, events);
     if (subSuggestion) {
       const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
       const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
 
-      const subAction = document.createElement("div");
-      subAction.className = "sub-action";
-
       const subText = document.createElement("div");
       subText.className = "sub-action-text";
-      subText.innerHTML = `
-        <span class="chip chip-field chip-sm">${esc(inName)}</span>
-        <span class="sub-action-arrow">&rarr;</span>
-        <span class="chip chip-bench chip-sm">${esc(outName)}</span>
-      `;
-      subAction.appendChild(subText);
+      subText.innerHTML = `<span class="chip chip-field chip-sm">${esc(inName)}</span> replaces <span class="chip chip-bench chip-sm">${esc(outName)}</span>`;
+      actionsZone.appendChild(subText);
 
       const subBtn = document.createElement("button");
       subBtn.type = "button";
@@ -131,46 +126,38 @@ export function renderResults(
       subBtn.addEventListener("click", () => {
         callbacks.onMakeSub(currentGame, subSuggestion.playerOut, subSuggestion.playerIn);
       });
-      subAction.appendChild(subBtn);
-
-      card.appendChild(subAction);
+      actionsZone.appendChild(subBtn);
     }
 
-    // Game progression button
+    // Game progression
     if (hasNextGame) {
       const nextGameBtn = document.createElement("button");
       nextGameBtn.type = "button";
       nextGameBtn.className = "btn-next-game";
       nextGameBtn.innerHTML = `${iconNext} Start game ${nextGameNum}`;
-      nextGameBtn.addEventListener("click", () => {
-        callbacks.onNextGame();
-      });
-      card.appendChild(nextGameBtn);
+      nextGameBtn.addEventListener("click", () => callbacks.onNextGame());
+      actionsZone.appendChild(nextGameBtn);
     } else {
       const endGameBtn = document.createElement("button");
       endGameBtn.type = "button";
       endGameBtn.className = "btn-end-game";
       endGameBtn.innerHTML = `${iconEnd} End game`;
-      endGameBtn.addEventListener("click", () => {
-        callbacks.onNextGame();
-      });
-      card.appendChild(endGameBtn);
+      endGameBtn.addEventListener("click", () => callbacks.onNextGame());
+      actionsZone.appendChild(endGameBtn);
     }
 
+    card.appendChild(actionsZone);
     sticky.appendChild(card);
     container.appendChild(sticky);
   }
 
-  // Future games (after current)
+  // Future games
   for (const game of plan.games) {
     if (game.gameNumber <= currentGame) continue;
-
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
-    const isNext = game.gameNumber === nextGameNum;
-    const emphasis: GameEmphasis = isNext ? "next" : "future";
-
+    const emphasis: GameEmphasis = game.gameNumber === nextGameNum ? "next" : "future";
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks),
+      renderGameCard(game, plan, playerMap, lookup, unavailable, emphasis, gameLabels, events, callbacks),
     );
   }
 
@@ -233,17 +220,19 @@ const BADGE_LABELS: Partial<Record<GameEmphasis, { text: string; className: stri
 
 function renderGameCard(
   game: Game,
+  plan: RotationPlan,
   playerMap: PlayerMap,
   lookup: EventLookup,
   unavailable: Set<string>,
   emphasis: GameEmphasis,
   gameLabels: Record<string, string>,
+  events: RotationEvent[],
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const card = document.createElement("div");
   card.className = `game-card game-card-${emphasis}`;
 
-  // Header
+  // ---- A. Header zone ----
   const headerRow = document.createElement("div");
   headerRow.className = "game-header";
 
@@ -256,7 +245,6 @@ function renderGameCard(
   }
   headerRow.appendChild(title);
 
-  // Opponent label: display mode with edit icon, toggles to input + save
   const savedLabel = gameLabels[String(game.gameNumber)] ?? "";
   headerRow.appendChild(
     createGameLabel(savedLabel, emphasis === "completed", (newLabel) => {
@@ -266,7 +254,7 @@ function renderGameCard(
 
   card.appendChild(headerRow);
 
-  // Content — collapsible for completed and distant future games
+  // ---- B. Players zone ----
   const content = document.createElement("div");
   content.className = "game-content";
 
@@ -280,18 +268,17 @@ function renderGameCard(
     });
   }
 
-  // Sections
-  content.appendChild(renderSection("On field", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks));
+  content.appendChild(renderSection("Playing", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks));
 
   if (game.bench.length > 0) {
-    content.appendChild(renderSection("On the bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks));
+    content.appendChild(renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks));
   }
 
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
-    content.appendChild(renderSection("Not available", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks));
+    content.appendChild(renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks));
   }
 
   // Replacement suggestions
@@ -303,15 +290,24 @@ function renderGameCard(
     }
   }
 
+  // Fairness hint (current game only) — subtle guidance
+  if (emphasis === "current" && game.bench.length > 0) {
+    const stats = getPlayerStats(plan, [...game.onField, ...game.bench], events);
+    const sorted = [...stats].sort((a, b) => a.fairnessScore - b.fairnessScore);
+    const mostUnderplayed = sorted[0];
+    if (mostUnderplayed && mostUnderplayed.fairnessScore < -0.3) {
+      const name = playerMap.get(mostUnderplayed.playerId)?.name ?? "?";
+      const hint = document.createElement("div");
+      hint.className = "fairness-hint";
+      hint.textContent = `${name} needs more time`;
+      content.appendChild(hint);
+    }
+  }
+
   card.appendChild(content);
   return card;
 }
 
-/**
- * Inline-editable opponent label.
- * Shows "vs ..." text + pen icon. Tap pen → text becomes an input
- * in the same position. Enter or blur saves. No layout shift.
- */
 function createGameLabel(
   savedLabel: string,
   readOnly: boolean,
@@ -322,14 +318,12 @@ function createGameLabel(
 
   let currentLabel = savedLabel;
 
-  // The label text (doubles as display)
   const labelText = document.createElement("span");
   labelText.className = "game-label-text";
   labelText.textContent = currentLabel || "vs \u2026";
   if (!currentLabel) labelText.classList.add("game-label-placeholder");
   wrapper.appendChild(labelText);
 
-  // Hidden input — same size as the text, swaps in on edit
   const input = document.createElement("input");
   input.type = "text";
   input.className = "game-label-input";
@@ -365,16 +359,10 @@ function createGameLabel(
     }
 
     editBtn.addEventListener("click", startEdit);
-
     input.addEventListener("blur", commitEdit);
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        commitEdit();
-      } else if (e.key === "Escape") {
-        input.value = currentLabel;
-        commitEdit();
-      }
+      if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+      else if (e.key === "Escape") { input.value = currentLabel; commitEdit(); }
     });
 
     wrapper.appendChild(editBtn);
@@ -396,14 +384,8 @@ function renderSection(
   section.className = "game-section";
 
   const sectionLabel = document.createElement("span");
-  sectionLabel.className = "game-section-label";
-  // Add contextual icon based on section role
-  const sectionIcons: Record<string, string> = {
-    "On field": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M7 21l3-7 2 2 4-6"/><path d="M17 21l-2-6"/></svg>`,
-    "On the bench": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="4" rx="1"/><path d="M6 14v4"/><path d="M18 14v4"/></svg>`,
-    "Not available": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`,
-  };
-  sectionLabel.innerHTML = (sectionIcons[label] ?? "") + " " + label;
+  sectionLabel.className = `game-section-label game-section-label-${role}`;
+  sectionLabel.textContent = label;
   section.appendChild(sectionLabel);
 
   const chipList = document.createElement("div");
@@ -416,7 +398,7 @@ function renderSection(
   return section;
 }
 
-// ---- Chips (display-only, tap opens action sheet) ----
+// ---- Chips ----
 
 function createChip(
   playerId: string,
@@ -498,10 +480,9 @@ function showActionSheet(
   }
   backdrop.hidden = false;
 
-  // Build status line for header
   let statusBadge = "";
   if (status === "late") {
-    statusBadge = `<span class="action-sheet-status action-sheet-status-late">Not here yet</span>`;
+    statusBadge = `<span class="action-sheet-status action-sheet-status-late">Not here</span>`;
   } else if (status === "injured") {
     const injAt = lookup.injuredAt.get(playerId);
     statusBadge = `<span class="action-sheet-status action-sheet-status-injured">Injured${injAt ? ` game ${injAt}` : ""}</span>`;
@@ -516,33 +497,33 @@ function showActionSheet(
     actionsHTML = `
       <button type="button" class="action-btn action-btn-late" data-action="late">
         <span class="action-btn-row">${iconLate} Not here yet</span>
-        <span class="action-desc">Sit out until they arrive</span>
+        <span class="action-desc">Unavailable until they arrive</span>
       </button>
       <button type="button" class="action-btn action-btn-injured" data-action="injured">
-        <span class="action-btn-row">${iconInjured} Player injured</span>
-        <span class="action-desc">Replaced from game ${gameNumber}</span>
+        <span class="action-btn-row">${iconInjured} Injured</span>
+        <span class="action-desc">Out for remaining games</span>
       </button>
       <button type="button" class="action-btn" data-action="leaving">
         <span class="action-btn-row">${iconLeaving} Leaving early</span>
-        <span class="action-desc">Won't be available for later games</span>
+        <span class="action-desc">Unavailable for later games</span>
       </button>
     `;
   } else if (status === "late") {
     actionsHTML = `
       <button type="button" class="action-btn action-btn-joined" data-action="joined">
-        <span class="action-btn-row">${iconArrived} Player has arrived</span>
-        <span class="action-desc">On the bench and ready if needed</span>
+        <span class="action-btn-row">${iconArrived} Arrived</span>
+        <span class="action-desc">On the bench and ready</span>
       </button>
       <button type="button" class="action-btn action-btn-clear" data-action="clear">
-        <span class="action-btn-row">${iconReset} Reset player</span>
-        <span class="action-desc">Put back into the full rotation</span>
+        <span class="action-btn-row">${iconReset} Reset</span>
+        <span class="action-desc">Back into the full rotation</span>
       </button>
     `;
   } else {
     actionsHTML = `
       <button type="button" class="action-btn action-btn-clear" data-action="clear">
-        <span class="action-btn-row">${iconReset} Reset player</span>
-        <span class="action-desc">Put back into the full rotation</span>
+        <span class="action-btn-row">${iconReset} Reset</span>
+        <span class="action-desc">Back into the full rotation</span>
       </button>
     `;
   }
@@ -561,9 +542,7 @@ function showActionSheet(
       else if (action === "injured") callbacks.onMarkInjured(playerId, gameNumber);
       else if (action === "joined") callbacks.onMarkJoined(playerId);
       else if (action === "clear") callbacks.onClearStatus(playerId);
-      else if (action === "leaving") {
-        callbacks.onMarkLeaving(playerId, gameNumber);
-      }
+      else if (action === "leaving") callbacks.onMarkLeaving(playerId, gameNumber);
     });
   });
 
@@ -572,10 +551,7 @@ function showActionSheet(
 
 function dismissActionSheet(): void {
   const sheet = document.getElementById("action-sheet");
-  if (sheet) {
-    sheet.hidden = true;
-    sheet.dataset.playerId = "";
-  }
+  if (sheet) { sheet.hidden = true; sheet.dataset.playerId = ""; }
   const backdrop = document.getElementById("action-backdrop");
   if (backdrop) backdrop.hidden = true;
 }
@@ -589,7 +565,7 @@ function renderReplacements(
   const card = document.createElement("div");
   card.className = "replacement-card";
   card.innerHTML = `
-    <span class="replacement-title">Suggested replacements</span>
+    <span class="replacement-title">Replacements</span>
     ${suggestions.map((s) => renderReplacementRow(s, playerMap)).join("")}
   `;
   return card;
@@ -605,9 +581,9 @@ function renderReplacementRow(
     const inName = esc(playerMap.get(suggestion.inPlayerId)?.name ?? "?");
     return `
       <div class="replacement-row">
-        <span class="chip chip-injured chip-sm">${outName}</span>
-        <span class="replacement-arrow">&rarr;</span>
         <span class="chip chip-field chip-sm">${inName}</span>
+        <span class="replacement-arrow">replaces</span>
+        <span class="chip chip-injured chip-sm">${outName}</span>
       </div>
     `;
   }
@@ -615,8 +591,8 @@ function renderReplacementRow(
   return `
     <div class="replacement-row">
       <span class="chip chip-injured chip-sm">${outName}</span>
-      <span class="replacement-arrow">&rarr;</span>
-      <span class="replacement-none">No replacement available</span>
+      <span class="replacement-arrow">&mdash;</span>
+      <span class="replacement-none">no replacement available</span>
     </div>
   `;
 }
@@ -641,7 +617,6 @@ function renderFairnessSummary(
   const list = document.createElement("div");
   list.className = "fairness-list";
 
-  // Sort by fairness score ascending (most underplayed first)
   const sorted = [...stats].sort((a, b) => a.fairnessScore - b.fairnessScore);
 
   for (const stat of sorted) {
@@ -649,7 +624,6 @@ function renderFairnessSummary(
     const totalGames = stat.playTimeUnits + stat.gamesBenched;
     const pct = totalGames > 0 ? Math.round((stat.playTimeUnits / totalGames) * 100) : 0;
 
-    // Format: show decimal only when fractional (2.5 not 2.0)
     const timeLabel = Number.isInteger(stat.playTimeUnits)
       ? String(stat.playTimeUnits)
       : stat.playTimeUnits.toFixed(1);
