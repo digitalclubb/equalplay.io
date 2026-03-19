@@ -13,12 +13,14 @@ export interface FormHandle {
   setLoading: (loading: boolean) => void;
 }
 
-/** Builds the input form — player names + game config, no status toggles */
 export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const section = document.createElement("section");
+  section.className = "setup-card";
+
   const form = document.createElement("form");
   form.id = "rotation-form";
 
+  // Players — chip-based
   const playerList = createPlayerList();
   form.appendChild(playerList.element);
 
@@ -27,24 +29,22 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   playerError.id = "error-players";
   playerList.element.appendChild(playerError);
 
-  const configHTML = document.createElement("div");
-  configHTML.className = "form-section";
-  configHTML.innerHTML = `
-    <div class="form-row">
-      <div class="form-group">
-        <label for="players-per-team">Players on field</label>
-        <input id="players-per-team" type="number" min="1" value="5" />
-        <div class="field-error" id="error-playersPerTeam"></div>
-      </div>
-      <div class="form-group">
-        <label for="num-games">Number of games</label>
-        <input id="num-games" type="number" min="1" value="3" />
-        <div class="field-error" id="error-numberOfGames"></div>
-      </div>
+  // Config — compact inline row
+  const configRow = document.createElement("div");
+  configRow.className = "setup-config";
+  configRow.innerHTML = `
+    <div class="setup-field">
+      <label for="players-per-team">On field</label>
+      <input id="players-per-team" type="number" min="1" value="5" />
+      <div class="field-error" id="error-playersPerTeam"></div>
     </div>
-
-    <div class="form-group">
-      <label for="sub-type">Substitution type</label>
+    <div class="setup-field">
+      <label for="num-games">Games</label>
+      <input id="num-games" type="number" min="1" value="3" />
+      <div class="field-error" id="error-numberOfGames"></div>
+    </div>
+    <div class="setup-field">
+      <label for="sub-type">Subs</label>
       <select id="sub-type">
         <option value="${SubstitutionType.None}">None</option>
         <option value="${SubstitutionType.Halftime}">Halftime</option>
@@ -52,12 +52,12 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
       </select>
     </div>
   `;
-  form.appendChild(configHTML);
+  form.appendChild(configRow);
 
   const submitBtn = document.createElement("button");
   submitBtn.type = "submit";
   submitBtn.id = "submit-btn";
-  submitBtn.textContent = "Generate Rotation";
+  submitBtn.textContent = "Generate rotation";
   form.appendChild(submitBtn);
 
   section.appendChild(form);
@@ -108,7 +108,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
     setLoading(loading: boolean) {
       submitBtn.disabled = loading;
-      submitBtn.textContent = loading ? "Generating..." : "Generate Rotation";
+      submitBtn.textContent = loading ? "Generating..." : "Generate rotation";
     },
   };
 

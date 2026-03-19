@@ -10,103 +10,103 @@ function generateId(): string {
 
 export interface PlayerListHandle {
   element: HTMLElement;
-  /** Returns all players with non-empty names */
   getPlayers: () => Player[];
 }
 
 /**
- * Dynamic player name input list.
- * Each row: [name input] [remove button]
- * Each row gets a stable ID for tracking through rotation logic.
+ * Chip-based player input. Type a name, press Enter or tap Add.
+ * Players appear as removable chips in a flow layout.
  */
 export function createPlayerList(): PlayerListHandle {
   const container = document.createElement("div");
-  container.className = "form-group";
+  container.className = "player-chips-group";
 
   const label = document.createElement("label");
   label.textContent = "Players";
   container.appendChild(label);
 
-  const list = document.createElement("div");
-  list.className = "player-list";
-  container.appendChild(list);
+  const chipArea = document.createElement("div");
+  chipArea.className = "player-chips";
+  container.appendChild(chipArea);
+
+  // Input row: text field + add button
+  const inputRow = document.createElement("div");
+  inputRow.className = "player-add-row";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "player-add-input";
+  input.placeholder = "Player name";
 
   const addBtn = document.createElement("button");
   addBtn.type = "button";
-  addBtn.className = "btn-add-player";
-  addBtn.textContent = "+ Add Player";
-  container.appendChild(addBtn);
+  addBtn.className = "player-add-btn";
+  addBtn.textContent = "+ Add";
 
-  appendRow(list, "");
-  appendRow(list, "");
-  updateRemoveButtons(list);
+  function addPlayer(): void {
+    const name = input.value.trim();
+    if (!name) return;
+    if (chipArea.children.length >= MAX_PLAYERS) return;
 
-  addBtn.addEventListener("click", () => {
-    if (list.children.length >= MAX_PLAYERS) return;
-    appendRow(list, "");
-    updateRemoveButtons(list);
-    updateAddButton(list, addBtn);
-    const inputs = list.querySelectorAll<HTMLInputElement>(".player-input");
-    inputs[inputs.length - 1].focus();
+    const chip = document.createElement("span");
+    chip.className = "player-chip";
+    chip.dataset.playerId = generateId();
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = name;
+    chip.appendChild(nameSpan);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "player-chip-remove";
+    removeBtn.textContent = "\u00D7";
+    removeBtn.addEventListener("click", () => {
+      chip.remove();
+      updateCount();
+    });
+    chip.appendChild(removeBtn);
+
+    chipArea.appendChild(chip);
+    input.value = "";
+    input.focus();
+    updateCount();
+  }
+
+  addBtn.addEventListener("click", addPlayer);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addPlayer();
+    }
   });
 
+  inputRow.appendChild(input);
+  inputRow.appendChild(addBtn);
+  container.appendChild(inputRow);
+
+  // Count display
+  const countEl = document.createElement("div");
+  countEl.className = "player-count";
+  container.appendChild(countEl);
+
+  function updateCount(): void {
+    const n = chipArea.children.length;
+    countEl.textContent = n > 0 ? `${n} player${n !== 1 ? "s" : ""}` : "";
+    if (n < MIN_PLAYERS && n > 0) {
+      countEl.textContent += ` (need at least ${MIN_PLAYERS})`;
+    }
+  }
+
   function getPlayers(): Player[] {
-    const rows = list.querySelectorAll<HTMLElement>(".player-row");
+    const chips = chipArea.querySelectorAll<HTMLElement>(".player-chip");
     const players: Player[] = [];
-    for (const row of rows) {
-      const name = (row.querySelector(".player-input") as HTMLInputElement).value.trim();
+    for (const chip of chips) {
+      const name = chip.querySelector("span")?.textContent?.trim();
       if (!name) continue;
-      players.push({ id: row.dataset.playerId!, name });
+      players.push({ id: chip.dataset.playerId!, name });
     }
     return players;
   }
 
   return { element: container, getPlayers };
-}
-
-function appendRow(list: HTMLElement, value: string): void {
-  const row = document.createElement("div");
-  row.className = "player-row";
-  row.dataset.playerId = generateId();
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "player-input";
-  input.placeholder = `Player ${list.children.length + 1}`;
-  input.value = value;
-
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "btn-remove-player";
-  removeBtn.title = "Remove player";
-  removeBtn.textContent = "\u00D7";
-  removeBtn.addEventListener("click", () => {
-    row.remove();
-    updateRemoveButtons(list);
-    renumberPlaceholders(list);
-    const addBtn = list.parentElement?.querySelector<HTMLButtonElement>(".btn-add-player");
-    if (addBtn) updateAddButton(list, addBtn);
-  });
-
-  row.appendChild(input);
-  row.appendChild(removeBtn);
-  list.appendChild(row);
-}
-
-function renumberPlaceholders(list: HTMLElement): void {
-  list.querySelectorAll<HTMLInputElement>(".player-input").forEach((inp, i) => {
-    inp.placeholder = `Player ${i + 1}`;
-  });
-}
-
-function updateRemoveButtons(list: HTMLElement): void {
-  const buttons = list.querySelectorAll<HTMLButtonElement>(".btn-remove-player");
-  const atMin = list.children.length <= MIN_PLAYERS;
-  buttons.forEach((btn) => {
-    btn.style.visibility = atMin ? "hidden" : "visible";
-  });
-}
-
-function updateAddButton(list: HTMLElement, btn: HTMLButtonElement): void {
-  btn.disabled = list.children.length >= MAX_PLAYERS;
 }

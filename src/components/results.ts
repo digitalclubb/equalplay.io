@@ -232,10 +232,11 @@ function renderGameCard(
   headerRow.className = "game-header";
 
   const title = document.createElement("h3");
-  title.textContent = `Game ${game.gameNumber}`;
-  const badge = BADGE_LABELS[emphasis];
-  if (badge) {
-    title.appendChild(createBadge(badge.text, badge.className));
+  const badgeInfo = BADGE_LABELS[emphasis];
+  if (badgeInfo) {
+    title.innerHTML = `Game ${game.gameNumber} <span class="${badgeInfo.className}">${badgeInfo.text}</span>`;
+  } else {
+    title.textContent = `Game ${game.gameNumber}`;
   }
   headerRow.appendChild(title);
 
@@ -288,13 +289,6 @@ function renderGameCard(
 
   card.appendChild(content);
   return card;
-}
-
-function createBadge(text: string, className: string): HTMLElement {
-  const badge = document.createElement("span");
-  badge.className = className;
-  badge.textContent = text;
-  return badge;
 }
 
 /**
