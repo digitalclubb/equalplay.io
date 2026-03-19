@@ -19,6 +19,7 @@ export interface ResultsCallbacks {
   onMarkLate: (playerId: string) => void;
   onMarkInjured: (playerId: string, gameNumber: number) => void;
   onMarkJoined: (playerId: string) => void;
+  onMarkLeaving: (playerId: string, afterGame: number) => void;
   onClearStatus: (playerId: string) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
@@ -26,7 +27,9 @@ export interface ResultsCallbacks {
   onStartNew: () => void;
 }
 
-type ChipStatus = "active" | "late" | "injured" | "joined";
+type ChipStatus = "active" | "late" | "injured" | "joined" | "leaving";
+
+let _totalGames = 0;
 
 export function renderResults(
   container: HTMLElement,
@@ -40,6 +43,7 @@ export function renderResults(
   callbacks: ResultsCallbacks,
 ): void {
   container.innerHTML = "";
+  _totalGames = plan.games.length;
 
   const lookup = buildEventLookup(events);
   const totalGames = plan.games.length;
@@ -176,20 +180,23 @@ interface EventLookup {
   lateIds: Set<string>;
   joinedIds: Set<string>;
   injuredAt: Map<string, number>;
+  leavingAfter: Map<string, number>;
 }
 
 function buildEventLookup(events: RotationEvent[]): EventLookup {
   const lateIds = new Set<string>();
   const joinedIds = new Set<string>();
   const injuredAt = new Map<string, number>();
+  const leavingAfter = new Map<string, number>();
 
   for (const e of events) {
     if (e.type === "late") lateIds.add(e.playerId);
     else if (e.type === "joined") joinedIds.add(e.playerId);
     else if (e.type === "injured") injuredAt.set(e.playerId, e.gameNumber);
+    else if (e.type === "leaving") leavingAfter.set(e.playerId, e.afterGame);
   }
 
-  return { lateIds, joinedIds, injuredAt };
+  return { lateIds, joinedIds, injuredAt, leavingAfter };
 }
 
 function getChipStatus(
@@ -199,6 +206,8 @@ function getChipStatus(
 ): ChipStatus {
   const injAt = lookup.injuredAt.get(playerId);
   if (injAt !== undefined && gameNumber >= injAt) return "injured";
+  const leaveAt = lookup.leavingAfter.get(playerId);
+  if (leaveAt !== undefined && gameNumber > leaveAt) return "leaving";
   if (lookup.lateIds.has(playerId)) {
     return lookup.joinedIds.has(playerId) ? "joined" : "late";
   }
@@ -426,6 +435,9 @@ function createChip(
   } else if (status === "injured") {
     chip.className = "chip chip-injured";
     chip.textContent = name;
+  } else if (status === "leaving") {
+    chip.className = "chip chip-late";
+    chip.innerHTML = `${esc(name)}<span class="chip-status-dot"></span>`;
   } else if (status === "joined") {
     chip.className = `chip chip-${chipRole} chip-joined`;
     chip.textContent = name;
@@ -488,11 +500,34 @@ function showActionSheet(
   } else if (status === "injured") {
     const injAt = lookup.injuredAt.get(playerId);
     statusBadge = `<span class="action-sheet-status action-sheet-status-injured">Injured${injAt ? ` game ${injAt}` : ""}</span>`;
+  } else if (status === "leaving") {
+    const leaveAt = lookup.leavingAfter.get(playerId);
+    statusBadge = `<span class="action-sheet-status action-sheet-status-late">Leaving after game ${leaveAt}</span>`;
   }
 
   let actionsHTML = "";
 
   if (status === "active" || status === "joined") {
+    // Build "leaves after" options for games from current onward
+    let leavingHTML = "";
+    if (_totalGames > 1 && gameNumber < _totalGames) {
+      let optionsHTML = "";
+      for (let g = gameNumber; g < _totalGames; g++) {
+        optionsHTML += `<option value="${g}">After game ${g}</option>`;
+      }
+      leavingHTML = `
+        <div class="action-leaving-row">
+          <button type="button" class="action-btn action-btn-leaving" data-action="leaving">
+            Leaving early
+            <span class="action-desc">Won't be available for later games</span>
+          </button>
+          <select class="action-leaving-select" id="leaving-game-select">
+            ${optionsHTML}
+          </select>
+        </div>
+      `;
+    }
+
     actionsHTML = `
       <button type="button" class="action-btn action-btn-late" data-action="late">
         Not here yet
@@ -502,6 +537,7 @@ function showActionSheet(
         Player injured
         <span class="action-desc">Replaced from game ${gameNumber}</span>
       </button>
+      ${leavingHTML}
     `;
   } else if (status === "late") {
     actionsHTML = `
@@ -537,6 +573,11 @@ function showActionSheet(
       else if (action === "injured") callbacks.onMarkInjured(playerId, gameNumber);
       else if (action === "joined") callbacks.onMarkJoined(playerId);
       else if (action === "clear") callbacks.onClearStatus(playerId);
+      else if (action === "leaving") {
+        const select = sheet.querySelector<HTMLSelectElement>("#leaving-game-select");
+        const afterGame = select ? parseInt(select.value) : gameNumber;
+        callbacks.onMarkLeaving(playerId, afterGame);
+      }
     });
   });
 

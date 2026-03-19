@@ -278,6 +278,19 @@ export function mountApp(root: HTMLElement): void {
       showToast(`${name} has arrived and is on the bench.`, undo);
     },
 
+    onMarkLeaving(playerId, afterGame) {
+      const name = getName(playerId);
+      applyAction(() => {
+        const team = getActive();
+        // Remove any existing leaving event for this player
+        team.events = team.events.filter(
+          (e) => !(e.type === "leaving" && e.playerId === playerId),
+        );
+        team.events.push({ type: "leaving", playerId, afterGame });
+      });
+      showToast(`${name} leaves after game ${afterGame}. Rotation updated.`, undo);
+    },
+
     onClearStatus(playerId) {
       const name = getName(playerId);
       applyAction(() => {

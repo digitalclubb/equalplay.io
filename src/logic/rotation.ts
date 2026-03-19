@@ -147,6 +147,8 @@ interface ResolvedAvailability {
   lateIds: Set<string>;
   joinedIds: Set<string>;
   injuredFrom: Map<string, number>;
+  /** Player leaves after this game number — unavailable from afterGame+1 onward */
+  leavingAfter: Map<string, number>;
   subs: Map<number, Array<{ playerOut: string; playerIn: string }>>;
 }
 
@@ -154,6 +156,7 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
   const lateIds = new Set<string>();
   const joinedIds = new Set<string>();
   const injuredFrom = new Map<string, number>();
+  const leavingAfter = new Map<string, number>();
   const subs = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
 
   for (const event of events) {
@@ -161,6 +164,12 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
       lateIds.add(event.playerId);
     } else if (event.type === "joined") {
       joinedIds.add(event.playerId);
+    } else if (event.type === "leaving") {
+      const existing = leavingAfter.get(event.playerId);
+      // Use the earliest leaving time if multiple
+      if (existing === undefined || event.afterGame < existing) {
+        leavingAfter.set(event.playerId, event.afterGame);
+      }
     } else if (event.type === "sub") {
       if (!subs.has(event.gameNumber)) subs.set(event.gameNumber, []);
       subs.get(event.gameNumber)!.push({
@@ -175,7 +184,7 @@ function resolveEvents(events: RotationEvent[]): ResolvedAvailability {
     }
   }
 
-  return { lateIds, joinedIds, injuredFrom, subs };
+  return { lateIds, joinedIds, injuredFrom, leavingAfter, subs };
 }
 
 function isAvailable(
@@ -188,6 +197,10 @@ function isAvailable(
   }
   const injAt = resolved.injuredFrom.get(id);
   if (injAt !== undefined && gameNumber > injAt) {
+    return false;
+  }
+  const leaveAt = resolved.leavingAfter.get(id);
+  if (leaveAt !== undefined && gameNumber > leaveAt) {
     return false;
   }
   return true;
