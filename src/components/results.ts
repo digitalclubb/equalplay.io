@@ -58,6 +58,19 @@ export function renderResults(
   });
   container.appendChild(resetBtn);
 
+  const isSessionFinished = currentGame > totalGames;
+
+  // Session finished — all games completed
+  if (isSessionFinished) {
+    const finishedBanner = document.createElement("div");
+    finishedBanner.className = "session-finished";
+    finishedBanner.innerHTML = `
+      <h3>All games completed</h3>
+      <p>Well done! Check the playing time breakdown below.</p>
+    `;
+    container.appendChild(finishedBanner);
+  }
+
   // Completed games (before current) — collapsed
   for (const game of plan.games) {
     if (game.gameNumber >= currentGame) break;
@@ -67,8 +80,10 @@ export function renderResults(
     );
   }
 
-  // Current game — sticky
-  const currentGameData = plan.games.find((g) => g.gameNumber === currentGame);
+  // Current game — sticky (only if session not finished)
+  const currentGameData = isSessionFinished
+    ? undefined
+    : plan.games.find((g) => g.gameNumber === currentGame);
   if (currentGameData) {
     const unavailable = getUnavailableForGame(currentGame, allPlayerIds, events);
 
@@ -110,7 +125,7 @@ export function renderResults(
       card.appendChild(subAction);
     }
 
-    // "Start next game" button
+    // Game progression button
     if (hasNextGame) {
       const nextGameBtn = document.createElement("button");
       nextGameBtn.type = "button";
@@ -120,6 +135,15 @@ export function renderResults(
         callbacks.onNextGame();
       });
       card.appendChild(nextGameBtn);
+    } else {
+      const endGameBtn = document.createElement("button");
+      endGameBtn.type = "button";
+      endGameBtn.className = "btn-end-game";
+      endGameBtn.textContent = "End game";
+      endGameBtn.addEventListener("click", () => {
+        callbacks.onNextGame();
+      });
+      card.appendChild(endGameBtn);
     }
 
     sticky.appendChild(card);
@@ -215,19 +239,13 @@ function renderGameCard(
   }
   headerRow.appendChild(title);
 
-  const labelInput = document.createElement("input");
-  labelInput.type = "text";
-  labelInput.className = "game-label-input";
-  labelInput.placeholder = "e.g. vs Tigers";
-  labelInput.value = gameLabels[String(game.gameNumber)] ?? "";
-  if (emphasis === "completed") {
-    labelInput.readOnly = true;
-  } else {
-    labelInput.addEventListener("change", () => {
-      callbacks.onGameLabelChange(game.gameNumber, labelInput.value.trim());
-    });
-  }
-  headerRow.appendChild(labelInput);
+  // Opponent label: display mode with edit icon, toggles to input + save
+  const savedLabel = gameLabels[String(game.gameNumber)] ?? "";
+  headerRow.appendChild(
+    createGameLabel(savedLabel, emphasis === "completed", (newLabel) => {
+      callbacks.onGameLabelChange(game.gameNumber, newLabel);
+    }),
+  );
 
   card.appendChild(headerRow);
 
@@ -277,6 +295,90 @@ function createBadge(text: string, className: string): HTMLElement {
   badge.className = className;
   badge.textContent = text;
   return badge;
+}
+
+/**
+ * Creates the game opponent label with display/edit toggle.
+ * Shows saved text + pen icon in display mode.
+ * Tapping pen switches to input + save button.
+ */
+function createGameLabel(
+  savedLabel: string,
+  readOnly: boolean,
+  onSave: (label: string) => void,
+): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.className = "game-label";
+
+  // Display mode
+  const display = document.createElement("div");
+  display.className = "game-label-display";
+
+  const labelText = document.createElement("span");
+  labelText.className = "game-label-text";
+  labelText.textContent = savedLabel || "vs \u2026";
+  if (!savedLabel) labelText.classList.add("game-label-placeholder");
+  display.appendChild(labelText);
+
+  if (!readOnly) {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "game-label-edit-btn";
+    editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      display.hidden = true;
+      editor.hidden = false;
+      input.value = savedLabel;
+      input.focus();
+    });
+    display.appendChild(editBtn);
+  }
+
+  wrapper.appendChild(display);
+
+  // Edit mode
+  const editor = document.createElement("div");
+  editor.className = "game-label-editor";
+  editor.hidden = true;
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "game-label-input";
+  input.placeholder = "e.g. Tigers";
+  input.value = savedLabel;
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "game-label-save-btn";
+  saveBtn.textContent = "Save";
+
+  function save(): void {
+    const val = input.value.trim();
+    onSave(val);
+    labelText.textContent = val || "vs \u2026";
+    labelText.classList.toggle("game-label-placeholder", !val);
+    editor.hidden = true;
+    display.hidden = false;
+  }
+
+  saveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    save();
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    }
+  });
+
+  editor.appendChild(input);
+  editor.appendChild(saveBtn);
+  wrapper.appendChild(editor);
+
+  return wrapper;
 }
 
 function renderSection(

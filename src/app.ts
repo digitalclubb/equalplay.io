@@ -201,12 +201,16 @@ export function mountApp(root: HTMLElement): void {
     onNextGame() {
       if (!state) return;
       const totalGames = state.initialPlan.games.length;
-      if (state.currentGame >= totalGames) return;
+      if (state.currentGame > totalGames) return;
       const nextNum = state.currentGame + 1;
       state.currentGame = nextNum;
       rerender();
       persist();
-      showToast(`Game ${nextNum} is now live.`);
+      if (nextNum > totalGames) {
+        showToast("All games completed.");
+      } else {
+        showToast(`Game ${nextNum} is now live.`);
+      }
     },
 
     onStartNew() {
