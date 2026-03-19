@@ -822,6 +822,23 @@ button[type="submit"]:disabled {
   flex-shrink: 0;
 }
 
+.fairness-score {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  width: 2rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.fairness-under {
+  color: var(--color-injured-text);
+}
+
+.fairness-over {
+  color: var(--color-field-text);
+}
+
 /* ---- Reset Session (top of results) ---- */
 
 .btn-reset {

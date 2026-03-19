@@ -37,6 +37,8 @@ export interface PlayerStats {
   playerId: string;
   gamesPlayed: number;
   gamesBenched: number;
+  /** gamesPlayed - expectedPlayTime. Negative = underplayed, positive = overplayed */
+  fairnessScore: number;
 }
 
 // ---- UI-layer types ----

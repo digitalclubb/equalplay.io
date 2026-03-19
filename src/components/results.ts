@@ -507,25 +507,28 @@ function renderFairnessSummary(
   const section = document.createElement("div");
   section.className = "fairness-summary";
 
-  const minPlayed = Math.min(...stats.map((s) => s.gamesPlayed));
-  const maxPlayed = Math.max(...stats.map((s) => s.gamesPlayed));
-  const spread = maxPlayed - minPlayed;
+  const maxScore = Math.max(...stats.map((s) => Math.abs(s.fairnessScore)));
+  const isBalanced = maxScore < 0.5;
 
   let headerText = "Playing time";
-  if (spread === 0) headerText += " \u2014 even";
-  else if (spread === 1) headerText += " \u2014 within 1 game";
+  if (isBalanced) headerText += " \u2014 balanced";
 
   section.innerHTML = `<h4 class="fairness-title">${headerText}</h4>`;
 
   const list = document.createElement("div");
   list.className = "fairness-list";
 
-  const sorted = [...stats].sort((a, b) => b.gamesPlayed - a.gamesPlayed);
+  // Sort by fairness score ascending (most underplayed first)
+  const sorted = [...stats].sort((a, b) => a.fairnessScore - b.fairnessScore);
 
   for (const stat of sorted) {
     const name = playerMap.get(stat.playerId)?.name ?? stat.playerId;
     const totalGames = stat.gamesPlayed + stat.gamesBenched;
     const pct = totalGames > 0 ? Math.round((stat.gamesPlayed / totalGames) * 100) : 0;
+
+    const scoreLabel = stat.fairnessScore > 0
+      ? `+${stat.fairnessScore}`
+      : String(stat.fairnessScore);
 
     const row = document.createElement("div");
     row.className = "fairness-row";
@@ -535,6 +538,7 @@ function renderFairnessSummary(
         <span class="fairness-bar-fill" style="width: ${pct}%"></span>
       </span>
       <span class="fairness-count">${stat.gamesPlayed}</span>
+      <span class="fairness-score ${stat.fairnessScore < -0.5 ? "fairness-under" : stat.fairnessScore > 0.5 ? "fairness-over" : ""}">${scoreLabel}</span>
     `;
     list.appendChild(row);
   }
