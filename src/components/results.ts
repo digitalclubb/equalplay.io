@@ -83,7 +83,7 @@ export function renderResults(
     if (game.gameNumber >= currentGame) break;
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     container.appendChild(
-      renderGameCard(game, plan, playerMap, lookup, unavailable, "completed", gameLabels, events, callbacks),
+      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks),
     );
   }
 
@@ -98,8 +98,8 @@ export function renderResults(
     sticky.className = "sticky-current";
 
     const card = renderGameCard(
-      currentGameData, plan, playerMap, lookup, unavailable,
-      "current", gameLabels, events, callbacks,
+      currentGameData, playerMap, lookup, unavailable,
+      "current", gameLabels, callbacks,
     );
 
     // ---- Actions zone (visually separated) ----
@@ -155,7 +155,7 @@ export function renderResults(
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const emphasis: GameEmphasis = game.gameNumber === nextGameNum ? "next" : "future";
     container.appendChild(
-      renderGameCard(game, plan, playerMap, lookup, unavailable, emphasis, gameLabels, events, callbacks),
+      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks),
     );
   }
 
@@ -218,13 +218,11 @@ const BADGE_LABELS: Partial<Record<GameEmphasis, { text: string; className: stri
 
 function renderGameCard(
   game: Game,
-  plan: RotationPlan,
   playerMap: PlayerMap,
   lookup: EventLookup,
   unavailable: Set<string>,
   emphasis: GameEmphasis,
   gameLabels: Record<string, string>,
-  events: RotationEvent[],
   callbacks: ResultsCallbacks,
 ): HTMLElement {
   const card = document.createElement("div");
@@ -264,17 +262,19 @@ function renderGameCard(
     });
   }
 
-  content.appendChild(renderSection("Playing", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks));
+  const isCompleted = emphasis === "completed";
+
+  content.appendChild(renderSection("Playing", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
 
   if (game.bench.length > 0) {
-    content.appendChild(renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks));
+    content.appendChild(renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
   }
 
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
-    content.appendChild(renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks));
+    content.appendChild(renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
   }
 
   // Replacement suggestions
@@ -286,19 +286,6 @@ function renderGameCard(
     }
   }
 
-  // Fairness hint (current game only) — subtle guidance
-  if (emphasis === "current" && game.bench.length > 0) {
-    const stats = getPlayerStats(plan, [...game.onField, ...game.bench], events);
-    const sorted = [...stats].sort((a, b) => a.fairnessScore - b.fairnessScore);
-    const mostUnderplayed = sorted[0];
-    if (mostUnderplayed && mostUnderplayed.fairnessScore < -0.3) {
-      const name = playerMap.get(mostUnderplayed.playerId)?.name ?? "?";
-      const hint = document.createElement("div");
-      hint.className = "fairness-hint";
-      hint.textContent = `${name} needs more time`;
-      content.appendChild(hint);
-    }
-  }
 
   card.appendChild(content);
   return card;
@@ -449,6 +436,7 @@ function renderSection(
   playerMap: PlayerMap,
   lookup: EventLookup,
   callbacks: ResultsCallbacks,
+  readOnly = false,
 ): HTMLElement {
   const section = document.createElement("div");
   section.className = "game-section";
@@ -462,7 +450,7 @@ function renderSection(
   chipList.className = "chip-list";
   for (const id of playerIds) {
     const status = getChipStatus(id, gameNumber, lookup);
-    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, callbacks));
+    chipList.appendChild(createChip(id, playerMap, role, status, gameNumber, lookup, callbacks, readOnly));
   }
   section.appendChild(chipList);
   return section;
@@ -478,9 +466,10 @@ function createChip(
   gameNumber: number,
   lookup: EventLookup,
   callbacks: ResultsCallbacks,
+  readOnly = false,
 ): HTMLElement {
-  const chip = document.createElement("button");
-  chip.type = "button";
+  const chip = document.createElement(readOnly ? "span" : "button");
+  if (!readOnly) (chip as HTMLButtonElement).type = "button";
 
   const player = playerMap.get(playerId);
   const name = player?.name ?? playerId;
@@ -503,10 +492,14 @@ function createChip(
     chip.textContent = name;
   }
 
-  chip.addEventListener("click", (e) => {
-    e.stopPropagation();
-    showActionSheet(playerId, name, status, gameNumber, lookup, callbacks);
-  });
+  if (!readOnly) {
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showActionSheet(playerId, name, status, gameNumber, lookup, callbacks);
+    });
+  } else {
+    chip.style.cursor = "default";
+  }
 
   return chip;
 }

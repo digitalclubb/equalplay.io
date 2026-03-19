@@ -737,14 +737,6 @@ body {
   gap: var(--sp-xs);
 }
 
-/* Fairness hint — subtle guidance inside current game */
-.fairness-hint {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-brand-dark);
-  padding: var(--sp-xs) 0;
-  margin-top: var(--sp-xs);
-}
 
 .sub-action-text {
   display: flex;
