@@ -64,22 +64,35 @@ function generateTeamId(): string {
 // ---- App ----
 
 export function mountApp(root: HTMLElement): void {
-  // Header bar: logo + strapline + team tabs in one branded zone
-  const headerBar = document.createElement("div");
-  headerBar.className = "header-bar";
+  // Header bar is static HTML in index.html for instant LCP.
+  // Adopt existing elements; fall back to creating them if missing.
+  let headerBar = document.getElementById("header-bar");
+  let tabsContainer: HTMLElement | null = document.getElementById("tabs-container");
 
-  const header = document.createElement("header");
-  header.className = "app-header";
-  header.innerHTML = `
-    ${createLogo()}
-    <h1 class="subtitle">Fair team rotation for youth sports</h1>
-  `;
-  headerBar.appendChild(header);
+  if (!headerBar) {
+    headerBar = document.createElement("div");
+    headerBar.className = "header-bar";
 
-  const tabsContainer = document.createElement("div");
-  headerBar.appendChild(tabsContainer);
+    const header = document.createElement("header");
+    header.className = "app-header";
+    header.innerHTML = `
+      ${createLogo()}
+      <h1 class="subtitle">Fair team rotation for youth sports</h1>
+    `;
+    headerBar.appendChild(header);
 
-  root.appendChild(headerBar);
+    tabsContainer = document.createElement("div");
+    headerBar.appendChild(tabsContainer);
+
+    root.appendChild(headerBar);
+  }
+
+  if (!tabsContainer) {
+    tabsContainer = document.createElement("div");
+    headerBar.appendChild(tabsContainer);
+  }
+
+  const tabs = tabsContainer as HTMLElement;
 
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
@@ -113,7 +126,7 @@ export function mountApp(root: HTMLElement): void {
 
   function renderTabs(): void {
     renderTeamTabs(
-      tabsContainer,
+      tabs,
       teams.map((t) => ({ id: t.id, name: t.name })),
       activeTeamId,
       {
