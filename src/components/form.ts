@@ -38,7 +38,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   settingsPanel.innerHTML = `
     <div class="setup-config setup-config-2col">
       <div class="setup-field">
-        <label for="players-per-team">Players per match</label>
+        <label for="players-per-team">Players per team</label>
         <input id="players-per-team" type="number" min="1" value="5" />
         <div class="field-error" id="error-playersPerTeam"></div>
       </div>
