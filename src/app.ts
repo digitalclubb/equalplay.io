@@ -202,28 +202,19 @@ export function mountApp(root: HTMLElement): void {
     },
   };
 
-  /**
-   * Auto-generate: called whenever squad or settings change.
-   * Only generates if inputs are valid. No explicit button needed.
-   */
-  function autoGenerate(handle: FormHandle): void {
+  function generate(handle: FormHandle): void {
     handle.clearErrors();
+    resultsContainer.innerHTML = "";
+    state = null;
+    previousEvents = null;
 
     const players = handle.getPlayers();
     const playersPerTeam = handle.getPlayersPerTeam();
     const numberOfGames = handle.getNumberOfGames();
 
-    // Don't generate until we have enough valid inputs
     const errors = validateInputs(players.length, playersPerTeam, numberOfGames);
     if (hasErrors(errors)) {
-      // Show errors only if user has tried (has some players)
-      if (players.length > 0) {
-        handle.showErrors(errors);
-      }
-      // If currently invalid but we had a previous state, keep it
-      if (!state) {
-        resultsContainer.innerHTML = "";
-      }
+      handle.showErrors(errors);
       return;
     }
 
@@ -231,32 +222,31 @@ export function mountApp(root: HTMLElement): void {
       players.map((p) => [p.id, p]),
     );
 
-    const plan = generateInitialPlan({
-      players,
-      playersPerTeam,
-      numberOfGames,
-    });
+    handle.setLoading(true);
+    setTimeout(() => {
+      const plan = generateInitialPlan({
+        players,
+        playersPerTeam,
+        numberOfGames,
+      });
 
-    // Preserve events and game labels if the player set hasn't changed
-    const prevEvents = state?.events ?? [];
-    const prevLabels = state?.gameLabels ?? {};
-    const prevGame = state?.currentGame ?? 1;
+      state = {
+        initialPlan: plan,
+        originalPlayerIds: players.map((p) => p.id),
+        playersPerTeam,
+        playerMap,
+        events: [],
+        currentGame: 1,
+        gameLabels: {},
+      };
 
-    state = {
-      initialPlan: plan,
-      originalPlayerIds: players.map((p) => p.id),
-      playersPerTeam,
-      playerMap,
-      events: prevEvents,
-      currentGame: prevGame,
-      gameLabels: prevLabels,
-    };
-
-    rerender();
-    persist();
+      rerender();
+      persist();
+      handle.setLoading(false);
+    }, 200);
   }
 
-  const formHandle = createForm(autoGenerate);
+  const formHandle = createForm(generate);
 
   // Auto-restore
   const saved = loadState();

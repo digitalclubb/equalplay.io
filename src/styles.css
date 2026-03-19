@@ -208,32 +208,15 @@ body {
   color: var(--color-muted);
 }
 
-/* Settings toggle */
-.settings-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: var(--sp-xs) 0;
-  background: transparent;
-  border: none;
-  color: var(--color-muted);
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.settings-toggle:active {
-  color: var(--color-text);
-}
-
-.settings-toggle-icon {
-  font-size: 0.6rem;
-}
-
-.settings-panel[hidden] {
-  display: none;
+/* Match settings label */
+.settings-label h2 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-secondary);
+  margin-bottom: var(--sp-xs);
+  margin-top: var(--sp-sm);
 }
 
 /* Config row */
@@ -290,6 +273,33 @@ body {
 
 .input-error {
   border-color: var(--color-danger) !important;
+}
+
+/* Generate button */
+.btn-generate {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--sp-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--sp-sm) var(--sp-lg);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease;
+}
+
+.btn-generate:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---- Results ---- */

@@ -14,10 +14,10 @@ export interface FormHandle {
 }
 
 /**
- * Squad-first panel. Players as chips + collapsible match settings.
- * Auto-generates on every change — no explicit "Generate" button.
+ * Squad panel with player chips, always-visible match settings,
+ * and a "Generate rotation" button.
  */
-export function createForm(onChange: (handle: FormHandle) => void): FormHandle {
+export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const section = document.createElement("section");
   section.className = "squad-panel";
 
@@ -36,16 +36,14 @@ export function createForm(onChange: (handle: FormHandle) => void): FormHandle {
   playerError.id = "error-players";
   playerList.element.appendChild(playerError);
 
-  // Match settings — collapsible
-  const settingsToggle = document.createElement("button");
-  settingsToggle.type = "button";
-  settingsToggle.className = "settings-toggle";
-  settingsToggle.innerHTML = `Match settings <span class="settings-toggle-icon">&#9662;</span>`;
-  section.appendChild(settingsToggle);
+  // Match settings — always visible
+  const settingsLabel = document.createElement("div");
+  settingsLabel.className = "settings-label";
+  settingsLabel.innerHTML = `<h2>Match settings</h2>`;
+  section.appendChild(settingsLabel);
 
   const settingsPanel = document.createElement("div");
   settingsPanel.className = "settings-panel";
-  settingsPanel.hidden = true;
   settingsPanel.innerHTML = `
     <div class="setup-config">
       <div class="setup-field">
@@ -70,29 +68,15 @@ export function createForm(onChange: (handle: FormHandle) => void): FormHandle {
   `;
   section.appendChild(settingsPanel);
 
-  settingsToggle.addEventListener("click", () => {
-    settingsPanel.hidden = !settingsPanel.hidden;
-    const icon = settingsToggle.querySelector(".settings-toggle-icon");
-    if (icon) icon.textContent = settingsPanel.hidden ? "\u25BE" : "\u25B4";
+  // Generate button
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "button";
+  submitBtn.className = "btn-generate";
+  submitBtn.textContent = "Generate rotation";
+  submitBtn.addEventListener("click", () => {
+    onSubmit(handle);
   });
-
-  // Auto-generate: listen to config changes
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  function scheduleGenerate(): void {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => onChange(handle), 200);
-  }
-
-  // Wire up config change listeners
-  settingsPanel.addEventListener("input", scheduleGenerate);
-  settingsPanel.addEventListener("change", scheduleGenerate);
-
-  // Wire up player add/remove — use MutationObserver on the chip area
-  const chipArea = playerList.element.querySelector(".player-chips");
-  if (chipArea) {
-    const observer = new MutationObserver(scheduleGenerate);
-    observer.observe(chipArea, { childList: true });
-  }
+  section.appendChild(submitBtn);
 
   const handle: FormHandle = {
     element: section,
@@ -138,8 +122,9 @@ export function createForm(onChange: (handle: FormHandle) => void): FormHandle {
       });
     },
 
-    setLoading() {
-      // No loading state needed — generation is instant
+    setLoading(loading: boolean) {
+      submitBtn.disabled = loading;
+      submitBtn.textContent = loading ? "Generating..." : "Generate rotation";
     },
   };
 
