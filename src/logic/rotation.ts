@@ -361,6 +361,7 @@ export function getNextSubSuggestion(
   plan: RotationPlan,
   currentGameNumber: number,
   unavailableIds: Set<string>,
+  events: RotationEvent[] = [],
 ): { playerIn: string; playerOut: string } | null {
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
@@ -368,6 +369,15 @@ export function getNextSubSuggestion(
   const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
+
+  // Build sub lookup for accurate credit calculation
+  const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
+  for (const e of events) {
+    if (e.type === "sub") {
+      if (!subsByGame.has(e.gameNumber)) subsByGame.set(e.gameNumber, []);
+      subsByGame.get(e.gameNumber)!.push({ playerOut: e.playerOut, playerIn: e.playerIn });
+    }
+  }
 
   const trackers = new Map<string, PlayerTracker>();
   for (const game of plan.games) {
@@ -378,10 +388,26 @@ export function getNextSubSuggestion(
       t.gamesAvailable++;
       trackers.set(id, t);
     }
+
+    const gameSubs = subsByGame.get(game.gameNumber);
+    const subbedIn = new Set<string>();
+    const subbedOut = new Set<string>();
+    if (gameSubs) {
+      for (const sub of gameSubs) {
+        subbedIn.add(sub.playerIn);
+        subbedOut.add(sub.playerOut);
+      }
+    }
+
     for (const id of game.onField) {
       const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += FULL_GAME;
+      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
       t.lastPlayedGame = game.gameNumber;
+      trackers.set(id, t);
+    }
+    for (const id of subbedOut) {
+      const t = trackers.get(id) ?? createTracker();
+      t.playTimeUnits += SUB_APPEARANCE;
       trackers.set(id, t);
     }
   }

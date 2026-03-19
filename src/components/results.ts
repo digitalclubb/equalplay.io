@@ -97,7 +97,7 @@ export function renderResults(
     );
 
     // Primary action: "Make sub"
-    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable);
+    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable, events);
     if (subSuggestion) {
       const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
       const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";

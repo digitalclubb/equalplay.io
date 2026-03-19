@@ -404,6 +404,67 @@ describe("getPlayerStats", () => {
     expect(total).toBeCloseTo(20, 1);
   });
 
+  it("no subs: each player gets fair time (A,B,C, 2 per team, 3 games)", () => {
+    const A = "p1", B = "p2", C = "p3";
+    const players: Player[] = [
+      { id: A, name: "A" },
+      { id: B, name: "B" },
+      { id: C, name: "C" },
+    ];
+    const ids = [A, B, C];
+    const plan = generateInitialPlan({ players, playersPerTeam: 2, numberOfGames: 3 });
+    const result = applyEvents(plan, [], ids, 2, 4);
+    const stats = getPlayerStats(result, ids, []);
+
+    // 3 games × 2 per team = 6 slots / 3 players = 2.0 each
+    for (const s of stats) {
+      expect(s.playTimeUnits).toBe(2);
+    }
+  });
+
+  it("with subs every game: total time is still fair", () => {
+    const A = "p1", B = "p2", C = "p3";
+    const players: Player[] = [
+      { id: A, name: "A" },
+      { id: B, name: "B" },
+      { id: C, name: "C" },
+    ];
+    const ids = [A, B, C];
+    const plan = generateInitialPlan({ players, playersPerTeam: 2, numberOfGames: 3 });
+
+    // Simulate: generate plan, then make subs based on the actual lineups
+    const allEvents: RotationEvent[] = [];
+    for (let gameNum = 1; gameNum <= 3; gameNum++) {
+      const current = applyEvents(plan, allEvents, ids, 2, gameNum);
+      const game = current.games[gameNum - 1];
+      if (game.bench.length > 0) {
+        allEvents.push({
+          type: "sub",
+          gameNumber: gameNum,
+          playerOut: game.onField[0],
+          playerIn: game.bench[0],
+        });
+      }
+    }
+
+    const finalPlan = applyEvents(plan, allEvents, ids, 2, 4);
+    const stats = getPlayerStats(finalPlan, ids, allEvents);
+    const total = stats.reduce((sum, s) => sum + s.playTimeUnits, 0);
+
+    // Total should still be 6.0 (3 games × 2 per team)
+    expect(total).toBeCloseTo(6.0, 1);
+
+    // No player should have 0
+    for (const s of stats) {
+      expect(s.playTimeUnits).toBeGreaterThan(0);
+    }
+
+    // Max difference between any two players should be at most 1.0
+    // (half-game granularity means perfect equality isn't always possible)
+    const times = stats.map((s) => s.playTimeUnits);
+    expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(1.0);
+  });
+
   it("subbed-on player gets 0.5 credit, not 1.0", () => {
     const A = "p1", B = "p2", C = "p3";
     const players: Player[] = [
