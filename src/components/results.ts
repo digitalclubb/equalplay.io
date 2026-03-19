@@ -261,7 +261,7 @@ function renderGameCard(
     content.classList.add("game-content-collapsed");
     headerRow.classList.add("game-header-collapsible");
     headerRow.addEventListener("click", (e) => {
-      if ((e.target as HTMLElement).classList.contains("game-label-input")) return;
+      if ((e.target as HTMLElement).classList.contains("match-detail-input")) return;
       content.classList.toggle("game-content-collapsed");
     });
   }
@@ -306,10 +306,35 @@ function renderGameCard(
   return card;
 }
 
+/** Parse "pitch|time|opponent" into parts */
+function parseMatchDetails(raw: string): { pitch: string; time: string; opponent: string } {
+  const parts = raw.split("|");
+  return {
+    pitch: (parts[0] ?? "").trim(),
+    time: (parts[1] ?? "").trim(),
+    opponent: (parts[2] ?? "").trim(),
+  };
+}
+
+function serializeMatchDetails(d: { pitch: string; time: string; opponent: string }): string {
+  return `${d.pitch}|${d.time}|${d.opponent}`;
+}
+
+function formatMatchDetails(d: { pitch: string; time: string; opponent: string }): string {
+  const parts: string[] = [];
+  if (d.pitch) parts.push(`Pitch ${d.pitch}`);
+  if (d.time) {
+    // Strip seconds if present (e.g. "11:30:00" → "11:30")
+    const t = d.time.includes(":") ? d.time.split(":").slice(0, 2).join(":") : d.time;
+    parts.push(t);
+  }
+  if (d.opponent) parts.push(`vs ${d.opponent}`);
+  return parts.join(" \u00B7 ");
+}
+
 /**
- * Creates a single editable game title: "Game 1 vs Tigers [pen]"
- * The prefix "Game N" is static. The opponent name is editable.
- * Pen icon and title are on one line, vertically centred.
+ * Game header: "Game 1 LIVE" title + match details row.
+ * Details show as "Pitch 6 · 11:30 · Tigers" — tappable to edit.
  */
 function createGameTitle(
   gameNumber: number,
@@ -318,66 +343,103 @@ function createGameTitle(
   readOnly: boolean,
   onSave: (label: string) => void,
 ): HTMLElement {
-  const wrapper = document.createElement("h3");
-  wrapper.className = "game-title";
+  const wrapper = document.createElement("div");
+  wrapper.className = "game-title-wrap";
 
-  let currentLabel = savedLabel;
+  // Title line: "Game 1 LIVE"
+  const title = document.createElement("h3");
+  title.className = "game-title";
+  title.innerHTML = `Game ${gameNumber}${badgeHTML}`;
+  wrapper.appendChild(title);
 
-  // Static prefix
-  const prefix = document.createElement("span");
-  prefix.innerHTML = `Game ${gameNumber}${badgeHTML}`;
-  wrapper.appendChild(prefix);
+  // Match details row
+  const details = parseMatchDetails(savedLabel);
+  let current = { ...details };
 
-  // Editable label portion
-  const labelSpan = document.createElement("span");
-  labelSpan.className = "game-title-label";
-  labelSpan.textContent = currentLabel ? ` ${currentLabel}` : "";
-  wrapper.appendChild(labelSpan);
+  const displayRow = document.createElement("div");
+  displayRow.className = "match-details";
 
-  // Hidden input — replaces the label when editing
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "game-title-input";
-  input.placeholder = "Opponent";
-  input.hidden = true;
-  wrapper.appendChild(input);
+  const displayText = document.createElement("span");
+  displayText.className = "match-details-text";
+  const formatted = formatMatchDetails(current);
+  displayText.textContent = formatted || "Add details";
+  if (!formatted) displayText.classList.add("match-details-empty");
+  displayRow.appendChild(displayText);
+
+  // Edit row — 3 compact inputs on one line
+  const editRow = document.createElement("div");
+  editRow.className = "match-details-edit";
+  editRow.hidden = true;
+
+  const pitchInput = document.createElement("input");
+  pitchInput.type = "number";
+  pitchInput.min = "1";
+  pitchInput.className = "match-detail-input";
+  pitchInput.placeholder = "Pitch";
+
+  const timeInput = document.createElement("input");
+  timeInput.type = "time";
+  timeInput.className = "match-detail-input";
+
+  const oppInput = document.createElement("input");
+  oppInput.type = "text";
+  oppInput.className = "match-detail-input match-detail-input-wide";
+  oppInput.placeholder = "Opponent";
+
+  const doneBtn = document.createElement("button");
+  doneBtn.type = "button";
+  doneBtn.className = "match-detail-done";
+  doneBtn.textContent = "Done";
+
+  editRow.appendChild(pitchInput);
+  editRow.appendChild(timeInput);
+  editRow.appendChild(oppInput);
+  editRow.appendChild(doneBtn);
 
   if (!readOnly) {
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.className = "game-title-edit";
-    editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
-
     function startEdit(e: Event): void {
       e.stopPropagation();
-      input.value = currentLabel;
-      labelSpan.hidden = true;
-      editBtn.hidden = true;
-      input.hidden = false;
-      input.focus();
-      input.select();
+      pitchInput.value = current.pitch;
+      timeInput.value = current.time;
+      oppInput.value = current.opponent;
+      displayRow.hidden = true;
+      editRow.hidden = false;
+      pitchInput.focus();
     }
 
     function commitEdit(): void {
-      const val = input.value.trim();
-      currentLabel = val;
-      onSave(val);
-      labelSpan.textContent = val ? ` ${val}` : "";
-      input.hidden = true;
-      labelSpan.hidden = false;
-      editBtn.hidden = false;
+      current = {
+        pitch: pitchInput.value.trim(),
+        time: timeInput.value.trim(),
+        opponent: oppInput.value.trim(),
+      };
+      onSave(serializeMatchDetails(current));
+      const fmt = formatMatchDetails(current);
+      displayText.textContent = fmt || "Add details";
+      displayText.classList.toggle("match-details-empty", !fmt);
+      editRow.hidden = true;
+      displayRow.hidden = false;
     }
 
-    editBtn.addEventListener("click", startEdit);
-    input.addEventListener("blur", commitEdit);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
-      else if (e.key === "Escape") { input.value = currentLabel; commitEdit(); }
+    displayRow.addEventListener("click", startEdit);
+    displayRow.style.cursor = "pointer";
+
+    doneBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      commitEdit();
     });
 
-    wrapper.appendChild(editBtn);
+    // Enter on any input commits
+    for (const inp of [pitchInput, timeInput, oppInput]) {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+        else if (e.key === "Escape") { commitEdit(); }
+      });
+    }
   }
 
+  wrapper.appendChild(displayRow);
+  wrapper.appendChild(editRow);
   return wrapper;
 }
 

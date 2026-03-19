@@ -476,7 +476,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Game title — single editable line: "Game 1 vs Tigers [pen]" */
+/* Game title */
+.game-title-wrap {
+  margin-bottom: 2px;
+}
+
 .game-title {
   display: flex;
   align-items: center;
@@ -486,25 +490,46 @@ body {
   font-weight: 800;
 }
 
-.game-title-label {
-  font-weight: 600;
+/* Match details — display row */
+.match-details {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.match-details-text {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--color-secondary);
 }
 
-.game-title-label[hidden] {
+.match-details-empty {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* Match details — edit row */
+.match-details-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.match-details-edit[hidden] {
   display: none;
 }
 
-.game-title-input {
-  width: 100px;
-  height: 24px;
-  padding: 0 4px;
-  margin: 0;
+.match-detail-input {
+  width: 70px;
+  min-height: 32px;
+  padding: 4px 6px;
   border: none;
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-border);
   border-radius: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 500;
   font-family: inherit;
   color: var(--color-text);
   background: transparent;
@@ -512,36 +537,37 @@ body {
   appearance: none;
 }
 
-.game-title-input[hidden] {
-  display: none;
+.match-detail-input[type="time"] {
+  width: 90px;
 }
 
-.game-title-input:focus {
+.match-detail-input-wide {
+  width: 80px;
+  flex: 1;
+}
+
+.match-detail-input:focus {
   outline: none;
+  border-bottom-color: var(--color-primary);
 }
 
-.game-title-input::placeholder {
+.match-detail-input::placeholder {
   color: var(--color-muted);
-  font-weight: 400;
 }
 
-.game-title-edit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: transparent;
+.match-detail-done {
+  min-height: 32px;
+  padding: 4px 10px;
+  background: var(--color-navy);
+  color: white;
   border: none;
-  color: var(--color-muted);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-}
-
-.game-title-edit[hidden] {
-  display: none;
 }
 
 .game-title-edit:active {
