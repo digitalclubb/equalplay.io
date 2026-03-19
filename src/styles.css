@@ -49,8 +49,8 @@
   --color-injured-text: #cf3918;
   --color-joined-border: #e6e6e6;
 
-  --radius: 10px;
-  --radius-lg: 14px;
+  --radius: 8px;
+  --radius-lg: 8px;
   --touch-min: 48px;
 }
 
@@ -60,12 +60,12 @@ html {
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--color-bg);
+  background: var(--color-surface);
   color: var(--color-text);
   line-height: 1.5;
-  padding: var(--sp-md) calc(var(--sp-sm) + env(safe-area-inset-right))
-    var(--sp-lg) calc(var(--sp-sm) + env(safe-area-inset-left));
-  padding-top: calc(var(--sp-md) + env(safe-area-inset-top));
+  padding: 0 calc(var(--sp-md) + env(safe-area-inset-right))
+    var(--sp-lg) calc(var(--sp-md) + env(safe-area-inset-left));
+  padding-top: env(safe-area-inset-top);
   padding-bottom: calc(var(--sp-lg) + env(safe-area-inset-bottom));
 }
 
@@ -78,9 +78,9 @@ body {
 
 .header-bar {
   background: var(--color-navy);
-  border-radius: var(--radius-lg);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   padding: var(--sp-md) var(--sp-md) var(--sp-sm);
-  margin-bottom: var(--sp-md);
+  margin: 0 calc(-1 * var(--sp-md)) var(--sp-lg);
 }
 
 .app-header {
@@ -200,10 +200,9 @@ body {
 /* ---- Squad Panel ---- */
 
 .squad-panel {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-md);
+  padding: 0 0 var(--sp-md);
   margin-bottom: var(--sp-sm);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .squad-header h2 {
@@ -430,21 +429,23 @@ body {
   position: sticky;
   top: -1px;
   z-index: 10;
-  background: var(--color-bg);
+  background: var(--color-surface);
   padding-bottom: var(--sp-xs);
-  margin-left: calc(-1 * var(--sp-sm));
-  margin-right: calc(-1 * var(--sp-sm));
-  padding-left: var(--sp-sm);
-  padding-right: var(--sp-sm);
+  margin-left: calc(-1 * var(--sp-md));
+  margin-right: calc(-1 * var(--sp-md));
+  padding-left: var(--sp-md);
+  padding-right: var(--sp-md);
 }
 
-/* ---- Game Cards ---- */
+/* ---- Game Sections ---- */
 
 .game-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-md);
-  margin-bottom: var(--sp-sm);
+  padding: var(--sp-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.game-card:last-of-type {
+  border-bottom: none;
 }
 
 .game-card-completed {
@@ -452,12 +453,13 @@ body {
 }
 
 .game-card-current {
+  padding-left: var(--sp-sm);
   border-left: 3px solid var(--color-navy);
-  box-shadow: 0 1px 4px rgba(0, 5, 55, 0.08);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .game-card-next {
-  /* Normal styling, no special border */
+  /* Normal section styling */
 }
 
 .game-card-future {
@@ -728,8 +730,6 @@ body {
 /* Actions zone — visually separated from players */
 .game-actions {
   margin-top: var(--sp-md);
-  padding-top: var(--sp-md);
-  border-top: 2px solid var(--color-bg);
   display: flex;
   flex-direction: column;
   gap: var(--sp-xs);
@@ -901,9 +901,7 @@ body {
 
 .replacement-card {
   margin-top: var(--sp-xs);
-  padding: var(--sp-sm);
-  background: var(--color-warning-bg);
-  border-radius: var(--radius);
+  padding: var(--sp-sm) 0;
 }
 
 .replacement-title {
@@ -944,9 +942,7 @@ body {
 
 .fairness-summary {
   margin-top: var(--sp-md);
-  padding: var(--sp-md);
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  padding: var(--sp-md) 0;
 }
 
 .fairness-title {
@@ -1044,10 +1040,9 @@ body {
 
 .session-finished {
   text-align: center;
-  padding: var(--sp-lg) var(--sp-md);
+  padding: var(--sp-lg) 0;
   margin-bottom: var(--sp-sm);
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .session-finished h3 {
@@ -1180,7 +1175,19 @@ body {
 
 @media (min-width: 540px) {
   body {
-    padding: 2rem var(--sp-lg);
+    padding: 0 var(--sp-lg) var(--sp-lg);
+    background: var(--color-bg);
+  }
+
+  #app {
+    background: var(--color-surface);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: 0 var(--sp-md);
+  }
+
+  .header-bar {
+    margin-left: calc(-1 * var(--sp-md));
+    margin-right: calc(-1 * var(--sp-md));
   }
 
   .summary-grid {
