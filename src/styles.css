@@ -81,9 +81,27 @@ body {
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.logo-icon {
   height: 36px;
   width: auto;
-  margin-bottom: 6px;
+}
+
+.logo-text {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.5px;
+}
+
+.logo-text-play {
+  color: var(--color-primary);
 }
 
 .subtitle {
