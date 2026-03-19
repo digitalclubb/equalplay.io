@@ -14,8 +14,6 @@ import {
 } from "../logic/rotation.js";
 import {
   iconSub,
-  iconNext,
-  iconEnd,
   iconLate,
   iconInjured,
   iconArrived,
@@ -134,14 +132,14 @@ export function renderResults(
       const nextGameBtn = document.createElement("button");
       nextGameBtn.type = "button";
       nextGameBtn.className = "btn-next-game";
-      nextGameBtn.innerHTML = `${iconNext} Start game ${nextGameNum}`;
+      nextGameBtn.textContent = "Start next game";
       nextGameBtn.addEventListener("click", () => callbacks.onNextGame());
       actionsZone.appendChild(nextGameBtn);
     } else {
       const endGameBtn = document.createElement("button");
       endGameBtn.type = "button";
       endGameBtn.className = "btn-end-game";
-      endGameBtn.innerHTML = `${iconEnd} End game`;
+      endGameBtn.textContent = "End game";
       endGameBtn.addEventListener("click", () => callbacks.onNextGame());
       actionsZone.appendChild(endGameBtn);
     }
