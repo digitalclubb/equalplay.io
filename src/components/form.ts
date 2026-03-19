@@ -57,7 +57,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
   const submitBtn = document.createElement("button");
   submitBtn.type = "button";
   submitBtn.className = "btn-generate";
-  submitBtn.innerHTML = `${iconGenerate} Generate rotation`;
+  submitBtn.innerHTML = `${iconGenerate} Sort my team`;
   submitBtn.addEventListener("click", () => {
     onSubmit(handle);
   });
@@ -105,7 +105,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
 
     setLoading(loading: boolean) {
       submitBtn.disabled = loading;
-      submitBtn.innerHTML = loading ? "Generating..." : `${iconGenerate} Generate rotation`;
+      submitBtn.innerHTML = loading ? "Sorting..." : `${iconGenerate} Sort my team`;
     },
   };
 
