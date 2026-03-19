@@ -71,25 +71,3 @@ export function clearAllTeams(): void {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LEGACY_KEY);
 }
-
-// Keep old exports for backward compat during migration
-export interface SavedState {
-  players: Player[];
-  playersPerTeam: number;
-  numberOfGames: number;
-  events: RotationEvent[];
-  currentGame: number;
-  gameLabels: Record<string, string>;
-}
-
-export function saveState(_state: SavedState): void {
-  // No-op — use saveTeams instead
-}
-
-export function loadState(): SavedState | null {
-  return null;
-}
-
-export function clearSavedState(): void {
-  clearAllTeams();
-}

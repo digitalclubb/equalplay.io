@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint src/",
     "generate-icons": "tsx scripts/generate-icons.ts"
   },
@@ -15,9 +17,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "devDependencies": {
+    "jsdom": "^29.0.0",
     "oxlint": "^1.56.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
   }
 }
