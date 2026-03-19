@@ -417,11 +417,21 @@ export function getNextSubSuggestion(
 export function getPlayerStats(
   plan: RotationPlan,
   allPlayerIds: string[],
+  events: RotationEvent[] = [],
 ): PlayerStats[] {
   const trackers = new Map<string, PlayerTracker>();
 
   for (const id of allPlayerIds) {
     trackers.set(id, createTracker());
+  }
+
+  // Build sub lookup: gameNumber → list of subs
+  const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
+  for (const e of events) {
+    if (e.type === "sub") {
+      if (!subsByGame.has(e.gameNumber)) subsByGame.set(e.gameNumber, []);
+      subsByGame.get(e.gameNumber)!.push({ playerOut: e.playerOut, playerIn: e.playerIn });
+    }
   }
 
   for (const game of plan.games) {
@@ -431,9 +441,30 @@ export function getPlayerStats(
       t.gamesAvailable++;
       trackers.set(id, t);
     }
+
+    // Determine who was subbed in/out for this game
+    const gameSubs = subsByGame.get(game.gameNumber);
+    const subbedIn = new Set<string>();
+    const subbedOut = new Set<string>();
+    if (gameSubs) {
+      for (const sub of gameSubs) {
+        subbedIn.add(sub.playerIn);
+        subbedOut.add(sub.playerOut);
+      }
+    }
+
+    // Credit on-field players
     for (const id of game.onField) {
       const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += FULL_GAME;
+      // Subbed on mid-game = 0.5, full game = 1.0
+      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
+      trackers.set(id, t);
+    }
+
+    // Credit subbed-off players (they're in bench now but played half)
+    for (const id of subbedOut) {
+      const t = trackers.get(id) ?? createTracker();
+      t.playTimeUnits += SUB_APPEARANCE;
       trackers.set(id, t);
     }
   }

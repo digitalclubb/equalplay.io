@@ -165,7 +165,7 @@ export function renderResults(
   }
 
   // Fairness breakdown
-  const stats = getPlayerStats(plan, allPlayerIds);
+  const stats = getPlayerStats(plan, allPlayerIds, events);
   container.appendChild(renderFairnessSummary(stats, playerMap));
 
   container.appendChild(createActionSheet());

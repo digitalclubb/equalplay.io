@@ -396,12 +396,46 @@ describe("getNextSubSuggestion", () => {
 // ====================================================================
 
 describe("getPlayerStats", () => {
-  it("total play time equals total slots", () => {
+  it("total play time equals total slots without subs", () => {
     const players = makePlayers(8);
     const plan = generateInitialPlan({ players, playersPerTeam: 5, numberOfGames: 4 });
     const stats = getPlayerStats(plan, playerIds(players));
     const total = stats.reduce((sum, s) => sum + s.playTimeUnits, 0);
     expect(total).toBeCloseTo(20, 1);
+  });
+
+  it("subbed-on player gets 0.5 credit, not 1.0", () => {
+    const A = "p1", B = "p2", C = "p3";
+    const players: Player[] = [
+      { id: A, name: "A" },
+      { id: B, name: "B" },
+      { id: C, name: "C" },
+    ];
+    const ids = [A, B, C];
+    const plan = generateInitialPlan({ players, playersPerTeam: 2, numberOfGames: 1 });
+
+    // Find who's on field and bench
+    const onField = plan.games[0].onField;
+    const benchPlayer = plan.games[0].bench[0];
+    const fieldPlayer = onField[0];
+
+    // Sub: bench player comes on for field player
+    const events: RotationEvent[] = [
+      { type: "sub", gameNumber: 1, playerOut: fieldPlayer, playerIn: benchPlayer },
+    ];
+    const result = applyEvents(plan, events, ids, 2, 1);
+    const stats = getPlayerStats(result, ids, events);
+
+    const subbedOnStats = stats.find((s) => s.playerId === benchPlayer)!;
+    const subbedOffStats = stats.find((s) => s.playerId === fieldPlayer)!;
+    const fullGameStats = stats.find((s) => s.playerId === onField[1])!;
+
+    // Subbed on = 0.5
+    expect(subbedOnStats.playTimeUnits).toBeCloseTo(0.5, 1);
+    // Subbed off = 0.5
+    expect(subbedOffStats.playTimeUnits).toBeCloseTo(0.5, 1);
+    // Full game = 1.0
+    expect(fullGameStats.playTimeUnits).toBeCloseTo(1.0, 1);
   });
 });
 
