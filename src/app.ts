@@ -3,7 +3,6 @@ import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
 import type { ResultsCallbacks } from "./components/results.js";
-import { renderSummary, clearSummary } from "./components/summary.js";
 import { showToast } from "./components/toast.js";
 import {
   generateInitialPlan,
@@ -12,7 +11,7 @@ import {
   getUnavailableForGame,
 } from "./logic/rotation.js";
 import { saveState, loadState, clearSavedState } from "./logic/storage.js";
-import { validateInputs, hasErrors, computeSummary } from "./logic/validate.js";
+import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
   RotationEvent,
@@ -34,12 +33,9 @@ export function mountApp(root: HTMLElement): void {
   header.className = "app-header";
   header.innerHTML = `
     ${createLogo()}
-    <p class="subtitle">Fair player rotations for youth team sports</p>
+    <p class="subtitle">Fair rotations for youth sport</p>
   `;
   root.appendChild(header);
-
-  const summaryContainer = document.createElement("div");
-  summaryContainer.id = "summary";
 
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
@@ -49,9 +45,8 @@ export function mountApp(root: HTMLElement): void {
 
   function persist(): void {
     if (!state) return;
-    const players = [...state.playerMap.values()];
     saveState({
-      players,
+      players: [...state.playerMap.values()],
       playersPerTeam: state.playersPerTeam,
       numberOfGames: state.initialPlan.games.length,
       events: state.events,
@@ -110,26 +105,17 @@ export function mountApp(root: HTMLElement): void {
   function findReplacementName(playerId: string, gameNumber: number): string | null {
     if (!state) return null;
     const plan = applyEvents(
-      state.initialPlan,
-      state.events,
-      state.originalPlayerIds,
-      state.playersPerTeam,
-      state.currentGame,
+      state.initialPlan, state.events, state.originalPlayerIds,
+      state.playersPerTeam, state.currentGame,
     );
     const game = plan.games.find((g) => g.gameNumber === gameNumber);
     if (!game) return null;
-
-    const unavailable = getUnavailableForGame(
-      gameNumber,
-      state.originalPlayerIds,
-      state.events,
-    );
+    const unavailable = getUnavailableForGame(gameNumber, state.originalPlayerIds, state.events);
     const suggestions = getReplacements(game, unavailable);
     const match = suggestions.find((s) => s.outPlayerId === playerId);
-    if (match?.inPlayerId) {
-      return state.playerMap.get(match.inPlayerId)?.name ?? null;
-    }
-    return null;
+    return match?.inPlayerId
+      ? state.playerMap.get(match.inPlayerId)?.name ?? null
+      : null;
   }
 
   function resetSession(): void {
@@ -137,7 +123,6 @@ export function mountApp(root: HTMLElement): void {
     state = null;
     previousEvents = null;
     resultsContainer.innerHTML = "";
-    clearSummary(summaryContainer);
   }
 
   const callbacks: ResultsCallbacks = {
@@ -157,9 +142,7 @@ export function mountApp(root: HTMLElement): void {
         state!.events.push({ type: "injured", playerId, gameNumber });
       });
       const replacementName = findReplacementName(playerId, gameNumber);
-      const detail = replacementName
-        ? `${replacementName} comes on`
-        : "No replacement available";
+      const detail = replacementName ? `${replacementName} comes on` : "No replacement available";
       showToast(`${name} injured in game ${gameNumber}. ${detail}`, undo);
     },
 
@@ -215,77 +198,77 @@ export function mountApp(root: HTMLElement): void {
 
     onStartNew() {
       resetSession();
-      showToast("Session cleared. Set up a new rotation above.");
+      showToast("Session cleared.");
     },
   };
 
-  function generateFromForm(handle: FormHandle): void {
+  /**
+   * Auto-generate: called whenever squad or settings change.
+   * Only generates if inputs are valid. No explicit button needed.
+   */
+  function autoGenerate(handle: FormHandle): void {
     handle.clearErrors();
-    clearSummary(summaryContainer);
-    resultsContainer.innerHTML = "";
-    state = null;
-    previousEvents = null;
 
     const players = handle.getPlayers();
     const playersPerTeam = handle.getPlayersPerTeam();
     const numberOfGames = handle.getNumberOfGames();
 
+    // Don't generate until we have enough valid inputs
     const errors = validateInputs(players.length, playersPerTeam, numberOfGames);
     if (hasErrors(errors)) {
-      handle.showErrors(errors);
+      // Show errors only if user has tried (has some players)
+      if (players.length > 0) {
+        handle.showErrors(errors);
+      }
+      // If currently invalid but we had a previous state, keep it
+      if (!state) {
+        resultsContainer.innerHTML = "";
+      }
       return;
     }
-
-    const summary = computeSummary(players.length, playersPerTeam, numberOfGames);
-    renderSummary(summaryContainer, summary);
 
     const playerMap = new Map<string, Player>(
       players.map((p) => [p.id, p]),
     );
 
-    handle.setLoading(true);
-    setTimeout(() => {
-      const plan = generateInitialPlan({
-        players,
-        playersPerTeam,
-        numberOfGames,
-      });
+    const plan = generateInitialPlan({
+      players,
+      playersPerTeam,
+      numberOfGames,
+    });
 
-      state = {
-        initialPlan: plan,
-        originalPlayerIds: players.map((p) => p.id),
-        playersPerTeam,
-        playerMap,
-        events: [],
-        currentGame: 1,
-        gameLabels: {},
-      };
+    // Preserve events and game labels if the player set hasn't changed
+    const prevEvents = state?.events ?? [];
+    const prevLabels = state?.gameLabels ?? {};
+    const prevGame = state?.currentGame ?? 1;
 
-      rerender();
-      persist();
-      handle.setLoading(false);
-    }, 300);
+    state = {
+      initialPlan: plan,
+      originalPlayerIds: players.map((p) => p.id),
+      playersPerTeam,
+      playerMap,
+      events: prevEvents,
+      currentGame: prevGame,
+      gameLabels: prevLabels,
+    };
+
+    rerender();
+    persist();
   }
 
-  function restoreFromSaved(
-    saved: NonNullable<ReturnType<typeof loadState>>,
-  ): void {
+  const formHandle = createForm(autoGenerate);
+
+  // Auto-restore
+  const saved = loadState();
+  if (saved) {
     const playerMap = new Map<string, Player>(
       saved.players.map((p) => [p.id, p]),
     );
-
     const plan = generateInitialPlan({
       players: saved.players,
       playersPerTeam: saved.playersPerTeam,
       numberOfGames: saved.numberOfGames,
     });
-
-    const summary = computeSummary(
-      saved.players.length,
-      saved.playersPerTeam,
-      saved.numberOfGames,
-    );
-    renderSummary(summaryContainer, summary);
 
     state = {
       initialPlan: plan,
@@ -300,15 +283,6 @@ export function mountApp(root: HTMLElement): void {
     rerender();
   }
 
-  const formHandle = createForm(generateFromForm);
-
-  // Auto-restore: seamless, no interaction needed
-  const saved = loadState();
-  if (saved) {
-    restoreFromSaved(saved);
-  }
-
   root.appendChild(formHandle.element);
-  root.appendChild(summaryContainer);
   root.appendChild(resultsContainer);
 }

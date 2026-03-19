@@ -70,63 +70,62 @@ body {
 
 .app-header {
   text-align: center;
-  margin-bottom: var(--sp-lg);
+  margin-bottom: var(--sp-md);
 }
 
 .logo {
-  width: 180px;
+  width: 160px;
   height: auto;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .subtitle {
   color: var(--color-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
-/* ---- Setup Card ---- */
+/* ---- Squad Panel ---- */
 
-.setup-card {
+.squad-panel {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: var(--sp-md);
-  margin-bottom: var(--sp-md);
+  margin-bottom: var(--sp-sm);
 }
 
-.player-chips-group {
-  margin-bottom: var(--sp-md);
-}
-
-.player-chips-group > label {
-  display: block;
+.squad-header h2 {
   font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-secondary);
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  color: var(--color-secondary);
   margin-bottom: var(--sp-xs);
 }
 
-/* Chip flow area */
+/* Squad chips */
+.squad-chips {
+  margin-bottom: var(--sp-xs);
+}
+
 .player-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-xs);
   margin-bottom: var(--sp-xs);
-  min-height: 8px;
+  min-height: 4px;
 }
 
 .player-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 10px;
+  height: 40px;
+  padding: 0 12px;
   background: var(--color-field-bg);
-  border: 1px solid var(--color-field-border);
   border-radius: 20px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-field-text);
 }
 
@@ -134,91 +133,120 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
+  margin-left: 2px;
   background: transparent;
   border: none;
   color: var(--color-field-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   border-radius: 50%;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .player-chip-remove:active {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.08);
 }
 
-/* Add player input row */
-.player-add-row {
-  display: flex;
-  gap: var(--sp-xs);
-}
-
-.player-add-input {
-  flex: 1;
-  min-width: 0;
-  min-height: var(--touch-min);
-  padding: var(--sp-xs) var(--sp-sm);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  font-size: 1rem;
+/* "+ Add" chip */
+.player-chip-add {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  border: 2px dashed var(--color-border);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  cursor: pointer;
   font-family: inherit;
-  background: var(--color-surface);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.player-chip-add:active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.player-chip-add[hidden] {
+  display: none;
+}
+
+/* Inline name input (replaces "+ Add" when active) */
+.player-inline-input {
+  display: inline-flex;
+}
+
+.player-inline-input[hidden] {
+  display: none;
+}
+
+.player-inline-input input {
+  height: 40px;
+  width: 120px;
+  padding: 0 10px;
+  border: 2px solid var(--color-primary);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-family: inherit;
   color: var(--color-text);
+  background: var(--color-surface);
   -webkit-appearance: none;
   appearance: none;
 }
 
-.player-add-input:focus {
+.player-inline-input input:focus {
   outline: none;
-  border-color: var(--color-primary);
 }
 
-.player-add-input::placeholder {
+.player-inline-input input::placeholder {
   color: var(--color-muted);
 }
 
-.player-add-btn {
-  min-height: var(--touch-min);
-  padding: 0 var(--sp-md);
-  background: var(--color-text);
-  color: white;
+/* Settings toggle */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--sp-xs) 0;
+  background: transparent;
   border: none;
-  border-radius: var(--radius);
+  color: var(--color-muted);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
-  flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
-.player-add-btn:active {
-  opacity: 0.85;
+.settings-toggle:active {
+  color: var(--color-text);
 }
 
-.player-count {
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  margin-top: 4px;
-  min-height: 1.2em;
+.settings-toggle-icon {
+  font-size: 0.6rem;
 }
 
-/* Config row — inline compact */
+.settings-panel[hidden] {
+  display: none;
+}
+
+/* Config row */
 .setup-config {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--sp-xs);
-  margin-bottom: var(--sp-md);
+  padding-top: var(--sp-xs);
 }
 
 .setup-field label {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--color-secondary);
   text-transform: uppercase;
@@ -229,7 +257,7 @@ body {
 .setup-field input,
 .setup-field select {
   width: 100%;
-  min-height: var(--touch-min);
+  min-height: 44px;
   padding: var(--sp-xs);
   border: 2px solid var(--color-border);
   border-radius: var(--radius);
@@ -262,90 +290,6 @@ body {
 
 .input-error {
   border-color: var(--color-danger) !important;
-}
-
-/* Submit */
-button[type="submit"] {
-  width: 100%;
-  min-height: 52px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: var(--sp-sm) var(--sp-lg);
-  border-radius: var(--radius);
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.08s ease;
-}
-
-button[type="submit"]:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-button[type="submit"]:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ---- Summary Card ---- */
-
-#summary {
-  margin-top: var(--sp-md);
-}
-
-.summary-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-md);
-}
-
-.summary-card h3 {
-  font-size: 0.85rem;
-  font-weight: 700;
-  margin-bottom: var(--sp-sm);
-  color: var(--color-text);
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-sm);
-}
-
-.summary-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.summary-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--color-text);
-  line-height: 1.1;
-}
-
-.summary-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--color-secondary);
-  margin-top: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.fairness-warning {
-  margin-top: var(--sp-sm);
-  padding: var(--sp-sm);
-  background: var(--color-warning-bg);
-  border-radius: var(--radius);
-  color: var(--color-warning-text);
-  font-size: 0.8rem;
-  font-weight: 500;
-  line-height: 1.4;
 }
 
 /* ---- Results ---- */

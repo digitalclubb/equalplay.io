@@ -1,6 +1,5 @@
 import type { Player } from "../types/index.js";
 
-const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
 
 let nextPlayerId = 1;
@@ -14,40 +13,73 @@ export interface PlayerListHandle {
 }
 
 /**
- * Chip-based player input. Type a name, press Enter or tap Add.
- * Players appear as removable chips in a flow layout.
+ * Chip-based squad list. No persistent input field —
+ * tap "+ Add" to reveal an inline input, type a name, press Enter.
  */
 export function createPlayerList(): PlayerListHandle {
   const container = document.createElement("div");
-  container.className = "player-chips-group";
-
-  const label = document.createElement("label");
-  label.textContent = "Players";
-  container.appendChild(label);
+  container.className = "squad-chips";
 
   const chipArea = document.createElement("div");
   chipArea.className = "player-chips";
   container.appendChild(chipArea);
 
-  // Input row: text field + add button
-  const inputRow = document.createElement("div");
-  inputRow.className = "player-add-row";
+  // "+ Add" chip that turns into an input
+  const addChip = document.createElement("button");
+  addChip.type = "button";
+  addChip.className = "player-chip-add";
+  addChip.textContent = "+ Add";
+
+  const inputWrap = document.createElement("div");
+  inputWrap.className = "player-inline-input";
+  inputWrap.hidden = true;
 
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "player-add-input";
-  input.placeholder = "Player name";
+  input.placeholder = "Name";
 
-  const addBtn = document.createElement("button");
-  addBtn.type = "button";
-  addBtn.className = "player-add-btn";
-  addBtn.textContent = "+ Add";
-
-  function addPlayer(): void {
+  function commitName(): void {
     const name = input.value.trim();
-    if (!name) return;
-    if (chipArea.children.length >= MAX_PLAYERS) return;
+    if (name && chipArea.children.length < MAX_PLAYERS) {
+      addPlayerChip(name);
+    }
+    input.value = "";
+  }
 
+  function closeInput(): void {
+    commitName();
+    inputWrap.hidden = true;
+    addChip.hidden = false;
+  }
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitName();
+      // Keep input open for rapid entry
+      input.focus();
+    } else if (e.key === "Escape") {
+      closeInput();
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    // Small delay to allow chip × clicks to register
+    setTimeout(closeInput, 150);
+  });
+
+  inputWrap.appendChild(input);
+  container.appendChild(inputWrap);
+  container.appendChild(addChip);
+
+  addChip.addEventListener("click", () => {
+    addChip.hidden = true;
+    inputWrap.hidden = false;
+    input.value = "";
+    input.focus();
+  });
+
+  function addPlayerChip(name: string): void {
     const chip = document.createElement("span");
     chip.className = "player-chip";
     chip.dataset.playerId = generateId();
@@ -60,41 +92,13 @@ export function createPlayerList(): PlayerListHandle {
     removeBtn.type = "button";
     removeBtn.className = "player-chip-remove";
     removeBtn.textContent = "\u00D7";
-    removeBtn.addEventListener("click", () => {
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       chip.remove();
-      updateCount();
     });
     chip.appendChild(removeBtn);
 
     chipArea.appendChild(chip);
-    input.value = "";
-    input.focus();
-    updateCount();
-  }
-
-  addBtn.addEventListener("click", addPlayer);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addPlayer();
-    }
-  });
-
-  inputRow.appendChild(input);
-  inputRow.appendChild(addBtn);
-  container.appendChild(inputRow);
-
-  // Count display
-  const countEl = document.createElement("div");
-  countEl.className = "player-count";
-  container.appendChild(countEl);
-
-  function updateCount(): void {
-    const n = chipArea.children.length;
-    countEl.textContent = n > 0 ? `${n} player${n !== 1 ? "s" : ""}` : "";
-    if (n < MIN_PLAYERS && n > 0) {
-      countEl.textContent += ` (need at least ${MIN_PLAYERS})`;
-    }
   }
 
   function getPlayers(): Player[] {
