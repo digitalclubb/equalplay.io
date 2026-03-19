@@ -227,15 +227,17 @@ export function applyEvents(
 
   const games: Game[] = [];
 
-  // Phase 1: Past and current games — locked lineups
-  // Joined players go to bench (can't displace someone mid-game)
+  // Phase 1: PAST games only (strictly before currentGame)
+  // These games already happened. Late+joined players were absent.
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
-    if (gameNumber > currentGame) break;
+    if (gameNumber >= currentGame) break;
 
     const fieldAvailable = allPlayerIds.filter((id) => {
-      if (resolved.joinedIds.has(id)) return false;
-      return isAvailable(id, gameNumber, resolved);
+      if (!isAvailable(id, gameNumber, resolved)) return false;
+      // Late+joined players weren't here for past games
+      if (resolved.lateIds.has(id) && resolved.joinedIds.has(id)) return false;
+      return true;
     });
 
     const allAvailable = allPlayerIds.filter((id) =>
@@ -268,9 +270,10 @@ export function applyEvents(
     games.push({ gameNumber, onField, bench });
   }
 
-  // Phase 2: Future games — fully rebalanced using fairness debt
-  // Joined players ARE eligible for field selection (no displacement concern)
-  for (let i = currentGame; i < plan.games.length; i++) {
+  // Phase 2: Current game AND future games — fully rebalanced
+  // All available players (including late+joined) are eligible for field.
+  // The fairness debt system ensures underplayed players get prioritised.
+  for (let i = Math.max(0, currentGame - 1); i < plan.games.length; i++) {
     const gameNumber = i + 1;
 
     const allAvailable = allPlayerIds.filter((id) =>
