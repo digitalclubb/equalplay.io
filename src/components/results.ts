@@ -523,8 +523,13 @@ function renderFairnessSummary(
 
   for (const stat of sorted) {
     const name = playerMap.get(stat.playerId)?.name ?? stat.playerId;
-    const totalGames = stat.gamesPlayed + stat.gamesBenched;
-    const pct = totalGames > 0 ? Math.round((stat.gamesPlayed / totalGames) * 100) : 0;
+    const totalGames = stat.playTimeUnits + stat.gamesBenched;
+    const pct = totalGames > 0 ? Math.round((stat.playTimeUnits / totalGames) * 100) : 0;
+
+    // Format: show decimal only when fractional (2.5 not 2.0)
+    const timeLabel = Number.isInteger(stat.playTimeUnits)
+      ? String(stat.playTimeUnits)
+      : stat.playTimeUnits.toFixed(1);
 
     const scoreLabel = stat.fairnessScore > 0
       ? `+${stat.fairnessScore}`
@@ -537,7 +542,7 @@ function renderFairnessSummary(
       <span class="fairness-bar-track">
         <span class="fairness-bar-fill" style="width: ${pct}%"></span>
       </span>
-      <span class="fairness-count">${stat.gamesPlayed}</span>
+      <span class="fairness-count">${timeLabel}</span>
       <span class="fairness-score ${stat.fairnessScore < -0.5 ? "fairness-under" : stat.fairnessScore > 0.5 ? "fairness-over" : ""}">${scoreLabel}</span>
     `;
     list.appendChild(row);

@@ -7,44 +7,34 @@ import type {
   ReplacementSuggestion,
 } from "../types/index.js";
 
+// ---- Play time units ----
+// Full game on field = 1.0
+// Subbed on mid-game = 0.5
+// Subbed off mid-game = 0.5
+// On bench whole game = 0.0
+
+const FULL_GAME = 1.0;
+const SUB_APPEARANCE = 0.5;
+
 // ---- Fairness tracker ----
 
 interface PlayerTracker {
-  gamesPlayed: number;
+  playTimeUnits: number;
   lastPlayedGame: number;
-  /**
-   * Sum of (playersPerTeam / availableCount) for each game this player
-   * was in the available pool. Represents their "fair share" of play
-   * time given their actual availability window.
-   */
   expectedPlayTime: number;
 }
 
 function createTracker(): PlayerTracker {
-  return { gamesPlayed: 0, lastPlayedGame: 0, expectedPlayTime: 0 };
+  return { playTimeUnits: 0, lastPlayedGame: 0, expectedPlayTime: 0 };
 }
 
-/**
- * Fairness score: how far a player is from their expected play time.
- * Negative = underplayed (should be prioritised).
- * Positive = overplayed (should sit out).
- */
 function fairnessScore(t: PlayerTracker): number {
-  return t.gamesPlayed - t.expectedPlayTime;
+  return t.playTimeUnits - t.expectedPlayTime;
 }
 
 /**
  * Selects the fairest `count` players from `available`.
- *
- * Sort order:
- * 1. Lowest fairness score (most underplayed gets priority)
- * 2. Longest since last played (break ties — whoever waited longest)
- *
- * This handles fairness recovery naturally: a player who missed games
- * due to late arrival has a lower expected, so their score is close
- * to zero — they're not artificially over-prioritised. A player who's
- * been available the whole time but got fewer games has a genuinely
- * negative score and gets strong priority.
+ * Sorts by lowest fairness score, then longest since last played.
  */
 function selectOnField(
   available: string[],
@@ -62,21 +52,50 @@ function selectOnField(
 }
 
 /**
- * Updates trackers after a game. Call this once per game after
- * determining who's on field.
+ * Computes play time credit for each player in a game.
  *
- * - On-field players: increment gamesPlayed and update lastPlayedGame
- * - All available players: increment expectedPlayTime by their
- *   fair share for this game (playersPerTeam / availableCount)
+ * @param preSubOnField  - who was selected for on-field before subs
+ * @param postSubOnField - who is on-field after subs applied
+ * @returns map of playerId → credit (1.0, 0.5, or 0.0)
+ */
+function computePlayCredits(
+  preSubOnField: string[],
+  postSubOnField: string[],
+): Map<string, number> {
+  const preSet = new Set(preSubOnField);
+  const postSet = new Set(postSubOnField);
+  const credits = new Map<string, number>();
+
+  // Players who were on field the whole game
+  for (const id of preSubOnField) {
+    if (postSet.has(id)) {
+      credits.set(id, FULL_GAME);
+    } else {
+      // Subbed off mid-game
+      credits.set(id, SUB_APPEARANCE);
+    }
+  }
+
+  // Players who were subbed on
+  for (const id of postSubOnField) {
+    if (!preSet.has(id)) {
+      credits.set(id, SUB_APPEARANCE);
+    }
+  }
+
+  return credits;
+}
+
+/**
+ * Updates trackers after a game using fractional play time credits.
  */
 function updateTrackers(
   trackers: Map<string, PlayerTracker>,
-  onField: string[],
+  credits: Map<string, number>,
   available: string[],
   gameNumber: number,
   playersPerTeam: number,
 ): void {
-  // Expected play rate for this game
   const rate = available.length > 0 ? playersPerTeam / available.length : 0;
 
   for (const id of available) {
@@ -85,11 +104,13 @@ function updateTrackers(
     trackers.set(id, t);
   }
 
-  for (const id of onField) {
-    const t = trackers.get(id) ?? createTracker();
-    t.gamesPlayed++;
-    t.lastPlayedGame = gameNumber;
-    trackers.set(id, t);
+  for (const [id, credit] of credits) {
+    if (credit > 0) {
+      const t = trackers.get(id) ?? createTracker();
+      t.playTimeUnits += credit;
+      t.lastPlayedGame = gameNumber;
+      trackers.set(id, t);
+    }
   }
 }
 
@@ -111,7 +132,9 @@ export function generateInitialPlan(config: RotationConfig): RotationPlan {
     const onFieldSet = new Set(onField);
     const bench = ids.filter((id) => !onFieldSet.has(id));
 
-    updateTrackers(trackers, onField, ids, gameNumber, playersPerTeam);
+    // No subs in initial plan → everyone on field gets full credit
+    const credits = computePlayCredits(onField, onField);
+    updateTrackers(trackers, credits, ids, gameNumber, playersPerTeam);
     games.push({ gameNumber, onField, bench });
   }
 
@@ -202,6 +225,7 @@ export function applyEvents(
     );
 
     const onField = selectOnField(fieldAvailable, playersPerTeam, trackers);
+    const preSubOnField = [...onField];
     const onFieldSet = new Set(onField);
 
     const bench = allPlayerIds.filter(
@@ -221,8 +245,9 @@ export function applyEvents(
       }
     }
 
-    // Update trackers with all available players (for expected) and on-field (for played)
-    updateTrackers(trackers, onField, allAvailable, gameNumber, playersPerTeam);
+    // Compute fractional play time: pre-sub vs post-sub
+    const credits = computePlayCredits(preSubOnField, onField);
+    updateTrackers(trackers, credits, allAvailable, gameNumber, playersPerTeam);
     games.push({ gameNumber, onField, bench });
   }
 
@@ -273,9 +298,8 @@ export function getReplacements(
 }
 
 /**
- * Suggests the next fair substitution using fairness scores.
- * Bench player with lowest score comes on, field player with
- * highest score comes off.
+ * Suggests the next fair substitution using fairness scores based
+ * on fractional play time units.
  */
 export function getNextSubSuggestion(
   plan: RotationPlan,
@@ -289,27 +313,32 @@ export function getNextSubSuggestion(
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
+  // Rebuild trackers from plan history
   const trackers = new Map<string, PlayerTracker>();
   for (const game of plan.games) {
     if (game.gameNumber > currentGameNumber) break;
     const allInGame = [...game.onField, ...game.bench];
+    const fieldCount = game.onField.length;
     const rate = allInGame.length > 0
-      ? Math.min(game.onField.length, allInGame.length) / allInGame.length
+      ? Math.min(fieldCount, allInGame.length) / allInGame.length
       : 0;
+
     for (const id of allInGame) {
       const t = trackers.get(id) ?? createTracker();
       t.expectedPlayTime += rate;
       trackers.set(id, t);
     }
+
+    // For history we assume post-sub lineup = 1.0 credit
+    // (subs within a game are already reflected in onField)
     for (const id of game.onField) {
       const t = trackers.get(id) ?? createTracker();
-      t.gamesPlayed++;
+      t.playTimeUnits += FULL_GAME;
       t.lastPlayedGame = game.gameNumber;
       trackers.set(id, t);
     }
   }
 
-  // Bench player with lowest fairness score → comes on
   const playerIn = availableBench.reduce((best, id) => {
     const bestT = trackers.get(best) ?? createTracker();
     const thisT = trackers.get(id) ?? createTracker();
@@ -321,7 +350,6 @@ export function getNextSubSuggestion(
     return thisT.lastPlayedGame < bestT.lastPlayedGame ? id : best;
   });
 
-  // Field player with highest fairness score → comes off
   const playerOut = availableField.reduce((best, id) => {
     const bestT = trackers.get(best) ?? createTracker();
     const thisT = trackers.get(id) ?? createTracker();
@@ -337,7 +365,7 @@ export function getNextSubSuggestion(
 }
 
 /**
- * Computes per-player stats including fairness score.
+ * Computes per-player stats with fractional play time units.
  */
 export function getPlayerStats(
   plan: RotationPlan,
@@ -351,8 +379,9 @@ export function getPlayerStats(
 
   for (const game of plan.games) {
     const allInGame = [...game.onField, ...game.bench];
+    const fieldCount = game.onField.length;
     const rate = allInGame.length > 0
-      ? Math.min(game.onField.length, allInGame.length) / allInGame.length
+      ? Math.min(fieldCount, allInGame.length) / allInGame.length
       : 0;
 
     for (const id of allInGame) {
@@ -361,9 +390,10 @@ export function getPlayerStats(
       trackers.set(id, t);
     }
 
+    // Post-sub onField = 1.0 credit each (subs already applied)
     for (const id of game.onField) {
       const t = trackers.get(id) ?? createTracker();
-      t.gamesPlayed++;
+      t.playTimeUnits += FULL_GAME;
       trackers.set(id, t);
     }
   }
@@ -376,8 +406,8 @@ export function getPlayerStats(
 
     return {
       playerId: id,
-      gamesPlayed: t.gamesPlayed,
-      gamesBenched: gamesInPlan - t.gamesPlayed,
+      playTimeUnits: Math.round(t.playTimeUnits * 10) / 10,
+      gamesBenched: gamesInPlan - Math.ceil(t.playTimeUnits),
       fairnessScore: Math.round(fairnessScore(t) * 100) / 100,
     };
   });

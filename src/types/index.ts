@@ -35,9 +35,10 @@ export interface ReplacementSuggestion {
 /** Per-player fairness stats computed from a rotation plan */
 export interface PlayerStats {
   playerId: string;
-  gamesPlayed: number;
+  /** Fractional play time: full game = 1.0, sub appearance = 0.5 */
+  playTimeUnits: number;
   gamesBenched: number;
-  /** gamesPlayed - expectedPlayTime. Negative = underplayed, positive = overplayed */
+  /** playTimeUnits - expectedPlayTime. Negative = underplayed, positive = overplayed */
   fairnessScore: number;
 }
 
