@@ -51,7 +51,7 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
@@ -81,7 +81,7 @@ body {
 }
 
 .logo {
-  height: 32px;
+  height: 36px;
   width: auto;
   margin-bottom: 6px;
 }
