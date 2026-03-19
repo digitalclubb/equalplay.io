@@ -98,6 +98,11 @@ body {
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.logo-text-play {
+  color: var(--color-primary);
 }
 
 .subtitle {

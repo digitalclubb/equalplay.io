@@ -6,7 +6,7 @@ export function createLogo(): string {
   return `
     <div class="logo" role="img" aria-label="EqualPlay">
       <img class="logo-icon" src="/logo-idea.png" alt="" />
-      <span class="logo-text">Equal Play</span>
+      <span class="logo-text">Equal <span class="logo-text-play">Play</span></span>
     </div>
   `;
 }
