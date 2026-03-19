@@ -298,9 +298,9 @@ function renderGameCard(
 }
 
 /**
- * Creates the game opponent label with display/edit toggle.
- * Shows saved text + pen icon in display mode.
- * Tapping pen switches to input + save button.
+ * Inline-editable opponent label.
+ * Shows "vs ..." text + pen icon. Tap pen → text becomes an input
+ * in the same position. Enter or blur saves. No layout shift.
  */
 function createGameLabel(
   savedLabel: string,
@@ -310,73 +310,65 @@ function createGameLabel(
   const wrapper = document.createElement("div");
   wrapper.className = "game-label";
 
-  // Display mode
-  const display = document.createElement("div");
-  display.className = "game-label-display";
+  let currentLabel = savedLabel;
 
+  // The label text (doubles as display)
   const labelText = document.createElement("span");
   labelText.className = "game-label-text";
-  labelText.textContent = savedLabel || "vs \u2026";
-  if (!savedLabel) labelText.classList.add("game-label-placeholder");
-  display.appendChild(labelText);
+  labelText.textContent = currentLabel || "vs \u2026";
+  if (!currentLabel) labelText.classList.add("game-label-placeholder");
+  wrapper.appendChild(labelText);
+
+  // Hidden input — same size as the text, swaps in on edit
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "game-label-input";
+  input.placeholder = "vs ...";
+  input.hidden = true;
+  wrapper.appendChild(input);
 
   if (!readOnly) {
     const editBtn = document.createElement("button");
     editBtn.type = "button";
     editBtn.className = "game-label-edit-btn";
     editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
-    editBtn.addEventListener("click", (e) => {
+
+    function startEdit(e: Event): void {
       e.stopPropagation();
-      display.hidden = true;
-      editor.hidden = false;
-      input.value = savedLabel;
+      input.value = currentLabel;
+      labelText.hidden = true;
+      editBtn.hidden = true;
+      input.hidden = false;
       input.focus();
-    });
-    display.appendChild(editBtn);
-  }
-
-  wrapper.appendChild(display);
-
-  // Edit mode
-  const editor = document.createElement("div");
-  editor.className = "game-label-editor";
-  editor.hidden = true;
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "game-label-input";
-  input.placeholder = "e.g. Tigers";
-  input.value = savedLabel;
-
-  const saveBtn = document.createElement("button");
-  saveBtn.type = "button";
-  saveBtn.className = "game-label-save-btn";
-  saveBtn.textContent = "Save";
-
-  function save(): void {
-    const val = input.value.trim();
-    onSave(val);
-    labelText.textContent = val || "vs \u2026";
-    labelText.classList.toggle("game-label-placeholder", !val);
-    editor.hidden = true;
-    display.hidden = false;
-  }
-
-  saveBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    save();
-  });
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      save();
+      input.select();
     }
-  });
 
-  editor.appendChild(input);
-  editor.appendChild(saveBtn);
-  wrapper.appendChild(editor);
+    function commitEdit(): void {
+      const val = input.value.trim();
+      currentLabel = val;
+      onSave(val);
+      labelText.textContent = val || "vs \u2026";
+      labelText.classList.toggle("game-label-placeholder", !val);
+      input.hidden = true;
+      labelText.hidden = false;
+      editBtn.hidden = false;
+    }
+
+    editBtn.addEventListener("click", startEdit);
+
+    input.addEventListener("blur", commitEdit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitEdit();
+      } else if (e.key === "Escape") {
+        input.value = currentLabel;
+        commitEdit();
+      }
+    });
+
+    wrapper.appendChild(editBtn);
+  }
 
   return wrapper;
 }
