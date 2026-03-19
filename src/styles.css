@@ -468,9 +468,6 @@ body {
 
 /* Game header */
 .game-header {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-xs);
   margin-bottom: var(--sp-sm);
 }
 
@@ -479,14 +476,76 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.game-header h3 {
-  font-size: 1rem;
-  font-weight: 800;
+/* Game title — single editable line: "Game 1 vs Tigers [pen]" */
+.game-title {
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.game-title-label {
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.game-title-label[hidden] {
+  display: none;
+}
+
+.game-title-input {
+  width: 100px;
+  height: 24px;
+  padding: 0 4px;
+  margin: 0;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text);
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.game-title-input[hidden] {
+  display: none;
+}
+
+.game-title-input:focus {
+  outline: none;
+}
+
+.game-title-input::placeholder {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.game-title-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-title-edit[hidden] {
+  display: none;
+}
+
+.game-title-edit:active {
+  color: var(--color-primary);
 }
 
 .game-badge-current {
@@ -517,89 +576,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-muted);
-}
-
-/* Game label — inline edit */
-.game-label {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.game-label-text {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.game-label-text[hidden] {
-  display: none;
-}
-
-.game-label-placeholder {
-  color: var(--color-muted);
-  font-weight: 400;
-}
-
-/* Input matches the text exactly — no layout shift */
-.game-label-input {
-  flex: 1;
-  min-width: 0;
-  height: 28px;
-  padding: 0 4px;
-  margin: 0;
-  border: none;
-  border-bottom: 2px solid var(--color-primary);
-  border-radius: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--color-text);
-  background: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.game-label-input[hidden] {
-  display: none;
-}
-
-.game-label-input:focus {
-  outline: none;
-}
-
-.game-label-input::placeholder {
-  color: var(--color-muted);
-  font-weight: 400;
-}
-
-.game-label-edit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--color-muted);
-  cursor: pointer;
-  border-radius: 4px;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.game-label-edit-btn[hidden] {
-  display: none;
-}
-
-.game-label-edit-btn:active {
-  color: var(--color-primary);
 }
 
 /* Collapse */

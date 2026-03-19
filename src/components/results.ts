@@ -236,20 +236,18 @@ function renderGameCard(
   const headerRow = document.createElement("div");
   headerRow.className = "game-header";
 
-  const title = document.createElement("h3");
-  const badgeInfo = BADGE_LABELS[emphasis];
-  if (badgeInfo) {
-    title.innerHTML = `Game ${game.gameNumber} <span class="${badgeInfo.className}">${badgeInfo.text}</span>`;
-  } else {
-    title.textContent = `Game ${game.gameNumber}`;
-  }
-  headerRow.appendChild(title);
-
   const savedLabel = gameLabels[String(game.gameNumber)] ?? "";
+  const badgeInfo = BADGE_LABELS[emphasis];
+  const badgeHTML = badgeInfo ? ` <span class="${badgeInfo.className}">${badgeInfo.text}</span>` : "";
+
   headerRow.appendChild(
-    createGameLabel(savedLabel, emphasis === "completed", (newLabel) => {
-      callbacks.onGameLabelChange(game.gameNumber, newLabel);
-    }),
+    createGameTitle(
+      game.gameNumber,
+      savedLabel,
+      badgeHTML,
+      emphasis === "completed",
+      (newLabel) => callbacks.onGameLabelChange(game.gameNumber, newLabel),
+    ),
   );
 
   card.appendChild(headerRow);
@@ -308,39 +306,52 @@ function renderGameCard(
   return card;
 }
 
-function createGameLabel(
+/**
+ * Creates a single editable game title: "Game 1 vs Tigers [pen]"
+ * The prefix "Game N" is static. The opponent name is editable.
+ * Pen icon and title are on one line, vertically centred.
+ */
+function createGameTitle(
+  gameNumber: number,
   savedLabel: string,
+  badgeHTML: string,
   readOnly: boolean,
   onSave: (label: string) => void,
 ): HTMLElement {
-  const wrapper = document.createElement("div");
-  wrapper.className = "game-label";
+  const wrapper = document.createElement("h3");
+  wrapper.className = "game-title";
 
   let currentLabel = savedLabel;
 
-  const labelText = document.createElement("span");
-  labelText.className = "game-label-text";
-  labelText.textContent = currentLabel || "vs \u2026";
-  if (!currentLabel) labelText.classList.add("game-label-placeholder");
-  wrapper.appendChild(labelText);
+  // Static prefix
+  const prefix = document.createElement("span");
+  prefix.innerHTML = `Game ${gameNumber}${badgeHTML}`;
+  wrapper.appendChild(prefix);
 
+  // Editable label portion
+  const labelSpan = document.createElement("span");
+  labelSpan.className = "game-title-label";
+  labelSpan.textContent = currentLabel ? ` ${currentLabel}` : "";
+  wrapper.appendChild(labelSpan);
+
+  // Hidden input — replaces the label when editing
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "game-label-input";
-  input.placeholder = "vs ...";
+  input.className = "game-title-input";
+  input.placeholder = "Opponent";
   input.hidden = true;
   wrapper.appendChild(input);
 
   if (!readOnly) {
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.className = "game-label-edit-btn";
+    editBtn.className = "game-title-edit";
     editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
 
     function startEdit(e: Event): void {
       e.stopPropagation();
       input.value = currentLabel;
-      labelText.hidden = true;
+      labelSpan.hidden = true;
       editBtn.hidden = true;
       input.hidden = false;
       input.focus();
@@ -351,10 +362,9 @@ function createGameLabel(
       const val = input.value.trim();
       currentLabel = val;
       onSave(val);
-      labelText.textContent = val || "vs \u2026";
-      labelText.classList.toggle("game-label-placeholder", !val);
+      labelSpan.textContent = val ? ` ${val}` : "";
       input.hidden = true;
-      labelText.hidden = false;
+      labelSpan.hidden = false;
       editBtn.hidden = false;
     }
 
