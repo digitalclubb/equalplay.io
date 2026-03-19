@@ -1,20 +1,22 @@
-/** Returns the SVG logo markup as a string */
+/**
+ * Rotation ring logo: two bold curved arrows forming a continuous loop.
+ * Paired with a geometric wordmark — "Equal" in dark, "Play" in blue.
+ */
 export function createLogo(): string {
   return `
-    <svg class="logo" viewBox="0 0 240 48" xmlns="http://www.w3.org/2000/svg" aria-label="Equal Play logo">
-      <!-- Balance / swap icon: two curved arrows forming a cycle -->
-      <g transform="translate(4, 4)" stroke="#2563eb" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 26 A12 12 0 0 1 32 14" />
-        <polyline points="28,8 32,14 26,16" />
-        <path d="M32 14 A12 12 0 0 1 8 26" />
-        <polyline points="12,32 8,26 14,24" />
+    <svg class="logo" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Equal Play">
+      <!-- Rotation ring mark -->
+      <g transform="translate(22, 22)">
+        <!-- Top arc: clockwise arrow -->
+        <path d="M-10,-2 A11,11 0 0,1 10,-2" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="9,-6 13,-1.5 8,-1" fill="#2563eb"/>
+        <!-- Bottom arc: counter-clockwise arrow -->
+        <path d="M10,2 A11,11 0 0,1 -10,2" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="-9,6 -13,1.5 -8,1" fill="#2563eb"/>
       </g>
-      <text x="52" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#1e293b">
-        Equal
-      </text>
-      <text x="134" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#2563eb">
-        Play
-      </text>
+      <!-- Wordmark -->
+      <text x="46" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" fill="#0f172a" letter-spacing="-0.5">Equal</text>
+      <text x="120" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" fill="#2563eb" letter-spacing="-0.5">Play</text>
     </svg>
   `;
 }
