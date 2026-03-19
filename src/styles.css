@@ -78,7 +78,7 @@ body {
 
 .header-bar {
   background: var(--color-navy);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 0;
   padding: var(--sp-md) var(--sp-md) var(--sp-sm);
   margin: 0 calc(-1 * var(--sp-md)) var(--sp-lg);
 }
