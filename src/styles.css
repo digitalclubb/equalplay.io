@@ -1186,10 +1186,6 @@ body {
     padding: 2rem var(--sp-lg);
   }
 
-  .logo {
-    width: 200px;
-  }
-
   .summary-grid {
     grid-template-columns: repeat(5, 1fr);
   }

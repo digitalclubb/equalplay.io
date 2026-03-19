@@ -7,9 +7,23 @@ if (root) {
   console.error("Root element #app not found");
 }
 
-// Register service worker for offline support
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
-  });
+// Deferred: service worker + analytics — loaded only when browser is idle
+function onIdle(fn: () => void): void {
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(fn);
+  } else {
+    setTimeout(fn, 2000);
+  }
 }
+
+onIdle(() => {
+  // Service worker for offline support
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js");
+  }
+
+  // Vercel Analytics — lazy import so it doesn't block initial load
+  import("@vercel/analytics").then(({ inject }) => {
+    inject();
+  });
+});
