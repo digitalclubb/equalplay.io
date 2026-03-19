@@ -184,6 +184,7 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function rerenderAll(): void {
+    rebuildForm();
     renderTabs();
     rerenderResults();
   }
@@ -396,7 +397,14 @@ export function mountApp(root: HTMLElement): void {
     }, 200);
   }
 
-  const formHandle = createForm(generate);
+  // Form container — rebuilt on every team switch so inputs are fresh
+  const formContainer = document.createElement("div");
+
+  function rebuildForm(): void {
+    formContainer.innerHTML = "";
+    const form = createForm(generate);
+    formContainer.appendChild(form.element);
+  }
 
   // ---- Restore ----
 
@@ -407,7 +415,6 @@ export function mountApp(root: HTMLElement): void {
         st.players.map((p) => [p.id, p]),
       );
 
-      // Parse the max team ID to avoid collisions
       const numPart = parseInt(st.id.replace("team-", ""), 10);
       if (!isNaN(numPart) && numPart >= nextTeamId) {
         nextTeamId = numPart + 1;
@@ -447,7 +454,7 @@ export function mountApp(root: HTMLElement): void {
 
   // ---- Mount ----
 
-  root.appendChild(formHandle.element);
+  root.appendChild(formContainer);
   root.appendChild(resultsContainer);
   rerenderAll();
 }

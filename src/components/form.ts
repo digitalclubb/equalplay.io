@@ -18,7 +18,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
   const squadHeader = document.createElement("div");
   squadHeader.className = "squad-header";
-  squadHeader.innerHTML = `<h2>${iconSquad} Squad</h2>`;
+  squadHeader.innerHTML = `<h2>${iconSquad} Team</h2>`;
   section.appendChild(squadHeader);
 
   const playerList = createPlayerList();
