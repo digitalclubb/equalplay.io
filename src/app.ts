@@ -118,12 +118,14 @@ export function mountApp(root: HTMLElement): void {
       activeTeamId,
       {
         onSelect(teamId) {
+          saveDraft();
           activeTeamId = teamId;
           previousEvents = null;
           rerenderAll();
           persist();
         },
         onAdd() {
+          saveDraft();
           const id = generateTeamId();
           const name = `Team ${teams.length + 1}`;
           teams.push(createEmptyTeam(id, name));
@@ -412,7 +414,6 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function rebuildForm(): void {
-    saveDraft();
     formContainer.innerHTML = "";
     const team = getActive();
     const form = createForm(generate, team.draftPlayerNames);
