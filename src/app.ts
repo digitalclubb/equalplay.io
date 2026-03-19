@@ -3,6 +3,7 @@ import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
 import { renderResults } from "./components/results.js";
 import type { ResultsCallbacks } from "./components/results.js";
+import { renderTeamTabs } from "./components/teamTabs.js";
 import { showToast } from "./components/toast.js";
 import {
   generateInitialPlan,
@@ -10,7 +11,11 @@ import {
   getReplacements,
   getUnavailableForGame,
 } from "./logic/rotation.js";
-import { saveState, loadState, clearSavedState } from "./logic/storage.js";
+import {
+  saveTeams,
+  loadTeams,
+} from "./logic/storage.js";
+import type { SavedTeam } from "./logic/storage.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
@@ -18,15 +23,42 @@ import type {
   RotationPlan,
 } from "./types/index.js";
 
-interface AppState {
-  initialPlan: RotationPlan;
+// ---- Per-team state ----
+
+interface TeamState {
+  id: string;
+  name: string;
+  initialPlan: RotationPlan | null;
   originalPlayerIds: string[];
   playersPerTeam: number;
+  numberOfGames: number;
   playerMap: Map<string, Player>;
   events: RotationEvent[];
   currentGame: number;
   gameLabels: Record<string, string>;
 }
+
+function createEmptyTeam(id: string, name: string): TeamState {
+  return {
+    id,
+    name,
+    initialPlan: null,
+    originalPlayerIds: [],
+    playersPerTeam: 5,
+    numberOfGames: 3,
+    playerMap: new Map(),
+    events: [],
+    currentGame: 1,
+    gameLabels: {},
+  };
+}
+
+let nextTeamId = 1;
+function generateTeamId(): string {
+  return `team-${nextTeamId++}`;
+}
+
+// ---- App ----
 
 export function mountApp(root: HTMLElement): void {
   const header = document.createElement("header");
@@ -37,100 +69,160 @@ export function mountApp(root: HTMLElement): void {
   `;
   root.appendChild(header);
 
+  // Team tabs
+  const tabsContainer = document.createElement("div");
+  root.appendChild(tabsContainer);
+
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
 
-  let state: AppState | null = null;
+  // Multi-team state
+  let teams: TeamState[] = [createEmptyTeam(generateTeamId(), "Team 1")];
+  let activeTeamId = teams[0].id;
   let previousEvents: RotationEvent[] | null = null;
 
-  function persist(): void {
-    if (!state) return;
-    saveState({
-      players: [...state.playerMap.values()],
-      playersPerTeam: state.playersPerTeam,
-      numberOfGames: state.initialPlan.games.length,
-      events: state.events,
-      currentGame: state.currentGame,
-      gameLabels: state.gameLabels,
-    });
+  function getActive(): TeamState {
+    return teams.find((t) => t.id === activeTeamId)!;
   }
 
-  function rerender(): void {
-    if (!state) return;
+  // ---- Persistence ----
 
-    const plan = state.events.length > 0
+  function persist(): void {
+    const savedTeams: SavedTeam[] = teams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      players: [...t.playerMap.values()],
+      playersPerTeam: t.playersPerTeam,
+      numberOfGames: t.numberOfGames,
+      events: t.events,
+      currentGame: t.currentGame,
+      gameLabels: t.gameLabels,
+    }));
+    saveTeams({ teams: savedTeams, activeTeamId });
+  }
+
+  // ---- Rendering ----
+
+  function renderTabs(): void {
+    renderTeamTabs(
+      tabsContainer,
+      teams.map((t) => ({ id: t.id, name: t.name })),
+      activeTeamId,
+      {
+        onSelect(teamId) {
+          activeTeamId = teamId;
+          previousEvents = null;
+          rerenderAll();
+          persist();
+        },
+        onAdd() {
+          const id = generateTeamId();
+          const name = `Team ${teams.length + 1}`;
+          teams.push(createEmptyTeam(id, name));
+          activeTeamId = id;
+          previousEvents = null;
+          rerenderAll();
+          persist();
+          showToast(`${name} created.`);
+        },
+        onRename(teamId, newName) {
+          const team = teams.find((t) => t.id === teamId);
+          if (team) {
+            team.name = newName;
+            renderTabs();
+            persist();
+          }
+        },
+      },
+    );
+  }
+
+  function rerenderResults(): void {
+    const team = getActive();
+    if (!team.initialPlan) {
+      resultsContainer.innerHTML = "";
+      return;
+    }
+
+    const plan = team.events.length > 0
       ? applyEvents(
-          state.initialPlan,
-          state.events,
-          state.originalPlayerIds,
-          state.playersPerTeam,
-          state.currentGame,
+          team.initialPlan,
+          team.events,
+          team.originalPlayerIds,
+          team.playersPerTeam,
+          team.currentGame,
         )
-      : state.initialPlan;
+      : team.initialPlan;
 
     renderResults(
       resultsContainer,
       plan,
-      state.playerMap,
-      state.playersPerTeam,
-      state.events,
-      state.originalPlayerIds,
-      state.currentGame,
-      state.gameLabels,
+      team.playerMap,
+      team.playersPerTeam,
+      team.events,
+      team.originalPlayerIds,
+      team.currentGame,
+      team.gameLabels,
       callbacks,
     );
   }
 
+  function rerenderAll(): void {
+    renderTabs();
+    rerenderResults();
+  }
+
+  // ---- Actions ----
+
   function undo(): void {
-    if (!state || previousEvents === null) return;
-    state.events = previousEvents;
+    const team = getActive();
+    if (!team.initialPlan || previousEvents === null) return;
+    team.events = previousEvents;
     previousEvents = null;
-    rerender();
+    rerenderResults();
     persist();
     showToast("Undone");
   }
 
   function applyAction(mutate: () => void): void {
-    if (!state) return;
-    previousEvents = [...state.events];
+    const team = getActive();
+    if (!team.initialPlan) return;
+    previousEvents = [...team.events];
     mutate();
-    rerender();
+    rerenderResults();
     persist();
   }
 
   function getName(playerId: string): string {
-    return state?.playerMap.get(playerId)?.name ?? "Player";
+    return getActive().playerMap.get(playerId)?.name ?? "Player";
   }
 
   function findReplacementName(playerId: string, gameNumber: number): string | null {
-    if (!state) return null;
+    const team = getActive();
+    if (!team.initialPlan) return null;
     const plan = applyEvents(
-      state.initialPlan, state.events, state.originalPlayerIds,
-      state.playersPerTeam, state.currentGame,
+      team.initialPlan, team.events, team.originalPlayerIds,
+      team.playersPerTeam, team.currentGame,
     );
     const game = plan.games.find((g) => g.gameNumber === gameNumber);
     if (!game) return null;
-    const unavailable = getUnavailableForGame(gameNumber, state.originalPlayerIds, state.events);
+    const unavailable = getUnavailableForGame(gameNumber, team.originalPlayerIds, team.events);
     const suggestions = getReplacements(game, unavailable);
     const match = suggestions.find((s) => s.outPlayerId === playerId);
     return match?.inPlayerId
-      ? state.playerMap.get(match.inPlayerId)?.name ?? null
+      ? team.playerMap.get(match.inPlayerId)?.name ?? null
       : null;
   }
 
-  function resetSession(): void {
-    clearSavedState();
-    state = null;
-    previousEvents = null;
-    resultsContainer.innerHTML = "";
-  }
+  // ---- Callbacks ----
 
   const callbacks: ResultsCallbacks = {
     onMarkLate(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
-        state!.events.push({ type: "late", playerId });
+        const team = getActive();
+        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+        team.events.push({ type: "late", playerId });
       });
       showToast(`${name} isn't here yet. Rotation updated.`, undo);
     },
@@ -138,31 +230,30 @@ export function mountApp(root: HTMLElement): void {
     onMarkInjured(playerId, gameNumber) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
-        state!.events.push({ type: "injured", playerId, gameNumber });
+        const team = getActive();
+        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+        team.events.push({ type: "injured", playerId, gameNumber });
 
-        // Auto-sub: find the best bench replacement and swap immediately
-        const plan = applyEvents(
-          state!.initialPlan, state!.events, state!.originalPlayerIds,
-          state!.playersPerTeam, state!.currentGame,
-        );
-        const game = plan.games.find((g) => g.gameNumber === gameNumber);
-        if (game) {
-          const unavailable = getUnavailableForGame(gameNumber, state!.originalPlayerIds, state!.events);
-          const suggestions = getReplacements(game, unavailable);
-          const match = suggestions.find((s) => s.outPlayerId === playerId);
-          if (match?.inPlayerId) {
-            state!.events.push({
-              type: "sub",
-              gameNumber,
-              playerOut: playerId,
-              playerIn: match.inPlayerId,
-            });
+        // Auto-sub
+        if (team.initialPlan) {
+          const plan = applyEvents(
+            team.initialPlan, team.events, team.originalPlayerIds,
+            team.playersPerTeam, team.currentGame,
+          );
+          const game = plan.games.find((g) => g.gameNumber === gameNumber);
+          if (game) {
+            const unavailable = getUnavailableForGame(gameNumber, team.originalPlayerIds, team.events);
+            const suggestions = getReplacements(game, unavailable);
+            const match = suggestions.find((s) => s.outPlayerId === playerId);
+            if (match?.inPlayerId) {
+              team.events.push({
+                type: "sub", gameNumber,
+                playerOut: playerId, playerIn: match.inPlayerId,
+              });
+            }
           }
         }
       });
-
-      // Re-derive replacement name after the sub was added
       const replacementName = findReplacementName(playerId, gameNumber);
       const detail = replacementName ? `${replacementName} comes on` : "No replacement available";
       showToast(`${name} injured. ${detail}`, undo);
@@ -171,7 +262,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkJoined(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events.push({ type: "joined", playerId });
+        getActive().events.push({ type: "joined", playerId });
       });
       showToast(`${name} has arrived and is on the bench.`, undo);
     },
@@ -179,17 +270,18 @@ export function mountApp(root: HTMLElement): void {
     onClearStatus(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+        const team = getActive();
+        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
       });
       showToast(`${name} is back in the rotation.`, undo);
     },
 
     onGameLabelChange(gameNumber, label) {
-      if (!state) return;
+      const team = getActive();
       if (label) {
-        state.gameLabels[String(gameNumber)] = label;
+        team.gameLabels[String(gameNumber)] = label;
       } else {
-        delete state.gameLabels[String(gameNumber)];
+        delete team.gameLabels[String(gameNumber)];
       }
       persist();
     },
@@ -198,18 +290,19 @@ export function mountApp(root: HTMLElement): void {
       const outName = getName(playerOut);
       const inName = getName(playerIn);
       applyAction(() => {
-        state!.events.push({ type: "sub", gameNumber, playerOut, playerIn });
+        getActive().events.push({ type: "sub", gameNumber, playerOut, playerIn });
       });
       showToast(`${inName} on for ${outName}.`, undo);
     },
 
     onNextGame() {
-      if (!state) return;
-      const totalGames = state.initialPlan.games.length;
-      if (state.currentGame > totalGames) return;
-      const nextNum = state.currentGame + 1;
-      state.currentGame = nextNum;
-      rerender();
+      const team = getActive();
+      if (!team.initialPlan) return;
+      const totalGames = team.initialPlan.games.length;
+      if (team.currentGame > totalGames) return;
+      const nextNum = team.currentGame + 1;
+      team.currentGame = nextNum;
+      rerenderResults();
       persist();
       if (nextNum > totalGames) {
         showToast("All games completed.");
@@ -219,15 +312,25 @@ export function mountApp(root: HTMLElement): void {
     },
 
     onStartNew() {
-      resetSession();
+      const team = getActive();
+      team.initialPlan = null;
+      team.events = [];
+      team.currentGame = 1;
+      team.gameLabels = {};
+      team.playerMap = new Map();
+      team.originalPlayerIds = [];
+      previousEvents = null;
+      resultsContainer.innerHTML = "";
+      persist();
       showToast("Session cleared.");
     },
   };
 
+  // ---- Generate ----
+
   function generate(handle: FormHandle): void {
     handle.clearErrors();
     resultsContainer.innerHTML = "";
-    state = null;
     previousEvents = null;
 
     const players = handle.getPlayers();
@@ -246,23 +349,19 @@ export function mountApp(root: HTMLElement): void {
 
     handle.setLoading(true);
     setTimeout(() => {
-      const plan = generateInitialPlan({
-        players,
-        playersPerTeam,
-        numberOfGames,
-      });
+      const plan = generateInitialPlan({ players, playersPerTeam, numberOfGames });
+      const team = getActive();
 
-      state = {
-        initialPlan: plan,
-        originalPlayerIds: players.map((p) => p.id),
-        playersPerTeam,
-        playerMap,
-        events: [],
-        currentGame: 1,
-        gameLabels: {},
-      };
+      team.initialPlan = plan;
+      team.originalPlayerIds = players.map((p) => p.id);
+      team.playersPerTeam = playersPerTeam;
+      team.numberOfGames = numberOfGames;
+      team.playerMap = playerMap;
+      team.events = [];
+      team.currentGame = 1;
+      team.gameLabels = {};
 
-      rerender();
+      rerenderResults();
       persist();
       handle.setLoading(false);
     }, 200);
@@ -270,31 +369,56 @@ export function mountApp(root: HTMLElement): void {
 
   const formHandle = createForm(generate);
 
-  // Auto-restore
-  const saved = loadState();
+  // ---- Restore ----
+
+  const saved = loadTeams();
   if (saved) {
-    const playerMap = new Map<string, Player>(
-      saved.players.map((p) => [p.id, p]),
-    );
-    const plan = generateInitialPlan({
-      players: saved.players,
-      playersPerTeam: saved.playersPerTeam,
-      numberOfGames: saved.numberOfGames,
+    teams = saved.teams.map((st) => {
+      const playerMap = new Map<string, Player>(
+        st.players.map((p) => [p.id, p]),
+      );
+
+      // Parse the max team ID to avoid collisions
+      const numPart = parseInt(st.id.replace("team-", ""), 10);
+      if (!isNaN(numPart) && numPart >= nextTeamId) {
+        nextTeamId = numPart + 1;
+      }
+
+      const plan = st.players.length > 0
+        ? generateInitialPlan({
+            players: st.players,
+            playersPerTeam: st.playersPerTeam,
+            numberOfGames: st.numberOfGames,
+          })
+        : null;
+
+      return {
+        id: st.id,
+        name: st.name,
+        initialPlan: plan,
+        originalPlayerIds: st.players.map((p) => p.id),
+        playersPerTeam: st.playersPerTeam,
+        numberOfGames: st.numberOfGames,
+        playerMap,
+        events: st.events ?? [],
+        currentGame: st.currentGame ?? 1,
+        gameLabels: st.gameLabels ?? {},
+      };
     });
 
-    state = {
-      initialPlan: plan,
-      originalPlayerIds: saved.players.map((p) => p.id),
-      playersPerTeam: saved.playersPerTeam,
-      playerMap,
-      events: saved.events ?? [],
-      currentGame: saved.currentGame ?? 1,
-      gameLabels: saved.gameLabels ?? {},
-    };
+    if (teams.length === 0) {
+      teams = [createEmptyTeam(generateTeamId(), "Team 1")];
+    }
 
-    rerender();
+    activeTeamId = saved.activeTeamId;
+    if (!teams.find((t) => t.id === activeTeamId)) {
+      activeTeamId = teams[0].id;
+    }
   }
+
+  // ---- Mount ----
 
   root.appendChild(formHandle.element);
   root.appendChild(resultsContainer);
+  rerenderAll();
 }

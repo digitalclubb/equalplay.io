@@ -85,6 +85,79 @@ body {
   font-weight: 500;
 }
 
+/* ---- Team Tabs ---- */
+
+.team-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--sp-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.team-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.team-tab {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease;
+}
+
+.team-tab:active {
+  transform: scale(0.97);
+}
+
+.team-tab-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.team-tab-add {
+  min-width: 40px;
+  padding: var(--sp-xs) var(--sp-sm);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  border-style: dashed;
+}
+
+.team-tab-add:active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.team-tab-name {
+  cursor: inherit;
+}
+
+.team-tab-rename {
+  width: 80px;
+  padding: 2px 6px;
+  border: none;
+  border-bottom: 2px solid white;
+  background: transparent;
+  color: white;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  outline: none;
+}
+
 /* ---- Squad Panel ---- */
 
 .squad-panel {
