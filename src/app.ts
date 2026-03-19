@@ -61,17 +61,22 @@ function generateTeamId(): string {
 // ---- App ----
 
 export function mountApp(root: HTMLElement): void {
+  // Header bar: logo + strapline + team tabs in one branded zone
+  const headerBar = document.createElement("div");
+  headerBar.className = "header-bar";
+
   const header = document.createElement("header");
   header.className = "app-header";
   header.innerHTML = `
     ${createLogo()}
     <p class="subtitle">Fair playing time, sorted</p>
   `;
-  root.appendChild(header);
+  headerBar.appendChild(header);
 
-  // Team tabs
   const tabsContainer = document.createElement("div");
-  root.appendChild(tabsContainer);
+  headerBar.appendChild(tabsContainer);
+
+  root.appendChild(headerBar);
 
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";

@@ -66,31 +66,37 @@ body {
   margin: 0 auto;
 }
 
-/* ---- Header ---- */
+/* ---- Header Bar ---- */
+
+.header-bar {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-md) var(--sp-md) var(--sp-sm);
+  margin-bottom: var(--sp-sm);
+}
 
 .app-header {
   text-align: center;
-  margin-bottom: var(--sp-md);
+  margin-bottom: var(--sp-sm);
 }
 
 .logo {
-  height: 28px;
+  height: 32px;
   width: auto;
   margin-bottom: 6px;
 }
 
 .subtitle {
-  color: var(--color-secondary);
-  font-size: 0.8rem;
-  font-weight: 500;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-/* ---- Team Tabs ---- */
+/* ---- Team Tabs (inside header bar) ---- */
 
 .team-tabs {
   display: flex;
   gap: 6px;
-  margin-bottom: var(--sp-sm);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
