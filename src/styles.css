@@ -810,6 +810,13 @@ body {
 .action-btn-injured:active { border-color: var(--color-injured-border); }
 .action-btn-joined:active { border-color: var(--color-joined-border); }
 .action-btn-clear:active { border-color: var(--color-primary); }
+.action-btn-delete {
+  color: var(--color-danger);
+}
+.action-btn-delete:active {
+  border-color: var(--color-danger);
+  background: var(--color-injured-bg);
+}
 
 /* ---- Replacements ---- */
 

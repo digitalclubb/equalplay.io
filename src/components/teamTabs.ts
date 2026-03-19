@@ -7,11 +7,12 @@ export interface TeamTabsCallbacks {
   onSelect: (teamId: string) => void;
   onAdd: () => void;
   onRename: (teamId: string, newName: string) => void;
+  onDelete: (teamId: string) => void;
 }
 
 /**
- * Renders a horizontal tab bar for team switching.
- * [ Team 1 ] [ Team 2 ] [ + ]
+ * Horizontal tab bar for team switching.
+ * Tap inactive tab → switch. Tap active tab → shows manage options.
  */
 export function renderTeamTabs(
   container: HTMLElement,
@@ -22,80 +23,122 @@ export function renderTeamTabs(
   container.innerHTML = "";
   container.className = "team-tabs";
 
+  const canDelete = teams.length > 1;
+
   for (const team of teams) {
     const isActive = team.id === activeTeamId;
 
     const tab = document.createElement("button");
     tab.type = "button";
     tab.className = `team-tab${isActive ? " team-tab-active" : ""}`;
-    tab.dataset.teamId = team.id;
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "team-tab-name";
     nameSpan.textContent = team.name;
     tab.appendChild(nameSpan);
 
-    tab.addEventListener("click", () => {
-      if (!isActive) {
-        callbacks.onSelect(team.id);
-      }
-    });
-
-    // Double-tap / long-press to rename (use simple click on name for active tab)
     if (isActive) {
-      nameSpan.addEventListener("dblclick", (e) => {
-        e.stopPropagation();
-        promptRename(tab, team, callbacks, nameSpan);
+      // Tap active tab → show manage sheet (rename / delete)
+      tab.addEventListener("click", () => {
+        showTeamSheet(team, canDelete, callbacks);
+      });
+    } else {
+      tab.addEventListener("click", () => {
+        callbacks.onSelect(team.id);
       });
     }
 
     container.appendChild(tab);
   }
 
-  // Add team button
+  // Add button
   const addBtn = document.createElement("button");
   addBtn.type = "button";
   addBtn.className = "team-tab team-tab-add";
   addBtn.textContent = "+";
-  addBtn.addEventListener("click", () => {
-    callbacks.onAdd();
-  });
+  addBtn.addEventListener("click", () => callbacks.onAdd());
   container.appendChild(addBtn);
 }
 
-function promptRename(
-  _tab: HTMLElement,
+// ---- Team manage sheet ----
+
+function showTeamSheet(
   team: TeamTab,
+  canDelete: boolean,
   callbacks: TeamTabsCallbacks,
-  nameSpan: HTMLSpanElement,
 ): void {
+  // Reuse the action sheet pattern (or create a dedicated one)
+  let sheet = document.getElementById("team-sheet");
+  let backdrop = document.getElementById("team-sheet-backdrop");
 
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "team-tab-rename";
-  input.value = team.name;
-
-  function commit(): void {
-    const newName = input.value.trim() || team.name;
-    nameSpan.textContent = newName;
-    if (input.parentElement) {
-      input.replaceWith(nameSpan);
-    }
-    callbacks.onRename(team.id, newName);
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.id = "team-sheet-backdrop";
+    backdrop.className = "action-backdrop";
+    backdrop.addEventListener("click", dismissTeamSheet);
+    document.body.appendChild(backdrop);
   }
 
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commit();
-    } else if (e.key === "Escape") {
-      nameSpan.textContent = team.name;
-      input.replaceWith(nameSpan);
-    }
-  });
+  if (!sheet) {
+    sheet = document.createElement("div");
+    sheet.id = "team-sheet";
+    sheet.className = "action-sheet";
+    document.body.appendChild(sheet);
+  }
 
-  nameSpan.replaceWith(input);
-  input.focus();
-  input.select();
+  backdrop.hidden = false;
+  sheet.hidden = false;
+
+  let deleteHTML = "";
+  if (canDelete) {
+    deleteHTML = `
+      <button type="button" class="action-btn action-btn-delete" data-action="delete">
+        Delete team
+        <span class="action-desc">Remove ${esc(team.name)} and all its data</span>
+      </button>
+    `;
+  }
+
+  sheet.innerHTML = `
+    <div class="action-sheet-header">${esc(team.name)}</div>
+    <div class="action-sheet-actions">
+      <button type="button" class="action-btn" data-action="rename">
+        Rename team
+        <span class="action-desc">Change the team name</span>
+      </button>
+      ${deleteHTML}
+    </div>
+  `;
+
+  sheet.querySelectorAll<HTMLButtonElement>(".action-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      dismissTeamSheet();
+
+      if (action === "rename") {
+        const newName = prompt("Team name:", team.name);
+        if (newName !== null && newName.trim()) {
+          callbacks.onRename(team.id, newName.trim());
+        }
+      } else if (action === "delete") {
+        if (confirm(`Delete ${team.name}? This can't be undone.`)) {
+          callbacks.onDelete(team.id);
+        }
+      }
+    });
+  });
+}
+
+function dismissTeamSheet(): void {
+  const sheet = document.getElementById("team-sheet");
+  const backdrop = document.getElementById("team-sheet-backdrop");
+  if (sheet) sheet.hidden = true;
+  if (backdrop) backdrop.hidden = true;
+}
+
+function esc(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }

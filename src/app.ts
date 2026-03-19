@@ -125,6 +125,17 @@ export function mountApp(root: HTMLElement): void {
           persist();
           showToast(`${name} created.`);
         },
+        onDelete(teamId) {
+          if (teams.length <= 1) return;
+          teams = teams.filter((t) => t.id !== teamId);
+          if (activeTeamId === teamId) {
+            activeTeamId = teams[0].id;
+          }
+          previousEvents = null;
+          rerenderAll();
+          persist();
+          showToast("Team deleted.");
+        },
         onRename(teamId, newName) {
           const team = teams.find((t) => t.id === teamId);
           if (team) {
