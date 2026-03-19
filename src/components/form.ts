@@ -1,5 +1,6 @@
 import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
+import { iconSquad, iconSettings, iconGenerate } from "./icons.js";
 
 export interface FormHandle {
   element: HTMLElement;
@@ -17,7 +18,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
   const squadHeader = document.createElement("div");
   squadHeader.className = "squad-header";
-  squadHeader.innerHTML = `<h2>Squad</h2>`;
+  squadHeader.innerHTML = `<h2>${iconSquad} Squad</h2>`;
   section.appendChild(squadHeader);
 
   const playerList = createPlayerList();
@@ -30,7 +31,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
   const settingsLabel = document.createElement("div");
   settingsLabel.className = "settings-label";
-  settingsLabel.innerHTML = `<h2>Match settings</h2>`;
+  settingsLabel.innerHTML = `<h2>${iconSettings} Match settings</h2>`;
   section.appendChild(settingsLabel);
 
   const settingsPanel = document.createElement("div");
@@ -54,7 +55,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
   const submitBtn = document.createElement("button");
   submitBtn.type = "button";
   submitBtn.className = "btn-generate";
-  submitBtn.textContent = "Generate rotation";
+  submitBtn.innerHTML = `${iconGenerate} Generate rotation`;
   submitBtn.addEventListener("click", () => {
     onSubmit(handle);
   });
@@ -101,7 +102,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void): FormHandle {
 
     setLoading(loading: boolean) {
       submitBtn.disabled = loading;
-      submitBtn.textContent = loading ? "Generating..." : "Generate rotation";
+      submitBtn.innerHTML = loading ? "Generating..." : `${iconGenerate} Generate rotation`;
     },
   };
 

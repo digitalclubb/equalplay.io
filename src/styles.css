@@ -85,18 +85,31 @@ body {
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 0;
   margin-bottom: 6px;
 }
 
+/* Crop the whitespace padding from the PNG */
+.logo-icon-wrap {
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .logo-icon {
-  height: 48px;
+  /* Scale up to fill the crop box, cutting off the whitespace */
+  height: 72px;
   width: auto;
+  max-width: none;
 }
 
 .logo-text {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 1.6rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 1.55rem;
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.3px;
@@ -195,6 +208,9 @@ body {
 }
 
 .squad-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -294,6 +310,9 @@ body {
 
 /* Match settings label */
 .settings-label h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -365,6 +384,10 @@ body {
 
 /* Generate button */
 .btn-generate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   min-height: 52px;
   margin-top: var(--sp-md);
@@ -593,7 +616,9 @@ body {
 }
 
 .game-section-label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--color-secondary);
@@ -710,6 +735,10 @@ body {
 }
 
 .btn-next-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   min-height: 52px;
   padding: var(--sp-sm) var(--sp-md);
@@ -815,6 +844,12 @@ body {
 .action-btn:active {
   transform: scale(0.98);
   background: var(--color-bg);
+}
+
+.action-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .action-desc {
@@ -1003,6 +1038,10 @@ body {
 /* ---- Game Progression Buttons ---- */
 
 .btn-next-game {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   min-height: var(--touch-min);
   margin-top: var(--sp-xs);
@@ -1026,6 +1065,10 @@ body {
 }
 
 .btn-end-game {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   min-height: var(--touch-min);
   margin-top: var(--sp-xs);

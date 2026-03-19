@@ -12,6 +12,16 @@ import {
   getNextSubSuggestion,
   getPlayerStats,
 } from "../logic/rotation.js";
+import {
+  iconSub,
+  iconNext,
+  iconEnd,
+  iconLate,
+  iconInjured,
+  iconArrived,
+  iconLeaving,
+  iconReset,
+} from "./icons.js";
 
 type PlayerMap = Map<string, Player>;
 
@@ -117,7 +127,7 @@ export function renderResults(
       const subBtn = document.createElement("button");
       subBtn.type = "button";
       subBtn.className = "btn-next-sub";
-      subBtn.textContent = "Make sub";
+      subBtn.innerHTML = `${iconSub} Make sub`;
       subBtn.addEventListener("click", () => {
         callbacks.onMakeSub(currentGame, subSuggestion.playerOut, subSuggestion.playerIn);
       });
@@ -131,7 +141,7 @@ export function renderResults(
       const nextGameBtn = document.createElement("button");
       nextGameBtn.type = "button";
       nextGameBtn.className = "btn-next-game";
-      nextGameBtn.textContent = `Start game ${nextGameNum}`;
+      nextGameBtn.innerHTML = `${iconNext} Start game ${nextGameNum}`;
       nextGameBtn.addEventListener("click", () => {
         callbacks.onNextGame();
       });
@@ -140,7 +150,7 @@ export function renderResults(
       const endGameBtn = document.createElement("button");
       endGameBtn.type = "button";
       endGameBtn.className = "btn-end-game";
-      endGameBtn.textContent = "End game";
+      endGameBtn.innerHTML = `${iconEnd} End game`;
       endGameBtn.addEventListener("click", () => {
         callbacks.onNextGame();
       });
@@ -387,7 +397,13 @@ function renderSection(
 
   const sectionLabel = document.createElement("span");
   sectionLabel.className = "game-section-label";
-  sectionLabel.textContent = label;
+  // Add contextual icon based on section role
+  const sectionIcons: Record<string, string> = {
+    "On field": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M7 21l3-7 2 2 4-6"/><path d="M17 21l-2-6"/></svg>`,
+    "On the bench": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="4" rx="1"/><path d="M6 14v4"/><path d="M18 14v4"/></svg>`,
+    "Not available": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`,
+  };
+  sectionLabel.innerHTML = (sectionIcons[label] ?? "") + " " + label;
   section.appendChild(sectionLabel);
 
   const chipList = document.createElement("div");
@@ -499,33 +515,33 @@ function showActionSheet(
   if (status === "active" || status === "joined") {
     actionsHTML = `
       <button type="button" class="action-btn action-btn-late" data-action="late">
-        Not here yet
+        <span class="action-btn-row">${iconLate} Not here yet</span>
         <span class="action-desc">Sit out until they arrive</span>
       </button>
       <button type="button" class="action-btn action-btn-injured" data-action="injured">
-        Player injured
+        <span class="action-btn-row">${iconInjured} Player injured</span>
         <span class="action-desc">Replaced from game ${gameNumber}</span>
       </button>
       <button type="button" class="action-btn" data-action="leaving">
-        Leaving early
+        <span class="action-btn-row">${iconLeaving} Leaving early</span>
         <span class="action-desc">Won't be available for later games</span>
       </button>
     `;
   } else if (status === "late") {
     actionsHTML = `
       <button type="button" class="action-btn action-btn-joined" data-action="joined">
-        Player has arrived
+        <span class="action-btn-row">${iconArrived} Player has arrived</span>
         <span class="action-desc">On the bench and ready if needed</span>
       </button>
       <button type="button" class="action-btn action-btn-clear" data-action="clear">
-        Reset player
+        <span class="action-btn-row">${iconReset} Reset player</span>
         <span class="action-desc">Put back into the full rotation</span>
       </button>
     `;
   } else {
     actionsHTML = `
       <button type="button" class="action-btn action-btn-clear" data-action="clear">
-        Reset player
+        <span class="action-btn-row">${iconReset} Reset player</span>
         <span class="action-desc">Put back into the full rotation</span>
       </button>
     `;
