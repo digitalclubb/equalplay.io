@@ -72,7 +72,7 @@ export function mountApp(root: HTMLElement): void {
   header.className = "app-header";
   header.innerHTML = `
     ${createLogo()}
-    <p class="subtitle">Fair playing time, sorted</p>
+    <h1 class="subtitle">Fair team rotation for youth sports</h1>
   `;
   headerBar.appendChild(header);
 
