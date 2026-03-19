@@ -83,25 +83,21 @@ body {
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   margin-bottom: 6px;
 }
 
 .logo-icon {
-  height: 36px;
+  height: 48px;
   width: auto;
 }
 
 .logo-text {
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--color-text);
-  letter-spacing: -0.5px;
-}
-
-.logo-text-play {
-  color: var(--color-primary);
+  letter-spacing: -0.3px;
 }
 
 .subtitle {
