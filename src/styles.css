@@ -717,40 +717,120 @@ body {
   font-size: 0.8rem;
 }
 
-.replacement-row .chip,
-.sub-action-text .chip {
+.replacement-row .chip {
   cursor: default;
 }
 
-.replacement-row .chip:active,
-.sub-action-text .chip:active {
+.replacement-row .chip:active {
   transform: none;
 }
 
-/* ---- Primary Action: Make Sub ---- */
+/* ---- Primary Action: Sub Strip ---- */
 
-/* Actions zone — visually separated from players */
 .game-actions {
   margin-top: var(--sp-md);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-xs);
+  gap: var(--sp-sm);
 }
 
+/* Sub strip — grouped container for suggestion + button */
+.sub-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  padding: var(--sp-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
 
-.sub-action-text {
+.sub-strip-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.sub-strip-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-secondary);
-  margin-bottom: var(--sp-xs);
+  gap: 8px;
+  padding: var(--sp-xs) 0;
+  will-change: transform, opacity;
 }
 
-.sub-action-arrow {
+.sub-strip-arrow {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--color-muted);
+}
+
+/* Cyclable chips — interactive feel */
+.sub-chip {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.sub-chip-cyclable {
+  cursor: pointer;
+  position: relative;
+}
+
+.sub-chip-cyclable::after {
+  content: "⟳";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.5rem;
+  line-height: 1;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.sub-chip-cyclable:active {
+  transform: scale(1.03);
+}
+
+/* Animation: exit (fade out + slide up) */
+.sub-strip-exit {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+/* Animation: enter (fade in + slide up from below) */
+.sub-strip-enter {
+  animation: sub-strip-in 0.15s ease forwards;
+}
+
+@keyframes sub-strip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Balanced state — no sub needed */
+.sub-strip-balanced {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  padding: var(--sp-sm) 0;
 }
 
 .btn-next-sub {
@@ -759,14 +839,14 @@ body {
   justify-content: center;
   gap: 6px;
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   padding: var(--sp-sm) var(--sp-md);
   background: var(--color-primary);
   color: white;
   border: none;
   border-radius: var(--radius);
   font-family: inherit;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;

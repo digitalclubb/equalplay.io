@@ -9,7 +9,7 @@ import type {
 import {
   getReplacements,
   getUnavailableForGame,
-  getNextSubSuggestion,
+  getSubCandidates,
   getPlayerStats,
 } from "../logic/rotation.js";
 import {
@@ -107,24 +107,98 @@ export function renderResults(
     actionsZone.className = "game-actions";
 
     // Substitution control
-    const subSuggestion = getNextSubSuggestion(plan, currentGame, unavailable, events);
-    if (subSuggestion) {
-      const inName = playerMap.get(subSuggestion.playerIn)?.name ?? "?";
-      const outName = playerMap.get(subSuggestion.playerOut)?.name ?? "?";
+    const candidates = getSubCandidates(plan, currentGame, unavailable, events);
+    if (candidates) {
+      const { benchRanked, fieldRanked } = candidates;
+      let inIdx = 0;
+      let outIdx = 0;
 
-      const subText = document.createElement("div");
-      subText.className = "sub-action-text";
-      subText.innerHTML = `<span class="chip chip-field chip-sm">${esc(inName)}</span> replaces <span class="chip chip-bench chip-sm">${esc(outName)}</span>`;
-      actionsZone.appendChild(subText);
+      const strip = document.createElement("div");
+      strip.className = "sub-strip";
+
+      const label = document.createElement("span");
+      label.className = "sub-strip-label";
+      label.textContent = "Next sub";
+      strip.appendChild(label);
+
+      const row = document.createElement("div");
+      row.className = "sub-strip-row";
+
+      const inChip = document.createElement("button");
+      inChip.type = "button";
+      inChip.className = "chip chip-field chip-sm sub-chip";
+
+      const arrow = document.createElement("span");
+      arrow.className = "sub-strip-arrow";
+      arrow.textContent = "on for";
+
+      const outChip = document.createElement("button");
+      outChip.type = "button";
+      outChip.className = "chip chip-bench chip-sm sub-chip";
+
+      function updateChips(animate = false): void {
+        const inId = benchRanked[inIdx];
+        const outId = fieldRanked[outIdx];
+        const inName = playerMap.get(inId)?.name ?? "?";
+        const outName = playerMap.get(outId)?.name ?? "?";
+
+        if (animate) {
+          row.classList.add("sub-strip-exit");
+          setTimeout(() => {
+            inChip.textContent = inName;
+            outChip.textContent = outName;
+            row.classList.remove("sub-strip-exit");
+            row.classList.add("sub-strip-enter");
+            setTimeout(() => row.classList.remove("sub-strip-enter"), 150);
+          }, 100);
+        } else {
+          inChip.textContent = inName;
+          outChip.textContent = outName;
+        }
+      }
+
+      updateChips();
+
+      if (benchRanked.length > 1) {
+        inChip.classList.add("sub-chip-cyclable");
+        inChip.addEventListener("click", (e) => {
+          e.stopPropagation();
+          inIdx = (inIdx + 1) % benchRanked.length;
+          updateChips(true);
+        });
+      }
+
+      if (fieldRanked.length > 1) {
+        outChip.classList.add("sub-chip-cyclable");
+        outChip.addEventListener("click", (e) => {
+          e.stopPropagation();
+          outIdx = (outIdx + 1) % fieldRanked.length;
+          updateChips(true);
+        });
+      }
+
+      row.appendChild(inChip);
+      row.appendChild(arrow);
+      row.appendChild(outChip);
+      strip.appendChild(row);
 
       const subBtn = document.createElement("button");
       subBtn.type = "button";
       subBtn.className = "btn-next-sub";
       subBtn.innerHTML = `${iconSub} Make sub`;
       subBtn.addEventListener("click", () => {
-        callbacks.onMakeSub(currentGame, subSuggestion.playerOut, subSuggestion.playerIn);
+        const inId = benchRanked[inIdx];
+        const outId = fieldRanked[outIdx];
+        callbacks.onMakeSub(currentGame, outId, inId);
       });
-      actionsZone.appendChild(subBtn);
+      strip.appendChild(subBtn);
+
+      actionsZone.appendChild(strip);
+    } else {
+      const balanced = document.createElement("div");
+      balanced.className = "sub-strip-balanced";
+      balanced.textContent = "All players balanced";
+      actionsZone.appendChild(balanced);
     }
 
     // Game progression

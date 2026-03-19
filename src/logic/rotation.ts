@@ -440,6 +440,89 @@ export function getNextSubSuggestion(
   return { playerIn, playerOut };
 }
 
+/**
+ * Returns ranked lists of bench and field players for sub cycling.
+ * Bench sorted by highest fairness debt (most deserving of time).
+ * Field sorted by lowest fairness debt (most overplayed).
+ */
+export function getSubCandidates(
+  plan: RotationPlan,
+  currentGameNumber: number,
+  unavailableIds: Set<string>,
+  events: RotationEvent[] = [],
+): { benchRanked: string[]; fieldRanked: string[] } | null {
+  const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
+  if (!currentGame) return null;
+
+  const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
+  const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
+  if (availableBench.length === 0 || availableField.length === 0) return null;
+
+  const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
+  for (const e of events) {
+    if (e.type === "sub") {
+      if (!subsByGame.has(e.gameNumber)) subsByGame.set(e.gameNumber, []);
+      subsByGame.get(e.gameNumber)!.push({ playerOut: e.playerOut, playerIn: e.playerIn });
+    }
+  }
+
+  const trackers = new Map<string, PlayerTracker>();
+  for (const game of plan.games) {
+    if (game.gameNumber > currentGameNumber) break;
+    const allInGame = [...game.onField, ...game.bench];
+    for (const id of allInGame) {
+      const t = trackers.get(id) ?? createTracker();
+      t.gamesAvailable++;
+      trackers.set(id, t);
+    }
+
+    const gameSubs = subsByGame.get(game.gameNumber);
+    const subbedIn = new Set<string>();
+    const subbedOut = new Set<string>();
+    if (gameSubs) {
+      for (const sub of gameSubs) {
+        subbedIn.add(sub.playerIn);
+        subbedOut.add(sub.playerOut);
+      }
+    }
+
+    for (const id of game.onField) {
+      const t = trackers.get(id) ?? createTracker();
+      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
+      t.lastPlayedGame = game.gameNumber;
+      trackers.set(id, t);
+    }
+    for (const id of subbedOut) {
+      const t = trackers.get(id) ?? createTracker();
+      t.playTimeUnits += SUB_APPEARANCE;
+      trackers.set(id, t);
+    }
+  }
+
+  const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
+  const ppt = availableField.length;
+
+  const benchRanked = [...availableBench].sort((a, b) => {
+    const aT = trackers.get(a) ?? createTracker();
+    const bT = trackers.get(b) ?? createTracker();
+    const aDebt = fairnessDebt(aT, ppt, avgPool);
+    const bDebt = fairnessDebt(bT, ppt, avgPool);
+    if (Math.abs(aDebt - bDebt) > 0.001) return bDebt - aDebt;
+    return aT.lastPlayedGame - bT.lastPlayedGame;
+  });
+
+  const fieldRanked = [...availableField].sort((a, b) => {
+    const aT = trackers.get(a) ?? createTracker();
+    const bT = trackers.get(b) ?? createTracker();
+    const aDebt = fairnessDebt(aT, ppt, avgPool);
+    const bDebt = fairnessDebt(bT, ppt, avgPool);
+    if (Math.abs(aDebt - bDebt) > 0.001) return aDebt - bDebt;
+    return bT.lastPlayedGame - aT.lastPlayedGame;
+  });
+
+  return { benchRanked, fieldRanked };
+}
+
 export function getPlayerStats(
   plan: RotationPlan,
   allPlayerIds: string[],
