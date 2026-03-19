@@ -140,10 +140,32 @@ export function mountApp(root: HTMLElement): void {
       applyAction(() => {
         state!.events = state!.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         state!.events.push({ type: "injured", playerId, gameNumber });
+
+        // Auto-sub: find the best bench replacement and swap immediately
+        const plan = applyEvents(
+          state!.initialPlan, state!.events, state!.originalPlayerIds,
+          state!.playersPerTeam, state!.currentGame,
+        );
+        const game = plan.games.find((g) => g.gameNumber === gameNumber);
+        if (game) {
+          const unavailable = getUnavailableForGame(gameNumber, state!.originalPlayerIds, state!.events);
+          const suggestions = getReplacements(game, unavailable);
+          const match = suggestions.find((s) => s.outPlayerId === playerId);
+          if (match?.inPlayerId) {
+            state!.events.push({
+              type: "sub",
+              gameNumber,
+              playerOut: playerId,
+              playerIn: match.inPlayerId,
+            });
+          }
+        }
       });
+
+      // Re-derive replacement name after the sub was added
       const replacementName = findReplacementName(playerId, gameNumber);
       const detail = replacementName ? `${replacementName} comes on` : "No replacement available";
-      showToast(`${name} injured in game ${gameNumber}. ${detail}`, undo);
+      showToast(`${name} injured. ${detail}`, undo);
     },
 
     onMarkJoined(playerId) {
