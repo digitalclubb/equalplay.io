@@ -45,23 +45,8 @@ export interface PlayerStats {
 
 // ---- UI-layer types ----
 
-export enum SubstitutionType {
-  None = "none",
-  Halftime = "halftime",
-  Rolling = "rolling",
-}
-
 export interface ValidationErrors {
   players?: string;
   playersPerTeam?: string;
   numberOfGames?: string;
-}
-
-export interface GameSummary {
-  totalPlayers: number;
-  playersOnField: number;
-  benchPerGame: number;
-  totalSlots: number;
-  avgPlaytime: number;
-  isEvenDistribution: boolean;
 }

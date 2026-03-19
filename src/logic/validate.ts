@@ -1,4 +1,4 @@
-import type { ValidationErrors, GameSummary } from "../types/index.js";
+import type { ValidationErrors } from "../types/index.js";
 
 const MIN_PLAYERS = 2;
 
@@ -29,21 +29,4 @@ export function validateInputs(
 
 export function hasErrors(errors: ValidationErrors): boolean {
   return Object.keys(errors).length > 0;
-}
-
-/** Computes summary stats from valid inputs */
-export function computeSummary(
-  totalPlayers: number,
-  playersOnField: number,
-  numberOfGames: number,
-): GameSummary {
-  const totalSlots = playersOnField * numberOfGames;
-  return {
-    totalPlayers,
-    playersOnField,
-    benchPerGame: totalPlayers - playersOnField,
-    totalSlots,
-    avgPlaytime: totalSlots / totalPlayers,
-    isEvenDistribution: totalSlots % totalPlayers === 0,
-  };
 }

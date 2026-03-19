@@ -290,6 +290,10 @@ body {
   padding-top: var(--sp-xs);
 }
 
+.setup-config-2col {
+  grid-template-columns: 1fr 1fr;
+}
+
 .setup-field label {
   display: block;
   font-size: 0.65rem;
