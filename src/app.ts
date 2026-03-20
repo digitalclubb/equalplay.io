@@ -344,22 +344,6 @@ export function mountApp(root: HTMLElement): void {
       showToast(`${inName} on for ${outName}.`, undo);
     },
 
-    onBatchSub(gameNumber, subs) {
-      if (subs.length === 0) return;
-      if (subs.length === 1) {
-        callbacks.onMakeSub(gameNumber, subs[0].playerOut, subs[0].playerIn);
-        return;
-      }
-      const inNames = subs.map((s) => getName(s.playerIn));
-      applyAction(() => {
-        const team = getActive();
-        for (const s of subs) {
-          team.events.push({ type: "sub", gameNumber, playerOut: s.playerOut, playerIn: s.playerIn });
-        }
-      });
-      showToast(`${inNames.join(", ")} subbed on.`, undo);
-    },
-
     onNextGame() {
       const team = getActive();
       if (!team.initialPlan) return;

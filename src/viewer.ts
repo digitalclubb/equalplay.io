@@ -23,7 +23,6 @@ const noopCallbacks: ResultsCallbacks = {
   onClearStatus() {},
   onGameLabelChange() {},
   onMakeSub() {},
-  onBatchSub() {},
   onNextGame() {},
   onStartNew() {},
 };
