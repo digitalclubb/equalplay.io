@@ -1,35 +1,39 @@
 let activeTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
- * Shows a toast message at the bottom of the screen.
- * Auto-dismisses after `duration` ms. Optionally includes an Undo button.
+ * Shows a toast message. Replaces any existing toast immediately.
+ * Auto-dismisses after 2s. Tap anywhere on the toast to dismiss.
+ * Supports horizontal swipe-to-dismiss.
  */
 export function showToast(
   message: string,
   onUndo?: () => void,
-  duration = 4000,
+  duration = 2000,
 ): void {
-  // Reuse or create toast container
   let toast = document.getElementById("toast");
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "toast";
     toast.className = "toast";
     document.body.appendChild(toast);
+    setupSwipeDismiss(toast);
   }
 
-  // Clear any pending auto-dismiss
+  // Clear pending dismiss
   if (activeTimer !== null) {
     clearTimeout(activeTimer);
     activeTimer = null;
   }
 
+  // If replacing a visible toast, skip fade-in — just swap content
+  const wasVisible = toast.classList.contains("toast-visible");
+
   // Build content
+  toast.innerHTML = "";
+
   const msgSpan = document.createElement("span");
   msgSpan.className = "toast-message";
   msgSpan.textContent = message;
-
-  toast.innerHTML = "";
   toast.appendChild(msgSpan);
 
   if (onUndo) {
@@ -45,10 +49,21 @@ export function showToast(
     toast.appendChild(undoBtn);
   }
 
+  // Tap to dismiss (but not on the undo button)
+  toast.onclick = (e) => {
+    if ((e.target as HTMLElement).classList.contains("toast-undo")) return;
+    dismissToast();
+  };
+
   // Show
   toast.hidden = false;
-  // Force reflow so the transition plays from opacity 0 → 1
-  void toast.offsetHeight;
+  toast.style.transform = "";
+  toast.style.opacity = "";
+
+  if (!wasVisible) {
+    // Force reflow for initial animation
+    void toast.offsetHeight;
+  }
   toast.classList.add("toast-visible");
 
   activeTimer = setTimeout(dismissToast, duration);
@@ -57,13 +72,62 @@ export function showToast(
 export function dismissToast(): void {
   const toast = document.getElementById("toast");
   if (!toast) return;
+
   toast.classList.remove("toast-visible");
-  // Wait for fade-out transition before hiding
-  setTimeout(() => {
-    toast.hidden = true;
-  }, 200);
   if (activeTimer !== null) {
     clearTimeout(activeTimer);
     activeTimer = null;
   }
+  // Wait for fade-out transition
+  setTimeout(() => {
+    toast.hidden = true;
+    toast.style.transform = "";
+    toast.style.opacity = "";
+  }, 150);
+}
+
+/** Horizontal swipe-to-dismiss. */
+function setupSwipeDismiss(toast: HTMLElement): void {
+  let startX = 0;
+  let startY = 0;
+  let dragging = false;
+
+  toast.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    dragging = true;
+    toast.style.transition = "none";
+  }, { passive: true });
+
+  toast.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    // Only track horizontal movement — ignore vertical scrolling
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 10) {
+      dragging = false;
+      toast.style.transition = "";
+      toast.style.transform = "";
+      return;
+    }
+
+    toast.style.transform = `translateX(${dx}px)`;
+    toast.style.opacity = String(Math.max(0, 1 - Math.abs(dx) / 200));
+  }, { passive: true });
+
+  toast.addEventListener("touchend", () => {
+    if (!dragging) return;
+    dragging = false;
+    toast.style.transition = "";
+
+    const current = parseFloat(toast.style.opacity || "1");
+    if (current < 0.5) {
+      dismissToast();
+    } else {
+      toast.style.transform = "";
+      toast.style.opacity = "";
+    }
+  });
 }
