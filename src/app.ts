@@ -13,7 +13,9 @@ import {
   saveTeams,
   loadTeams,
 } from "./logic/storage.js";
-import type { SavedTeam } from "./logic/storage.js";
+import type { SavedData } from "./logic/storage.js";
+import { supabase } from "./logic/supabase.js";
+import { createSession, createOwnerSync } from "./logic/sync.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
@@ -95,6 +97,9 @@ export function mountApp(root: HTMLElement): void {
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
 
+  const shareContainer = document.createElement("div");
+  shareContainer.className = "share-container";
+
   // Multi-team state
   let teams: TeamState[] = [createEmptyTeam(generateTeamId(), "Team 1")];
   let activeTeamId = teams[0].id;
@@ -106,18 +111,32 @@ export function mountApp(root: HTMLElement): void {
 
   // ---- Persistence ----
 
+  // ---- Session sync ----
+
+  let sessionId: string | null = localStorage.getItem("equalplay_session_id");
+  let ownerSync = sessionId ? createOwnerSync(sessionId) : null;
+
+  function buildSavedData(): SavedData {
+    return {
+      teams: teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        players: [...t.playerMap.values()],
+        playersPerTeam: t.playersPerTeam,
+        numberOfGames: t.numberOfGames,
+        events: t.events,
+        currentGame: t.currentGame,
+        gameLabels: t.gameLabels,
+      })),
+      activeTeamId,
+    };
+  }
+
   function persist(): void {
-    const savedTeams: SavedTeam[] = teams.map((t) => ({
-      id: t.id,
-      name: t.name,
-      players: [...t.playerMap.values()],
-      playersPerTeam: t.playersPerTeam,
-      numberOfGames: t.numberOfGames,
-      events: t.events,
-      currentGame: t.currentGame,
-      gameLabels: t.gameLabels,
-    }));
-    saveTeams({ teams: savedTeams, activeTeamId });
+    const data = buildSavedData();
+    saveTeams(data);
+    // Non-blocking async sync to Supabase (if shared)
+    ownerSync?.push(data);
   }
 
   // ---- Rendering ----
@@ -173,6 +192,7 @@ export function mountApp(root: HTMLElement): void {
     const team = getActive();
     if (!team.initialPlan) {
       resultsContainer.innerHTML = "";
+      updateShareButton();
       return;
     }
 
@@ -197,6 +217,7 @@ export function mountApp(root: HTMLElement): void {
       team.gameLabels,
       callbacks,
     );
+    updateShareButton();
   }
 
   function rerenderAll(): void {
@@ -328,6 +349,15 @@ export function mountApp(root: HTMLElement): void {
       team.originalPlayerIds = [];
       previousEvents = null;
       resultsContainer.innerHTML = "";
+
+      // Disconnect shared session — old link becomes stale
+      if (ownerSync) {
+        ownerSync.destroy();
+        ownerSync = null;
+      }
+      sessionId = null;
+      localStorage.removeItem("equalplay_session_id");
+
       persist();
       showToast("Session cleared.");
     },
@@ -440,9 +470,64 @@ export function mountApp(root: HTMLElement): void {
     }
   }
 
+  // ---- Share button ----
+
+  function updateShareButton(): void {
+    shareContainer.innerHTML = "";
+    const hasData = getActive().initialPlan !== null;
+    if (!hasData || !supabase) return;
+
+    if (sessionId) {
+      // Already shared — show "Copy link" button
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "btn-share";
+      copyBtn.textContent = "Copy link";
+      copyBtn.addEventListener("click", () => {
+        const url = `${window.location.origin}/session/${sessionId}`;
+        navigator.clipboard.writeText(url).then(() => {
+          showToast("Link copied");
+        }).catch(() => {
+          showToast("Could not copy link");
+        });
+      });
+      shareContainer.appendChild(copyBtn);
+    } else {
+      // Not shared yet — show "Share plan" button
+      const shareBtn = document.createElement("button");
+      shareBtn.type = "button";
+      shareBtn.className = "btn-share";
+      shareBtn.textContent = "Share plan";
+      shareBtn.addEventListener("click", async () => {
+        shareBtn.disabled = true;
+        shareBtn.textContent = "Sharing...";
+        const data = buildSavedData();
+        const id = await createSession(data);
+        if (id) {
+          sessionId = id;
+          localStorage.setItem("equalplay_session_id", id);
+          ownerSync = createOwnerSync(id);
+          const url = `${window.location.origin}/session/${id}`;
+          navigator.clipboard.writeText(url).then(() => {
+            showToast("Link copied");
+          }).catch(() => {
+            showToast("Session shared");
+          });
+          updateShareButton();
+        } else {
+          shareBtn.disabled = false;
+          shareBtn.textContent = "Share plan";
+          showToast("Could not share. Try again.");
+        }
+      });
+      shareContainer.appendChild(shareBtn);
+    }
+  }
+
   // ---- Mount ----
 
   root.appendChild(formContainer);
   root.appendChild(resultsContainer);
+  root.appendChild(shareContainer);
   rerenderAll();
 }

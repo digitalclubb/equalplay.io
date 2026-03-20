@@ -47,6 +47,7 @@ export function renderResults(
   currentGame: number,
   gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
+  readOnly = false,
 ): void {
   container.innerHTML = "";
 
@@ -55,16 +56,18 @@ export function renderResults(
   const nextGameNum = currentGame + 1;
   const hasNextGame = nextGameNum <= totalGames;
 
-  const resetBtn = document.createElement("button");
-  resetBtn.type = "button";
-  resetBtn.className = "btn-reset";
-  resetBtn.textContent = "Reset session";
-  resetBtn.addEventListener("click", () => {
-    if (window.confirm("This will clear all players, games and events. Are you sure?")) {
-      callbacks.onStartNew();
-    }
-  });
-  container.appendChild(resetBtn);
+  if (!readOnly) {
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "btn-reset";
+    resetBtn.textContent = "Reset session";
+    resetBtn.addEventListener("click", () => {
+      if (window.confirm("This will clear all players, games and events. Are you sure?")) {
+        callbacks.onStartNew();
+      }
+    });
+    container.appendChild(resetBtn);
+  }
 
   const isSessionFinished = currentGame > totalGames;
 
@@ -83,7 +86,7 @@ export function renderResults(
     if (game.gameNumber >= currentGame) break;
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks),
+      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks, readOnly),
     );
   }
 
@@ -99,131 +102,134 @@ export function renderResults(
 
     const card = renderGameCard(
       currentGameData, playerMap, lookup, unavailable,
-      "current", gameLabels, callbacks,
+      "current", gameLabels, callbacks, readOnly,
     );
 
-    // ---- Actions zone (visually separated) ----
-    const actionsZone = document.createElement("div");
-    actionsZone.className = "game-actions";
+    if (!readOnly) {
+      // ---- Actions zone (visually separated) ----
+      const actionsZone = document.createElement("div");
+      actionsZone.className = "game-actions";
 
-    // Substitution control
-    const candidates = getSubCandidates(plan, currentGame, unavailable, events);
-    if (candidates) {
-      const { benchRanked, fieldRanked, injuredOut } = candidates;
-      let inIdx = 0;
-      let outIdx = 0;
+      // Substitution control
+      const candidates = getSubCandidates(plan, currentGame, unavailable, events);
+      if (candidates) {
+        const { benchRanked, fieldRanked, injuredOut } = candidates;
+        let inIdx = 0;
+        let outIdx = 0;
 
-      const strip = document.createElement("div");
-      strip.className = "sub-strip";
-      if (injuredOut) strip.classList.add("sub-strip-urgent");
+        const strip = document.createElement("div");
+        strip.className = "sub-strip";
+        if (injuredOut) strip.classList.add("sub-strip-urgent");
 
-      const label = document.createElement("span");
-      label.className = "sub-strip-label";
-      label.textContent = injuredOut ? "Injury replacement" : "Next sub";
-      strip.appendChild(label);
+        const label = document.createElement("span");
+        label.className = "sub-strip-label";
+        label.textContent = injuredOut ? "Injury replacement" : "Next sub";
+        strip.appendChild(label);
 
-      const row = document.createElement("div");
-      row.className = "sub-strip-row";
+        const row = document.createElement("div");
+        row.className = "sub-strip-row";
 
-      const inChip = document.createElement("button");
-      inChip.type = "button";
-      inChip.className = "chip chip-field chip-sm sub-chip";
-      inChip.dataset.testid = "sub-in";
+        const inChip = document.createElement("button");
+        inChip.type = "button";
+        inChip.className = "chip chip-field chip-sm sub-chip";
+        inChip.dataset.testid = "sub-in";
 
-      const arrow = document.createElement("span");
-      arrow.className = "sub-strip-arrow";
-      arrow.textContent = "on for";
+        const arrow = document.createElement("span");
+        arrow.className = "sub-strip-arrow";
+        arrow.textContent = "on for";
 
-      const outChip = document.createElement("button");
-      outChip.type = "button";
-      outChip.className = injuredOut
-        ? "chip chip-injured chip-sm sub-chip"
-        : "chip chip-bench chip-sm sub-chip";
-      outChip.dataset.testid = "sub-out";
+        const outChip = document.createElement("button");
+        outChip.type = "button";
+        outChip.className = injuredOut
+          ? "chip chip-injured chip-sm sub-chip"
+          : "chip chip-bench chip-sm sub-chip";
+        outChip.dataset.testid = "sub-out";
 
-      function updateChips(animate = false): void {
-        const inId = benchRanked[inIdx];
-        const outId = fieldRanked[outIdx];
-        const inName = playerMap.get(inId)?.name ?? "?";
-        const outName = playerMap.get(outId)?.name ?? "?";
+        function updateChips(animate = false): void {
+          const inId = benchRanked[inIdx];
+          const outId = fieldRanked[outIdx];
+          const inName = playerMap.get(inId)?.name ?? "?";
+          const outName = playerMap.get(outId)?.name ?? "?";
 
-        if (animate) {
-          row.classList.add("sub-strip-exit");
-          setTimeout(() => {
+          if (animate) {
+            row.classList.add("sub-strip-exit");
+            setTimeout(() => {
+              inChip.textContent = inName;
+              outChip.textContent = outName;
+              row.classList.remove("sub-strip-exit");
+              row.classList.add("sub-strip-enter");
+              setTimeout(() => row.classList.remove("sub-strip-enter"), 150);
+            }, 100);
+          } else {
             inChip.textContent = inName;
             outChip.textContent = outName;
-            row.classList.remove("sub-strip-exit");
-            row.classList.add("sub-strip-enter");
-            setTimeout(() => row.classList.remove("sub-strip-enter"), 150);
-          }, 100);
-        } else {
-          inChip.textContent = inName;
-          outChip.textContent = outName;
+          }
         }
-      }
 
-      updateChips();
+        updateChips();
 
-      if (benchRanked.length > 1) {
-        inChip.classList.add("sub-chip-cyclable");
-        inChip.addEventListener("click", (e) => {
-          e.stopPropagation();
-          inIdx = (inIdx + 1) % benchRanked.length;
-          updateChips(true);
+        if (benchRanked.length > 1) {
+          inChip.classList.add("sub-chip-cyclable");
+          inChip.addEventListener("click", (e) => {
+            e.stopPropagation();
+            inIdx = (inIdx + 1) % benchRanked.length;
+            updateChips(true);
+          });
+        }
+
+        if (fieldRanked.length > 1) {
+          outChip.classList.add("sub-chip-cyclable");
+          outChip.addEventListener("click", (e) => {
+            e.stopPropagation();
+            outIdx = (outIdx + 1) % fieldRanked.length;
+            updateChips(true);
+          });
+        }
+
+        row.appendChild(inChip);
+        row.appendChild(arrow);
+        row.appendChild(outChip);
+        strip.appendChild(row);
+
+        const subBtn = document.createElement("button");
+        subBtn.type = "button";
+        subBtn.className = "btn-next-sub";
+        subBtn.innerHTML = `${iconSub} Make sub`;
+        subBtn.addEventListener("click", () => {
+          const inId = benchRanked[inIdx];
+          const outId = fieldRanked[outIdx];
+          callbacks.onMakeSub(currentGame, outId, inId);
         });
+        strip.appendChild(subBtn);
+
+        actionsZone.appendChild(strip);
+      } else {
+        const balanced = document.createElement("div");
+        balanced.className = "sub-strip-balanced";
+        balanced.textContent = "All players balanced";
+        actionsZone.appendChild(balanced);
       }
 
-      if (fieldRanked.length > 1) {
-        outChip.classList.add("sub-chip-cyclable");
-        outChip.addEventListener("click", (e) => {
-          e.stopPropagation();
-          outIdx = (outIdx + 1) % fieldRanked.length;
-          updateChips(true);
-        });
+      // Game progression
+      if (hasNextGame) {
+        const nextGameBtn = document.createElement("button");
+        nextGameBtn.type = "button";
+        nextGameBtn.className = "btn-next-game";
+        nextGameBtn.textContent = "Start next game";
+        nextGameBtn.addEventListener("click", () => callbacks.onNextGame());
+        actionsZone.appendChild(nextGameBtn);
+      } else {
+        const endGameBtn = document.createElement("button");
+        endGameBtn.type = "button";
+        endGameBtn.className = "btn-end-game";
+        endGameBtn.textContent = "End game";
+        endGameBtn.addEventListener("click", () => callbacks.onNextGame());
+        actionsZone.appendChild(endGameBtn);
       }
 
-      row.appendChild(inChip);
-      row.appendChild(arrow);
-      row.appendChild(outChip);
-      strip.appendChild(row);
-
-      const subBtn = document.createElement("button");
-      subBtn.type = "button";
-      subBtn.className = "btn-next-sub";
-      subBtn.innerHTML = `${iconSub} Make sub`;
-      subBtn.addEventListener("click", () => {
-        const inId = benchRanked[inIdx];
-        const outId = fieldRanked[outIdx];
-        callbacks.onMakeSub(currentGame, outId, inId);
-      });
-      strip.appendChild(subBtn);
-
-      actionsZone.appendChild(strip);
-    } else {
-      const balanced = document.createElement("div");
-      balanced.className = "sub-strip-balanced";
-      balanced.textContent = "All players balanced";
-      actionsZone.appendChild(balanced);
+      card.appendChild(actionsZone);
     }
 
-    // Game progression
-    if (hasNextGame) {
-      const nextGameBtn = document.createElement("button");
-      nextGameBtn.type = "button";
-      nextGameBtn.className = "btn-next-game";
-      nextGameBtn.textContent = "Start next game";
-      nextGameBtn.addEventListener("click", () => callbacks.onNextGame());
-      actionsZone.appendChild(nextGameBtn);
-    } else {
-      const endGameBtn = document.createElement("button");
-      endGameBtn.type = "button";
-      endGameBtn.className = "btn-end-game";
-      endGameBtn.textContent = "End game";
-      endGameBtn.addEventListener("click", () => callbacks.onNextGame());
-      actionsZone.appendChild(endGameBtn);
-    }
-
-    card.appendChild(actionsZone);
     sticky.appendChild(card);
     container.appendChild(sticky);
   }
@@ -234,7 +240,7 @@ export function renderResults(
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const emphasis: GameEmphasis = game.gameNumber === nextGameNum ? "next" : "future";
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks),
+      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks, readOnly),
     );
   }
 
@@ -242,7 +248,9 @@ export function renderResults(
   const stats = getPlayerStats(plan, allPlayerIds, events);
   container.appendChild(renderFairnessSummary(stats, playerMap));
 
-  container.appendChild(createActionSheet());
+  if (!readOnly) {
+    container.appendChild(createActionSheet());
+  }
 }
 
 // ---- Event lookup ----
@@ -303,6 +311,7 @@ function renderGameCard(
   emphasis: GameEmphasis,
   gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
+  readOnly = false,
 ): HTMLElement {
   const card = document.createElement("div");
   card.className = `game-card game-card-${emphasis}`;
@@ -321,7 +330,7 @@ function renderGameCard(
       game.gameNumber,
       savedLabel,
       badgeHTML,
-      emphasis === "completed",
+      emphasis === "completed" || readOnly,
       (newLabel) => callbacks.onGameLabelChange(game.gameNumber, newLabel),
     ),
   );
@@ -342,19 +351,19 @@ function renderGameCard(
     });
   }
 
-  const isCompleted = emphasis === "completed";
+  const isReadOnly = emphasis === "completed" || readOnly;
 
-  content.appendChild(renderSection("Playing", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
+  content.appendChild(renderSection("Playing", game.onField, "field", game.gameNumber, playerMap, lookup, callbacks, isReadOnly));
 
   if (game.bench.length > 0) {
-    content.appendChild(renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
+    content.appendChild(renderSection("Bench", game.bench, "bench", game.gameNumber, playerMap, lookup, callbacks, isReadOnly));
   }
 
   const unavailableIds = [...unavailable].filter(
     (id) => !game.onField.includes(id) && !game.bench.includes(id),
   );
   if (unavailableIds.length > 0) {
-    content.appendChild(renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks, isCompleted));
+    content.appendChild(renderSection("Unavailable", unavailableIds, "unavailable", game.gameNumber, playerMap, lookup, callbacks, isReadOnly));
   }
 
   // Replacement suggestions
