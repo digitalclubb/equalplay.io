@@ -109,16 +109,17 @@ export function renderResults(
     // Substitution control
     const candidates = getSubCandidates(plan, currentGame, unavailable, events);
     if (candidates) {
-      const { benchRanked, fieldRanked } = candidates;
+      const { benchRanked, fieldRanked, injuredOut } = candidates;
       let inIdx = 0;
       let outIdx = 0;
 
       const strip = document.createElement("div");
       strip.className = "sub-strip";
+      if (injuredOut) strip.classList.add("sub-strip-urgent");
 
       const label = document.createElement("span");
       label.className = "sub-strip-label";
-      label.textContent = "Next sub";
+      label.textContent = injuredOut ? "Injury replacement" : "Next sub";
       strip.appendChild(label);
 
       const row = document.createElement("div");
@@ -134,7 +135,9 @@ export function renderResults(
 
       const outChip = document.createElement("button");
       outChip.type = "button";
-      outChip.className = "chip chip-bench chip-sm sub-chip";
+      outChip.className = injuredOut
+        ? "chip chip-injured chip-sm sub-chip"
+        : "chip chip-bench chip-sm sub-chip";
 
       function updateChips(animate = false): void {
         const inId = benchRanked[inIdx];

@@ -745,6 +745,11 @@ body {
   background: var(--color-bg);
 }
 
+.sub-strip-urgent {
+  border-color: var(--color-injured-bg);
+  background: #fef8f8;
+}
+
 .sub-strip-label {
   font-size: 0.7rem;
   font-weight: 600;

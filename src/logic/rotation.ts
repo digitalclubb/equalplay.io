@@ -444,18 +444,45 @@ export function getNextSubSuggestion(
  * Returns ranked lists of bench and field players for sub cycling.
  * Bench sorted by highest fairness debt (most deserving of time).
  * Field sorted by lowest fairness debt (most overplayed).
+ *
+ * Injury override: if any on-field player is injured in the current game
+ * and hasn't been subbed off yet, they are forced to position 0 in fieldRanked.
  */
 export function getSubCandidates(
   plan: RotationPlan,
   currentGameNumber: number,
   unavailableIds: Set<string>,
   events: RotationEvent[] = [],
-): { benchRanked: string[]; fieldRanked: string[] } | null {
+): { benchRanked: string[]; fieldRanked: string[]; injuredOut: boolean } | null {
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
   const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
-  const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
+
+  // Find on-field players injured THIS game who haven't been subbed off yet
+  const subbedOff = new Set<string>();
+  for (const e of events) {
+    if (e.type === "sub" && e.gameNumber === currentGameNumber) {
+      subbedOff.add(e.playerOut);
+    }
+  }
+  const injuredOnField: string[] = [];
+  for (const e of events) {
+    if (
+      e.type === "injured" &&
+      e.gameNumber === currentGameNumber &&
+      currentGame.onField.includes(e.playerId) &&
+      !subbedOff.has(e.playerId)
+    ) {
+      injuredOnField.push(e.playerId);
+    }
+  }
+
+  const injuredSet = new Set(injuredOnField);
+  const availableField = currentGame.onField.filter(
+    (id) => !unavailableIds.has(id) || injuredSet.has(id),
+  );
+
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
   const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
@@ -478,11 +505,11 @@ export function getSubCandidates(
 
     const gameSubs = subsByGame.get(game.gameNumber);
     const subbedIn = new Set<string>();
-    const subbedOut = new Set<string>();
+    const subbedOutGame = new Set<string>();
     if (gameSubs) {
       for (const sub of gameSubs) {
         subbedIn.add(sub.playerIn);
-        subbedOut.add(sub.playerOut);
+        subbedOutGame.add(sub.playerOut);
       }
     }
 
@@ -492,7 +519,7 @@ export function getSubCandidates(
       t.lastPlayedGame = game.gameNumber;
       trackers.set(id, t);
     }
-    for (const id of subbedOut) {
+    for (const id of subbedOutGame) {
       const t = trackers.get(id) ?? createTracker();
       t.playTimeUnits += SUB_APPEARANCE;
       trackers.set(id, t);
@@ -511,7 +538,13 @@ export function getSubCandidates(
     return aT.lastPlayedGame - bT.lastPlayedGame;
   });
 
+  // Injured on-field players forced to front — they must come off first
+  const hasInjury = injuredOnField.length > 0;
   const fieldRanked = [...availableField].sort((a, b) => {
+    const aInj = injuredSet.has(a);
+    const bInj = injuredSet.has(b);
+    if (aInj !== bInj) return aInj ? -1 : 1;
+
     const aT = trackers.get(a) ?? createTracker();
     const bT = trackers.get(b) ?? createTracker();
     const aDebt = fairnessDebt(aT, ppt, avgPool);
@@ -520,7 +553,7 @@ export function getSubCandidates(
     return bT.lastPlayedGame - aT.lastPlayedGame;
   });
 
-  return { benchRanked, fieldRanked };
+  return { benchRanked, fieldRanked, injuredOut: hasInjury };
 }
 
 export function getPlayerStats(

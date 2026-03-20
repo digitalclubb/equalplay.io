@@ -5,6 +5,7 @@ import {
   getReplacements,
   getUnavailableForGame,
   getNextSubSuggestion,
+  getSubCandidates,
   getPlayerStats,
 } from "../logic/rotation.js";
 import type { Player, RotationEvent } from "../types/index.js";
@@ -517,6 +518,76 @@ describe("edge cases", () => {
       if (game.gameNumber > 1) {
         expect(game.onField).not.toContain("p1");
       }
+    }
+  });
+});
+
+// ====================================================================
+// getSubCandidates — injury override
+// ====================================================================
+
+describe("getSubCandidates — injury override", () => {
+  // 7 players, 5 per team → 5 on field, 2 on bench
+  const players = makePlayers(7);
+  const ids = playerIds(players);
+  const plan = generateInitialPlan({ players, playersPerTeam: 5, numberOfGames: 3 });
+  const game1 = plan.games[0];
+
+  it("normal suggestion does not flag injuredOut", () => {
+    const unavailable = getUnavailableForGame(1, ids, []);
+    const result = getSubCandidates(plan, 1, unavailable, []);
+    expect(result).not.toBeNull();
+    expect(result!.injuredOut).toBe(false);
+    // All field players should be available, not injured
+    for (const id of result!.fieldRanked) {
+      expect(game1.onField).toContain(id);
+    }
+  });
+
+  it("injured on-field player is forced to position 0 in fieldRanked", () => {
+    const injuredId = game1.onField[2]; // pick a player in the middle
+    const events: RotationEvent[] = [
+      { type: "injured", playerId: injuredId, gameNumber: 1 },
+    ];
+    const unavailable = getUnavailableForGame(1, ids, events);
+    const result = getSubCandidates(plan, 1, unavailable, events);
+
+    expect(result).not.toBeNull();
+    expect(result!.injuredOut).toBe(true);
+    expect(result!.fieldRanked[0]).toBe(injuredId);
+  });
+
+  it("injured player who has been subbed off is not forced", () => {
+    const injuredId = game1.onField[2];
+    const replacementId = game1.bench[0];
+    const events: RotationEvent[] = [
+      { type: "injured", playerId: injuredId, gameNumber: 1 },
+      { type: "sub", gameNumber: 1, playerOut: injuredId, playerIn: replacementId },
+    ];
+    // Apply events to get rebalanced plan (as the real app does)
+    const rebalanced = applyEvents(plan, events, ids, 5, 1);
+    const unavailable = getUnavailableForGame(1, ids, events);
+    const result = getSubCandidates(rebalanced, 1, unavailable, events);
+
+    // After the sub, injuredOut should be false — the injury sub is done
+    if (result) {
+      expect(result.injuredOut).toBe(false);
+    }
+  });
+
+  it("bench player selected by fairness when injury overrides out-player", () => {
+    const injuredId = game1.onField[0];
+    const events: RotationEvent[] = [
+      { type: "injured", playerId: injuredId, gameNumber: 1 },
+    ];
+    const unavailable = getUnavailableForGame(1, ids, events);
+    const result = getSubCandidates(plan, 1, unavailable, events);
+
+    expect(result).not.toBeNull();
+    // benchRanked should only contain available bench players
+    for (const id of result!.benchRanked) {
+      expect(game1.bench).toContain(id);
+      expect(unavailable.has(id)).toBe(false);
     }
   });
 });

@@ -8,8 +8,6 @@ import { showToast } from "./components/toast.js";
 import {
   generateInitialPlan,
   applyEvents,
-  getReplacements,
-  getUnavailableForGame,
 } from "./logic/rotation.js";
 import {
   saveTeams,
@@ -232,23 +230,6 @@ export function mountApp(root: HTMLElement): void {
     return getActive().playerMap.get(playerId)?.name ?? "Player";
   }
 
-  function findReplacementName(playerId: string, gameNumber: number): string | null {
-    const team = getActive();
-    if (!team.initialPlan) return null;
-    const plan = applyEvents(
-      team.initialPlan, team.events, team.originalPlayerIds,
-      team.playersPerTeam, team.currentGame,
-    );
-    const game = plan.games.find((g) => g.gameNumber === gameNumber);
-    if (!game) return null;
-    const unavailable = getUnavailableForGame(gameNumber, team.originalPlayerIds, team.events);
-    const suggestions = getReplacements(game, unavailable);
-    const match = suggestions.find((s) => s.outPlayerId === playerId);
-    return match?.inPlayerId
-      ? team.playerMap.get(match.inPlayerId)?.name ?? null
-      : null;
-  }
-
   // ---- Callbacks ----
 
   const callbacks: ResultsCallbacks = {
@@ -268,30 +249,8 @@ export function mountApp(root: HTMLElement): void {
         const team = getActive();
         team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         team.events.push({ type: "injured", playerId, gameNumber });
-
-        // Auto-sub
-        if (team.initialPlan) {
-          const plan = applyEvents(
-            team.initialPlan, team.events, team.originalPlayerIds,
-            team.playersPerTeam, team.currentGame,
-          );
-          const game = plan.games.find((g) => g.gameNumber === gameNumber);
-          if (game) {
-            const unavailable = getUnavailableForGame(gameNumber, team.originalPlayerIds, team.events);
-            const suggestions = getReplacements(game, unavailable);
-            const match = suggestions.find((s) => s.outPlayerId === playerId);
-            if (match?.inPlayerId) {
-              team.events.push({
-                type: "sub", gameNumber,
-                playerOut: playerId, playerIn: match.inPlayerId,
-              });
-            }
-          }
-        }
       });
-      const replacementName = findReplacementName(playerId, gameNumber);
-      const detail = replacementName ? `${replacementName} comes on` : "No replacement available";
-      showToast(`${name} injured. ${detail}`, undo);
+      showToast(`${name} injured. Use Make sub to replace.`, undo);
     },
 
     onMarkJoined(playerId) {
