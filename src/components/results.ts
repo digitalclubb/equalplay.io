@@ -128,6 +128,7 @@ export function renderResults(
       const inChip = document.createElement("button");
       inChip.type = "button";
       inChip.className = "chip chip-field chip-sm sub-chip";
+      inChip.dataset.testid = "sub-in";
 
       const arrow = document.createElement("span");
       arrow.className = "sub-strip-arrow";
@@ -138,6 +139,7 @@ export function renderResults(
       outChip.className = injuredOut
         ? "chip chip-injured chip-sm sub-chip"
         : "chip chip-bench chip-sm sub-chip";
+      outChip.dataset.testid = "sub-out";
 
       function updateChips(animate = false): void {
         const inId = benchRanked[inIdx];
@@ -304,6 +306,7 @@ function renderGameCard(
 ): HTMLElement {
   const card = document.createElement("div");
   card.className = `game-card game-card-${emphasis}`;
+  card.dataset.testid = `game-${game.gameNumber}`;
 
   // ---- A. Header zone ----
   const headerRow = document.createElement("div");
@@ -517,6 +520,7 @@ function renderSection(
 ): HTMLElement {
   const section = document.createElement("div");
   section.className = "game-section";
+  section.dataset.testid = `section-${role}`;
 
   const sectionLabel = document.createElement("span");
   sectionLabel.className = `game-section-label game-section-label-${role}`;

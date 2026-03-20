@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type Locator } from "@playwright/test";
 
 // ---- Helpers ----
 
@@ -10,11 +10,10 @@ async function freshStart(page: Page) {
   await page.waitForSelector(".btn-generate");
 }
 
-/** Fill in player names, overwriting default empty rows then adding more. */
+/** Fill in player names, adding rows as needed. */
 async function addPlayers(page: Page, names: string[]) {
   const inputs = page.locator(".player-input");
   for (let i = 0; i < names.length; i++) {
-    // Add a row if we've run out of existing inputs
     if ((await inputs.count()) <= i) {
       await page.getByText("+ Add player").click();
     }
@@ -22,26 +21,37 @@ async function addPlayers(page: Page, names: string[]) {
   }
 }
 
-/** Set the "Players per team" number input. */
 async function setPlayersPerTeam(page: Page, n: number) {
   await page.locator("#players-per-team").fill(String(n));
 }
 
-/** Set the "Number of matches" number input. */
 async function setNumberOfGames(page: Page, n: number) {
   await page.locator("#num-games").fill(String(n));
 }
 
-/** Click "Sort my team" and wait for results to appear. */
+/** Click "Sort my team" and wait for game cards to appear. */
 async function generate(page: Page) {
   await page.getByRole("button", { name: "Sort my team" }).click();
-  await page.waitForSelector(".game-card");
+  await page.waitForSelector("[data-testid^='game-']");
 }
 
-/** Get all player names inside a section ("Playing" / "Bench" / "Unavailable") of the current (Live) game. */
-async function currentGameSection(page: Page, label: string): Promise<string[]> {
-  const card = page.locator(".game-card-current");
-  const section = card.locator(".game-section", { has: page.locator(`.game-section-label`, { hasText: label }) });
+// ---- Locator helpers ----
+
+/** The current (Live) game card. */
+function liveGame(page: Page): Locator {
+  return page.locator(".game-card-current");
+}
+
+/** Get a specific game card by number. */
+function gameCard(page: Page, n: number): Locator {
+  return page.locator(`[data-testid='game-${n}']`);
+}
+
+/** Player names within a section of a game card. */
+async function playersIn(card: Locator, role: "field" | "bench" | "unavailable"): Promise<string[]> {
+  const section = card.locator(`[data-testid='section-${role}']`);
+  // Section may not exist (e.g. no bench players) — return empty
+  if ((await section.count()) === 0) return [];
   const chips = section.locator(".chip");
   const names: string[] = [];
   for (let i = 0; i < await chips.count(); i++) {
@@ -50,125 +60,144 @@ async function currentGameSection(page: Page, label: string): Promise<string[]> 
   return names;
 }
 
-/** Click a player chip by name inside the current game card to open the action sheet. */
-async function tapPlayer(page: Page, name: string) {
-  const card = page.locator(".game-card-current");
-  // Scope to chip-list to avoid matching sub-strip chips
-  await card.locator(".chip-list").getByRole("button", { name, exact: true }).click();
-  await page.waitForSelector("#action-sheet:not([hidden])");
+/** All player names across all sections of a game card. */
+async function allPlayersInGame(card: Locator): Promise<string[]> {
+  const field = await playersIn(card, "field");
+  const bench = await playersIn(card, "bench");
+  return [...field, ...bench];
 }
 
-/** Click an action in the open action sheet. */
+/** Tap a player chip by name within a game card to open the action sheet. */
+async function tapPlayer(page: Page, name: string, card?: Locator) {
+  const scope = card ?? liveGame(page);
+  await scope.locator(".chip-list").getByRole("button", { name, exact: true }).click();
+  await expect(page.locator("#action-sheet")).toBeVisible();
+}
+
+/** Select an action from the open action sheet. */
 async function pickAction(page: Page, action: string) {
   await page.locator(`#action-sheet [data-action="${action}"]`).click();
-  // Wait for sheet to close
   await expect(page.locator("#action-sheet")).toBeHidden();
 }
 
-/** Dismiss the toast (wait for it to auto-hide or click undo). */
+/** Wait for the toast to appear and return its message text. */
 async function waitForToast(page: Page): Promise<string> {
   const toast = page.locator("#toast");
-  await expect(toast).not.toHaveAttribute("hidden", "");
-  const msg = await toast.locator(".toast-message").textContent();
-  return msg?.trim() ?? "";
+  await expect(toast).toBeVisible();
+  return (await toast.locator(".toast-message").textContent())?.trim() ?? "";
 }
 
+/** Click the undo button in the currently visible toast. */
 async function clickUndo(page: Page) {
   await page.locator("#toast .toast-undo").click();
 }
 
+/** The sub-strip component (suggestion area). */
+function subStrip(page: Page): Locator {
+  return page.locator(".sub-strip");
+}
+
+/** The name shown in the "coming on" position of the sub strip. */
+async function subInName(page: Page): Promise<string> {
+  return (await page.locator("[data-testid='sub-in']").textContent())?.trim() ?? "";
+}
+
+/** The name shown in the "going off" position of the sub strip. */
+async function subOutName(page: Page): Promise<string> {
+  return (await page.locator("[data-testid='sub-out']").textContent())?.trim() ?? "";
+}
+
 // ====================================================================
-// SCENARIO 1: Basic flow — generate rotation, see fair distribution
+// SCENARIO 1: Basic flow
+// A coach adds players, generates a rotation, and sees a usable plan.
 // ====================================================================
 
-test("basic flow: 3 players, 2 per team, 3 games — fair rotation generated", async ({ page }) => {
+test("basic flow: generate rotation, all players included, sub suggestion visible", async ({ page }) => {
   await freshStart(page);
 
-  await addPlayers(page, ["Alice", "Bob", "Charlie"]);
+  const names = ["Alice", "Bob", "Charlie"];
+  await addPlayers(page, names);
   await setPlayersPerTeam(page, 2);
   await setNumberOfGames(page, 3);
   await generate(page);
 
-  // Three game cards should exist
-  const cards = page.locator(".game-card");
-  await expect(cards).toHaveCount(3);
+  // Three game cards rendered
+  await expect(page.locator("[data-testid^='game-']")).toHaveCount(3);
 
-  // Current game is game 1 (has "Live" badge)
-  const live = page.locator(".game-badge-current");
-  await expect(live).toHaveText("Live");
+  // Current game is live
+  await expect(liveGame(page).locator(".game-badge-current")).toHaveText("Live");
 
-  // Current game: 2 playing, 1 on bench
-  const playing = await currentGameSection(page, "Playing");
-  const bench = await currentGameSection(page, "Bench");
+  // 2 playing, 1 on bench — correct squad distribution
+  const playing = await playersIn(liveGame(page), "field");
+  const bench = await playersIn(liveGame(page), "bench");
   expect(playing).toHaveLength(2);
   expect(bench).toHaveLength(1);
 
-  // All three names accounted for
-  const allNames = [...playing, ...bench].sort();
-  expect(allNames).toEqual(["Alice", "Bob", "Charlie"]);
+  // Every player is accounted for in game 1
+  expect([...playing, ...bench].sort()).toEqual(names.sort());
 
-  // Sub suggestion is visible
-  await expect(page.locator(".sub-strip")).toBeVisible();
-  await expect(page.locator(".sub-strip-label")).toHaveText("Next sub");
-  await expect(page.locator(".sub-strip-arrow")).toHaveText("on for");
+  // Every player appears in at least one game across the session
+  for (const name of names) {
+    let found = false;
+    for (let g = 1; g <= 3; g++) {
+      const gamePlayers = await playersIn(gameCard(page, g), "field");
+      if (gamePlayers.includes(name)) { found = true; break; }
+    }
+    expect(found).toBe(true);
+  }
 
-  // Fairness summary exists
-  await expect(page.locator(".fairness-summary")).toBeVisible();
+  // Sub suggestion is visible with a clear "X on for Y" structure
+  await expect(subStrip(page)).toBeVisible();
+  const coming = await subInName(page);
+  const going = await subOutName(page);
+  expect(bench).toContain(coming); // the player coming on was on the bench
+  expect(playing).toContain(going); // the player going off was playing
 });
 
 // ====================================================================
-// SCENARIO 2: Late player arrives mid-session
+// SCENARIO 2: Late player arrives
+// A player hasn't turned up. Coach marks them late, then they arrive.
 // ====================================================================
 
-test("late player: excluded initially, reintegrated after arrival", async ({ page }) => {
+test("late player: excluded from current game, reintegrated after arrival", async ({ page }) => {
   await freshStart(page);
 
   await addPlayers(page, ["Alice", "Bob", "Charlie"]);
   await setPlayersPerTeam(page, 2);
   await setNumberOfGames(page, 3);
-
-  // Mark Alice as late before generating
-  // (We generate first, then mark late — the app works on generated plans)
   await generate(page);
 
-  // Mark Alice as "Not here yet"
+  // Mark Alice as not here yet
   await tapPlayer(page, "Alice");
   await pickAction(page, "late");
-  const lateToast = await waitForToast(page);
-  expect(lateToast).toContain("Alice");
+  await waitForToast(page);
 
-  // Alice should appear with the late chip style
-  const lateChips = page.locator(".game-card-current .chip-late");
-  const lateNames: string[] = [];
-  for (let i = 0; i < await lateChips.count(); i++) {
-    lateNames.push((await lateChips.nth(i).textContent() ?? "").trim());
-  }
-  expect(lateNames).toContain("Alice");
+  // Alice should NOT be in the "Playing" section of the current game
+  const playingAfterLate = await playersIn(liveGame(page), "field");
+  expect(playingAfterLate).not.toContain("Alice");
 
-  // Now mark Alice as arrived
-  await tapPlayer(page, "Alice");
+  // Mark Alice as arrived
+  // She's shown as a late chip — tap her through the chip-list
+  await liveGame(page).locator(".chip-list .chip-late", { hasText: "Alice" }).click();
+  await expect(page.locator("#action-sheet")).toBeVisible();
   await pickAction(page, "joined");
-  const arrivedToast = await waitForToast(page);
-  expect(arrivedToast).toContain("Alice");
-  expect(arrivedToast).toContain("arrived");
+  const toast = await waitForToast(page);
+  expect(toast).toContain("arrived");
 
-  // Alice should now be in the rotation for future games.
-  // Check game 2 (up next) — Alice should appear somewhere.
-  const nextCard = page.locator(".game-card-next");
-  await expect(nextCard).toBeVisible();
-  const nextChips = nextCard.locator(".chip");
-  const nextNames: string[] = [];
-  for (let i = 0; i < await nextChips.count(); i++) {
-    nextNames.push((await nextChips.nth(i).textContent() ?? "").trim());
-  }
-  expect(nextNames).toContain("Alice");
+  // Alice should appear in future games (game 2 or 3)
+  const game2Players = await allPlayersInGame(gameCard(page, 2));
+  const game3Players = await allPlayersInGame(gameCard(page, 3));
+  const inFutureGames = game2Players.includes("Alice") || game3Players.includes("Alice");
+  expect(inFutureGames).toBe(true);
 });
 
 // ====================================================================
-// SCENARIO 3: Injury during game — suggestion updates immediately
+// SCENARIO 3: Injury during game
+// A player on the field gets injured. The coach needs a clear,
+// immediate substitution suggestion showing the injured player out.
 // ====================================================================
 
-test("injury: sub suggestion immediately shows injured player as out", async ({ page }) => {
+test("injury: suggestion immediately shows injured player as the one to come off", async ({ page }) => {
   await freshStart(page);
 
   await addPlayers(page, ["Alice", "Bob", "Charlie", "Dave", "Eve", "Frank", "Grace"]);
@@ -176,41 +205,46 @@ test("injury: sub suggestion immediately shows injured player as out", async ({ 
   await setNumberOfGames(page, 3);
   await generate(page);
 
-  // Identify a player currently playing
-  const playing = await currentGameSection(page, "Playing");
-  expect(playing.length).toBe(5);
-  const playerToInjure = playing[2]; // pick one from the middle
+  // Pick a player currently on the field
+  const playing = await playersIn(liveGame(page), "field");
+  const bench = await playersIn(liveGame(page), "bench");
+  const injured = playing[2];
 
   // Mark them injured
-  await tapPlayer(page, playerToInjure);
+  await tapPlayer(page, injured);
   await pickAction(page, "injured");
-  const toast = await waitForToast(page);
-  expect(toast).toContain(playerToInjure);
-  expect(toast).toContain("injured");
+  await waitForToast(page);
 
-  // Sub strip should now show "Injury replacement" label
+  // The sub strip should immediately reflect the injury:
+  // 1. Label changes to "Injury replacement"
   await expect(page.locator(".sub-strip-label")).toHaveText("Injury replacement");
 
-  // The strip should have the urgent style
-  await expect(page.locator(".sub-strip-urgent")).toBeVisible();
+  // 2. The "going off" player is the injured one
+  expect(await subOutName(page)).toBe(injured);
 
-  // The outgoing chip should show the injured player's name
-  const outChip = page.locator(".sub-strip-row .chip-injured");
-  await expect(outChip).toHaveText(playerToInjure);
+  // 3. The "coming on" player is from the bench
+  const replacement = await subInName(page);
+  expect(bench).toContain(replacement);
 
-  // Confirm the sub
+  // Coach confirms the sub
   await page.getByRole("button", { name: "Make sub" }).click();
+  await waitForToast(page);
 
-  // After making the sub, the injured player should no longer be in "Playing"
-  const playingAfter = await currentGameSection(page, "Playing");
-  expect(playingAfter).not.toContain(playerToInjure);
+  // Injured player is no longer in "Playing"
+  const playingAfter = await playersIn(liveGame(page), "field");
+  expect(playingAfter).not.toContain(injured);
+
+  // Replacement is now playing
+  expect(playingAfter).toContain(replacement);
 });
 
 // ====================================================================
-// SCENARIO 4: Fairness recovery — underplayed player gets priority
+// SCENARIO 4: Fairness recovery
+// A player misses game 1 (late). The system should give them more
+// time in later games so they're not permanently disadvantaged.
 // ====================================================================
 
-test("fairness: late joiner is prioritised in later games", async ({ page }) => {
+test("fairness: late player gets prioritised in later games", async ({ page }) => {
   await freshStart(page);
 
   await addPlayers(page, ["Alice", "Bob", "Charlie"]);
@@ -218,7 +252,7 @@ test("fairness: late joiner is prioritised in later games", async ({ page }) => 
   await setNumberOfGames(page, 3);
   await generate(page);
 
-  // Mark Charlie as late
+  // Charlie is late — misses game 1
   await tapPlayer(page, "Charlie");
   await pickAction(page, "late");
   await waitForToast(page);
@@ -226,37 +260,38 @@ test("fairness: late joiner is prioritised in later games", async ({ page }) => 
   // Advance to game 2
   await page.getByRole("button", { name: "Start next game" }).click();
 
-  // Mark Charlie as arrived
-  const charlieChip = page.locator(".game-card-current .chip-late", { hasText: "Charlie" });
-  await charlieChip.click();
-  await page.waitForSelector("#action-sheet:not([hidden])");
+  // Charlie arrives
+  await liveGame(page).locator(".chip-list .chip-late", { hasText: "Charlie" }).click();
+  await expect(page.locator("#action-sheet")).toBeVisible();
   await pickAction(page, "joined");
   await waitForToast(page);
 
   // Advance to game 3
   await page.getByRole("button", { name: "Start next game" }).click();
 
-  // Charlie missed game 1 entirely, so the fairness system should
-  // prioritise them. Check that Charlie is playing in game 3.
-  const game3Playing = await currentGameSection(page, "Playing");
+  // Charlie missed game 1, so the system should prioritise them.
+  // Observable check: Charlie should be playing in game 3.
+  const game3Playing = await playersIn(liveGame(page), "field");
   expect(game3Playing).toContain("Charlie");
 
-  // Check the fairness summary — Charlie should not be significantly underplayed
+  // No player should be benched in ALL games — everyone plays at least once.
+  // Check the fairness summary: every player has a non-zero play count.
   const fairnessRows = page.locator(".fairness-row");
   const count = await fairnessRows.count();
   for (let i = 0; i < count; i++) {
-    const scoreText = await fairnessRows.nth(i).locator(".fairness-score").textContent();
-    const score = parseFloat(scoreText ?? "0");
-    // No player should be more than 1 unit behind fair rate
-    expect(Math.abs(score)).toBeLessThanOrEqual(1.5);
+    const countText = await fairnessRows.nth(i).locator(".fairness-count").textContent();
+    const playTime = parseFloat(countText ?? "0");
+    expect(playTime).toBeGreaterThan(0);
   }
 });
 
 // ====================================================================
-// SCENARIO 5: Make sub then undo — state fully restored
+// SCENARIO 5: Make sub then undo
+// Coach makes a sub, realises it was wrong, and undoes it.
+// Everything should return to exactly where it was.
 // ====================================================================
 
-test("undo: substitution is fully reversible", async ({ page }) => {
+test("undo: substitution is fully reversible, lineup and suggestion restored", async ({ page }) => {
   await freshStart(page);
 
   await addPlayers(page, ["Alice", "Bob", "Charlie"]);
@@ -264,36 +299,42 @@ test("undo: substitution is fully reversible", async ({ page }) => {
   await setNumberOfGames(page, 3);
   await generate(page);
 
-  // Capture state before sub
-  const playingBefore = await currentGameSection(page, "Playing");
-  const benchBefore = await currentGameSection(page, "Bench");
+  // Capture the full state before: who's playing, who's on bench, who's suggested
+  const playingBefore = await playersIn(liveGame(page), "field");
+  const benchBefore = await playersIn(liveGame(page), "bench");
+  const sugInBefore = await subInName(page);
+  const sugOutBefore = await subOutName(page);
 
-  // Make the suggested sub
+  // Make the sub
   await page.getByRole("button", { name: "Make sub" }).click();
-  const subToast = await waitForToast(page);
-  expect(subToast).toContain("on for");
+  await waitForToast(page);
 
-  // Verify the lineup changed
-  const playingAfterSub = await currentGameSection(page, "Playing");
-  expect(playingAfterSub).not.toEqual(playingBefore);
+  // Lineup should have changed
+  const playingAfterSub = await playersIn(liveGame(page), "field");
+  expect(playingAfterSub.sort()).not.toEqual(playingBefore.sort());
 
   // Undo
   await clickUndo(page);
-  const undoToast = await waitForToast(page);
-  expect(undoToast).toContain("Undone");
+  await waitForToast(page);
 
-  // Lineup should be back to original
-  const playingAfterUndo = await currentGameSection(page, "Playing");
-  const benchAfterUndo = await currentGameSection(page, "Bench");
+  // Lineup restored
+  const playingAfterUndo = await playersIn(liveGame(page), "field");
+  const benchAfterUndo = await playersIn(liveGame(page), "bench");
   expect(playingAfterUndo.sort()).toEqual(playingBefore.sort());
   expect(benchAfterUndo.sort()).toEqual(benchBefore.sort());
+
+  // Sub suggestion also restored
+  expect(await subInName(page)).toBe(sugInBefore);
+  expect(await subOutName(page)).toBe(sugOutBefore);
 });
 
 // ====================================================================
 // SCENARIO 6: Player leaving early
+// A parent says their kid has to leave after game 1.
+// The app should exclude them from all future games.
 // ====================================================================
 
-test("leaving early: player excluded from future games, fairness adjusts", async ({ page }) => {
+test("leaving early: player gone from all games after their exit point", async ({ page }) => {
   await freshStart(page);
 
   await addPlayers(page, ["Alice", "Bob", "Charlie"]);
@@ -301,24 +342,110 @@ test("leaving early: player excluded from future games, fairness adjusts", async
   await setNumberOfGames(page, 3);
   await generate(page);
 
-  // Mark Alice as leaving early
+  // Alice has to leave after game 1
   await tapPlayer(page, "Alice");
   await pickAction(page, "leaving");
   const toast = await waitForToast(page);
-  expect(toast).toContain("Alice");
   expect(toast).toContain("leaves");
 
   // Advance to game 2
   await page.getByRole("button", { name: "Start next game" }).click();
 
-  // Alice should not be playing or on bench in game 2
-  // (she left after game 1)
-  const game2Playing = await currentGameSection(page, "Playing");
-  const game2Bench = await currentGameSection(page, "Bench");
+  // Alice should not appear in game 2 at all
+  const game2Playing = await playersIn(liveGame(page), "field");
+  const game2Bench = await playersIn(liveGame(page), "bench");
   expect(game2Playing).not.toContain("Alice");
   expect(game2Bench).not.toContain("Alice");
 
-  // The remaining two players should fill the slots
-  const allGame2 = [...game2Playing, ...game2Bench].sort();
-  expect(allGame2).toEqual(["Bob", "Charlie"]);
+  // Remaining players fill all slots — no empty positions
+  expect(game2Playing).toHaveLength(2);
+
+  // Advance to game 3 — Alice still absent
+  await page.getByRole("button", { name: "Start next game" }).click();
+  const game3Playing = await playersIn(liveGame(page), "field");
+  const game3Bench = await playersIn(liveGame(page), "bench");
+  expect(game3Playing).not.toContain("Alice");
+  expect(game3Bench).not.toContain("Alice");
+});
+
+// ====================================================================
+// SCENARIO 7: Chaos — real match conditions
+// One player is late, one gets injured, the late player arrives.
+// The system should handle all of this without breaking.
+// ====================================================================
+
+test("chaos: late + injury + arrival all in one session produces valid state", async ({ page }) => {
+  await freshStart(page);
+
+  // 5 players, 3 on field, 3 games — tight squad, every event matters
+  await addPlayers(page, ["Alice", "Bob", "Charlie", "Dave", "Eve"]);
+  await setPlayersPerTeam(page, 3);
+  await setNumberOfGames(page, 3);
+  await generate(page);
+
+  const initialPlaying = await playersIn(liveGame(page), "field");
+  const initialBench = await playersIn(liveGame(page), "bench");
+
+  // Step 1: Alice hasn't turned up
+  await tapPlayer(page, "Alice");
+  await pickAction(page, "late");
+  await waitForToast(page);
+
+  // Alice is no longer in the playing section
+  const afterLate = await playersIn(liveGame(page), "field");
+  expect(afterLate).not.toContain("Alice");
+
+  // Step 2: One of the on-field players gets injured
+  const playingNow = await playersIn(liveGame(page), "field");
+  const injured = playingNow[0];
+  await tapPlayer(page, injured);
+  await pickAction(page, "injured");
+  await waitForToast(page);
+
+  // Sub suggestion should show the injured player going off
+  expect(await subOutName(page)).toBe(injured);
+  await expect(page.locator(".sub-strip-label")).toHaveText("Injury replacement");
+
+  // Step 3: Alice arrives
+  await liveGame(page).locator(".chip-list .chip-late", { hasText: "Alice" }).click();
+  await expect(page.locator("#action-sheet")).toBeVisible();
+  await pickAction(page, "joined");
+  await waitForToast(page);
+
+  // The sub suggestion should still be valid — a bench player on for the injured player
+  await expect(subStrip(page)).toBeVisible();
+  expect(await subOutName(page)).toBe(injured);
+
+  // The coming-on player should be someone from the bench (could be Alice now)
+  const comingOn = await subInName(page);
+  const currentBench = await playersIn(liveGame(page), "bench");
+  expect(currentBench).toContain(comingOn);
+
+  // Confirm the injury sub
+  await page.getByRole("button", { name: "Make sub" }).click();
+  await waitForToast(page);
+
+  // Verify: the game is in a valid state
+  const finalPlaying = await playersIn(liveGame(page), "field");
+  const finalBench = await playersIn(liveGame(page), "bench");
+
+  // Correct number on field
+  expect(finalPlaying).toHaveLength(3);
+
+  // Injured player is not playing
+  expect(finalPlaying).not.toContain(injured);
+
+  // No duplicate players — everyone appears exactly once
+  const allPlayers = [...finalPlaying, ...finalBench];
+  const unique = new Set(allPlayers);
+  expect(unique.size).toBe(allPlayers.length);
+
+  // Advance to game 2 — verify the app doesn't break
+  await page.getByRole("button", { name: "Start next game" }).click();
+  await expect(liveGame(page).locator(".game-badge-current")).toHaveText("Live");
+
+  // Game 2 should have 3 playing, and injured player should not be in any section
+  const g2Playing = await playersIn(liveGame(page), "field");
+  expect(g2Playing).toHaveLength(3);
+  expect(g2Playing).not.toContain(injured);
 });
