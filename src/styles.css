@@ -684,16 +684,19 @@ body {
 }
 
 .chip-late {
+  position: relative;
   background: var(--color-late-bg);
   color: var(--color-late-text);
 }
 
 .chip-status-dot {
-  width: 7px;
-  height: 7px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--color-late-border);
-  flex-shrink: 0;
 }
 
 .chip-injured {
