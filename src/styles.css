@@ -832,6 +832,16 @@ body {
   }
 }
 
+/* Selection mode */
+.sub-strip-selection .sub-strip-label {
+  color: var(--color-secondary);
+}
+
+.chip-selected {
+  outline: 2px solid var(--color-navy);
+  outline-offset: -2px;
+}
+
 /* Balanced state — no sub needed */
 .sub-strip-balanced {
   text-align: center;

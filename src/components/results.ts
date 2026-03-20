@@ -31,6 +31,7 @@ export interface ResultsCallbacks {
   onClearStatus: (playerId: string) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
+  onBatchSub: (gameNumber: number, subs: Array<{ playerOut: string; playerIn: string }>) => void;
   onNextGame: () => void;
   onStartNew: () => void;
   onShare?: () => void;
@@ -136,6 +137,11 @@ export function renderResults(
         let inIdx = 0;
         let outIdx = 0;
 
+        // ---- Selection mode state (lives in this closure) ----
+        let selectionMode = false;
+        const selectedBench = new Set<string>();
+        const maxSubs = Math.min(benchRanked.length, fieldRanked.length);
+
         const strip = document.createElement("div");
         strip.className = "sub-strip";
         if (injuredOut) strip.classList.add("sub-strip-urgent");
@@ -164,7 +170,7 @@ export function renderResults(
           : "chip chip-bench chip-sm sub-chip";
         outChip.dataset.testid = "sub-out";
 
-        function updateChips(animate = false): void {
+        function updateDefaultPreview(animate = false): void {
           const inId = benchRanked[inIdx];
           const outId = fieldRanked[outIdx];
           const inName = playerMap.get(inId)?.name ?? "?";
@@ -185,14 +191,101 @@ export function renderResults(
           }
         }
 
-        updateChips();
+        /** Build sub pairs from selection: selected bench → most overplayed field */
+        function buildPairs(): Array<{ playerIn: string; playerOut: string }> {
+          const inIds = [...selectedBench];
+          return inIds.map((inId, i) => ({
+            playerIn: inId,
+            playerOut: fieldRanked[i],
+          }));
+        }
+
+        /** Update preview and CTA to reflect current selection */
+        function updateSelectionPreview(): void {
+          const count = selectedBench.size;
+          if (count === 0) {
+            // Show helper text, hide preview row
+            inChip.textContent = "...";
+            outChip.textContent = "...";
+            subBtn.innerHTML = `${iconSub} Make sub`;
+            subBtn.disabled = true;
+            return;
+          }
+
+          subBtn.disabled = false;
+          const pairs = buildPairs();
+          const inNames = pairs.map((p) => playerMap.get(p.playerIn)?.name ?? "?").join(", ");
+          const outNames = pairs.map((p) => playerMap.get(p.playerOut)?.name ?? "?").join(", ");
+          inChip.textContent = inNames;
+          outChip.textContent = outNames;
+          subBtn.innerHTML = count > 1
+            ? `${iconSub} Sub ${count} players`
+            : `${iconSub} Make sub`;
+        }
+
+        /** Mark bench chips as selected/deselected visually */
+        function updateBenchChipStyles(): void {
+          const benchSection = card.querySelector("[data-testid='section-bench']");
+          if (!benchSection) return;
+          const chips = benchSection.querySelectorAll<HTMLElement>(".chip");
+          chips.forEach((chip) => {
+            const id = chip.dataset.playerId;
+            if (id && selectedBench.has(id)) {
+              chip.classList.add("chip-selected");
+            } else {
+              chip.classList.remove("chip-selected");
+            }
+          });
+        }
+
+        function enterSelectionMode(): void {
+          if (selectionMode || injuredOut) return; // don't override injury flow
+          selectionMode = true;
+          strip.classList.add("sub-strip-selection");
+          label.textContent = "Select players to sub on";
+
+          // Pre-select the currently suggested bench player
+          selectedBench.clear();
+          selectedBench.add(benchRanked[inIdx]);
+          updateSelectionPreview();
+          updateBenchChipStyles();
+
+          // Remove cyclable handlers in selection mode
+          inChip.classList.remove("sub-chip-cyclable");
+          outChip.classList.remove("sub-chip-cyclable");
+        }
+
+        function exitSelectionMode(): void {
+          if (!selectionMode) return;
+          selectionMode = false;
+          selectedBench.clear();
+          strip.classList.remove("sub-strip-selection");
+          label.textContent = injuredOut ? "Injury replacement" : "Next sub";
+          subBtn.disabled = false;
+
+          // Restore default preview
+          updateDefaultPreview();
+
+          // Restore cyclable state
+          if (benchRanked.length > 1) inChip.classList.add("sub-chip-cyclable");
+          if (fieldRanked.length > 1) outChip.classList.add("sub-chip-cyclable");
+
+          // Clear visual selection
+          const benchSection = card.querySelector("[data-testid='section-bench']");
+          if (benchSection) {
+            benchSection.querySelectorAll(".chip-selected").forEach((c) => c.classList.remove("chip-selected"));
+          }
+        }
+
+        updateDefaultPreview();
 
         if (benchRanked.length > 1) {
           inChip.classList.add("sub-chip-cyclable");
           inChip.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (selectionMode) return;
             inIdx = (inIdx + 1) % benchRanked.length;
-            updateChips(true);
+            updateDefaultPreview(true);
           });
         }
 
@@ -200,8 +293,20 @@ export function renderResults(
           outChip.classList.add("sub-chip-cyclable");
           outChip.addEventListener("click", (e) => {
             e.stopPropagation();
+            if (selectionMode) return;
             outIdx = (outIdx + 1) % fieldRanked.length;
-            updateChips(true);
+            updateDefaultPreview(true);
+          });
+        }
+
+        // Tap the preview row to enter selection mode (only if multiple bench options)
+        if (benchRanked.length > 1) {
+          row.style.cursor = "pointer";
+          row.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!selectionMode) {
+              enterSelectionMode();
+            }
           });
         }
 
@@ -215,13 +320,59 @@ export function renderResults(
         subBtn.className = "btn-next-sub";
         subBtn.innerHTML = `${iconSub} Make sub`;
         subBtn.addEventListener("click", () => {
-          const inId = benchRanked[inIdx];
-          const outId = fieldRanked[outIdx];
-          callbacks.onMakeSub(currentGame, outId, inId);
+          if (selectionMode) {
+            const pairs = buildPairs();
+            if (pairs.length > 0) {
+              callbacks.onBatchSub(
+                currentGame,
+                pairs.map((p) => ({ playerOut: p.playerOut, playerIn: p.playerIn })),
+              );
+            }
+            // renderResults will be called by the callback, resetting everything
+          } else {
+            const inId = benchRanked[inIdx];
+            const outId = fieldRanked[outIdx];
+            callbacks.onMakeSub(currentGame, outId, inId);
+          }
         });
         strip.appendChild(subBtn);
 
         actionsZone.appendChild(strip);
+
+        // ---- Bench chip interception in selection mode ----
+        // Uses event delegation on the card to intercept bench chip taps
+        card.addEventListener("click", (e) => {
+          if (!selectionMode) return;
+          const target = (e.target as HTMLElement).closest<HTMLElement>("[data-testid='section-bench'] .chip");
+          if (!target) {
+            // Tapped outside bench area — exit selection mode
+            if (!(e.target as HTMLElement).closest(".sub-strip") && !(e.target as HTMLElement).closest(".game-actions")) {
+              exitSelectionMode();
+            }
+            return;
+          }
+
+          e.stopPropagation();
+          e.preventDefault();
+
+          const id = target.dataset.playerId;
+          if (!id || !benchRanked.includes(id)) return;
+
+          if (selectedBench.has(id)) {
+            selectedBench.delete(id);
+            if (selectedBench.size === 0) {
+              exitSelectionMode();
+              return;
+            }
+          } else {
+            if (selectedBench.size >= maxSubs) return; // can't select more than available field players
+            selectedBench.add(id);
+          }
+
+          updateSelectionPreview();
+          updateBenchChipStyles();
+        });
+
       } else {
         const balanced = document.createElement("div");
         balanced.className = "sub-strip-balanced";
@@ -579,6 +730,7 @@ function createChip(
 ): HTMLElement {
   const chip = document.createElement(readOnly ? "span" : "button");
   if (!readOnly) (chip as HTMLButtonElement).type = "button";
+  chip.dataset.playerId = playerId;
 
   const player = playerMap.get(playerId);
   const name = player?.name ?? playerId;
