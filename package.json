@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "lint": "oxlint src/",
     "generate-icons": "tsx scripts/generate-icons.ts"
   },
@@ -17,6 +18,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "jsdom": "^29.0.0",
     "oxlint": "^1.56.0",
     "tsx": "^4.21.0",
