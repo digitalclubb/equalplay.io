@@ -86,48 +86,51 @@ export function dismissToast(): void {
   }, 150);
 }
 
-/** Horizontal swipe-to-dismiss. */
+/** Swipe-to-dismiss: horizontal or upward (like flicking away an iOS notification). */
 function setupSwipeDismiss(toast: HTMLElement): void {
   let startX = 0;
   let startY = 0;
-  let dragging = false;
+  let axis: "x" | "y" | null = null;
 
   toast.addEventListener("touchstart", (e) => {
     const touch = e.touches[0];
     startX = touch.clientX;
     startY = touch.clientY;
-    dragging = true;
+    axis = null;
     toast.style.transition = "none";
   }, { passive: true });
 
   toast.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-
-    // Only track horizontal movement — ignore vertical scrolling
-    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 10) {
-      dragging = false;
-      toast.style.transition = "";
-      toast.style.transform = "";
-      return;
+    if (axis === null) {
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx < 5 && dy < 5) return; // haven't moved enough to decide
+      axis = dx > dy ? "x" : "y";
     }
 
-    toast.style.transform = `translateX(${dx}px)`;
-    toast.style.opacity = String(Math.max(0, 1 - Math.abs(dx) / 200));
+    if (axis === "x") {
+      const dx = e.touches[0].clientX - startX;
+      toast.style.transform = `translateX(${dx}px)`;
+      toast.style.opacity = String(Math.max(0, 1 - Math.abs(dx) / 200));
+    } else {
+      const dy = e.touches[0].clientY - startY;
+      // Only allow upward swipe (negative dy) — ignore downward
+      if (dy < 0) {
+        toast.style.transform = `translateY(${dy}px)`;
+        toast.style.opacity = String(Math.max(0, 1 - Math.abs(dy) / 100));
+      }
+    }
   }, { passive: true });
 
   toast.addEventListener("touchend", () => {
-    if (!dragging) return;
-    dragging = false;
     toast.style.transition = "";
-
-    const current = parseFloat(toast.style.opacity || "1");
-    if (current < 0.5) {
+    const opacity = parseFloat(toast.style.opacity || "1");
+    if (opacity < 0.5) {
       dismissToast();
     } else {
       toast.style.transform = "";
       toast.style.opacity = "";
     }
+    axis = null;
   });
 }

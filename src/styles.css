@@ -1217,7 +1217,7 @@ body {
 
 .toast {
   position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom));
+  top: calc(env(safe-area-inset-top, 0px) + var(--sp-sm));
   left: var(--sp-sm);
   right: var(--sp-sm);
   max-width: 460px;
@@ -1233,11 +1233,11 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   z-index: 200;
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(-6px);
   transition: opacity 0.15s ease, transform 0.15s ease;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-x;
+  touch-action: none;
   user-select: none;
 }
 
