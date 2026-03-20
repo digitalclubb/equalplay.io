@@ -42,7 +42,7 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
     <div class="setup-config setup-config-2col">
       <div class="setup-field">
         <label for="players-per-team">Players per team</label>
-        <input id="players-per-team" type="number" min="1" value="5" />
+        <input id="players-per-team" type="number" min="1" value="7" />
         <div class="field-error" id="error-playersPerTeam"></div>
       </div>
       <div class="setup-field">

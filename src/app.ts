@@ -44,7 +44,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     name,
     initialPlan: null,
     originalPlayerIds: [],
-    playersPerTeam: 5,
+    playersPerTeam: 7,
     numberOfGames: 3,
     playerMap: new Map(),
     events: [],
