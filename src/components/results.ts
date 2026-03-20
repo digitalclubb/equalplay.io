@@ -33,6 +33,9 @@ export interface ResultsCallbacks {
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
   onNextGame: () => void;
   onStartNew: () => void;
+  onShare?: () => void;
+  /** If set, the share button shows this label instead of the default */
+  shareLabel?: string;
 }
 
 type ChipStatus = "active" | "late" | "injured" | "joined" | "leaving";
@@ -57,6 +60,20 @@ export function renderResults(
   const hasNextGame = nextGameNum <= totalGames;
 
   if (!readOnly) {
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "session-actions-row";
+
+    if (callbacks.onShare) {
+      const shareBtn = document.createElement("button");
+      shareBtn.type = "button";
+      shareBtn.className = "btn-share-live";
+      shareBtn.textContent = callbacks.shareLabel ?? "Share live plan \u2197";
+      shareBtn.addEventListener("click", () => {
+        callbacks.onShare!();
+      });
+      actionsRow.appendChild(shareBtn);
+    }
+
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
     resetBtn.className = "btn-reset";
@@ -66,7 +83,9 @@ export function renderResults(
         callbacks.onStartNew();
       }
     });
-    container.appendChild(resetBtn);
+    actionsRow.appendChild(resetBtn);
+
+    container.appendChild(actionsRow);
   }
 
   const isSessionFinished = currentGame > totalGames;

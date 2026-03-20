@@ -14,8 +14,6 @@ import {
   loadTeams,
 } from "./logic/storage.js";
 import type { SavedData } from "./logic/storage.js";
-import { supabase } from "./logic/supabase.js";
-import { createSession, createOwnerSync } from "./logic/sync.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
@@ -97,9 +95,6 @@ export function mountApp(root: HTMLElement): void {
   const resultsContainer = document.createElement("div");
   resultsContainer.id = "results";
 
-  const shareContainer = document.createElement("div");
-  shareContainer.className = "share-container";
-
   // Multi-team state
   let teams: TeamState[] = [createEmptyTeam(generateTeamId(), "Team 1")];
   let activeTeamId = teams[0].id;
@@ -111,10 +106,38 @@ export function mountApp(root: HTMLElement): void {
 
   // ---- Persistence ----
 
-  // ---- Session sync ----
+  // ---- Session sync (lazy-loaded) ----
 
   let sessionId: string | null = localStorage.getItem("equalplay_session_id");
-  let ownerSync = sessionId ? createOwnerSync(sessionId) : null;
+  let ownerSync: { push(state: SavedData): void; destroy(): void } | null = null;
+  let sharePending = false;
+  let shareEnabled = false;
+
+  // Lazy-load Supabase + sync module only when needed
+  async function loadSync() {
+    const { supabase } = await import("./logic/supabase.js");
+    if (!supabase) return null;
+    const sync = await import("./logic/sync.js");
+    return { supabase, ...sync };
+  }
+
+  // Reconnect sync if session was previously shared
+  if (sessionId) {
+    loadSync().then((mod) => {
+      if (mod) {
+        shareEnabled = true;
+        ownerSync = mod.createOwnerSync(sessionId!);
+      }
+    });
+  } else {
+    // Probe for Supabase availability in the background
+    loadSync().then((mod) => {
+      if (mod) {
+        shareEnabled = true;
+        rerenderResults(); // show the share button now that we know it's available
+      }
+    });
+  }
 
   function buildSavedData(): SavedData {
     return {
@@ -192,7 +215,6 @@ export function mountApp(root: HTMLElement): void {
     const team = getActive();
     if (!team.initialPlan) {
       resultsContainer.innerHTML = "";
-      updateShareButton();
       return;
     }
 
@@ -217,7 +239,6 @@ export function mountApp(root: HTMLElement): void {
       team.gameLabels,
       callbacks,
     );
-    updateShareButton();
   }
 
   function rerenderAll(): void {
@@ -361,7 +382,70 @@ export function mountApp(root: HTMLElement): void {
       persist();
       showToast("Session cleared.");
     },
+
   };
+
+  // Share — label is a getter so it reflects current state on every render
+  Object.defineProperty(callbacks, "shareLabel", {
+    get(): string {
+      return sharePending ? "Sharing..." : "Share live plan \u2197";
+    },
+    enumerable: true,
+  });
+
+  // onShare only appears when Supabase is available (shareEnabled set async on load)
+  Object.defineProperty(callbacks, "onShare", {
+    get(): (() => Promise<void>) | undefined {
+      if (!shareEnabled) return undefined;
+      return async () => {
+        if (sharePending) return;
+
+        if (sessionId) {
+          const url = `${window.location.origin}/session/${sessionId}`;
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast("Link copied");
+          } catch {
+            showToast("Could not copy link");
+          }
+          return;
+        }
+
+        sharePending = true;
+        rerenderResults();
+
+        const mod = await loadSync();
+        if (!mod) {
+          sharePending = false;
+          rerenderResults();
+          showToast("Sharing not available.");
+          return;
+        }
+
+        const data = buildSavedData();
+        const id = await mod.createSession(data);
+        sharePending = false;
+
+        if (id) {
+          sessionId = id;
+          localStorage.setItem("equalplay_session_id", id);
+          ownerSync = mod.createOwnerSync(id);
+          const url = `${window.location.origin}/session/${id}`;
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast("Link copied. Live updates enabled.");
+          } catch {
+            showToast("Live updates enabled");
+          }
+          rerenderResults();
+        } else {
+          rerenderResults();
+          showToast("Could not share. Try again.");
+        }
+      };
+    },
+    enumerable: true,
+  });
 
   // ---- Generate ----
 
@@ -470,64 +554,9 @@ export function mountApp(root: HTMLElement): void {
     }
   }
 
-  // ---- Share button ----
-
-  function updateShareButton(): void {
-    shareContainer.innerHTML = "";
-    const hasData = getActive().initialPlan !== null;
-    if (!hasData || !supabase) return;
-
-    if (sessionId) {
-      // Already shared — show "Copy link" button
-      const copyBtn = document.createElement("button");
-      copyBtn.type = "button";
-      copyBtn.className = "btn-share";
-      copyBtn.textContent = "Copy link";
-      copyBtn.addEventListener("click", () => {
-        const url = `${window.location.origin}/session/${sessionId}`;
-        navigator.clipboard.writeText(url).then(() => {
-          showToast("Link copied");
-        }).catch(() => {
-          showToast("Could not copy link");
-        });
-      });
-      shareContainer.appendChild(copyBtn);
-    } else {
-      // Not shared yet — show "Share plan" button
-      const shareBtn = document.createElement("button");
-      shareBtn.type = "button";
-      shareBtn.className = "btn-share";
-      shareBtn.textContent = "Share plan";
-      shareBtn.addEventListener("click", async () => {
-        shareBtn.disabled = true;
-        shareBtn.textContent = "Sharing...";
-        const data = buildSavedData();
-        const id = await createSession(data);
-        if (id) {
-          sessionId = id;
-          localStorage.setItem("equalplay_session_id", id);
-          ownerSync = createOwnerSync(id);
-          const url = `${window.location.origin}/session/${id}`;
-          navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copied");
-          }).catch(() => {
-            showToast("Session shared");
-          });
-          updateShareButton();
-        } else {
-          shareBtn.disabled = false;
-          shareBtn.textContent = "Share plan";
-          showToast("Could not share. Try again.");
-        }
-      });
-      shareContainer.appendChild(shareBtn);
-    }
-  }
-
   // ---- Mount ----
 
   root.appendChild(formContainer);
   root.appendChild(resultsContainer);
-  root.appendChild(shareContainer);
   rerenderAll();
 }
