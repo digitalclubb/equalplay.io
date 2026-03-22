@@ -43,6 +43,10 @@ export interface PlayerStats {
   fairnessScore: number;
 }
 
+// ---- Match mode ----
+
+export type MatchMode = "setup" | "live";
+
 // ---- UI-layer types ----
 
 export interface ValidationErrors {

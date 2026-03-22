@@ -24,6 +24,7 @@ const noopCallbacks: ResultsCallbacks = {
   onGameLabelChange() {},
   onMakeSub() {},
   onNextGame() {},
+  onStartMatch() {},
   onStartNew() {},
 };
 

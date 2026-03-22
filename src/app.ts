@@ -17,6 +17,7 @@ import type { SavedData } from "./logic/storage.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
+  MatchMode,
   RotationEvent,
   RotationPlan,
 } from "./types/index.js";
@@ -34,6 +35,7 @@ interface TeamState {
   events: RotationEvent[];
   currentGame: number;
   gameLabels: Record<string, string>;
+  matchMode: MatchMode;
   /** Draft player names — saved before generation so they survive tab switches */
   draftPlayerNames: string[];
 }
@@ -50,6 +52,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     events: [],
     currentGame: 1,
     gameLabels: {},
+    matchMode: "setup",
     draftPlayerNames: [],
   };
 }
@@ -150,6 +153,7 @@ export function mountApp(root: HTMLElement): void {
         events: t.events,
         currentGame: t.currentGame,
         gameLabels: t.gameLabels,
+        matchMode: t.matchMode,
       })),
       activeTeamId,
     };
@@ -238,6 +242,8 @@ export function mountApp(root: HTMLElement): void {
       team.currentGame,
       team.gameLabels,
       callbacks,
+      false,
+      team.matchMode,
     );
   }
 
@@ -360,12 +366,21 @@ export function mountApp(root: HTMLElement): void {
       }
     },
 
+    onStartMatch() {
+      const team = getActive();
+      team.matchMode = "live";
+      rerenderResults();
+      persist();
+      showToast("Game 1 is live.");
+    },
+
     onStartNew() {
       const team = getActive();
       team.initialPlan = null;
       team.events = [];
       team.currentGame = 1;
       team.gameLabels = {};
+      team.matchMode = "setup";
       team.playerMap = new Map();
       team.originalPlayerIds = [];
       previousEvents = null;
@@ -481,6 +496,7 @@ export function mountApp(root: HTMLElement): void {
       team.events = [];
       team.currentGame = 1;
       team.gameLabels = {};
+      team.matchMode = "setup";
 
       rerenderResults();
       persist();
@@ -540,6 +556,7 @@ export function mountApp(root: HTMLElement): void {
         events: st.events ?? [],
         currentGame: st.currentGame ?? 1,
         gameLabels: st.gameLabels ?? {},
+        matchMode: st.matchMode ?? "setup",
         draftPlayerNames: st.players.map((p) => p.name),
       };
     });

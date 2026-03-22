@@ -1161,6 +1161,34 @@ body {
   color: var(--color-secondary);
 }
 
+/* ---- Start Match Button ---- */
+
+.btn-start-match {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: var(--touch-min);
+  margin-top: var(--sp-xs);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--color-navy);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease;
+}
+
+.btn-start-match:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
 /* ---- Game Progression Buttons ---- */
 
 .btn-next-game {

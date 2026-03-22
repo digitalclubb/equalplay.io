@@ -12,6 +12,7 @@ export interface SavedTeam {
   events: RotationEvent[];
   currentGame: number;
   gameLabels: Record<string, string>;
+  matchMode?: "setup" | "live";
 }
 
 export interface SavedData {
