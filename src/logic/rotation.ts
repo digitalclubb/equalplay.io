@@ -36,11 +36,18 @@ function selectOnField(
   trackers: Map<string, PlayerTracker>,
   playersPerTeam: number,
   avgPoolSize: number,
+  subbedOffPrevGame: Set<string> = new Set(),
 ): string[] {
   const sorted = [...available].sort((a, b) => {
     const ta = trackers.get(a) ?? createTracker();
     const tb = trackers.get(b) ?? createTracker();
-    const debtDiff = fairnessDebt(tb, playersPerTeam, avgPoolSize) - fairnessDebt(ta, playersPerTeam, avgPoolSize);
+    // Players subbed off last game get a 0.5 debt boost — they were
+    // on the bench for half a game and should be prioritised to start.
+    const aDebt = fairnessDebt(ta, playersPerTeam, avgPoolSize)
+      + (subbedOffPrevGame.has(a) ? 0.5 : 0);
+    const bDebt = fairnessDebt(tb, playersPerTeam, avgPoolSize)
+      + (subbedOffPrevGame.has(b) ? 0.5 : 0);
+    const debtDiff = bDebt - aDebt;
     if (Math.abs(debtDiff) > 0.001) return debtDiff;
     return ta.lastPlayedGame - tb.lastPlayedGame;
   });
@@ -276,6 +283,7 @@ export function applyEvents(
   }
 
   const games: Game[] = [];
+  let subbedOffPrevGame = new Set<string>();
 
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
@@ -292,14 +300,15 @@ export function applyEvents(
     );
 
     const avgPool = getAvgPoolSize(trackers) || allAvailable.length;
-    const onField = selectOnField(fieldEligible, ppt, trackers, ppt, avgPool);
+    const onField = selectOnField(fieldEligible, ppt, trackers, ppt, avgPool, subbedOffPrevGame);
     const preSubOnField = [...onField];
     const onFieldSet = new Set(onField);
 
     // Bench: all available players not on field
     const bench = allAvailable.filter((id) => !onFieldSet.has(id));
 
-    // Apply substitutions
+    // Apply substitutions and track who was subbed off this game
+    subbedOffPrevGame = new Set<string>();
     const gameSubs = resolved.subs.get(gameNumber);
     if (gameSubs) {
       for (const sub of gameSubs) {
@@ -308,6 +317,7 @@ export function applyEvents(
         if (outIdx !== -1 && inIdx !== -1) {
           onField[outIdx] = sub.playerIn;
           bench[inIdx] = sub.playerOut;
+          subbedOffPrevGame.add(sub.playerOut);
         }
       }
     }
@@ -421,33 +431,56 @@ export function getNextSubSuggestion(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
+  // Count prior sub-offs and identify who was subbed off last game
+  const subOffCount = new Map<string, number>();
+  const subbedOffPrevGame = new Set<string>();
+  for (const e of events) {
+    if (e.type === "sub") {
+      subOffCount.set(e.playerOut, (subOffCount.get(e.playerOut) ?? 0) + 1);
+      if (e.gameNumber === currentGameNumber - 1) {
+        subbedOffPrevGame.add(e.playerOut);
+      }
+    }
+  }
+
+  /** Effective debt with recency boost for recently subbed-off players */
+  function effectiveDebt(id: string): number {
+    const t = trackers.get(id) ?? createTracker();
+    return fairnessDebt(t, ppt, avgPool)
+      + (subbedOffPrevGame.has(id) ? 0.5 : 0);
+  }
+
   const playerIn = availableBench.reduce((best, id) => {
-    const bestT = trackers.get(best) ?? createTracker();
-    const thisT = trackers.get(id) ?? createTracker();
-    const bestDebt = fairnessDebt(bestT, ppt, avgPool);
-    const thisDebt = fairnessDebt(thisT, ppt, avgPool);
+    const bestDebt = effectiveDebt(best);
+    const thisDebt = effectiveDebt(id);
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt > bestDebt ? id : best;
     }
+    const bestT = trackers.get(best) ?? createTracker();
+    const thisT = trackers.get(id) ?? createTracker();
     return thisT.lastPlayedGame < bestT.lastPlayedGame ? id : best;
   });
 
   const playerOut = availableField.reduce((best, id) => {
-    const bestT = trackers.get(best) ?? createTracker();
-    const thisT = trackers.get(id) ?? createTracker();
-    const bestDebt = fairnessDebt(bestT, ppt, avgPool);
-    const thisDebt = fairnessDebt(thisT, ppt, avgPool);
+    const bestDebt = effectiveDebt(best);
+    const thisDebt = effectiveDebt(id);
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt < bestDebt ? id : best;
     }
+    // Spread sub burden: prefer player with fewer prior sub-offs
+    const bestOffs = subOffCount.get(best) ?? 0;
+    const thisOffs = subOffCount.get(id) ?? 0;
+    if (thisOffs !== bestOffs) {
+      return thisOffs < bestOffs ? id : best;
+    }
+    const bestT = trackers.get(best) ?? createTracker();
+    const thisT = trackers.get(id) ?? createTracker();
     return thisT.lastPlayedGame > bestT.lastPlayedGame ? id : best;
   });
 
   // Only recommend if the sub would improve fairness
-  const inT = trackers.get(playerIn) ?? createTracker();
-  const outT = trackers.get(playerOut) ?? createTracker();
-  const inDebt = fairnessDebt(inT, ppt, avgPool);
-  const outDebt = fairnessDebt(outT, ppt, avgPool);
+  const inDebt = effectiveDebt(playerIn);
+  const outDebt = effectiveDebt(playerOut);
   if (inDebt <= outDebt + 0.001) return null;
 
   return { playerIn, playerOut };
@@ -542,12 +575,31 @@ export function getSubCandidates(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
+  // Count sub-offs and identify who was subbed off last game — recency boost
+  const subOffCount = new Map<string, number>();
+  const subbedOffPrevGame = new Set<string>();
+  for (const e of events) {
+    if (e.type === "sub") {
+      subOffCount.set(e.playerOut, (subOffCount.get(e.playerOut) ?? 0) + 1);
+      if (e.gameNumber === currentGameNumber - 1) {
+        subbedOffPrevGame.add(e.playerOut);
+      }
+    }
+  }
+
+  /** Effective debt with recency boost for recently subbed-off players */
+  function effectiveDebt(id: string): number {
+    const t = trackers.get(id) ?? createTracker();
+    return fairnessDebt(t, ppt, avgPool)
+      + (subbedOffPrevGame.has(id) ? 0.5 : 0);
+  }
+
   const benchRanked = [...availableBench].sort((a, b) => {
+    const aDebt = effectiveDebt(a);
+    const bDebt = effectiveDebt(b);
+    if (Math.abs(aDebt - bDebt) > 0.001) return bDebt - aDebt;
     const aT = trackers.get(a) ?? createTracker();
     const bT = trackers.get(b) ?? createTracker();
-    const aDebt = fairnessDebt(aT, ppt, avgPool);
-    const bDebt = fairnessDebt(bT, ppt, avgPool);
-    if (Math.abs(aDebt - bDebt) > 0.001) return bDebt - aDebt;
     return aT.lastPlayedGame - bT.lastPlayedGame;
   });
 
@@ -558,11 +610,15 @@ export function getSubCandidates(
     const bInj = injuredSet.has(b);
     if (aInj !== bInj) return aInj ? -1 : 1;
 
+    const aDebt = effectiveDebt(a);
+    const bDebt = effectiveDebt(b);
+    if (Math.abs(aDebt - bDebt) > 0.001) return aDebt - bDebt;
+    // Spread sub burden: fewer prior sub-offs = picked off first
+    const aOffs = subOffCount.get(a) ?? 0;
+    const bOffs = subOffCount.get(b) ?? 0;
+    if (aOffs !== bOffs) return aOffs - bOffs;
     const aT = trackers.get(a) ?? createTracker();
     const bT = trackers.get(b) ?? createTracker();
-    const aDebt = fairnessDebt(aT, ppt, avgPool);
-    const bDebt = fairnessDebt(bT, ppt, avgPool);
-    if (Math.abs(aDebt - bDebt) > 0.001) return aDebt - bDebt;
     return bT.lastPlayedGame - aT.lastPlayedGame;
   });
 
@@ -572,10 +628,8 @@ export function getSubCandidates(
   // (e.g. 10 players, 5 per team, game 2 — everyone has equal time),
   // any sub would worsen fairness.  Injury overrides skip this check.
   if (!hasInjury) {
-    const topBenchT = trackers.get(benchRanked[0]) ?? createTracker();
-    const topFieldT = trackers.get(fieldRanked[0]) ?? createTracker();
-    const topBenchDebt = fairnessDebt(topBenchT, ppt, avgPool);
-    const topFieldDebt = fairnessDebt(topFieldT, ppt, avgPool);
+    const topBenchDebt = effectiveDebt(benchRanked[0]);
+    const topFieldDebt = effectiveDebt(fieldRanked[0]);
     if (topBenchDebt <= topFieldDebt + 0.001) return null;
   }
 
