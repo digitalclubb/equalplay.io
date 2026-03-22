@@ -437,6 +437,13 @@ export function getNextSubSuggestion(
     return thisT.lastPlayedGame > bestT.lastPlayedGame ? id : best;
   });
 
+  // Only recommend if the sub would improve fairness
+  const inT = trackers.get(playerIn) ?? createTracker();
+  const outT = trackers.get(playerOut) ?? createTracker();
+  const inDebt = fairnessDebt(inT, ppt, avgPool);
+  const outDebt = fairnessDebt(outT, ppt, avgPool);
+  if (inDebt <= outDebt + 0.001) return null;
+
   return { playerIn, playerOut };
 }
 
@@ -552,6 +559,19 @@ export function getSubCandidates(
     if (Math.abs(aDebt - bDebt) > 0.001) return aDebt - bDebt;
     return bT.lastPlayedGame - aT.lastPlayedGame;
   });
+
+  // Only recommend a sub if it would actually improve fairness:
+  // the most deserving bench player must have higher debt than the
+  // most overplayed field player.  When the lineup is already balanced
+  // (e.g. 10 players, 5 per team, game 2 — everyone has equal time),
+  // any sub would worsen fairness.  Injury overrides skip this check.
+  if (!hasInjury) {
+    const topBenchT = trackers.get(benchRanked[0]) ?? createTracker();
+    const topFieldT = trackers.get(fieldRanked[0]) ?? createTracker();
+    const topBenchDebt = fairnessDebt(topBenchT, ppt, avgPool);
+    const topFieldDebt = fairnessDebt(topFieldT, ppt, avgPool);
+    if (topBenchDebt <= topFieldDebt + 0.001) return null;
+  }
 
   return { benchRanked, fieldRanked, injuredOut: hasInjury };
 }
