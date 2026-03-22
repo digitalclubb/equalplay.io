@@ -574,6 +574,76 @@ body {
   color: var(--color-primary);
 }
 
+/* ---- Team Size Stepper ---- */
+
+.team-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-xs) 0;
+}
+
+.team-size-label {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+}
+
+.team-size-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.team-size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.team-size-btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.team-size-btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.team-size-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.team-size-btn:active:not(:disabled) {
+  background: var(--color-border);
+}
+
+.team-size-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--sp-xs);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.team-size-value-modified {
+  color: var(--color-primary);
+}
+
 .game-badge-current {
   font-size: 0.6rem;
   font-weight: 800;

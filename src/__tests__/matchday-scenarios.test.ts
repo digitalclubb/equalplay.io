@@ -763,3 +763,147 @@ describe("scenario 8: late arrival momentum fairness", () => {
     });
   });
 });
+
+// ====================================================================
+// SCENARIO 9: DYNAMIC TEAM SIZE
+//
+// 9 players, normally 7 on field. Coach reduces game 3 to 6 on field.
+// The extra bench spot should go to the most-played player,
+// and underplayed players should remain on field.
+// ====================================================================
+
+describe("scenario 9: dynamic team size (9 players, 7→6 in final game)", () => {
+  const { players, ids } = squad(9);
+  const perTeam = 7;
+  const numGames = 3;
+  const plan = generateInitialPlan({ players, playersPerTeam: perTeam, numberOfGames: numGames });
+
+  // Override: game 3 has 6 on field instead of 7
+  const overrides: Record<number, number> = { 3: 6 };
+
+  it("games 1 and 2 have 7 on field as normal", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    expect(result.games[0].onField).toHaveLength(7);
+    expect(result.games[1].onField).toHaveLength(7);
+  });
+
+  it("game 3 has 6 on field and 3 on bench", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    expect(result.games[2].onField).toHaveLength(6);
+    expect(result.games[2].bench).toHaveLength(3);
+  });
+
+  it("everyone is still accounted for in game 3", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    const g3 = result.games[2];
+    const all = [...g3.onField, ...g3.bench].sort();
+    expect(all).toEqual([...ids].sort());
+  });
+
+  it("the extra benched player in game 3 had the most play time going in", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    const g3 = result.games[2];
+
+    // Check PRE-game-3 play time (games 1+2 only) to verify the fairness
+    // algorithm benched the most-played players for the smaller game.
+    const preGame3Plan = { games: result.games.slice(0, 2) };
+    const preStats = getPlayerStats(preGame3Plan, ids);
+
+    const benchPreTime = g3.bench.map(
+      (id) => preStats.find((s) => s.playerId === id)!.playTimeUnits,
+    );
+    const fieldPreTime = g3.onField.map(
+      (id) => preStats.find((s) => s.playerId === id)!.playTimeUnits,
+    );
+
+    // Every bench player's pre-game time should be >= every field player's
+    const minBenchTime = Math.min(...benchPreTime);
+    const maxFieldTime = Math.max(...fieldPreTime);
+    expect(minBenchTime).toBeGreaterThanOrEqual(maxFieldTime);
+  });
+
+  it("underplayed players remain on field in the reduced-size game", () => {
+    // Players benched in game 1 should still be on field in game 3
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    const g1Bench = new Set(result.games[0].bench);
+    const g3OnField = new Set(result.games[2].onField);
+
+    // Players who were benched in game 1 (underplayed) should be on field in game 3
+    for (const id of g1Bench) {
+      expect(g3OnField.has(id)).toBe(true);
+    }
+  });
+
+  it("total play slots reflect the different team sizes", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    const stats = getPlayerStats(result, ids);
+    const total = stats.reduce((sum, s) => sum + s.playTimeUnits, 0);
+    // 7 + 7 + 6 = 20 total slots
+    expect(total).toBeCloseTo(20, 1);
+  });
+
+  it("fairness spread remains tight despite uneven team sizes", () => {
+    const result = applyEvents(plan, [], ids, perTeam, 1, overrides);
+    const stats = getPlayerStats(result, ids);
+    const times = stats.map((s) => s.playTimeUnits);
+    const spread = Math.max(...times) - Math.min(...times);
+    // With 9 players and 7+7+6=20 slots, perfect = 20/9 ≈ 2.22 each
+    // Spread should be at most 1 game
+    expect(spread).toBeLessThanOrEqual(1);
+  });
+
+  it("works with events applied (late player + team size change)", () => {
+    const latePlayer = "p1";
+    const events: RotationEvent[] = [
+      { type: "late", playerId: latePlayer },
+      { type: "joined", playerId: latePlayer, duringGame: 1 },
+    ];
+
+    const result = applyEvents(plan, events, ids, perTeam, 1, overrides);
+
+    // Late player is on bench game 1, on field game 2+
+    expect(result.games[0].onField).not.toContain(latePlayer);
+    expect(result.games[1].onField).toContain(latePlayer);
+
+    // Game 3 still has 6 on field despite the late event
+    expect(result.games[2].onField).toHaveLength(6);
+
+    // Late player should be on field in game 3 (they're underplayed)
+    expect(result.games[2].onField).toContain(latePlayer);
+  });
+
+  it("generateInitialPlan also supports per-game overrides", () => {
+    const customPlan = generateInitialPlan(
+      { players, playersPerTeam: perTeam, numberOfGames: numGames },
+      overrides,
+    );
+
+    expect(customPlan.games[0].onField).toHaveLength(7);
+    expect(customPlan.games[1].onField).toHaveLength(7);
+    expect(customPlan.games[2].onField).toHaveLength(6);
+    expect(customPlan.games[2].bench).toHaveLength(3);
+  });
+
+  it("increasing team size for a game also works", () => {
+    // Normally 7, but game 2 needs 8 (only 1 on bench)
+    const bigOverrides: Record<number, number> = { 2: 8 };
+    const result = applyEvents(plan, [], ids, perTeam, 1, bigOverrides);
+
+    expect(result.games[0].onField).toHaveLength(7);
+    expect(result.games[1].onField).toHaveLength(8);
+    expect(result.games[1].bench).toHaveLength(1);
+    expect(result.games[2].onField).toHaveLength(7);
+  });
+
+  it("setting team size equal to default has no effect", () => {
+    const noopOverrides: Record<number, number> = { 2: perTeam };
+    const result = applyEvents(plan, [], ids, perTeam, 1, noopOverrides);
+    const baseline = applyEvents(plan, [], ids, perTeam, 1);
+
+    // Lineups should be identical since we didn't actually change anything
+    // (applyEvents with overrides but same size should match)
+    for (let i = 0; i < numGames; i++) {
+      expect(result.games[i].onField.sort()).toEqual(baseline.games[i].onField.sort());
+    }
+  });
+});

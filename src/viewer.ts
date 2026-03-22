@@ -21,6 +21,7 @@ const noopCallbacks: ResultsCallbacks = {
   onMarkJoined() {},
   onMarkLeaving() {},
   onClearStatus() {},
+  onTeamSizeChange() {},
   onGameLabelChange() {},
   onMakeSub() {},
   onNextGame() {},

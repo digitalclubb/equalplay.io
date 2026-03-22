@@ -13,6 +13,7 @@ export interface SavedTeam {
   currentGame: number;
   gameLabels: Record<string, string>;
   matchMode?: "setup" | "live";
+  teamSizeOverrides?: Record<string, number>;
 }
 
 export interface SavedData {

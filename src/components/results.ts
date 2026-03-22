@@ -29,6 +29,7 @@ export interface ResultsCallbacks {
   onMarkJoined: (playerId: string) => void;
   onMarkLeaving: (playerId: string, afterGame: number) => void;
   onClearStatus: (playerId: string) => void;
+  onTeamSizeChange: (gameNumber: number, size: number) => void;
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
   onNextGame: () => void;
@@ -45,7 +46,7 @@ export function renderResults(
   container: HTMLElement,
   plan: RotationPlan,
   playerMap: PlayerMap,
-  _playersPerTeam: number,
+  playersPerTeam: number,
   events: RotationEvent[],
   allPlayerIds: string[],
   currentGame: number,
@@ -53,6 +54,7 @@ export function renderResults(
   callbacks: ResultsCallbacks,
   readOnly = false,
   matchMode: "setup" | "live" = "live",
+  teamSizeOverrides: Record<string, number> = {},
 ): void {
   container.innerHTML = "";
 
@@ -107,7 +109,7 @@ export function renderResults(
     if (game.gameNumber >= currentGame) break;
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks, readOnly),
+      renderGameCard(game, playerMap, lookup, unavailable, "completed", gameLabels, callbacks, readOnly, playersPerTeam, teamSizeOverrides),
     );
   }
 
@@ -122,6 +124,7 @@ export function renderResults(
     const card = renderGameCard(
       currentGameData, playerMap, lookup, unavailable,
       isLive ? "current" : "next", gameLabels, callbacks, readOnly,
+      playersPerTeam, teamSizeOverrides,
     );
 
     if (!readOnly) {
@@ -276,7 +279,7 @@ export function renderResults(
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
     const emphasis: GameEmphasis = game.gameNumber === nextGameNum ? "next" : "future";
     container.appendChild(
-      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks, readOnly),
+      renderGameCard(game, playerMap, lookup, unavailable, emphasis, gameLabels, callbacks, readOnly, playersPerTeam, teamSizeOverrides),
     );
   }
 
@@ -348,6 +351,8 @@ function renderGameCard(
   gameLabels: Record<string, string>,
   callbacks: ResultsCallbacks,
   readOnly = false,
+  defaultTeamSize = 0,
+  teamSizeOverrides: Record<string, number> = {},
 ): HTMLElement {
   const card = document.createElement("div");
   card.className = `game-card game-card-${emphasis}`;
@@ -373,6 +378,62 @@ function renderGameCard(
 
   card.appendChild(headerRow);
 
+  // ---- Team size control (editable in setup/future, not completed) ----
+  if (!readOnly && emphasis !== "completed" && defaultTeamSize > 0) {
+    const currentSize = teamSizeOverrides[String(game.gameNumber)] ?? defaultTeamSize;
+    const totalPlayers = game.onField.length + game.bench.length;
+    const maxSize = totalPlayers;
+    const minSize = 1;
+
+    const sizeRow = document.createElement("div");
+    sizeRow.className = "team-size-row";
+
+    const sizeLabel = document.createElement("span");
+    sizeLabel.className = "team-size-label";
+    sizeLabel.textContent = "Players on field";
+    sizeRow.appendChild(sizeLabel);
+
+    const stepper = document.createElement("div");
+    stepper.className = "team-size-stepper";
+
+    const minusBtn = document.createElement("button");
+    minusBtn.type = "button";
+    minusBtn.className = "team-size-btn";
+    minusBtn.textContent = "\u2212";
+    minusBtn.disabled = currentSize <= minSize;
+    minusBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (currentSize > minSize) {
+        callbacks.onTeamSizeChange(game.gameNumber, currentSize - 1);
+      }
+    });
+
+    const sizeDisplay = document.createElement("span");
+    sizeDisplay.className = "team-size-value";
+    sizeDisplay.textContent = String(currentSize);
+    if (currentSize !== defaultTeamSize) {
+      sizeDisplay.classList.add("team-size-value-modified");
+    }
+
+    const plusBtn = document.createElement("button");
+    plusBtn.type = "button";
+    plusBtn.className = "team-size-btn";
+    plusBtn.textContent = "+";
+    plusBtn.disabled = currentSize >= maxSize;
+    plusBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (currentSize < maxSize) {
+        callbacks.onTeamSizeChange(game.gameNumber, currentSize + 1);
+      }
+    });
+
+    stepper.appendChild(minusBtn);
+    stepper.appendChild(sizeDisplay);
+    stepper.appendChild(plusBtn);
+    sizeRow.appendChild(stepper);
+    card.appendChild(sizeRow);
+  }
+
   // ---- B. Players zone ----
   const content = document.createElement("div");
   content.className = "game-content";
@@ -383,6 +444,7 @@ function renderGameCard(
     headerRow.classList.add("game-header-collapsible");
     headerRow.addEventListener("click", (e) => {
       if ((e.target as HTMLElement).classList.contains("match-detail-input")) return;
+      if ((e.target as HTMLElement).closest(".team-size-stepper")) return;
       content.classList.toggle("game-content-collapsed");
     });
   }

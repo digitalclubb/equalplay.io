@@ -36,6 +36,7 @@ interface TeamState {
   currentGame: number;
   gameLabels: Record<string, string>;
   matchMode: MatchMode;
+  teamSizeOverrides: Record<string, number>;
   /** Draft player names — saved before generation so they survive tab switches */
   draftPlayerNames: string[];
 }
@@ -53,6 +54,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     currentGame: 1,
     gameLabels: {},
     matchMode: "setup",
+    teamSizeOverrides: {},
     draftPlayerNames: [],
   };
 }
@@ -154,6 +156,7 @@ export function mountApp(root: HTMLElement): void {
         currentGame: t.currentGame,
         gameLabels: t.gameLabels,
         matchMode: t.matchMode,
+        teamSizeOverrides: t.teamSizeOverrides,
       })),
       activeTeamId,
     };
@@ -215,6 +218,15 @@ export function mountApp(root: HTMLElement): void {
     );
   }
 
+  /** Convert string-keyed overrides to number-keyed for the logic layer */
+  function numericOverrides(overrides: Record<string, number>): Record<number, number> | undefined {
+    const keys = Object.keys(overrides);
+    if (keys.length === 0) return undefined;
+    const out: Record<number, number> = {};
+    for (const k of keys) out[Number(k)] = overrides[k];
+    return out;
+  }
+
   function rerenderResults(): void {
     const team = getActive();
     if (!team.initialPlan) {
@@ -222,13 +234,16 @@ export function mountApp(root: HTMLElement): void {
       return;
     }
 
-    const plan = team.events.length > 0
+    const overrides = numericOverrides(team.teamSizeOverrides);
+    const needsRecompute = team.events.length > 0 || overrides;
+    const plan = needsRecompute
       ? applyEvents(
           team.initialPlan,
           team.events,
           team.originalPlayerIds,
           team.playersPerTeam,
           team.currentGame,
+          overrides,
         )
       : team.initialPlan;
 
@@ -244,6 +259,7 @@ export function mountApp(root: HTMLElement): void {
       callbacks,
       false,
       team.matchMode,
+      team.teamSizeOverrides,
     );
   }
 
@@ -331,6 +347,17 @@ export function mountApp(root: HTMLElement): void {
       showToast(`${name} is back in the rotation.`, undo);
     },
 
+    onTeamSizeChange(gameNumber, size) {
+      const team = getActive();
+      if (size === team.playersPerTeam) {
+        delete team.teamSizeOverrides[String(gameNumber)];
+      } else {
+        team.teamSizeOverrides[String(gameNumber)] = size;
+      }
+      rerenderResults();
+      persist();
+    },
+
     onGameLabelChange(gameNumber, label) {
       const team = getActive();
       if (label) {
@@ -381,6 +408,7 @@ export function mountApp(root: HTMLElement): void {
       team.currentGame = 1;
       team.gameLabels = {};
       team.matchMode = "setup";
+      team.teamSizeOverrides = {};
       team.playerMap = new Map();
       team.originalPlayerIds = [];
       previousEvents = null;
@@ -497,6 +525,7 @@ export function mountApp(root: HTMLElement): void {
       team.currentGame = 1;
       team.gameLabels = {};
       team.matchMode = "setup";
+      team.teamSizeOverrides = {};
 
       rerenderResults();
       persist();
@@ -557,6 +586,7 @@ export function mountApp(root: HTMLElement): void {
         currentGame: st.currentGame ?? 1,
         gameLabels: st.gameLabels ?? {},
         matchMode: st.matchMode ?? "setup",
+        teamSizeOverrides: st.teamSizeOverrides ?? {},
         draftPlayerNames: st.players.map((p) => p.name),
       };
     });

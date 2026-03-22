@@ -102,7 +102,10 @@ function getAvgPoolSize(trackers: Map<string, PlayerTracker>): number {
 
 // ---- Plan generation ----
 
-export function generateInitialPlan(config: RotationConfig): RotationPlan {
+export function generateInitialPlan(
+  config: RotationConfig,
+  teamSizeOverrides?: Record<number, number>,
+): RotationPlan {
   const { players, playersPerTeam, numberOfGames } = config;
   const ids = players.map((p) => p.id);
   const trackers = new Map<string, PlayerTracker>();
@@ -114,8 +117,9 @@ export function generateInitialPlan(config: RotationConfig): RotationPlan {
   const games: Game[] = [];
   for (let i = 0; i < numberOfGames; i++) {
     const gameNumber = i + 1;
+    const ppt = teamSizeOverrides?.[gameNumber] ?? playersPerTeam;
     const avgPool = ids.length;
-    const onField = selectOnField(ids, playersPerTeam, trackers, playersPerTeam, avgPool);
+    const onField = selectOnField(ids, ppt, trackers, ppt, avgPool);
     const onFieldSet = new Set(onField);
     const bench = ids.filter((id) => !onFieldSet.has(id));
 
@@ -260,8 +264,9 @@ export function applyEvents(
   allPlayerIds: string[],
   playersPerTeam: number,
   _currentGame: number,
+  teamSizeOverrides?: Record<number, number>,
 ): RotationPlan {
-  if (events.length === 0) return plan;
+  if (events.length === 0 && !teamSizeOverrides) return plan;
 
   const resolved = resolveEvents(events);
   const trackers = new Map<string, PlayerTracker>();
@@ -274,6 +279,7 @@ export function applyEvents(
 
   for (let i = 0; i < plan.games.length; i++) {
     const gameNumber = i + 1;
+    const ppt = teamSizeOverrides?.[gameNumber] ?? playersPerTeam;
 
     // Who can be selected for on-field?
     const fieldEligible = allPlayerIds.filter((id) =>
@@ -286,7 +292,7 @@ export function applyEvents(
     );
 
     const avgPool = getAvgPoolSize(trackers) || allAvailable.length;
-    const onField = selectOnField(fieldEligible, playersPerTeam, trackers, playersPerTeam, avgPool);
+    const onField = selectOnField(fieldEligible, ppt, trackers, ppt, avgPool);
     const preSubOnField = [...onField];
     const onFieldSet = new Set(onField);
 
