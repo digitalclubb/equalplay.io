@@ -382,7 +382,17 @@ export function getNextSubSuggestion(
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
-  const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
+  // Late+joined players in their arrival game should not be recommended —
+  // children who arrived on time get priority for this game.
+  const resolved = resolveEvents(events);
+  const availableBench = currentGame.bench.filter((id) => {
+    if (unavailableIds.has(id)) return false;
+    if (resolved.lateIds.has(id)) {
+      const arrivedDuring = resolved.joinedDuring.get(id);
+      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) return false;
+    }
+    return true;
+  });
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
@@ -424,6 +434,7 @@ export function getNextSubSuggestion(
     for (const id of subbedOut) {
       const t = trackers.get(id) ?? createTracker();
       t.playTimeUnits += SUB_APPEARANCE;
+      t.lastPlayedGame = game.gameNumber;
       trackers.set(id, t);
     }
   }
@@ -503,7 +514,17 @@ export function getSubCandidates(
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
-  const availableBench = currentGame.bench.filter((id) => !unavailableIds.has(id));
+  // Late+joined players in their arrival game should not be recommended —
+  // children who arrived on time get priority for this game.
+  const resolved = resolveEvents(events);
+  const availableBench = currentGame.bench.filter((id) => {
+    if (unavailableIds.has(id)) return false;
+    if (resolved.lateIds.has(id)) {
+      const arrivedDuring = resolved.joinedDuring.get(id);
+      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) return false;
+    }
+    return true;
+  });
 
   // Find on-field players injured THIS game who haven't been subbed off yet
   const subbedOff = new Set<string>();
@@ -568,6 +589,7 @@ export function getSubCandidates(
     for (const id of subbedOutGame) {
       const t = trackers.get(id) ?? createTracker();
       t.playTimeUnits += SUB_APPEARANCE;
+      t.lastPlayedGame = game.gameNumber;
       trackers.set(id, t);
     }
   }

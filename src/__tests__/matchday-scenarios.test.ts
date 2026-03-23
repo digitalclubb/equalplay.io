@@ -907,3 +907,93 @@ describe("scenario 9: dynamic team size (9 players, 7→6 in final game)", () =>
     }
   });
 });
+
+// ====================================================================
+// SCENARIO 10: TEAM SIZE DROP — EQUAL PLAY TIME EDGE CASE
+//
+// 7 players, all 7 on field for games 1-2, then drop to 5 for game 3.
+// Everyone has identical play time. The algorithm can't be "fair" about
+// who sits — but it MUST still be structurally correct.
+// ====================================================================
+
+describe("scenario 10: team size drop when all players have equal time", () => {
+  const { players, ids } = squad(7);
+  const plan = generateInitialPlan({ players, playersPerTeam: 7, numberOfGames: 3 });
+  const overrides: Record<number, number> = { 3: 5 };
+
+  it("games 1-2: all 7 on field (no bench)", () => {
+    const result = applyEvents(plan, [], ids, 7, 1, overrides);
+    expect(result.games[0].onField).toHaveLength(7);
+    expect(result.games[0].bench).toHaveLength(0);
+    expect(result.games[1].onField).toHaveLength(7);
+    expect(result.games[1].bench).toHaveLength(0);
+  });
+
+  it("game 3: exactly 5 on field, 2 on bench", () => {
+    const result = applyEvents(plan, [], ids, 7, 1, overrides);
+    expect(result.games[2].onField).toHaveLength(5);
+    expect(result.games[2].bench).toHaveLength(2);
+  });
+
+  it("everyone accounted for — no player lost", () => {
+    const result = applyEvents(plan, [], ids, 7, 1, overrides);
+    const all = [...result.games[2].onField, ...result.games[2].bench].sort();
+    expect(all).toEqual([...ids].sort());
+  });
+
+  it("total play slots = 7+7+5 = 19", () => {
+    const result = applyEvents(plan, [], ids, 7, 1, overrides);
+    const stats = getPlayerStats(result, ids);
+    const total = stats.reduce((sum, s) => sum + s.playTimeUnits, 0);
+    expect(total).toBeCloseTo(19, 1);
+  });
+
+  it("play time spread ≤ 1 game (the 2 benched miss exactly 1 game)", () => {
+    const result = applyEvents(plan, [], ids, 7, 1, overrides);
+    const stats = getPlayerStats(result, ids);
+    const times = stats.map((s) => s.playTimeUnits);
+    // 5 players get 3 games (3.0), 2 players get 2 games (2.0)
+    expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(1);
+  });
+});
+
+// ====================================================================
+// SCENARIO 11: TEAM SIZE DROP WITH PRIOR DIFFERENTIATION
+//
+// 7 players, 5 per team for 2 games (with bench rotation), then
+// drop to 3 for game 3. The 3 who played LEAST should stay on field.
+// ====================================================================
+
+describe("scenario 11: team size drop with prior bench rotation (7p 5v→3v)", () => {
+  const { players, ids } = squad(7);
+  const plan = generateInitialPlan({ players, playersPerTeam: 5, numberOfGames: 3 });
+  const overrides: Record<number, number> = { 3: 3 };
+
+  it("game 3 field players are the ones with least pre-game time", () => {
+    const result = applyEvents(plan, [], ids, 5, 1, overrides);
+    const g3 = result.games[2];
+
+    // Pre-game-3 stats (games 1-2 only)
+    const preG3Plan = { games: result.games.slice(0, 2) };
+    const preStats = getPlayerStats(preG3Plan, ids);
+
+    const fieldPreTime = g3.onField.map(
+      (id) => preStats.find((s) => s.playerId === id)!.playTimeUnits,
+    );
+    const benchPreTime = g3.bench.map(
+      (id) => preStats.find((s) => s.playerId === id)!.playTimeUnits,
+    );
+
+    // Every field player should have ≤ play time of every bench player
+    const maxField = Math.max(...fieldPreTime);
+    const minBench = Math.min(...benchPreTime);
+    expect(maxField).toBeLessThanOrEqual(minBench);
+  });
+
+  it("fairness spread stays ≤ 1 across all 3 games", () => {
+    const result = applyEvents(plan, [], ids, 5, 1, overrides);
+    const stats = getPlayerStats(result, ids);
+    const times = stats.map((s) => s.playTimeUnits);
+    expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(1);
+  });
+});
