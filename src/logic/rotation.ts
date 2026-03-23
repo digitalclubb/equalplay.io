@@ -382,9 +382,11 @@ export function getReplacements(
 function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
   subOffCount: Map<string, number>;
   subbedOffPrevGame: Set<string>;
+  subbedOffThisGame: Set<string>;
 } {
   const subOffCount = new Map<string, number>();
   const subbedOffPrevGame = new Set<string>();
+  const subbedOffThisGame = new Set<string>();
   const prevGame = currentGameNumber - 1;
   for (const e of events) {
     if (e.type === "sub") {
@@ -392,9 +394,12 @@ function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
       if (e.gameNumber === prevGame) {
         subbedOffPrevGame.add(e.playerOut);
       }
+      if (e.gameNumber === currentGameNumber) {
+        subbedOffThisGame.add(e.playerOut);
+      }
     }
   }
-  return { subOffCount, subbedOffPrevGame };
+  return { subOffCount, subbedOffPrevGame, subbedOffThisGame };
 }
 
 /**
@@ -480,7 +485,7 @@ export function getNextSubSuggestion(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  const { subOffCount, subbedOffPrevGame } = extractSubMeta(events, currentGameNumber);
+  const { subOffCount, subbedOffPrevGame, subbedOffThisGame } = extractSubMeta(events, currentGameNumber);
 
   // Pre-compute effective debt for all relevant players (avoids recomputing in comparators)
   const debtCache = new Map<string, number>();
@@ -494,10 +499,15 @@ export function getNextSubSuggestion(
   }
 
   const playerIn = availableBench.reduce((best, id) => {
-    // On-time bench players always come before late arrivals in their arrival game
+    // Late arrivals deprioritised behind original bench players (who haven't
+    // played yet). Players who were subbed off already had their turn —
+    // they don't jump the queue ahead of the late arrival.
     const bestLate = lateInArrivalGame.has(best);
     const thisLate = lateInArrivalGame.has(id);
-    if (bestLate !== thisLate) return thisLate ? best : id;
+    if (bestLate !== thisLate) {
+      if (thisLate && !subbedOffThisGame.has(best)) return best;
+      if (bestLate && !subbedOffThisGame.has(id)) return id;
+    }
 
     const bestDebt = debtCache.get(best)!;
     const thisDebt = debtCache.get(id)!;
@@ -594,7 +604,7 @@ export function getSubCandidates(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  const { subOffCount, subbedOffPrevGame } = extractSubMeta(events, currentGameNumber);
+  const { subOffCount, subbedOffPrevGame, subbedOffThisGame } = extractSubMeta(events, currentGameNumber);
 
   // Pre-compute effective debt for all relevant players
   const debtCache = new Map<string, number>();
@@ -608,10 +618,15 @@ export function getSubCandidates(
   }
 
   const benchRanked = [...availableBench].sort((a, b) => {
-    // On-time bench players always ranked before late arrivals in arrival game
+    // Late arrivals deprioritised behind original bench players (who haven't
+    // played yet). Players who were subbed off already had their turn —
+    // they don't jump the queue ahead of the late arrival.
     const aLate = lateInArrivalGame.has(a);
     const bLate = lateInArrivalGame.has(b);
-    if (aLate !== bLate) return aLate ? 1 : -1;
+    if (aLate !== bLate) {
+      if (aLate && !subbedOffThisGame.has(b)) return 1;
+      if (bLate && !subbedOffThisGame.has(a)) return -1;
+    }
 
     const diff = debtCache.get(b)! - debtCache.get(a)!;
     if (Math.abs(diff) > 0.001) return diff;

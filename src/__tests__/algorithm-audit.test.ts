@@ -402,12 +402,15 @@ describe("rule 4 scenarios: late arrival sub queue", () => {
       // A should now be in benchRanked (available for selection)
       expect(cands2.benchRanked).toContain("A");
 
-      // But A should still be behind any on-time bench player
-      // (the subbed-off player is back on bench and is on-time)
+      // The subbed-off player has already played (0.5 credit) — they
+      // should NOT jump the queue ahead of A who has zero play time.
+      // A should rank by debt, which is higher than the subbed-off player.
       const aIdx = cands2.benchRanked.indexOf("A");
-      const onTimeInBench = cands2.benchRanked.filter((id) => id !== "A");
-      for (const otId of onTimeInBench) {
-        expect(cands2.benchRanked.indexOf(otId)).toBeLessThan(aIdx);
+      const subbedOffOnBench = cands2.benchRanked.filter(
+        (id) => id !== "A" && id === sub1!.playerOut,
+      );
+      for (const soId of subbedOffOnBench) {
+        expect(aIdx).toBeLessThan(cands2.benchRanked.indexOf(soId));
       }
     }
   });
