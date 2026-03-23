@@ -382,14 +382,17 @@ export function getNextSubSuggestion(
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
-  // Late+joined players in their arrival game should not be recommended —
-  // children who arrived on time get priority for this game.
+  // Late+joined players in their arrival game are available but deprioritised —
+  // on-time bench players get subbed on first.
   const resolved = resolveEvents(events);
+  const lateInArrivalGame = new Set<string>();
   const availableBench = currentGame.bench.filter((id) => {
     if (unavailableIds.has(id)) return false;
     if (resolved.lateIds.has(id)) {
       const arrivedDuring = resolved.joinedDuring.get(id);
-      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) return false;
+      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) {
+        lateInArrivalGame.add(id);
+      }
     }
     return true;
   });
@@ -462,6 +465,11 @@ export function getNextSubSuggestion(
   }
 
   const playerIn = availableBench.reduce((best, id) => {
+    // On-time bench players always come before late arrivals in their arrival game
+    const bestLate = lateInArrivalGame.has(best);
+    const thisLate = lateInArrivalGame.has(id);
+    if (bestLate !== thisLate) return thisLate ? best : id;
+
     const bestDebt = effectiveDebt(best);
     const thisDebt = effectiveDebt(id);
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
@@ -514,14 +522,17 @@ export function getSubCandidates(
   const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
   if (!currentGame) return null;
 
-  // Late+joined players in their arrival game should not be recommended —
-  // children who arrived on time get priority for this game.
+  // Late+joined players in their arrival game are available but deprioritised —
+  // on-time bench players get subbed on first.
   const resolved = resolveEvents(events);
+  const lateInArrivalGame = new Set<string>();
   const availableBench = currentGame.bench.filter((id) => {
     if (unavailableIds.has(id)) return false;
     if (resolved.lateIds.has(id)) {
       const arrivedDuring = resolved.joinedDuring.get(id);
-      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) return false;
+      if (arrivedDuring !== undefined && currentGameNumber <= arrivedDuring) {
+        lateInArrivalGame.add(id);
+      }
     }
     return true;
   });
@@ -617,6 +628,11 @@ export function getSubCandidates(
   }
 
   const benchRanked = [...availableBench].sort((a, b) => {
+    // On-time bench players always ranked before late arrivals in arrival game
+    const aLate = lateInArrivalGame.has(a);
+    const bLate = lateInArrivalGame.has(b);
+    if (aLate !== bLate) return aLate ? 1 : -1;
+
     const aDebt = effectiveDebt(a);
     const bDebt = effectiveDebt(b);
     if (Math.abs(aDebt - bDebt) > 0.001) return bDebt - aDebt;

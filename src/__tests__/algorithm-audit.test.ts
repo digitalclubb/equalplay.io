@@ -252,16 +252,25 @@ describe("rule 4: late arrival", () => {
         expect(result.games[0].bench).toContain(latePlayer);
       });
 
-      it("4c: not recommended as sub-on in arrival game", () => {
+      it("4c: deprioritised behind on-time bench players in arrival game", () => {
         const result = applyEvents(plan, lateEvents, ids, p, 1);
         const unavail = getUnavailableForGame(1, ids, lateEvents);
         const cands = getSubCandidates(result, 1, unavail, lateEvents);
-        if (cands) {
-          expect(cands.benchRanked).not.toContain(latePlayer);
+        if (cands && cands.benchRanked.length > 1) {
+          // Late player should be LAST in benchRanked (on-time players first)
+          const lateIdx = cands.benchRanked.indexOf(latePlayer);
+          const onTimePlayers = cands.benchRanked.filter((id) => id !== latePlayer);
+          for (const otId of onTimePlayers) {
+            expect(cands.benchRanked.indexOf(otId)).toBeLessThan(lateIdx);
+          }
         }
 
+        // If there are on-time bench players, they should be recommended first
+        const onTimeBench = result.games[0].bench.filter(
+          (id) => id !== latePlayer && !unavail.has(id),
+        );
         const suggestion = getNextSubSuggestion(result, 1, unavail, lateEvents);
-        if (suggestion) {
+        if (suggestion && onTimeBench.length > 0) {
           expect(suggestion.playerIn).not.toBe(latePlayer);
         }
       });
@@ -300,6 +309,108 @@ describe("rule 4: late arrival", () => {
       });
     });
   }
+});
+
+// ====================================================================
+// RULE 4 SCENARIOS: Exact user examples for late arrival sub ordering
+// ====================================================================
+
+describe("rule 4 scenarios: late arrival sub queue", () => {
+  it("4p 3v: A late, D on bench → D goes on, then A is next sub", () => {
+    // A, B, C, D — 3 on field. A is late, so D replaces A.
+    const players: Player[] = [
+      { id: "A", name: "A" },
+      { id: "B", name: "B" },
+      { id: "C", name: "C" },
+      { id: "D", name: "D" },
+    ];
+    const ids = ["A", "B", "C", "D"];
+    const plan = generateInitialPlan({ players, playersPerTeam: 3, numberOfGames: 2 });
+
+    const events: RotationEvent[] = [
+      { type: "late", playerId: "A" },
+      { type: "joined", playerId: "A", duringGame: 1 },
+    ];
+
+    const result = applyEvents(plan, events, ids, 3, 1);
+    const g1 = result.games[0];
+
+    // D should be on field (replaced A). A on bench.
+    expect(g1.onField).not.toContain("A");
+    expect(g1.bench).toContain("A");
+
+    // Sub recommendation: A is the only bench player, so A should be recommended
+    const unavail = getUnavailableForGame(1, ids, events);
+    const suggestion = getNextSubSuggestion(result, 1, unavail, events);
+    if (suggestion) {
+      expect(suggestion.playerIn).toBe("A");
+    }
+  });
+
+  it("5p 3v: A late, D+E on bench → D goes on first, E next, then A", () => {
+    // A, B, C, D, E — 3 on field. A is late.
+    // D and E are on bench (on-time). A arrives on bench (late).
+    const players: Player[] = [
+      { id: "A", name: "A" },
+      { id: "B", name: "B" },
+      { id: "C", name: "C" },
+      { id: "D", name: "D" },
+      { id: "E", name: "E" },
+    ];
+    const ids = ["A", "B", "C", "D", "E"];
+    const plan = generateInitialPlan({ players, playersPerTeam: 3, numberOfGames: 2 });
+
+    const events: RotationEvent[] = [
+      { type: "late", playerId: "A" },
+      { type: "joined", playerId: "A", duringGame: 1 },
+    ];
+
+    const result = applyEvents(plan, events, ids, 3, 1);
+    const g1 = result.games[0];
+
+    // A is on bench. D and E should also be on bench (on-time).
+    expect(g1.onField).not.toContain("A");
+    expect(g1.bench).toContain("A");
+
+    const unavail = getUnavailableForGame(1, ids, events);
+    const cands = getSubCandidates(result, 1, unavail, events);
+
+    // On-time bench players (D, E) should come before A in benchRanked
+    expect(cands).not.toBeNull();
+    const aIdx = cands!.benchRanked.indexOf("A");
+    const onTimeBench = cands!.benchRanked.filter((id) => id !== "A");
+    expect(onTimeBench.length).toBeGreaterThan(0);
+    for (const otId of onTimeBench) {
+      expect(cands!.benchRanked.indexOf(otId)).toBeLessThan(aIdx);
+    }
+
+    // First sub recommendation should NOT be A
+    const sub1 = getNextSubSuggestion(result, 1, unavail, events);
+    expect(sub1).not.toBeNull();
+    expect(sub1!.playerIn).not.toBe("A");
+
+    // After first on-time sub, A should now be in the candidate pool
+    const events2: RotationEvent[] = [
+      ...events,
+      { type: "sub", gameNumber: 1, playerOut: sub1!.playerOut, playerIn: sub1!.playerIn },
+    ];
+    const result2 = applyEvents(plan, events2, ids, 3, 1);
+    const unavail2 = getUnavailableForGame(1, ids, events2);
+    const cands2 = getSubCandidates(result2, 1, unavail2, events2);
+
+    if (cands2) {
+      // A should now be in benchRanked (available for selection)
+      expect(cands2.benchRanked).toContain("A");
+
+      // But A should still be behind any on-time bench player
+      // (the subbed-off player is back on bench and is on-time)
+      const aIdx = cands2.benchRanked.indexOf("A");
+      const onTimeInBench = cands2.benchRanked.filter((id) => id !== "A");
+      for (const otId of onTimeInBench) {
+        expect(cands2.benchRanked.indexOf(otId)).toBeLessThan(aIdx);
+      }
+    }
+  });
 });
 
 // ====================================================================
