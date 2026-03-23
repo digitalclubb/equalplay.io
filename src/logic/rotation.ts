@@ -383,10 +383,12 @@ function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
   subOffCount: Map<string, number>;
   subbedOffPrevGame: Set<string>;
   subbedOffThisGame: Set<string>;
+  subbedOnThisGame: Set<string>;
 } {
   const subOffCount = new Map<string, number>();
   const subbedOffPrevGame = new Set<string>();
   const subbedOffThisGame = new Set<string>();
+  const subbedOnThisGame = new Set<string>();
   const prevGame = currentGameNumber - 1;
   for (const e of events) {
     if (e.type === "sub") {
@@ -396,10 +398,11 @@ function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
       }
       if (e.gameNumber === currentGameNumber) {
         subbedOffThisGame.add(e.playerOut);
+        subbedOnThisGame.add(e.playerIn);
       }
     }
   }
-  return { subOffCount, subbedOffPrevGame, subbedOffThisGame };
+  return { subOffCount, subbedOffPrevGame, subbedOffThisGame, subbedOnThisGame };
 }
 
 /**
@@ -485,7 +488,16 @@ export function getNextSubSuggestion(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  const { subOffCount, subbedOffPrevGame, subbedOffThisGame } = extractSubMeta(events, currentGameNumber);
+  const { subOffCount, subbedOffPrevGame, subbedOffThisGame, subbedOnThisGame } = extractSubMeta(events, currentGameNumber);
+
+  // Late arrivals who joined in the previous game were benched for part of it —
+  // they deserve the same recency boost as players who were subbed off.
+  const prevGame = currentGameNumber - 1;
+  for (const [id, arrivedDuring] of resolved.joinedDuring) {
+    if (resolved.lateIds.has(id) && arrivedDuring === prevGame) {
+      subbedOffPrevGame.add(id);
+    }
+  }
 
   // Pre-compute effective debt for all relevant players (avoids recomputing in comparators)
   const debtCache = new Map<string, number>();
@@ -520,6 +532,11 @@ export function getNextSubSuggestion(
   });
 
   const playerOut = availableField.reduce((best, id) => {
+    // Players just subbed ON this game should not be immediately taken off
+    const bestJustOn = subbedOnThisGame.has(best);
+    const thisJustOn = subbedOnThisGame.has(id);
+    if (bestJustOn !== thisJustOn) return bestJustOn ? id : best;
+
     const bestDebt = debtCache.get(best)!;
     const thisDebt = debtCache.get(id)!;
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
@@ -604,7 +621,16 @@ export function getSubCandidates(
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  const { subOffCount, subbedOffPrevGame, subbedOffThisGame } = extractSubMeta(events, currentGameNumber);
+  const { subOffCount, subbedOffPrevGame, subbedOffThisGame, subbedOnThisGame } = extractSubMeta(events, currentGameNumber);
+
+  // Late arrivals who joined in the previous game were benched for part of it —
+  // they deserve the same recency boost as players who were subbed off.
+  const prevGame = currentGameNumber - 1;
+  for (const [id, arrivedDuring] of resolved.joinedDuring) {
+    if (resolved.lateIds.has(id) && arrivedDuring === prevGame) {
+      subbedOffPrevGame.add(id);
+    }
+  }
 
   // Pre-compute effective debt for all relevant players
   const debtCache = new Map<string, number>();
@@ -640,6 +666,11 @@ export function getSubCandidates(
     const aInj = injuredSet.has(a);
     const bInj = injuredSet.has(b);
     if (aInj !== bInj) return aInj ? -1 : 1;
+
+    // Players just subbed ON this game should not be immediately taken off
+    const aJustOn = subbedOnThisGame.has(a);
+    const bJustOn = subbedOnThisGame.has(b);
+    if (aJustOn !== bJustOn) return aJustOn ? 1 : -1;
 
     const diff = debtCache.get(a)! - debtCache.get(b)!;
     if (Math.abs(diff) > 0.001) return diff;
