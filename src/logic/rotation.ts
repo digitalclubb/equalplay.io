@@ -24,7 +24,12 @@ function createTracker(): PlayerTracker {
   return { playTimeUnits: 0, lastPlayedGame: 0, gamesAvailable: 0 };
 }
 
-function fairnessDebt(t: PlayerTracker, playersPerTeam: number, avgPoolSize: number): number {
+/** Frozen sentinel for read-only fallback — avoids allocating in hot comparators */
+const EMPTY_TRACKER: Readonly<PlayerTracker> = Object.freeze(
+  { playTimeUnits: 0, lastPlayedGame: 0, gamesAvailable: 0 },
+);
+
+function fairnessDebt(t: Readonly<PlayerTracker>, playersPerTeam: number, avgPoolSize: number): number {
   if (t.gamesAvailable === 0) return 0;
   const fairShare = t.gamesAvailable * (playersPerTeam / Math.max(avgPoolSize, playersPerTeam));
   return fairShare - t.playTimeUnits;
@@ -39,8 +44,8 @@ function selectOnField(
   subbedOffPrevGame: Set<string> = new Set(),
 ): string[] {
   const sorted = [...available].sort((a, b) => {
-    const ta = trackers.get(a) ?? createTracker();
-    const tb = trackers.get(b) ?? createTracker();
+    const ta = trackers.get(a) ?? EMPTY_TRACKER;
+    const tb = trackers.get(b) ?? EMPTY_TRACKER;
     // Players subbed off last game get a 0.5 debt boost — they were
     // on the bench for half a game and should be prioritised to start.
     const aDebt = fairnessDebt(ta, playersPerTeam, avgPoolSize)
@@ -102,7 +107,7 @@ function getAvgPoolSize(trackers: Map<string, PlayerTracker>): number {
   let maxGames = 0;
   for (const t of trackers.values()) {
     totalAvail += t.gamesAvailable;
-    maxGames = Math.max(maxGames, t.gamesAvailable);
+    if (t.gamesAvailable > maxGames) maxGames = t.gamesAvailable;
   }
   return maxGames > 0 ? totalAvail / maxGames : 1;
 }
@@ -373,13 +378,84 @@ export function getReplacements(
   return suggestions;
 }
 
+/** Single-pass extraction of sub metadata from events */
+function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
+  subOffCount: Map<string, number>;
+  subbedOffPrevGame: Set<string>;
+} {
+  const subOffCount = new Map<string, number>();
+  const subbedOffPrevGame = new Set<string>();
+  const prevGame = currentGameNumber - 1;
+  for (const e of events) {
+    if (e.type === "sub") {
+      subOffCount.set(e.playerOut, (subOffCount.get(e.playerOut) ?? 0) + 1);
+      if (e.gameNumber === prevGame) {
+        subbedOffPrevGame.add(e.playerOut);
+      }
+    }
+  }
+  return { subOffCount, subbedOffPrevGame };
+}
+
+/**
+ * Build play-time trackers from plan games up to (and including) a given game.
+ * Uses resolved.subs for credit calculation — no extra event iteration needed.
+ */
+function buildTrackers(
+  plan: RotationPlan,
+  upToGame: number,
+  resolved: ResolvedAvailability,
+): Map<string, PlayerTracker> {
+  const trackers = new Map<string, PlayerTracker>();
+
+  for (const game of plan.games) {
+    if (game.gameNumber > upToGame) break;
+
+    // Increment gamesAvailable for all participants (iterate both arrays, no spread)
+    for (const id of game.onField) {
+      const t = trackers.get(id) ?? createTracker();
+      t.gamesAvailable++;
+      trackers.set(id, t);
+    }
+    for (const id of game.bench) {
+      const t = trackers.get(id) ?? createTracker();
+      t.gamesAvailable++;
+      trackers.set(id, t);
+    }
+
+    // Credit play time using resolved subs
+    const gameSubs = resolved.subs.get(game.gameNumber);
+    const subbedIn = new Set<string>();
+    const subbedOut = new Set<string>();
+    if (gameSubs) {
+      for (const sub of gameSubs) {
+        subbedIn.add(sub.playerIn);
+        subbedOut.add(sub.playerOut);
+      }
+    }
+
+    for (const id of game.onField) {
+      const t = trackers.get(id)!;
+      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
+      t.lastPlayedGame = game.gameNumber;
+    }
+    for (const id of subbedOut) {
+      const t = trackers.get(id)!;
+      t.playTimeUnits += SUB_APPEARANCE;
+      t.lastPlayedGame = game.gameNumber;
+    }
+  }
+
+  return trackers;
+}
+
 export function getNextSubSuggestion(
   plan: RotationPlan,
   currentGameNumber: number,
   unavailableIds: Set<string>,
   events: RotationEvent[] = [],
 ): { playerIn: string; playerOut: string } | null {
-  const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
+  const currentGame = plan.games[currentGameNumber - 1];
   if (!currentGame) return null;
 
   // Late+joined players in their arrival game are available but deprioritised —
@@ -399,69 +475,22 @@ export function getNextSubSuggestion(
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
-  // Build sub lookup for accurate credit calculation
-  const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
-  for (const e of events) {
-    if (e.type === "sub") {
-      if (!subsByGame.has(e.gameNumber)) subsByGame.set(e.gameNumber, []);
-      subsByGame.get(e.gameNumber)!.push({ playerOut: e.playerOut, playerIn: e.playerIn });
-    }
-  }
-
-  const trackers = new Map<string, PlayerTracker>();
-  for (const game of plan.games) {
-    if (game.gameNumber > currentGameNumber) break;
-    const allInGame = [...game.onField, ...game.bench];
-    for (const id of allInGame) {
-      const t = trackers.get(id) ?? createTracker();
-      t.gamesAvailable++;
-      trackers.set(id, t);
-    }
-
-    const gameSubs = subsByGame.get(game.gameNumber);
-    const subbedIn = new Set<string>();
-    const subbedOut = new Set<string>();
-    if (gameSubs) {
-      for (const sub of gameSubs) {
-        subbedIn.add(sub.playerIn);
-        subbedOut.add(sub.playerOut);
-      }
-    }
-
-    for (const id of game.onField) {
-      const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
-      t.lastPlayedGame = game.gameNumber;
-      trackers.set(id, t);
-    }
-    for (const id of subbedOut) {
-      const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += SUB_APPEARANCE;
-      t.lastPlayedGame = game.gameNumber;
-      trackers.set(id, t);
-    }
-  }
+  const trackers = buildTrackers(plan, currentGameNumber, resolved);
 
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  // Count prior sub-offs and identify who was subbed off last game
-  const subOffCount = new Map<string, number>();
-  const subbedOffPrevGame = new Set<string>();
-  for (const e of events) {
-    if (e.type === "sub") {
-      subOffCount.set(e.playerOut, (subOffCount.get(e.playerOut) ?? 0) + 1);
-      if (e.gameNumber === currentGameNumber - 1) {
-        subbedOffPrevGame.add(e.playerOut);
-      }
-    }
-  }
+  const { subOffCount, subbedOffPrevGame } = extractSubMeta(events, currentGameNumber);
 
-  /** Effective debt with recency boost for recently subbed-off players */
-  function effectiveDebt(id: string): number {
-    const t = trackers.get(id) ?? createTracker();
-    return fairnessDebt(t, ppt, avgPool)
-      + (subbedOffPrevGame.has(id) ? 0.5 : 0);
+  // Pre-compute effective debt for all relevant players (avoids recomputing in comparators)
+  const debtCache = new Map<string, number>();
+  for (const id of availableBench) {
+    const t = trackers.get(id) ?? EMPTY_TRACKER;
+    debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
+  }
+  for (const id of availableField) {
+    const t = trackers.get(id) ?? EMPTY_TRACKER;
+    debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
   }
 
   const playerIn = availableBench.reduce((best, id) => {
@@ -470,19 +499,19 @@ export function getNextSubSuggestion(
     const thisLate = lateInArrivalGame.has(id);
     if (bestLate !== thisLate) return thisLate ? best : id;
 
-    const bestDebt = effectiveDebt(best);
-    const thisDebt = effectiveDebt(id);
+    const bestDebt = debtCache.get(best)!;
+    const thisDebt = debtCache.get(id)!;
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt > bestDebt ? id : best;
     }
-    const bestT = trackers.get(best) ?? createTracker();
-    const thisT = trackers.get(id) ?? createTracker();
+    const bestT = trackers.get(best) ?? EMPTY_TRACKER;
+    const thisT = trackers.get(id) ?? EMPTY_TRACKER;
     return thisT.lastPlayedGame < bestT.lastPlayedGame ? id : best;
   });
 
   const playerOut = availableField.reduce((best, id) => {
-    const bestDebt = effectiveDebt(best);
-    const thisDebt = effectiveDebt(id);
+    const bestDebt = debtCache.get(best)!;
+    const thisDebt = debtCache.get(id)!;
     if (Math.abs(thisDebt - bestDebt) > 0.001) {
       return thisDebt < bestDebt ? id : best;
     }
@@ -492,15 +521,13 @@ export function getNextSubSuggestion(
     if (thisOffs !== bestOffs) {
       return thisOffs < bestOffs ? id : best;
     }
-    const bestT = trackers.get(best) ?? createTracker();
-    const thisT = trackers.get(id) ?? createTracker();
+    const bestT = trackers.get(best) ?? EMPTY_TRACKER;
+    const thisT = trackers.get(id) ?? EMPTY_TRACKER;
     return thisT.lastPlayedGame > bestT.lastPlayedGame ? id : best;
   });
 
   // Only recommend if the sub would improve fairness
-  const inDebt = effectiveDebt(playerIn);
-  const outDebt = effectiveDebt(playerOut);
-  if (inDebt <= outDebt + 0.001) return null;
+  if (debtCache.get(playerIn)! <= debtCache.get(playerOut)! + 0.001) return null;
 
   return { playerIn, playerOut };
 }
@@ -519,7 +546,7 @@ export function getSubCandidates(
   unavailableIds: Set<string>,
   events: RotationEvent[] = [],
 ): { benchRanked: string[]; fieldRanked: string[]; injuredOut: boolean } | null {
-  const currentGame = plan.games.find((g) => g.gameNumber === currentGameNumber);
+  const currentGame = plan.games[currentGameNumber - 1];
   if (!currentGame) return null;
 
   // Late+joined players in their arrival game are available but deprioritised —
@@ -537,19 +564,18 @@ export function getSubCandidates(
     return true;
   });
 
-  // Find on-field players injured THIS game who haven't been subbed off yet
+  // Find on-field players injured THIS game who haven't been subbed off yet.
+  // Single pass over events for both subbedOff and injuredOnField.
   const subbedOff = new Set<string>();
+  const injuredOnField: string[] = [];
+  const onFieldSet = new Set(currentGame.onField);
   for (const e of events) {
     if (e.type === "sub" && e.gameNumber === currentGameNumber) {
       subbedOff.add(e.playerOut);
-    }
-  }
-  const injuredOnField: string[] = [];
-  for (const e of events) {
-    if (
+    } else if (
       e.type === "injured" &&
       e.gameNumber === currentGameNumber &&
-      currentGame.onField.includes(e.playerId) &&
+      onFieldSet.has(e.playerId) &&
       !subbedOff.has(e.playerId)
     ) {
       injuredOnField.push(e.playerId);
@@ -563,68 +589,22 @@ export function getSubCandidates(
 
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
-  const subsByGame = new Map<number, Array<{ playerOut: string; playerIn: string }>>();
-  for (const e of events) {
-    if (e.type === "sub") {
-      if (!subsByGame.has(e.gameNumber)) subsByGame.set(e.gameNumber, []);
-      subsByGame.get(e.gameNumber)!.push({ playerOut: e.playerOut, playerIn: e.playerIn });
-    }
-  }
-
-  const trackers = new Map<string, PlayerTracker>();
-  for (const game of plan.games) {
-    if (game.gameNumber > currentGameNumber) break;
-    const allInGame = [...game.onField, ...game.bench];
-    for (const id of allInGame) {
-      const t = trackers.get(id) ?? createTracker();
-      t.gamesAvailable++;
-      trackers.set(id, t);
-    }
-
-    const gameSubs = subsByGame.get(game.gameNumber);
-    const subbedIn = new Set<string>();
-    const subbedOutGame = new Set<string>();
-    if (gameSubs) {
-      for (const sub of gameSubs) {
-        subbedIn.add(sub.playerIn);
-        subbedOutGame.add(sub.playerOut);
-      }
-    }
-
-    for (const id of game.onField) {
-      const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
-      t.lastPlayedGame = game.gameNumber;
-      trackers.set(id, t);
-    }
-    for (const id of subbedOutGame) {
-      const t = trackers.get(id) ?? createTracker();
-      t.playTimeUnits += SUB_APPEARANCE;
-      t.lastPlayedGame = game.gameNumber;
-      trackers.set(id, t);
-    }
-  }
+  const trackers = buildTrackers(plan, currentGameNumber, resolved);
 
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
   const ppt = availableField.length;
 
-  // Count sub-offs and identify who was subbed off last game — recency boost
-  const subOffCount = new Map<string, number>();
-  const subbedOffPrevGame = new Set<string>();
-  for (const e of events) {
-    if (e.type === "sub") {
-      subOffCount.set(e.playerOut, (subOffCount.get(e.playerOut) ?? 0) + 1);
-      if (e.gameNumber === currentGameNumber - 1) {
-        subbedOffPrevGame.add(e.playerOut);
-      }
-    }
-  }
+  const { subOffCount, subbedOffPrevGame } = extractSubMeta(events, currentGameNumber);
 
-  /** Effective debt with recency boost for recently subbed-off players */
-  function effectiveDebt(id: string): number {
-    const t = trackers.get(id) ?? createTracker();
-    return fairnessDebt(t, ppt, avgPool)
-      + (subbedOffPrevGame.has(id) ? 0.5 : 0);
+  // Pre-compute effective debt for all relevant players
+  const debtCache = new Map<string, number>();
+  for (const id of availableBench) {
+    const t = trackers.get(id) ?? EMPTY_TRACKER;
+    debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
+  }
+  for (const id of availableField) {
+    const t = trackers.get(id) ?? EMPTY_TRACKER;
+    debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
   }
 
   const benchRanked = [...availableBench].sort((a, b) => {
@@ -633,12 +613,10 @@ export function getSubCandidates(
     const bLate = lateInArrivalGame.has(b);
     if (aLate !== bLate) return aLate ? 1 : -1;
 
-    const aDebt = effectiveDebt(a);
-    const bDebt = effectiveDebt(b);
-    if (Math.abs(aDebt - bDebt) > 0.001) return bDebt - aDebt;
-    const aT = trackers.get(a) ?? createTracker();
-    const bT = trackers.get(b) ?? createTracker();
-    return aT.lastPlayedGame - bT.lastPlayedGame;
+    const diff = debtCache.get(b)! - debtCache.get(a)!;
+    if (Math.abs(diff) > 0.001) return diff;
+    return (trackers.get(a) ?? EMPTY_TRACKER).lastPlayedGame
+      - (trackers.get(b) ?? EMPTY_TRACKER).lastPlayedGame;
   });
 
   // Injured on-field players forced to front — they must come off first
@@ -648,16 +626,14 @@ export function getSubCandidates(
     const bInj = injuredSet.has(b);
     if (aInj !== bInj) return aInj ? -1 : 1;
 
-    const aDebt = effectiveDebt(a);
-    const bDebt = effectiveDebt(b);
-    if (Math.abs(aDebt - bDebt) > 0.001) return aDebt - bDebt;
+    const diff = debtCache.get(a)! - debtCache.get(b)!;
+    if (Math.abs(diff) > 0.001) return diff;
     // Spread sub burden: fewer prior sub-offs = picked off first
     const aOffs = subOffCount.get(a) ?? 0;
     const bOffs = subOffCount.get(b) ?? 0;
     if (aOffs !== bOffs) return aOffs - bOffs;
-    const aT = trackers.get(a) ?? createTracker();
-    const bT = trackers.get(b) ?? createTracker();
-    return bT.lastPlayedGame - aT.lastPlayedGame;
+    return (trackers.get(b) ?? EMPTY_TRACKER).lastPlayedGame
+      - (trackers.get(a) ?? EMPTY_TRACKER).lastPlayedGame;
   });
 
   // Only recommend a sub if it would actually improve fairness:
@@ -666,9 +642,7 @@ export function getSubCandidates(
   // (e.g. 10 players, 5 per team, game 2 — everyone has equal time),
   // any sub would worsen fairness.  Injury overrides skip this check.
   if (!hasInjury) {
-    const topBenchDebt = effectiveDebt(benchRanked[0]);
-    const topFieldDebt = effectiveDebt(fieldRanked[0]);
-    if (topBenchDebt <= topFieldDebt + 0.001) return null;
+    if (debtCache.get(benchRanked[0])! <= debtCache.get(fieldRanked[0])! + 0.001) return null;
   }
 
   return { benchRanked, fieldRanked, injuredOut: hasInjury };
@@ -695,8 +669,13 @@ export function getPlayerStats(
   }
 
   for (const game of plan.games) {
-    const allInGame = [...game.onField, ...game.bench];
-    for (const id of allInGame) {
+    // Increment gamesAvailable — iterate both arrays, no spread
+    for (const id of game.onField) {
+      const t = trackers.get(id) ?? createTracker();
+      t.gamesAvailable++;
+      trackers.set(id, t);
+    }
+    for (const id of game.bench) {
       const t = trackers.get(id) ?? createTracker();
       t.gamesAvailable++;
       trackers.set(id, t);
@@ -715,17 +694,15 @@ export function getPlayerStats(
 
     // Credit on-field players
     for (const id of game.onField) {
-      const t = trackers.get(id) ?? createTracker();
+      const t = trackers.get(id)!;
       // Subbed on mid-game = 0.5, full game = 1.0
       t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
-      trackers.set(id, t);
     }
 
     // Credit subbed-off players (they're in bench now but played half)
     for (const id of subbedOut) {
-      const t = trackers.get(id) ?? createTracker();
+      const t = trackers.get(id)!;
       t.playTimeUnits += SUB_APPEARANCE;
-      trackers.set(id, t);
     }
   }
 
@@ -733,7 +710,7 @@ export function getPlayerStats(
   const playersPerTeam = plan.games.length > 0 ? plan.games[0].onField.length : 5;
 
   return allPlayerIds.map((id) => {
-    const t = trackers.get(id) ?? createTracker();
+    const t = trackers.get(id) ?? EMPTY_TRACKER;
     const debt = fairnessDebt(t, playersPerTeam, avgPool);
 
     return {
