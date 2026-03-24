@@ -798,6 +798,65 @@ body {
   transform: none;
 }
 
+/* ---- Recent Actions ---- */
+
+.recent-actions {
+  padding-bottom: var(--sp-xs);
+}
+
+.recent-actions-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin-bottom: 2px;
+}
+
+.recent-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.recent-actions-item {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  line-height: 1.4;
+}
+
+.recent-actions-overflow {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms ease;
+}
+
+.recent-actions-overflow > * {
+  overflow: hidden;
+}
+
+.recent-actions-overflow-open {
+  grid-template-rows: 1fr;
+}
+
+.recent-actions-toggle {
+  display: inline;
+  padding: 0;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recent-actions-toggle:active {
+  color: var(--color-text);
+}
+
 /* ---- Primary Action: Sub Strip ---- */
 
 .game-actions {

@@ -132,10 +132,22 @@ export function renderResults(
       actionsZone.className = "game-actions";
 
       if (isLive) {
+        // ---- Recent actions (read-only, above sub controls) ----
+        const recent = renderRecentSection(events, currentGame, playerMap);
+        if (recent) actionsZone.appendChild(recent);
+
         // ---- Live mode: sub controls + game progression ----
         const candidates = getSubCandidates(plan, currentGame, unavailable, events);
-        if (candidates) {
-          const { benchRanked, fieldRanked, injuredOut } = candidates;
+
+        // When candidates is null (all balanced), fall back to raw bench/field
+        // so the coach can still make manual subs.
+        const availBench = currentGameData.bench.filter((id) => !unavailable.has(id));
+        const availField = currentGameData.onField.filter((id) => !unavailable.has(id));
+        const benchRanked = candidates ? candidates.benchRanked : availBench;
+        const fieldRanked = candidates ? candidates.fieldRanked : availField;
+        const injuredOut = candidates?.injuredOut ?? false;
+
+        if (benchRanked.length > 0 && fieldRanked.length > 0) {
           let inIdx = 0;
           let outIdx = 0;
 
@@ -143,10 +155,14 @@ export function renderResults(
           strip.className = "sub-strip";
           if (injuredOut) strip.classList.add("sub-strip-urgent");
 
-          const label = document.createElement("span");
-          label.className = "sub-strip-label";
-          label.textContent = injuredOut ? "Injury replacement" : "Next sub";
-          strip.appendChild(label);
+          const stripLabel = document.createElement("span");
+          stripLabel.className = "sub-strip-label";
+          stripLabel.textContent = injuredOut
+            ? "Injury replacement"
+            : candidates
+              ? "Next sub"
+              : "All players balanced";
+          strip.appendChild(stripLabel);
 
           const row = document.createElement("div");
           row.className = "sub-strip-row";
@@ -225,11 +241,6 @@ export function renderResults(
           strip.appendChild(subBtn);
 
           actionsZone.appendChild(strip);
-        } else {
-          const balanced = document.createElement("div");
-          balanced.className = "sub-strip-balanced";
-          balanced.textContent = "All players balanced";
-          actionsZone.appendChild(balanced);
         }
 
         // Game progression
@@ -897,6 +908,123 @@ function renderFairnessSummary(
   }
 
   section.appendChild(list);
+  return section;
+}
+
+// ---- Recent actions ----
+
+const COLLAPSED_COUNT = 3;
+
+/**
+ * Derive human-readable action descriptions from events for a specific game.
+ * Returns ALL matching actions, most-recent-first.
+ *
+ * Game-scoped events (sub, injured, joined) filter by gameNumber.
+ * Session-level events (late, leaving) are included unfiltered —
+ * they're rare, important, and the coach needs to see them.
+ */
+function getGameActions(
+  events: RotationEvent[],
+  gameNumber: number,
+  playerMap: PlayerMap,
+): string[] {
+  const actions: string[] = [];
+
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.type === "sub" && e.gameNumber === gameNumber) {
+      const inName = playerMap.get(e.playerIn)?.name ?? "Player";
+      const outName = playerMap.get(e.playerOut)?.name ?? "Player";
+      actions.push(`${inName} on for ${outName}`);
+    } else if (e.type === "injured" && e.gameNumber === gameNumber) {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      actions.push(`${name} injured`);
+    } else if (e.type === "joined" && e.duringGame === gameNumber) {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      actions.push(`${name} arrived`);
+    } else if (e.type === "late") {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      // Show "not here yet" only if player hasn't arrived
+      const hasJoined = events.some(
+        (ev) => ev.type === "joined" && ev.playerId === e.playerId,
+      );
+      if (!hasJoined) {
+        actions.push(`${name} not here yet`);
+      }
+    } else if (e.type === "leaving") {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      actions.push(`${name} leaving after game ${e.afterGame}`);
+    }
+  }
+
+  return actions;
+}
+
+/**
+ * Render the inline recent actions section with expand/collapse.
+ * Flat chronological list (most recent first).
+ * Shows COLLAPSED_COUNT items by default, expand reveals the rest.
+ */
+function renderRecentSection(
+  events: RotationEvent[],
+  gameNumber: number,
+  playerMap: PlayerMap,
+): HTMLElement | null {
+  const allActions = getGameActions(events, gameNumber, playerMap);
+  if (allActions.length === 0) return null;
+
+  const collapsedActions = allActions.slice(0, COLLAPSED_COUNT);
+  const hiddenActions = allActions.slice(COLLAPSED_COUNT);
+  const hasMore = hiddenActions.length > 0;
+
+  const section = document.createElement("div");
+  section.className = "recent-actions";
+
+  const label = document.createElement("span");
+  label.className = "recent-actions-label";
+  label.textContent = "Recent";
+  section.appendChild(label);
+
+  // Always-visible items
+  const collapsedList = document.createElement("div");
+  collapsedList.className = "recent-actions-list";
+  for (const text of collapsedActions) {
+    const item = document.createElement("div");
+    item.className = "recent-actions-item";
+    item.textContent = text;
+    collapsedList.appendChild(item);
+  }
+  section.appendChild(collapsedList);
+
+  if (hasMore) {
+    // Overflow container — CSS grid animation for smooth expand/collapse
+    const overflowOuter = document.createElement("div");
+    overflowOuter.className = "recent-actions-overflow";
+    const overflowInner = document.createElement("div");
+    overflowInner.className = "recent-actions-list";
+    for (const text of hiddenActions) {
+      const item = document.createElement("div");
+      item.className = "recent-actions-item";
+      item.textContent = text;
+      overflowInner.appendChild(item);
+    }
+    overflowOuter.appendChild(overflowInner);
+    section.appendChild(overflowOuter);
+
+    // Toggle control
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "recent-actions-toggle";
+    toggle.textContent = "Show full history";
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const expanding = !overflowOuter.classList.contains("recent-actions-overflow-open");
+      overflowOuter.classList.toggle("recent-actions-overflow-open");
+      toggle.textContent = expanding ? "Show less" : "Show full history";
+    });
+    section.appendChild(toggle);
+  }
+
   return section;
 }
 
