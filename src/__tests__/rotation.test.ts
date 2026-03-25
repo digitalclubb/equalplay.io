@@ -591,3 +591,79 @@ describe("getSubCandidates — injury override", () => {
     }
   });
 });
+
+// ====================================================================
+// BUG: Late arrival + injury — late player never subbed on
+// Scenario: 10 players (A-J), 7 per team, 3 games.
+// Before game 1: A is late. Game 1 starts, A arrives. B injured → subbed off.
+// Expected: A should eventually be suggested as a sub in game 1.
+// ====================================================================
+
+describe("late arrival + injury: late player should be subbed on", () => {
+  const players = makePlayers(10);
+  const ids = playerIds(players);
+  const A = ids[0], B = ids[1];
+  const plan = generateInitialPlan({ players, playersPerTeam: 7, numberOfGames: 3 });
+
+  it("A is the injury replacement for B (not deprioritised)", () => {
+    const currentGame = 1;
+    const events: RotationEvent[] = [
+      { type: "late", playerId: A },
+      { type: "joined", playerId: A, duringGame: 1 },
+      { type: "injured", playerId: B, gameNumber: 1 },
+    ];
+
+    const currentPlan = applyEvents(plan, events, ids, 7, currentGame);
+
+    // A should be on the bench
+    expect(currentPlan.games[0].bench).toContain(A);
+    expect(currentPlan.games[0].onField).not.toContain(A);
+
+    const unavail = getUnavailableForGame(currentGame, ids, events);
+    const candidates = getSubCandidates(currentPlan, currentGame, unavail, events);
+    expect(candidates).not.toBeNull();
+    expect(candidates!.injuredOut).toBe(true);
+
+    // A should be in benchRanked (not filtered out)
+    expect(candidates!.benchRanked).toContain(A);
+
+    // With injury on field, late deprioritisation is skipped —
+    // A has the same debt as other bench players but should be eligible
+    // as the top candidate (or tied for top, not pushed to the back).
+    // A must not be last in benchRanked.
+    const aIdx = candidates!.benchRanked.indexOf(A);
+    expect(aIdx).toBeLessThan(candidates!.benchRanked.length - 1);
+  });
+
+  it("A is subbed on within the first two subs after injury", () => {
+    const currentGame = 1;
+    const events: RotationEvent[] = [
+      { type: "late", playerId: A },
+      { type: "joined", playerId: A, duringGame: 1 },
+      { type: "injured", playerId: B, gameNumber: 1 },
+    ];
+
+    let currentEvents = [...events];
+    let currentPlan = applyEvents(plan, currentEvents, ids, 7, currentGame);
+    let aSubbedOn = false;
+
+    // Two subs should be enough: injury replacement + one more at most
+    for (let step = 0; step < 2; step++) {
+      const unavail = getUnavailableForGame(currentGame, ids, currentEvents);
+      const candidates = getSubCandidates(currentPlan, currentGame, unavail, currentEvents);
+      if (!candidates) break;
+
+      const playerIn = candidates.benchRanked[0];
+      const playerOut = candidates.fieldRanked[0];
+      if (playerIn === A) aSubbedOn = true;
+
+      currentEvents = [
+        ...currentEvents,
+        { type: "sub", gameNumber: 1, playerOut, playerIn },
+      ];
+      currentPlan = applyEvents(plan, currentEvents, ids, 7, currentGame);
+    }
+
+    expect(aSubbedOn).toBe(true);
+  });
+});

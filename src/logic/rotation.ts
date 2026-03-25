@@ -483,6 +483,23 @@ export function getNextSubSuggestion(
   const availableField = currentGame.onField.filter((id) => !unavailableIds.has(id));
   if (availableBench.length === 0 || availableField.length === 0) return null;
 
+  // Detect injuries on the field that haven't been subbed off yet
+  const onFieldSet = new Set(currentGame.onField);
+  const subbedOffForInjury = new Set<string>();
+  let hasInjuryOnField = false;
+  for (const e of events) {
+    if (e.type === "sub" && e.gameNumber === currentGameNumber) {
+      subbedOffForInjury.add(e.playerOut);
+    } else if (
+      e.type === "injured" &&
+      e.gameNumber === currentGameNumber &&
+      onFieldSet.has(e.playerId) &&
+      !subbedOffForInjury.has(e.playerId)
+    ) {
+      hasInjuryOnField = true;
+    }
+  }
+
   const trackers = buildTrackers(plan, currentGameNumber, resolved);
 
   const avgPool = getAvgPoolSize(trackers) || (availableBench.length + availableField.length);
@@ -514,11 +531,15 @@ export function getNextSubSuggestion(
     // Late arrivals deprioritised behind original bench players (who haven't
     // played yet). Players who were subbed off already had their turn —
     // they don't jump the queue ahead of the late arrival.
-    const bestLate = lateInArrivalGame.has(best);
-    const thisLate = lateInArrivalGame.has(id);
-    if (bestLate !== thisLate) {
-      if (thisLate && !subbedOffThisGame.has(best)) return best;
-      if (bestLate && !subbedOffThisGame.has(id)) return id;
+    // Skip deprioritisation when there's an injury — the late arrival should
+    // be a candidate for the injury replacement based on fairness debt alone.
+    if (!hasInjuryOnField) {
+      const bestLate = lateInArrivalGame.has(best);
+      const thisLate = lateInArrivalGame.has(id);
+      if (bestLate !== thisLate) {
+        if (thisLate && !subbedOffThisGame.has(best)) return best;
+        if (bestLate && !subbedOffThisGame.has(id)) return id;
+      }
     }
 
     const bestDebt = debtCache.get(best)!;
@@ -643,15 +664,22 @@ export function getSubCandidates(
     debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
   }
 
+  // Injured on-field players forced to front — they must come off first
+  const hasInjury = injuredOnField.length > 0;
+
   const benchRanked = [...availableBench].sort((a, b) => {
     // Late arrivals deprioritised behind original bench players (who haven't
     // played yet). Players who were subbed off already had their turn —
     // they don't jump the queue ahead of the late arrival.
-    const aLate = lateInArrivalGame.has(a);
-    const bLate = lateInArrivalGame.has(b);
-    if (aLate !== bLate) {
-      if (aLate && !subbedOffThisGame.has(b)) return 1;
-      if (bLate && !subbedOffThisGame.has(a)) return -1;
+    // Skip deprioritisation when there's an injury — the late arrival should
+    // be a candidate for the injury replacement based on fairness debt alone.
+    if (!hasInjury) {
+      const aLate = lateInArrivalGame.has(a);
+      const bLate = lateInArrivalGame.has(b);
+      if (aLate !== bLate) {
+        if (aLate && !subbedOffThisGame.has(b)) return 1;
+        if (bLate && !subbedOffThisGame.has(a)) return -1;
+      }
     }
 
     const diff = debtCache.get(b)! - debtCache.get(a)!;
@@ -659,9 +687,6 @@ export function getSubCandidates(
     return (trackers.get(a) ?? EMPTY_TRACKER).lastPlayedGame
       - (trackers.get(b) ?? EMPTY_TRACKER).lastPlayedGame;
   });
-
-  // Injured on-field players forced to front — they must come off first
-  const hasInjury = injuredOnField.length > 0;
   const fieldRanked = [...availableField].sort((a, b) => {
     const aInj = injuredSet.has(a);
     const bInj = injuredSet.has(b);
