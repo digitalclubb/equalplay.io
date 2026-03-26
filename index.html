@@ -61,8 +61,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="/src/styles.css" />
     <!-- Fonts loaded async — app renders immediately with system font, swaps when ready -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Outfit:wght@600;700&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Outfit:wght@600;700&display=swap" /></noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=Outfit:wght@600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=Outfit:wght@600;700&display=swap" /></noscript>
   </head>
   <body>
     <main id="app">
@@ -79,7 +79,7 @@
           </div>
           <h1 class="subtitle">Fair team rotation for youth sports</h1>
         </header>
-        <div id="tabs-container"></div>
+        <nav id="tabs-container" aria-label="Teams"></nav>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

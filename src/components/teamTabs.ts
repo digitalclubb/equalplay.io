@@ -22,6 +22,8 @@ export function renderTeamTabs(
 ): void {
   container.innerHTML = "";
   container.className = "team-tabs";
+  container.setAttribute("role", "tablist");
+  container.setAttribute("aria-label", "Teams");
 
   const canDelete = teams.length > 1;
 
@@ -31,6 +33,8 @@ export function renderTeamTabs(
     const tab = document.createElement("button");
     tab.type = "button";
     tab.className = `team-tab${isActive ? " team-tab-active" : ""}`;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(isActive));
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "team-tab-name";
@@ -56,6 +60,7 @@ export function renderTeamTabs(
   addBtn.type = "button";
   addBtn.className = "team-tab team-tab-add";
   addBtn.textContent = "+";
+  addBtn.setAttribute("aria-label", "Add team");
   addBtn.addEventListener("click", () => callbacks.onAdd());
   container.appendChild(addBtn);
 }
@@ -83,11 +88,14 @@ function showTeamSheet(
     sheet = document.createElement("div");
     sheet.id = "team-sheet";
     sheet.className = "action-sheet";
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-modal", "true");
     document.body.appendChild(sheet);
   }
 
   backdrop.hidden = false;
   sheet.hidden = false;
+  sheet.setAttribute("aria-label", `Manage ${team.name}`);
 
   let deleteHTML = "";
   if (canDelete) {
@@ -114,20 +122,102 @@ function showTeamSheet(
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const action = btn.dataset.action;
-      dismissTeamSheet();
 
       if (action === "rename") {
-        const newName = prompt("Team name:", team.name);
-        if (newName !== null && newName.trim()) {
-          callbacks.onRename(team.id, newName.trim());
-        }
+        showRenameView(sheet!, team, callbacks);
       } else if (action === "delete") {
-        if (confirm(`Delete ${team.name}? This can't be undone.`)) {
-          callbacks.onDelete(team.id);
-        }
+        showDeleteConfirm(sheet!, team, callbacks);
       }
     });
   });
+
+  // Focus first action and add Escape key handler
+  const firstBtn = sheet.querySelector<HTMLButtonElement>(".action-btn");
+  if (firstBtn) firstBtn.focus();
+
+  addSheetKeyHandler();
+}
+
+/** Inline rename: replaces sheet content with a text input + save/cancel */
+function showRenameView(
+  sheet: HTMLElement,
+  team: TeamTab,
+  callbacks: TeamTabsCallbacks,
+): void {
+  sheet.setAttribute("aria-label", `Rename ${team.name}`);
+  sheet.innerHTML = `
+    <div class="action-sheet-header">Rename team</div>
+    <div class="team-sheet-rename-form">
+      <input type="text" class="team-sheet-rename-input" value="${esc(team.name)}" maxlength="30" aria-label="Team name" />
+      <div class="team-sheet-rename-actions">
+        <button type="button" class="action-btn action-btn-clear" data-action="cancel">Cancel</button>
+        <button type="button" class="action-btn team-sheet-rename-save" data-action="save">Save</button>
+      </div>
+    </div>
+  `;
+
+  const input = sheet.querySelector<HTMLInputElement>(".team-sheet-rename-input")!;
+  const saveBtn = sheet.querySelector<HTMLButtonElement>('[data-action="save"]')!;
+  const cancelBtn = sheet.querySelector<HTMLButtonElement>('[data-action="cancel"]')!;
+
+  input.focus();
+  input.select();
+
+  function save(): void {
+    const newName = input.value.trim();
+    if (newName && newName !== team.name) {
+      callbacks.onRename(team.id, newName);
+    }
+    dismissTeamSheet();
+  }
+
+  saveBtn.addEventListener("click", (e) => { e.stopPropagation(); save(); });
+  cancelBtn.addEventListener("click", (e) => { e.stopPropagation(); dismissTeamSheet(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); save(); }
+    else if (e.key === "Escape") { e.preventDefault(); dismissTeamSheet(); }
+  });
+}
+
+/** Inline delete confirm: replaces sheet content with a warning + confirm/cancel */
+function showDeleteConfirm(
+  sheet: HTMLElement,
+  team: TeamTab,
+  callbacks: TeamTabsCallbacks,
+): void {
+  sheet.setAttribute("aria-label", `Delete ${team.name}`);
+  sheet.innerHTML = `
+    <div class="action-sheet-header">Delete ${esc(team.name)}?</div>
+    <p class="team-sheet-delete-warning">This will remove all players, games and events for this team. This can't be undone.</p>
+    <div class="team-sheet-rename-actions">
+      <button type="button" class="action-btn action-btn-clear" data-action="cancel">Cancel</button>
+      <button type="button" class="action-btn action-btn-delete" data-action="confirm-delete">Delete</button>
+    </div>
+  `;
+
+  const confirmBtn = sheet.querySelector<HTMLButtonElement>('[data-action="confirm-delete"]')!;
+  const cancelBtn = sheet.querySelector<HTMLButtonElement>('[data-action="cancel"]')!;
+
+  cancelBtn.focus();
+
+  confirmBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dismissTeamSheet();
+    callbacks.onDelete(team.id);
+  });
+  cancelBtn.addEventListener("click", (e) => { e.stopPropagation(); dismissTeamSheet(); });
+}
+
+function sheetKeyHandler(e: KeyboardEvent): void {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    dismissTeamSheet();
+  }
+}
+
+function addSheetKeyHandler(): void {
+  document.removeEventListener("keydown", sheetKeyHandler);
+  document.addEventListener("keydown", sheetKeyHandler);
 }
 
 function dismissTeamSheet(): void {
@@ -135,6 +225,7 @@ function dismissTeamSheet(): void {
   const backdrop = document.getElementById("team-sheet-backdrop");
   if (sheet) sheet.hidden = true;
   if (backdrop) backdrop.hidden = true;
+  document.removeEventListener("keydown", sheetKeyHandler);
 }
 
 function esc(text: string): string {

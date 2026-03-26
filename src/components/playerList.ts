@@ -80,12 +80,14 @@ function appendRow(list: HTMLElement, value: string): void {
   input.type = "text";
   input.className = "player-input";
   input.placeholder = `Player ${list.children.length + 1}`;
+  input.setAttribute("aria-label", `Player ${list.children.length + 1} name`);
   input.value = value;
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
   removeBtn.className = "btn-remove-player";
   removeBtn.title = "Remove";
+  removeBtn.setAttribute("aria-label", `Remove player ${list.children.length + 1}`);
   removeBtn.textContent = "\u00D7";
   removeBtn.addEventListener("click", () => {
     row.remove();
@@ -103,6 +105,7 @@ function appendRow(list: HTMLElement, value: string): void {
 function renumberPlaceholders(list: HTMLElement): void {
   list.querySelectorAll<HTMLInputElement>(".player-input").forEach((inp, i) => {
     inp.placeholder = `Player ${i + 1}`;
+    inp.setAttribute("aria-label", `Player ${i + 1} name`);
   });
 }
 

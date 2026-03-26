@@ -98,7 +98,7 @@ export function renderResults(
     const finishedBanner = document.createElement("div");
     finishedBanner.className = "session-finished";
     finishedBanner.innerHTML = `
-      <h3>All games completed</h3>
+      <h3>\uD83C\uDFC1 All games completed</h3>
       <p>Well done! Check the playing time breakdown below.</p>
     `;
     container.appendChild(finishedBanner);
@@ -453,10 +453,23 @@ function renderGameCard(
   if (isCollapsible) {
     content.classList.add("game-content-collapsed");
     headerRow.classList.add("game-header-collapsible");
-    headerRow.addEventListener("click", (e) => {
+    headerRow.setAttribute("role", "button");
+    headerRow.setAttribute("tabindex", "0");
+    headerRow.setAttribute("aria-expanded", "false");
+    headerRow.setAttribute("aria-controls", `game-content-${game.gameNumber}`);
+    content.id = `game-content-${game.gameNumber}`;
+    const toggleCollapse = (e: Event) => {
       if ((e.target as HTMLElement).classList.contains("match-detail-input")) return;
       if ((e.target as HTMLElement).closest(".team-size-stepper")) return;
-      content.classList.toggle("game-content-collapsed");
+      const isCollapsed = content.classList.toggle("game-content-collapsed");
+      headerRow.setAttribute("aria-expanded", String(!isCollapsed));
+    };
+    headerRow.addEventListener("click", toggleCollapse);
+    headerRow.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleCollapse(e);
+      }
     });
   }
 
@@ -692,12 +705,17 @@ function createChip(
   }
 
   if (!readOnly) {
+    chip.dataset.playerId = playerId;
+    const statusLabel = status === "active" ? role : status;
+    chip.setAttribute("aria-label", `${name}, ${statusLabel}. Tap for actions`);
     chip.addEventListener("click", (e) => {
       e.stopPropagation();
       showActionSheet(playerId, name, status, gameNumber, lookup, callbacks);
     });
   } else {
     chip.style.cursor = "default";
+    const statusLabel = status === "active" ? role : status;
+    chip.setAttribute("aria-label", `${name}, ${statusLabel}`);
   }
 
   return chip;
@@ -710,6 +728,8 @@ function createActionSheet(): HTMLElement {
   sheet.id = "action-sheet";
   sheet.className = "action-sheet";
   sheet.hidden = true;
+  sheet.setAttribute("role", "dialog");
+  sheet.setAttribute("aria-modal", "true");
   return sheet;
 }
 
@@ -790,6 +810,8 @@ function showActionSheet(
     `;
   }
 
+  sheet.setAttribute("aria-label", `Actions for ${playerName}`);
+
   sheet.innerHTML = `
     <div class="action-sheet-header">${esc(playerName)}${statusBadge}</div>
     <div class="action-sheet-actions">${actionsHTML}</div>
@@ -809,13 +831,61 @@ function showActionSheet(
   });
 
   sheet.hidden = false;
+
+  // Focus first action button and trap focus
+  const firstBtn = sheet.querySelector<HTMLButtonElement>(".action-btn");
+  if (firstBtn) firstBtn.focus();
+
+  // Store the element that triggered the sheet so we can return focus
+  sheet.dataset.triggerPlayerId = playerId;
+
+  // Escape key and focus trap
+  document.removeEventListener("keydown", handleActionSheetKeydown);
+  document.addEventListener("keydown", handleActionSheetKeydown);
+}
+
+function handleActionSheetKeydown(e: KeyboardEvent): void {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    dismissActionSheet();
+    return;
+  }
+
+  // Trap focus within the sheet
+  if (e.key === "Tab") {
+    const sheet = document.getElementById("action-sheet");
+    if (!sheet) return;
+    const focusable = sheet.querySelectorAll<HTMLElement>("button, [tabindex]");
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 }
 
 function dismissActionSheet(): void {
   const sheet = document.getElementById("action-sheet");
-  if (sheet) { sheet.hidden = true; sheet.dataset.playerId = ""; }
+  if (sheet) {
+    // Return focus to the chip that opened the sheet
+    const triggerId = sheet.dataset.triggerPlayerId;
+    sheet.hidden = true;
+    sheet.dataset.playerId = "";
+    sheet.dataset.triggerPlayerId = "";
+
+    if (triggerId) {
+      const trigger = document.querySelector<HTMLElement>(`[data-player-id="${triggerId}"]`);
+      if (trigger) trigger.focus();
+    }
+  }
   const backdrop = document.getElementById("action-backdrop");
   if (backdrop) backdrop.hidden = true;
+  document.removeEventListener("keydown", handleActionSheetKeydown);
 }
 
 // ---- Replacement suggestions ----
@@ -874,7 +944,8 @@ function renderFairnessSummary(
   let headerText = "Playing time";
   if (isBalanced) headerText += " \u2014 balanced";
 
-  section.innerHTML = `<h4 class="fairness-title">${headerText}</h4>`;
+  const titleClass = isBalanced ? "fairness-title fairness-title-balanced" : "fairness-title";
+  section.innerHTML = `<h4 class="${titleClass}">${headerText}</h4>`;
 
   const list = document.createElement("div");
   list.className = "fairness-list";

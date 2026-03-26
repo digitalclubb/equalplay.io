@@ -87,6 +87,8 @@ export async function mountViewer(root: HTMLElement, sessionId: string): Promise
   // Status bar
   const statusBar = document.createElement("div");
   statusBar.className = "viewer-status";
+  statusBar.setAttribute("role", "status");
+  statusBar.setAttribute("aria-live", "polite");
   statusBar.textContent = "Loading live plan...";
   root.appendChild(statusBar);
 

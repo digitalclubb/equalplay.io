@@ -91,7 +91,8 @@ export function mountApp(root: HTMLElement): void {
   }
 
   if (!tabsContainer) {
-    tabsContainer = document.createElement("div");
+    tabsContainer = document.createElement("nav");
+    tabsContainer.setAttribute("aria-label", "Teams");
     headerBar.appendChild(tabsContainer);
   }
 

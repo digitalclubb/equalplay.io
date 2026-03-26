@@ -15,6 +15,8 @@ export function showToast(
     toast = document.createElement("div");
     toast.id = "toast";
     toast.className = "toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
     document.body.appendChild(toast);
     setupSwipeDismiss(toast);
   }
