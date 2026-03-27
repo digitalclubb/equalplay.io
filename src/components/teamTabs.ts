@@ -24,6 +24,7 @@ export function renderTeamTabs(
   container.className = "team-tabs";
   container.setAttribute("role", "tablist");
   container.setAttribute("aria-label", "Teams");
+  container.removeAttribute("aria-hidden");
 
   const canDelete = teams.length > 1;
 
@@ -35,6 +36,7 @@ export function renderTeamTabs(
     tab.className = `team-tab${isActive ? " team-tab-active" : ""}`;
     tab.setAttribute("role", "tab");
     tab.setAttribute("aria-selected", String(isActive));
+    tab.setAttribute("tabindex", isActive ? "0" : "-1");
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "team-tab-name";

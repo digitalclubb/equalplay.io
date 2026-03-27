@@ -6,6 +6,32 @@
   padding: 0;
 }
 
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: var(--sp-xs);
+  left: var(--sp-xs);
+  width: auto;
+  height: auto;
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--brand);
+  color: #fff;
+  font-weight: var(--weight-semi);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  outline: 2px solid #fff;
+}
+
 :root {
   /* Spacing scale: 2 / 4 / 6 / 8 / 12 / 16 / 24 */
   --sp-3xs: 0.125rem;

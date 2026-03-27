@@ -78,7 +78,7 @@ export async function mountViewer(root: HTMLElement, sessionId: string): Promise
     header.className = "app-header";
     header.innerHTML = `
       ${createLogo()}
-      <h1 class="subtitle">Fair team rotation for youth sports</h1>
+      <p class="subtitle">Fair team rotation for youth sports</p>
     `;
     bar.appendChild(header);
     root.insertBefore(bar, root.firstChild);

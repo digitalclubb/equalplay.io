@@ -80,7 +80,7 @@ export function mountApp(root: HTMLElement): void {
     header.className = "app-header";
     header.innerHTML = `
       ${createLogo()}
-      <h1 class="subtitle">Fair team rotation for youth sports</h1>
+      <p class="subtitle">Fair team rotation for youth sports</p>
     `;
     headerBar.appendChild(header);
 
@@ -536,6 +536,7 @@ export function mountApp(root: HTMLElement): void {
 
   // Form container — rebuilt on every team switch so inputs are fresh
   const formContainer = document.createElement("div");
+  formContainer.id = "main-content";
   let currentFormHandle: { getRawNames: () => string[] } | null = null;
 
   /** Save current form inputs to the active team's draft before switching */
