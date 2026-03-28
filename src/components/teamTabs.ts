@@ -65,6 +65,31 @@ export function renderTeamTabs(
   addBtn.setAttribute("aria-label", "Add team");
   addBtn.addEventListener("click", () => callbacks.onAdd());
   container.appendChild(addBtn);
+
+  // Arrow key navigation between tabs (WAI-ARIA tabs pattern)
+  container.addEventListener("keydown", (e) => {
+    if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return;
+
+    const tabs = Array.from(container.querySelectorAll<HTMLElement>('[role="tab"]'));
+    const currentIndex = tabs.findIndex((t) => t === document.activeElement);
+    if (currentIndex === -1) return;
+
+    let nextIndex: number;
+    if (e.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % tabs.length;
+    } else if (e.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    } else if (e.key === "Home") {
+      nextIndex = 0;
+    } else {
+      nextIndex = tabs.length - 1;
+    }
+
+    e.preventDefault();
+    tabs[currentIndex].setAttribute("tabindex", "-1");
+    tabs[nextIndex].setAttribute("tabindex", "0");
+    tabs[nextIndex].focus();
+  });
 }
 
 // ---- Team manage sheet ----
