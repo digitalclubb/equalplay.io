@@ -14,55 +14,12 @@ import {
   loadTeams,
 } from "./logic/storage.js";
 import type { SavedData } from "./logic/storage.js";
+import { TeamStore } from "./logic/teamState.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
   Player,
-  MatchMode,
   RotationEvent,
-  RotationPlan,
 } from "./types/index.js";
-
-// ---- Per-team state ----
-
-interface TeamState {
-  id: string;
-  name: string;
-  initialPlan: RotationPlan | null;
-  originalPlayerIds: string[];
-  playersPerTeam: number;
-  numberOfGames: number;
-  playerMap: Map<string, Player>;
-  events: RotationEvent[];
-  currentGame: number;
-  gameLabels: Record<string, string>;
-  matchMode: MatchMode;
-  teamSizeOverrides: Record<string, number>;
-  /** Draft player names — saved before generation so they survive tab switches */
-  draftPlayerNames: string[];
-}
-
-function createEmptyTeam(id: string, name: string): TeamState {
-  return {
-    id,
-    name,
-    initialPlan: null,
-    originalPlayerIds: [],
-    playersPerTeam: 7,
-    numberOfGames: 3,
-    playerMap: new Map(),
-    events: [],
-    currentGame: 1,
-    gameLabels: {},
-    matchMode: "setup",
-    teamSizeOverrides: {},
-    draftPlayerNames: [],
-  };
-}
-
-let nextTeamId = 1;
-function generateTeamId(): string {
-  return `team-${nextTeamId++}`;
-}
 
 // ---- App ----
 
@@ -102,13 +59,8 @@ export function mountApp(root: HTMLElement): void {
   resultsContainer.id = "results";
 
   // Multi-team state
-  let teams: TeamState[] = [createEmptyTeam(generateTeamId(), "Team 1")];
-  let activeTeamId = teams[0].id;
+  const store = new TeamStore();
   let previousEvents: RotationEvent[] | null = null;
-
-  function getActive(): TeamState {
-    return teams.find((t) => t.id === activeTeamId)!;
-  }
 
   // ---- Persistence ----
 
@@ -145,26 +97,8 @@ export function mountApp(root: HTMLElement): void {
     });
   }
 
-  function buildSavedData(): SavedData {
-    return {
-      teams: teams.map((t) => ({
-        id: t.id,
-        name: t.name,
-        players: [...t.playerMap.values()],
-        playersPerTeam: t.playersPerTeam,
-        numberOfGames: t.numberOfGames,
-        events: t.events,
-        currentGame: t.currentGame,
-        gameLabels: t.gameLabels,
-        matchMode: t.matchMode,
-        teamSizeOverrides: t.teamSizeOverrides,
-      })),
-      activeTeamId,
-    };
-  }
-
   function persist(): void {
-    const data = buildSavedData();
+    const data = store.buildSavedData();
     saveTeams(data);
     // Non-blocking async sync to Supabase (if shared)
     ownerSync?.push(data);
@@ -175,42 +109,33 @@ export function mountApp(root: HTMLElement): void {
   function renderTabs(): void {
     renderTeamTabs(
       tabs,
-      teams.map((t) => ({ id: t.id, name: t.name })),
-      activeTeamId,
+      store.teams.map((t) => ({ id: t.id, name: t.name })),
+      store.activeTeamId,
       {
         onSelect(teamId) {
           saveDraft();
-          activeTeamId = teamId;
+          store.activeTeamId = teamId;
           previousEvents = null;
           rerenderAll();
           persist();
         },
         onAdd() {
           saveDraft();
-          const id = generateTeamId();
-          const name = `Team ${teams.length + 1}`;
-          teams.push(createEmptyTeam(id, name));
-          activeTeamId = id;
+          const team = store.addTeam();
           previousEvents = null;
           rerenderAll();
           persist();
-          showToast(`${name} created.`);
+          showToast(`${team.name} created.`);
         },
         onDelete(teamId) {
-          if (teams.length <= 1) return;
-          teams = teams.filter((t) => t.id !== teamId);
-          if (activeTeamId === teamId) {
-            activeTeamId = teams[0].id;
-          }
+          if (!store.deleteTeam(teamId)) return;
           previousEvents = null;
           rerenderAll();
           persist();
           showToast("Team deleted.");
         },
         onRename(teamId, newName) {
-          const team = teams.find((t) => t.id === teamId);
-          if (team) {
-            team.name = newName;
+          if (store.renameTeam(teamId, newName)) {
             renderTabs();
             persist();
           }
@@ -229,7 +154,7 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function rerenderResults(): void {
-    const team = getActive();
+    const team = store.getActive();
     if (!team.initialPlan) {
       resultsContainer.innerHTML = "";
       return;
@@ -273,7 +198,7 @@ export function mountApp(root: HTMLElement): void {
   // ---- Actions ----
 
   function undo(): void {
-    const team = getActive();
+    const team = store.getActive();
     if (!team.initialPlan || previousEvents === null) return;
     team.events = previousEvents;
     previousEvents = null;
@@ -283,7 +208,7 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function applyAction(mutate: () => void): void {
-    const team = getActive();
+    const team = store.getActive();
     if (!team.initialPlan) return;
     previousEvents = [...team.events];
     mutate();
@@ -292,7 +217,7 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function getName(playerId: string): string {
-    return getActive().playerMap.get(playerId)?.name ?? "Player";
+    return store.getActive().playerMap.get(playerId)?.name ?? "Player";
   }
 
   // ---- Callbacks ----
@@ -301,7 +226,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkLate(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        const team = getActive();
+        const team = store.getActive();
         team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         team.events.push({ type: "late", playerId });
       });
@@ -311,7 +236,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkInjured(playerId, gameNumber) {
       const name = getName(playerId);
       applyAction(() => {
-        const team = getActive();
+        const team = store.getActive();
         team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
         team.events.push({ type: "injured", playerId, gameNumber });
       });
@@ -321,7 +246,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkJoined(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        getActive().events.push({ type: "joined", playerId, duringGame: getActive().currentGame });
+        store.getActive().events.push({ type: "joined", playerId, duringGame: store.getActive().currentGame });
       });
       showToast(`${name} has arrived and is on the bench.`, undo);
     },
@@ -329,7 +254,7 @@ export function mountApp(root: HTMLElement): void {
     onMarkLeaving(playerId, afterGame) {
       const name = getName(playerId);
       applyAction(() => {
-        const team = getActive();
+        const team = store.getActive();
         // Remove any existing leaving event for this player
         team.events = team.events.filter(
           (e) => !(e.type === "leaving" && e.playerId === playerId),
@@ -342,14 +267,14 @@ export function mountApp(root: HTMLElement): void {
     onClearStatus(playerId) {
       const name = getName(playerId);
       applyAction(() => {
-        const team = getActive();
+        const team = store.getActive();
         team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
       });
       showToast(`${name} is back in the rotation.`, undo);
     },
 
     onTeamSizeChange(gameNumber, size) {
-      const team = getActive();
+      const team = store.getActive();
       if (size === team.playersPerTeam) {
         delete team.teamSizeOverrides[String(gameNumber)];
       } else {
@@ -360,7 +285,7 @@ export function mountApp(root: HTMLElement): void {
     },
 
     onGameLabelChange(gameNumber, label) {
-      const team = getActive();
+      const team = store.getActive();
       if (label) {
         team.gameLabels[String(gameNumber)] = label;
       } else {
@@ -373,13 +298,13 @@ export function mountApp(root: HTMLElement): void {
       const outName = getName(playerOut);
       const inName = getName(playerIn);
       applyAction(() => {
-        getActive().events.push({ type: "sub", gameNumber, playerOut, playerIn });
+        store.getActive().events.push({ type: "sub", gameNumber, playerOut, playerIn });
       });
       showToast(`${inName} on for ${outName}.`, undo);
     },
 
     onNextGame() {
-      const team = getActive();
+      const team = store.getActive();
       if (!team.initialPlan) return;
       const totalGames = team.initialPlan.games.length;
       if (team.currentGame > totalGames) return;
@@ -395,7 +320,7 @@ export function mountApp(root: HTMLElement): void {
     },
 
     onStartMatch() {
-      const team = getActive();
+      const team = store.getActive();
       team.matchMode = "live";
       rerenderResults();
       persist();
@@ -403,7 +328,7 @@ export function mountApp(root: HTMLElement): void {
     },
 
     onStartNew() {
-      const team = getActive();
+      const team = store.getActive();
       team.initialPlan = null;
       team.events = [];
       team.currentGame = 1;
@@ -466,7 +391,7 @@ export function mountApp(root: HTMLElement): void {
           return;
         }
 
-        const data = buildSavedData();
+        const data = store.buildSavedData();
         const id = await mod.createSession(data);
         sharePending = false;
 
@@ -515,7 +440,7 @@ export function mountApp(root: HTMLElement): void {
     handle.setLoading(true);
     setTimeout(() => {
       const plan = generateInitialPlan({ players, playersPerTeam, numberOfGames });
-      const team = getActive();
+      const team = store.getActive();
 
       team.initialPlan = plan;
       team.originalPlayerIds = players.map((p) => p.id);
@@ -542,13 +467,13 @@ export function mountApp(root: HTMLElement): void {
   /** Save current form inputs to the active team's draft before switching */
   function saveDraft(): void {
     if (currentFormHandle) {
-      getActive().draftPlayerNames = currentFormHandle.getRawNames();
+      store.getActive().draftPlayerNames = currentFormHandle.getRawNames();
     }
   }
 
   function rebuildForm(): void {
     formContainer.innerHTML = "";
-    const team = getActive();
+    const team = store.getActive();
     const form = createForm(generate, team.draftPlayerNames);
     currentFormHandle = form;
     formContainer.appendChild(form.element);
@@ -558,49 +483,7 @@ export function mountApp(root: HTMLElement): void {
 
   const saved = loadTeams();
   if (saved) {
-    teams = saved.teams.map((st) => {
-      const playerMap = new Map<string, Player>(
-        st.players.map((p) => [p.id, p]),
-      );
-
-      const numPart = parseInt(st.id.replace("team-", ""), 10);
-      if (!isNaN(numPart) && numPart >= nextTeamId) {
-        nextTeamId = numPart + 1;
-      }
-
-      const plan = st.players.length > 0
-        ? generateInitialPlan({
-            players: st.players,
-            playersPerTeam: st.playersPerTeam,
-            numberOfGames: st.numberOfGames,
-          })
-        : null;
-
-      return {
-        id: st.id,
-        name: st.name,
-        initialPlan: plan,
-        originalPlayerIds: st.players.map((p) => p.id),
-        playersPerTeam: st.playersPerTeam,
-        numberOfGames: st.numberOfGames,
-        playerMap,
-        events: st.events ?? [],
-        currentGame: st.currentGame ?? 1,
-        gameLabels: st.gameLabels ?? {},
-        matchMode: st.matchMode ?? "setup",
-        teamSizeOverrides: st.teamSizeOverrides ?? {},
-        draftPlayerNames: st.players.map((p) => p.name),
-      };
-    });
-
-    if (teams.length === 0) {
-      teams = [createEmptyTeam(generateTeamId(), "Team 1")];
-    }
-
-    activeTeamId = saved.activeTeamId;
-    if (!teams.find((t) => t.id === activeTeamId)) {
-      activeTeamId = teams[0].id;
-    }
+    store.restoreFrom(saved);
   }
 
   // ---- Mount ----
