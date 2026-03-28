@@ -13,7 +13,7 @@ import {
   saveTeams,
   loadTeams,
 } from "./logic/storage.js";
-import type { SavedData } from "./logic/storage.js";
+import { ShareManager } from "./logic/shareManager.js";
 import { TeamStore } from "./logic/teamState.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
@@ -62,46 +62,21 @@ export function mountApp(root: HTMLElement): void {
   const store = new TeamStore();
   let previousEvents: RotationEvent[] | null = null;
 
+  // ---- Share / sync ----
+
+  const share = new ShareManager({
+    onStateChange: () => rerenderResults(),
+    buildSavedData: () => store.buildSavedData(),
+    showToast,
+  });
+  share.init();
+
   // ---- Persistence ----
-
-  // ---- Session sync (lazy-loaded) ----
-
-  let sessionId: string | null = localStorage.getItem("equalplay_session_id");
-  let ownerSync: { push(state: SavedData): void; destroy(): void } | null = null;
-  let sharePending = false;
-  let shareEnabled = false;
-
-  // Lazy-load Supabase + sync module only when needed
-  async function loadSync() {
-    const { supabase } = await import("./logic/supabase.js");
-    if (!supabase) return null;
-    const sync = await import("./logic/sync.js");
-    return { supabase, ...sync };
-  }
-
-  // Reconnect sync if session was previously shared
-  if (sessionId) {
-    loadSync().then((mod) => {
-      if (mod) {
-        shareEnabled = true;
-        ownerSync = mod.createOwnerSync(sessionId!);
-      }
-    });
-  } else {
-    // Probe for Supabase availability in the background
-    loadSync().then((mod) => {
-      if (mod) {
-        shareEnabled = true;
-        rerenderResults(); // show the share button now that we know it's available
-      }
-    });
-  }
 
   function persist(): void {
     const data = store.buildSavedData();
     saveTeams(data);
-    // Non-blocking async sync to Supabase (if shared)
-    ownerSync?.push(data);
+    share.push(data);
   }
 
   // ---- Rendering ----
@@ -182,7 +157,7 @@ export function mountApp(root: HTMLElement): void {
       team.originalPlayerIds,
       team.currentGame,
       team.gameLabels,
-      callbacks,
+      buildCallbacks(),
       false,
       team.matchMode,
       team.teamSizeOverrides,
@@ -222,199 +197,140 @@ export function mountApp(root: HTMLElement): void {
 
   // ---- Callbacks ----
 
-  const callbacks: ResultsCallbacks = {
-    onMarkLate(playerId) {
-      const name = getName(playerId);
-      applyAction(() => {
+  function buildCallbacks(): ResultsCallbacks {
+    return {
+      onMarkLate(playerId) {
+        const name = getName(playerId);
+        applyAction(() => {
+          const team = store.getActive();
+          team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+          team.events.push({ type: "late", playerId });
+        });
+        showToast(`${name} isn't here yet. Rotation updated.`, undo);
+      },
+
+      onMarkInjured(playerId, gameNumber) {
+        const name = getName(playerId);
+        applyAction(() => {
+          const team = store.getActive();
+          team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+          team.events.push({ type: "injured", playerId, gameNumber });
+        });
+        showToast(`${name} injured. Use Make sub to replace.`, undo);
+      },
+
+      onMarkJoined(playerId) {
+        const name = getName(playerId);
+        applyAction(() => {
+          store.getActive().events.push({ type: "joined", playerId, duringGame: store.getActive().currentGame });
+        });
+        showToast(`${name} has arrived and is on the bench.`, undo);
+      },
+
+      onMarkLeaving(playerId, afterGame) {
+        const name = getName(playerId);
+        applyAction(() => {
+          const team = store.getActive();
+          // Remove any existing leaving event for this player
+          team.events = team.events.filter(
+            (e) => !(e.type === "leaving" && e.playerId === playerId),
+          );
+          team.events.push({ type: "leaving", playerId, afterGame });
+        });
+        showToast(`${name} leaves after game ${afterGame}. Rotation updated.`, undo);
+      },
+
+      onClearStatus(playerId) {
+        const name = getName(playerId);
+        applyAction(() => {
+          const team = store.getActive();
+          team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
+        });
+        showToast(`${name} is back in the rotation.`, undo);
+      },
+
+      onTeamSizeChange(gameNumber, size) {
         const team = store.getActive();
-        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
-        team.events.push({ type: "late", playerId });
-      });
-      showToast(`${name} isn't here yet. Rotation updated.`, undo);
-    },
-
-    onMarkInjured(playerId, gameNumber) {
-      const name = getName(playerId);
-      applyAction(() => {
-        const team = store.getActive();
-        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
-        team.events.push({ type: "injured", playerId, gameNumber });
-      });
-      showToast(`${name} injured. Use Make sub to replace.`, undo);
-    },
-
-    onMarkJoined(playerId) {
-      const name = getName(playerId);
-      applyAction(() => {
-        store.getActive().events.push({ type: "joined", playerId, duringGame: store.getActive().currentGame });
-      });
-      showToast(`${name} has arrived and is on the bench.`, undo);
-    },
-
-    onMarkLeaving(playerId, afterGame) {
-      const name = getName(playerId);
-      applyAction(() => {
-        const team = store.getActive();
-        // Remove any existing leaving event for this player
-        team.events = team.events.filter(
-          (e) => !(e.type === "leaving" && e.playerId === playerId),
-        );
-        team.events.push({ type: "leaving", playerId, afterGame });
-      });
-      showToast(`${name} leaves after game ${afterGame}. Rotation updated.`, undo);
-    },
-
-    onClearStatus(playerId) {
-      const name = getName(playerId);
-      applyAction(() => {
-        const team = store.getActive();
-        team.events = team.events.filter((e) => !("playerId" in e && e.playerId === playerId));
-      });
-      showToast(`${name} is back in the rotation.`, undo);
-    },
-
-    onTeamSizeChange(gameNumber, size) {
-      const team = store.getActive();
-      if (size === team.playersPerTeam) {
-        delete team.teamSizeOverrides[String(gameNumber)];
-      } else {
-        team.teamSizeOverrides[String(gameNumber)] = size;
-      }
-      rerenderResults();
-      persist();
-    },
-
-    onGameLabelChange(gameNumber, label) {
-      const team = store.getActive();
-      if (label) {
-        team.gameLabels[String(gameNumber)] = label;
-      } else {
-        delete team.gameLabels[String(gameNumber)];
-      }
-      persist();
-    },
-
-    onMakeSub(gameNumber, playerOut, playerIn) {
-      const outName = getName(playerOut);
-      const inName = getName(playerIn);
-      applyAction(() => {
-        store.getActive().events.push({ type: "sub", gameNumber, playerOut, playerIn });
-      });
-      showToast(`${inName} on for ${outName}.`, undo);
-    },
-
-    onNextGame() {
-      const team = store.getActive();
-      if (!team.initialPlan) return;
-      const totalGames = team.initialPlan.games.length;
-      if (team.currentGame > totalGames) return;
-      const nextNum = team.currentGame + 1;
-      team.currentGame = nextNum;
-      rerenderResults();
-      persist();
-      if (nextNum > totalGames) {
-        showToast("All games completed.");
-      } else {
-        showToast(`Game ${nextNum} is now live.`);
-      }
-    },
-
-    onStartMatch() {
-      const team = store.getActive();
-      team.matchMode = "live";
-      rerenderResults();
-      persist();
-      showToast("Game 1 is live.");
-    },
-
-    onStartNew() {
-      const team = store.getActive();
-      team.initialPlan = null;
-      team.events = [];
-      team.currentGame = 1;
-      team.gameLabels = {};
-      team.matchMode = "setup";
-      team.teamSizeOverrides = {};
-      team.playerMap = new Map();
-      team.originalPlayerIds = [];
-      previousEvents = null;
-      resultsContainer.innerHTML = "";
-
-      // Disconnect shared session — old link becomes stale
-      if (ownerSync) {
-        ownerSync.destroy();
-        ownerSync = null;
-      }
-      sessionId = null;
-      localStorage.removeItem("equalplay_session_id");
-
-      persist();
-      showToast("Session cleared.");
-    },
-
-  };
-
-  // Share — label is a getter so it reflects current state on every render
-  Object.defineProperty(callbacks, "shareLabel", {
-    get(): string {
-      return sharePending ? "Sharing..." : "Share live plan \u2197";
-    },
-    enumerable: true,
-  });
-
-  // onShare only appears when Supabase is available (shareEnabled set async on load)
-  Object.defineProperty(callbacks, "onShare", {
-    get(): (() => Promise<void>) | undefined {
-      if (!shareEnabled) return undefined;
-      return async () => {
-        if (sharePending) return;
-
-        if (sessionId) {
-          const url = `${window.location.origin}/session/${sessionId}`;
-          try {
-            await navigator.clipboard.writeText(url);
-            showToast("Link copied");
-          } catch {
-            showToast("Could not copy link");
-          }
-          return;
-        }
-
-        sharePending = true;
-        rerenderResults();
-
-        const mod = await loadSync();
-        if (!mod) {
-          sharePending = false;
-          rerenderResults();
-          showToast("Sharing not available.");
-          return;
-        }
-
-        const data = store.buildSavedData();
-        const id = await mod.createSession(data);
-        sharePending = false;
-
-        if (id) {
-          sessionId = id;
-          localStorage.setItem("equalplay_session_id", id);
-          ownerSync = mod.createOwnerSync(id);
-          const url = `${window.location.origin}/session/${id}`;
-          try {
-            await navigator.clipboard.writeText(url);
-            showToast("Link copied. Live updates enabled.");
-          } catch {
-            showToast("Live updates enabled");
-          }
-          rerenderResults();
+        if (size === team.playersPerTeam) {
+          delete team.teamSizeOverrides[String(gameNumber)];
         } else {
-          rerenderResults();
-          showToast("Could not share. Try again.");
+          team.teamSizeOverrides[String(gameNumber)] = size;
         }
-      };
-    },
-    enumerable: true,
-  });
+        rerenderResults();
+        persist();
+      },
+
+      onGameLabelChange(gameNumber, label) {
+        const team = store.getActive();
+        if (label) {
+          team.gameLabels[String(gameNumber)] = label;
+        } else {
+          delete team.gameLabels[String(gameNumber)];
+        }
+        persist();
+      },
+
+      onMakeSub(gameNumber, playerOut, playerIn) {
+        const outName = getName(playerOut);
+        const inName = getName(playerIn);
+        applyAction(() => {
+          store.getActive().events.push({ type: "sub", gameNumber, playerOut, playerIn });
+        });
+        showToast(`${inName} on for ${outName}.`, undo);
+      },
+
+      onNextGame() {
+        const team = store.getActive();
+        if (!team.initialPlan) return;
+        const totalGames = team.initialPlan.games.length;
+        if (team.currentGame > totalGames) return;
+        const nextNum = team.currentGame + 1;
+        team.currentGame = nextNum;
+        rerenderResults();
+        persist();
+        if (nextNum > totalGames) {
+          showToast("All games completed.");
+        } else {
+          showToast(`Game ${nextNum} is now live.`);
+        }
+      },
+
+      onStartMatch() {
+        const team = store.getActive();
+        team.matchMode = "live";
+        rerenderResults();
+        persist();
+        showToast("Game 1 is live.");
+      },
+
+      onStartNew() {
+        const team = store.getActive();
+        team.initialPlan = null;
+        team.events = [];
+        team.currentGame = 1;
+        team.gameLabels = {};
+        team.matchMode = "setup";
+        team.teamSizeOverrides = {};
+        team.playerMap = new Map();
+        team.originalPlayerIds = [];
+        previousEvents = null;
+        resultsContainer.innerHTML = "";
+
+        share.disconnect();
+
+        persist();
+        showToast("Session cleared.");
+      },
+
+      get shareLabel() {
+        return share.shareLabel;
+      },
+
+      get onShare() {
+        return share.onShare;
+      },
+    };
+  }
 
   // ---- Generate ----
 
