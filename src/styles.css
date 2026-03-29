@@ -531,6 +531,7 @@ body {
   margin-right: calc(-1 * var(--sp-md));
   padding-left: var(--sp-md);
   padding-right: var(--sp-md);
+  contain: layout style;
 }
 
 /* ---- Game Sections ---- */
@@ -538,6 +539,7 @@ body {
 .game-card {
   padding: var(--sp-md) 0;
   border-bottom: 1px solid var(--color-border);
+  contain: layout style;
 }
 
 .game-card:last-of-type {
@@ -1110,6 +1112,7 @@ body {
   inset: 0;
   background: var(--color-overlay);
   z-index: 99;
+  contain: strict;
 }
 
 .action-backdrop[hidden] {

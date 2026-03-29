@@ -299,7 +299,7 @@ export function renderResults(
   container.appendChild(renderFairnessSummary(stats, playerMap));
 
   if (!readOnly) {
-    container.appendChild(createActionSheet());
+    ensureActionSheet();
   }
 }
 
@@ -723,14 +723,16 @@ function createChip(
 
 // ---- Action Sheet ----
 
-function createActionSheet(): HTMLElement {
+/** Create the action sheet once on body so it survives container rebuilds. */
+function ensureActionSheet(): void {
+  if (document.getElementById("action-sheet")) return;
   const sheet = document.createElement("div");
   sheet.id = "action-sheet";
   sheet.className = "action-sheet";
   sheet.hidden = true;
   sheet.setAttribute("role", "dialog");
   sheet.setAttribute("aria-modal", "true");
-  return sheet;
+  document.body.appendChild(sheet);
 }
 
 function showActionSheet(
