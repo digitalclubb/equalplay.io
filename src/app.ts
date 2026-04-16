@@ -376,7 +376,9 @@ export function mountApp(root: HTMLElement): void {
   }
 
   // Form container — rebuilt on every team switch so inputs are fresh
-  const formContainer = document.createElement("div");
+  const formContainer =
+    document.getElementById("main-content") ??
+    document.createElement("div");
   formContainer.id = "main-content";
   let currentFormHandle: { getRawNames: () => string[] } | null = null;
 
