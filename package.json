@@ -27,7 +27,6 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.99.3",
     "@vercel/analytics": "^2.0.1"
   }
 }

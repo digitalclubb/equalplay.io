@@ -13,7 +13,6 @@ import {
   saveTeams,
   loadTeams,
 } from "./logic/storage.js";
-import { ShareManager } from "./logic/shareManager.js";
 import { TeamStore } from "./logic/teamState.js";
 import { validateInputs, hasErrors } from "./logic/validate.js";
 import type {
@@ -62,21 +61,10 @@ export function mountApp(root: HTMLElement): void {
   const store = new TeamStore();
   let previousEvents: RotationEvent[] | null = null;
 
-  // ---- Share / sync ----
-
-  const share = new ShareManager({
-    onStateChange: () => rerenderResults(),
-    buildSavedData: () => store.buildSavedData(),
-    showToast,
-  });
-  share.init();
-
   // ---- Persistence ----
 
   function persist(): void {
-    const data = store.buildSavedData();
-    saveTeams(data);
-    share.push(data);
+    saveTeams(store.buildSavedData());
   }
 
   // ---- Rendering ----
@@ -316,18 +304,8 @@ export function mountApp(root: HTMLElement): void {
         previousEvents = null;
         resultsContainer.innerHTML = "";
 
-        share.disconnect();
-
         persist();
         showToast("Session cleared.");
-      },
-
-      get shareLabel() {
-        return share.shareLabel;
-      },
-
-      get onShare() {
-        return share.onShare;
       },
     };
   }

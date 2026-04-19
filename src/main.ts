@@ -4,15 +4,7 @@ const root = document.getElementById("app");
 if (!root) {
   console.error("Root element #app not found");
 } else {
-  // Route: /session/{id} → viewer mode, otherwise → owner mode
-  const sessionMatch = window.location.pathname.match(/^\/session\/([a-zA-Z0-9-]+)/);
-  if (sessionMatch) {
-    import("./viewer.js").then(({ mountViewer }) => {
-      mountViewer(root, sessionMatch[1]);
-    });
-  } else {
-    mountApp(root);
-  }
+  mountApp(root);
 }
 
 // Deferred: service worker + analytics — loaded only when browser is idle

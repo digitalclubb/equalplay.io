@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/session/:id", "destination": "/index.html" }
-  ]
-}
