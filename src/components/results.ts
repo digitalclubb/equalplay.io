@@ -33,6 +33,7 @@ export interface ResultsCallbacks {
   onGameLabelChange: (gameNumber: number, label: string) => void;
   onMakeSub: (gameNumber: number, playerOut: string, playerIn: string) => void;
   onNextGame: () => void;
+  onPrevGame: () => void;
   onStartMatch: () => void;
   onStartNew: () => void;
 }
@@ -64,6 +65,15 @@ export function renderResults(
     const actionsRow = document.createElement("div");
     actionsRow.className = "session-actions-row";
 
+    const historyBtn = document.createElement("button");
+    historyBtn.type = "button";
+    historyBtn.className = "btn-history";
+    historyBtn.textContent = "Session history";
+    historyBtn.addEventListener("click", () => {
+      showHistoryView(plan, events, gameLabels, playerMap);
+    });
+    actionsRow.appendChild(historyBtn);
+
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
     resetBtn.className = "btn-reset";
@@ -87,6 +97,14 @@ export function renderResults(
       <h3>\uD83C\uDFC1 All games completed</h3>
       <p>Well done! Check the playing time breakdown below.</p>
     `;
+    if (!readOnly && totalGames > 0) {
+      const backLink = document.createElement("button");
+      backLink.type = "button";
+      backLink.className = "btn-prev-game";
+      backLink.textContent = `← Back to game ${totalGames}`;
+      backLink.addEventListener("click", () => callbacks.onPrevGame());
+      finishedBanner.appendChild(backLink);
+    }
     container.appendChild(finishedBanner);
   }
 
@@ -126,75 +144,82 @@ export function renderResults(
         const candidates = getSubCandidates(plan, currentGame, unavailable, events);
 
         // When candidates is null (all balanced), fall back to raw bench/field
-        // so the coach can still make manual subs.
+        // so the coach can still make manual subs (single row).
         const availBench = currentGameData.bench.filter((id) => !unavailable.has(id));
         const availField = currentGameData.onField.filter((id) => !unavailable.has(id));
         const benchRanked = candidates ? candidates.benchRanked : availBench;
         const fieldRanked = candidates ? candidates.fieldRanked : availField;
         const injuredOut = candidates?.injuredOut ?? false;
+        const injuredCount = candidates?.injuredCount ?? 0;
+        const pairCount = candidates
+          ? candidates.pairCount
+          : (benchRanked.length > 0 && fieldRanked.length > 0 ? 1 : 0);
 
-        if (benchRanked.length > 0 && fieldRanked.length > 0) {
-          let inIdx = 0;
-          let outIdx = 0;
-
+        if (pairCount > 0) {
           const strip = document.createElement("div");
           strip.className = "sub-strip";
           if (injuredOut) strip.classList.add("sub-strip-urgent");
 
           const stripLabel = document.createElement("span");
           stripLabel.className = "sub-strip-label";
-          stripLabel.textContent = injuredOut
-            ? "Injury replacement"
-            : candidates
-              ? "Next sub"
-              : "All players balanced";
+          if (injuredOut) {
+            stripLabel.textContent = pairCount > 1 ? "Injury replacements" : "Injury replacement";
+          } else if (candidates) {
+            stripLabel.textContent = "Next sub";
+          } else {
+            stripLabel.textContent = "All players balanced";
+          }
           strip.appendChild(stripLabel);
 
-          const row = document.createElement("div");
-          row.className = "sub-strip-row";
+          // Primary row: prominent chips + Make sub button.
+          // Chips are cyclable when there are alternatives, so the coach can
+          // override the recommendation if they have a specific player in mind.
+          let inIdx = 0;
+          let outIdx = 0;
+          const primaryIsInjury = injuredCount > 0;
 
-          const inChip = document.createElement("button");
-          inChip.type = "button";
-          inChip.className = "chip chip-field chip-sm sub-chip";
-          inChip.dataset.testid = "sub-in";
+          const primaryRow = document.createElement("div");
+          primaryRow.className = "sub-strip-row";
 
-          const arrow = document.createElement("span");
-          arrow.className = "sub-strip-arrow";
-          arrow.textContent = "on for";
+          const primaryInChip = document.createElement("button");
+          primaryInChip.type = "button";
+          primaryInChip.className = "chip chip-field chip-sm sub-chip";
+          primaryInChip.dataset.testid = "sub-in";
 
-          const outChip = document.createElement("button");
-          outChip.type = "button";
-          outChip.className = injuredOut
+          const primaryArrow = document.createElement("span");
+          primaryArrow.className = "sub-strip-arrow";
+          primaryArrow.textContent = "on for";
+
+          const primaryOutChip = document.createElement("button");
+          primaryOutChip.type = "button";
+          primaryOutChip.className = primaryIsInjury
             ? "chip chip-injured chip-sm sub-chip"
             : "chip chip-bench chip-sm sub-chip";
-          outChip.dataset.testid = "sub-out";
+          primaryOutChip.dataset.testid = "sub-out";
 
           function updateChips(animate = false): void {
-            const inId = benchRanked[inIdx];
-            const outId = fieldRanked[outIdx];
-            const inName = playerMap.get(inId)?.name ?? "?";
-            const outName = playerMap.get(outId)?.name ?? "?";
-
+            const inName = playerMap.get(benchRanked[inIdx])?.name ?? "?";
+            const outName = playerMap.get(fieldRanked[outIdx])?.name ?? "?";
             if (animate) {
-              row.classList.add("sub-strip-exit");
+              primaryRow.classList.add("sub-strip-exit");
               setTimeout(() => {
-                inChip.textContent = inName;
-                outChip.textContent = outName;
-                row.classList.remove("sub-strip-exit");
-                row.classList.add("sub-strip-enter");
-                setTimeout(() => row.classList.remove("sub-strip-enter"), 150);
+                primaryInChip.textContent = inName;
+                primaryOutChip.textContent = outName;
+                primaryRow.classList.remove("sub-strip-exit");
+                primaryRow.classList.add("sub-strip-enter");
+                setTimeout(() => primaryRow.classList.remove("sub-strip-enter"), 150);
               }, 100);
             } else {
-              inChip.textContent = inName;
-              outChip.textContent = outName;
+              primaryInChip.textContent = inName;
+              primaryOutChip.textContent = outName;
             }
           }
 
           updateChips();
 
           if (benchRanked.length > 1) {
-            inChip.classList.add("sub-chip-cyclable");
-            inChip.addEventListener("click", (e) => {
+            primaryInChip.classList.add("sub-chip-cyclable");
+            primaryInChip.addEventListener("click", (e) => {
               e.stopPropagation();
               inIdx = (inIdx + 1) % benchRanked.length;
               updateChips(true);
@@ -202,29 +227,68 @@ export function renderResults(
           }
 
           if (fieldRanked.length > 1) {
-            outChip.classList.add("sub-chip-cyclable");
-            outChip.addEventListener("click", (e) => {
+            primaryOutChip.classList.add("sub-chip-cyclable");
+            primaryOutChip.addEventListener("click", (e) => {
               e.stopPropagation();
               outIdx = (outIdx + 1) % fieldRanked.length;
               updateChips(true);
             });
           }
 
-          row.appendChild(inChip);
-          row.appendChild(arrow);
-          row.appendChild(outChip);
-          strip.appendChild(row);
+          primaryRow.appendChild(primaryInChip);
+          primaryRow.appendChild(primaryArrow);
+          primaryRow.appendChild(primaryOutChip);
+          strip.appendChild(primaryRow);
 
           const subBtn = document.createElement("button");
           subBtn.type = "button";
           subBtn.className = "btn-next-sub";
           subBtn.innerHTML = `${iconSub} Make sub`;
           subBtn.addEventListener("click", () => {
-            const inId = benchRanked[inIdx];
-            const outId = fieldRanked[outIdx];
-            callbacks.onMakeSub(currentGame, outId, inId);
+            callbacks.onMakeSub(currentGame, fieldRanked[outIdx], benchRanked[inIdx]);
           });
           strip.appendChild(subBtn);
+
+          // Upcoming preview: rows 1+ as read-only chip pairs
+          if (pairCount > 1) {
+            const upcoming = document.createElement("div");
+            upcoming.className = "sub-strip-upcoming";
+
+            const upcomingLabel = document.createElement("span");
+            upcomingLabel.className = "sub-strip-upcoming-label";
+            upcomingLabel.textContent = pairCount > 2 ? "Upcoming subs" : "Upcoming sub";
+            upcoming.appendChild(upcomingLabel);
+
+            for (let i = 1; i < pairCount; i++) {
+              const inName = playerMap.get(benchRanked[i])?.name ?? "?";
+              const outName = playerMap.get(fieldRanked[i])?.name ?? "?";
+              const isInjuryRow = i < injuredCount;
+
+              const row = document.createElement("div");
+              row.className = "sub-strip-row sub-strip-row-upcoming";
+
+              const inChip = document.createElement("span");
+              inChip.className = "chip chip-field chip-sm";
+              inChip.textContent = inName;
+
+              const arrow = document.createElement("span");
+              arrow.className = "sub-strip-arrow";
+              arrow.textContent = "on for";
+
+              const outChip = document.createElement("span");
+              outChip.className = isInjuryRow
+                ? "chip chip-injured chip-sm"
+                : "chip chip-bench chip-sm";
+              outChip.textContent = outName;
+
+              row.appendChild(inChip);
+              row.appendChild(arrow);
+              row.appendChild(outChip);
+              upcoming.appendChild(row);
+            }
+
+            strip.appendChild(upcoming);
+          }
 
           actionsZone.appendChild(strip);
         }
@@ -244,6 +308,16 @@ export function renderResults(
           endGameBtn.textContent = "End game";
           endGameBtn.addEventListener("click", () => callbacks.onNextGame());
           actionsZone.appendChild(endGameBtn);
+        }
+
+        // Recovery link — coach can step back if they advanced by mistake.
+        if (currentGame > 1) {
+          const backLink = document.createElement("button");
+          backLink.type = "button";
+          backLink.className = "btn-prev-game";
+          backLink.textContent = `← Back to game ${currentGame - 1}`;
+          backLink.addEventListener("click", () => callbacks.onPrevGame());
+          actionsZone.appendChild(backLink);
         }
       } else {
         // ---- Setup mode: "Start match" button ----
@@ -867,6 +941,146 @@ function dismissActionSheet(): void {
   document.removeEventListener("keydown", handleActionSheetKeydown);
 }
 
+// ---- Session history ----
+
+/** Game-scoped events for the history view. Excludes session-level "late"
+ * (joined event already shows when they arrived). */
+function getGameHistoryActions(
+  events: RotationEvent[],
+  gameNumber: number,
+  playerMap: PlayerMap,
+): { kind: "sub" | "joined" | "injured" | "leaving"; text: string }[] {
+  const out: { kind: "sub" | "joined" | "injured" | "leaving"; text: string }[] = [];
+  for (const e of events) {
+    if (e.type === "sub" && e.gameNumber === gameNumber) {
+      const inName = playerMap.get(e.playerIn)?.name ?? "Player";
+      const outName = playerMap.get(e.playerOut)?.name ?? "Player";
+      out.push({ kind: "sub", text: `${inName} on for ${outName}` });
+    } else if (e.type === "injured" && e.gameNumber === gameNumber) {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      out.push({ kind: "injured", text: `${name} injured` });
+    } else if (e.type === "joined" && e.duringGame === gameNumber) {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      out.push({ kind: "joined", text: `${name} arrived` });
+    } else if (e.type === "leaving" && e.afterGame === gameNumber) {
+      const name = playerMap.get(e.playerId)?.name ?? "Player";
+      out.push({ kind: "leaving", text: `${name} leaving` });
+    }
+  }
+  return out;
+}
+
+function formatGameHeading(gameNumber: number, savedLabel: string): string {
+  const details = parseMatchDetails(savedLabel);
+  const formatted = formatMatchDetails(details);
+  return formatted ? `Game ${gameNumber} · ${formatted}` : `Game ${gameNumber}`;
+}
+
+function showHistoryView(
+  plan: RotationPlan,
+  events: RotationEvent[],
+  gameLabels: Record<string, string>,
+  playerMap: PlayerMap,
+): void {
+  let sheet = document.getElementById("history-sheet");
+  let backdrop = document.getElementById("history-backdrop");
+
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.id = "history-backdrop";
+    backdrop.className = "action-backdrop";
+    backdrop.addEventListener("click", dismissHistoryView);
+    document.body.appendChild(backdrop);
+  }
+
+  if (!sheet) {
+    sheet = document.createElement("div");
+    sheet.id = "history-sheet";
+    sheet.className = "history-sheet";
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-modal", "true");
+    sheet.setAttribute("aria-label", "Session history");
+    document.body.appendChild(sheet);
+  }
+
+  // Total sub count for the header summary
+  const subTotal = events.reduce((n, e) => (e.type === "sub" ? n + 1 : n), 0);
+  const subSummary = subTotal === 1 ? "1 sub" : `${subTotal} subs`;
+
+  const gamesHTML = plan.games.map((game) => {
+    const heading = esc(formatGameHeading(game.gameNumber, gameLabels[String(game.gameNumber)] ?? ""));
+    const onFieldNames = game.onField
+      .map((id) => esc(playerMap.get(id)?.name ?? "?"))
+      .join(", ");
+    const benchNames = game.bench
+      .map((id) => esc(playerMap.get(id)?.name ?? "?"))
+      .join(", ");
+
+    const actions = getGameHistoryActions(events, game.gameNumber, playerMap);
+    const subCount = actions.filter((a) => a.kind === "sub").length;
+    const subBadge = subCount > 0
+      ? `<span class="history-game-badge">${subCount} sub${subCount === 1 ? "" : "s"}</span>`
+      : `<span class="history-game-badge history-game-badge-empty">No subs</span>`;
+
+    const activityHTML = actions.length > 0
+      ? `<ul class="history-actions">${actions
+          .map((a) => `<li class="history-action history-action-${a.kind}">${esc(a.text)}</li>`)
+          .join("")}</ul>`
+      : `<p class="history-empty">No activity recorded</p>`;
+
+    return `
+      <section class="history-game">
+        <div class="history-game-head">
+          <h3 class="history-game-title">${heading}</h3>
+          ${subBadge}
+        </div>
+        <div class="history-lineup">
+          <div><span class="history-lineup-label">On field</span> ${onFieldNames || "&mdash;"}</div>
+          ${benchNames ? `<div><span class="history-lineup-label">Bench</span> ${benchNames}</div>` : ""}
+        </div>
+        ${activityHTML}
+      </section>
+    `;
+  }).join("");
+
+  sheet.innerHTML = `
+    <header class="history-sheet-header">
+      <div>
+        <h2 class="history-sheet-title">Session history</h2>
+        <p class="history-sheet-summary">${plan.games.length} games · ${subSummary}</p>
+      </div>
+      <button type="button" class="history-close" aria-label="Close session history">&times;</button>
+    </header>
+    <div class="history-sheet-body">${gamesHTML}</div>
+  `;
+
+  sheet.querySelector<HTMLButtonElement>(".history-close")?.addEventListener("click", dismissHistoryView);
+
+  backdrop.hidden = false;
+  sheet.hidden = false;
+
+  const closeBtn = sheet.querySelector<HTMLButtonElement>(".history-close");
+  if (closeBtn) closeBtn.focus();
+
+  document.removeEventListener("keydown", handleHistoryKeydown);
+  document.addEventListener("keydown", handleHistoryKeydown);
+}
+
+function handleHistoryKeydown(e: KeyboardEvent): void {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    dismissHistoryView();
+  }
+}
+
+function dismissHistoryView(): void {
+  const sheet = document.getElementById("history-sheet");
+  const backdrop = document.getElementById("history-backdrop");
+  if (sheet) sheet.hidden = true;
+  if (backdrop) backdrop.hidden = true;
+  document.removeEventListener("keydown", handleHistoryKeydown);
+}
+
 // ---- Replacement suggestions ----
 
 function renderReplacements(
@@ -924,7 +1138,10 @@ function renderFairnessSummary(
   if (isBalanced) headerText += " \u2014 balanced";
 
   const titleClass = isBalanced ? "fairness-title fairness-title-balanced" : "fairness-title";
-  section.innerHTML = `<h4 class="${titleClass}">${headerText}</h4>`;
+  section.innerHTML = `
+    <h4 class="${titleClass}">${headerText}</h4>
+    <p class="fairness-legend">Games played \u00b7 a sub on or off counts as &frac12;</p>
+  `;
 
   const list = document.createElement("div");
   list.className = "fairness-list";

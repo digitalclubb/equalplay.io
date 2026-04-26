@@ -593,7 +593,17 @@ export function getSubCandidates(
   currentGameNumber: number,
   unavailableIds: Set<string>,
   events: RotationEvent[] = [],
-): { benchRanked: string[]; fieldRanked: string[]; injuredOut: boolean } | null {
+): {
+  benchRanked: string[];
+  fieldRanked: string[];
+  injuredOut: boolean;
+  /** How many of the ranked pairs are recommended subs.
+   *  Index `i` of benchRanked pairs with index `i` of fieldRanked.
+   *  Injuries always count; fair pairs count while bench debt > field debt. */
+  pairCount: number;
+  /** Number of injured players forced to the front of fieldRanked. */
+  injuredCount: number;
+} | null {
   const currentGame = plan.games[currentGameNumber - 1];
   if (!currentGame) return null;
 
@@ -716,7 +726,22 @@ export function getSubCandidates(
     if (debtCache.get(benchRanked[0])! <= debtCache.get(fieldRanked[0])! + 0.001) return null;
   }
 
-  return { benchRanked, fieldRanked, injuredOut: hasInjury };
+  // Count how many index-paired subs are worth recommending.
+  // Injury rows are forced; fair-pair rows count while bench debt beats field debt.
+  const injuredCount = injuredOnField.length;
+  const maxPairs = Math.min(benchRanked.length, fieldRanked.length);
+  let pairCount = 0;
+  for (let i = 0; i < maxPairs; i++) {
+    if (i < injuredCount) {
+      pairCount++;
+    } else if (debtCache.get(benchRanked[i])! > debtCache.get(fieldRanked[i])! + 0.001) {
+      pairCount++;
+    } else {
+      break;
+    }
+  }
+
+  return { benchRanked, fieldRanked, injuredOut: hasInjury, pairCount, injuredCount };
 }
 
 export function getPlayerStats(

@@ -283,6 +283,17 @@ export function mountApp(root: HTMLElement): void {
         }
       },
 
+      onPrevGame() {
+        const team = store.getActive();
+        if (!team.initialPlan) return;
+        if (team.currentGame <= 1) return;
+        const prevNum = team.currentGame - 1;
+        team.currentGame = prevNum;
+        rerenderResults();
+        persist();
+        showToast(`Back to game ${prevNum}.`);
+      },
+
       onStartMatch() {
         const team = store.getActive();
         team.matchMode = "live";

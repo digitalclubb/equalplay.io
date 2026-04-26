@@ -985,6 +985,34 @@ body {
   will-change: transform, opacity;
 }
 
+/* Upcoming subs preview — read-only list shown below the primary Make sub button
+   so the coach can see what's queued (e.g. at half-time). */
+.sub-strip-upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2xs);
+  margin-top: var(--sp-sm);
+  padding-top: var(--sp-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.sub-strip-urgent .sub-strip-upcoming {
+  border-top-color: var(--color-injured-bg);
+}
+
+.sub-strip-upcoming-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.sub-strip-row-upcoming {
+  opacity: 0.75;
+  padding: var(--sp-3xs) 0;
+}
+
 .sub-strip-arrow {
   font-size: var(--text-sm);
   font-weight: var(--weight-normal);
@@ -1316,10 +1344,16 @@ body {
 .fairness-title {
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
-  margin-bottom: var(--sp-sm);
+  margin-bottom: var(--sp-2xs);
   color: var(--color-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.fairness-legend {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-bottom: var(--sp-sm);
 }
 
 .fairness-list {
@@ -1394,7 +1428,8 @@ body {
   margin-bottom: var(--sp-xs);
 }
 
-.btn-reset {
+.btn-reset,
+.btn-history {
   padding: var(--sp-xs) var(--sp-sm);
   background: transparent;
   border: none;
@@ -1410,6 +1445,181 @@ body {
 
 .btn-reset:active {
   color: var(--color-danger);
+}
+
+.btn-history:active,
+.btn-history:hover {
+  color: var(--color-text);
+}
+
+/* ---- Session history sheet ---- */
+
+.history-sheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  top: 5vh;
+  width: 100%;
+  max-width: 480px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -8px 24px var(--color-shadow);
+  animation: history-sheet-in var(--duration-normal) var(--ease-out);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes history-sheet-in {
+  from { transform: translate(-50%, 100%); }
+  to { transform: translate(-50%, 0); }
+}
+
+.history-sheet[hidden] {
+  display: none;
+}
+
+.history-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  padding: var(--sp-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-sheet-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heavy);
+  color: var(--color-text);
+}
+
+.history-sheet-summary {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--sp-3xs);
+}
+
+.history-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: var(--radius-full);
+  transition: background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.history-close:hover,
+.history-close:focus-visible {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.history-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.history-game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  padding: var(--sp-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.history-game-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-xs);
+}
+
+.history-game-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.history-game-badge {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--sp-3xs) var(--sp-xs);
+  border-radius: var(--radius-full);
+  background: var(--color-field-bg);
+  color: var(--color-field-text);
+}
+
+.history-game-badge-empty {
+  background: var(--color-bg);
+  color: var(--color-muted);
+}
+
+.history-lineup {
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3xs);
+}
+
+.history-lineup-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  margin-right: var(--sp-2xs);
+}
+
+.history-actions {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3xs);
+  margin-top: var(--sp-2xs);
+}
+
+.history-action {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  padding-left: var(--sp-sm);
+  position: relative;
+}
+
+.history-action::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--color-muted);
+}
+
+.history-action-injured::before { color: var(--color-injured-text); }
+.history-action-joined::before { color: var(--color-success); }
+
+.history-empty {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-style: italic;
 }
 
 /* ---- Session Finished ---- */
@@ -1531,6 +1741,45 @@ body {
   transform: scale(0.98);
   border-color: var(--color-text);
   color: var(--color-text);
+}
+
+/* ---- Back to previous game (recovery link) ----
+   Small text link below the next/end game button so a coach who advanced
+   by mistake can step back without an "are you sure" modal. */
+.btn-prev-game {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: var(--touch-min);
+  padding: var(--sp-xs) var(--sp-sm);
+  margin-top: var(--sp-2xs);
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-normal);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--duration-normal) var(--ease-out),
+    color var(--duration-normal) var(--ease-out);
+}
+
+.btn-prev-game:hover,
+.btn-prev-game:focus-visible {
+  color: var(--color-text);
+  text-decoration-color: currentColor;
+}
+
+.btn-prev-game:active {
+  opacity: 0.7;
+}
+
+.session-finished .btn-prev-game {
+  margin-top: var(--sp-sm);
 }
 
 /* ---- Toast ---- */
