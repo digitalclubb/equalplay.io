@@ -519,21 +519,6 @@ body {
   margin-bottom: var(--sp-md);
 }
 
-/* ---- Sticky Current Game ---- */
-
-.sticky-current {
-  position: sticky;
-  top: -1px;
-  z-index: 10;
-  background: var(--color-surface);
-  padding-bottom: var(--sp-xs);
-  margin-left: calc(-1 * var(--sp-md));
-  margin-right: calc(-1 * var(--sp-md));
-  padding-left: var(--sp-md);
-  padding-right: var(--sp-md);
-  contain: layout style;
-}
-
 /* ---- Game Sections ---- */
 
 .game-card {
@@ -1664,13 +1649,8 @@ body {
 
 /* ---- Responsive ---- */
 
-/* Landscape phones — reduce vertical footprint of sticky area */
+/* Landscape phones — reduce vertical footprint */
 @media (max-height: 500px) and (orientation: landscape) {
-  .sticky-current {
-    position: relative;
-    top: auto;
-  }
-
   .game-card-current {
     padding-top: var(--sp-xs);
     padding-bottom: var(--sp-xs);
@@ -1815,10 +1795,6 @@ body {
   .game-card-future {
     opacity: 1;
     break-inside: avoid;
-  }
-
-  .sticky-current {
-    position: static;
   }
 
   /* Chips as plain text for print */

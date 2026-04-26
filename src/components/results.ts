@@ -99,7 +99,7 @@ export function renderResults(
     );
   }
 
-  // Current game — sticky only in live mode
+  // Current game
   const currentGameData = isSessionFinished
     ? undefined
     : plan.games.find((g) => g.gameNumber === currentGame);
@@ -258,16 +258,7 @@ export function renderResults(
       card.appendChild(actionsZone);
     }
 
-    if (isLive) {
-      // Wrap in sticky container
-      const sticky = document.createElement("div");
-      sticky.className = "sticky-current";
-      sticky.appendChild(card);
-      container.appendChild(sticky);
-    } else {
-      // Setup mode: no sticky, just append normally
-      container.appendChild(card);
-    }
+    container.appendChild(card);
   }
 
   // Future games
