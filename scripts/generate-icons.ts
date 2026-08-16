@@ -31,9 +31,12 @@ const iconPage = (size: number) => `
 `;
 
 // The whistle glyph on its own, lifted out of the favicon's badge wrapper so it
-// can sit at OG-image scale without the rounded rect around it.
-const whistlePath = favicon.match(/<path d="([^"]+)"/)?.[1];
-if (!whistlePath) throw new Error("Could not find the whistle path in favicon.svg");
+// can sit at OG-image scale without the rounded rect around it. Anchored to the
+// <g> so that turning the badge into a <path> can't silently win the match.
+const whistlePath = favicon.match(/<g[^>]*>\s*<path d="([^"]+)"/)?.[1];
+if (!whistlePath) {
+  throw new Error("Could not find the whistle path inside the <g> in favicon.svg");
+}
 
 const ogPage = `
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -50,19 +50,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For all other assets (JS, CSS, images): cache-first
+  // For all other assets (JS, CSS, images): stale-while-revalidate. Answer from
+  // cache for speed, but always refresh behind it — the build hashes JS, but
+  // pages.css and the icons are served at stable URLs, and plain cache-first
+  // would pin those to a stale copy until the next CACHE_NAME bump.
   event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request).then((response) => {
-          // Only cache successful same-origin responses
-          if (response.ok && request.url.startsWith(self.location.origin)) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        }),
-    ),
+    caches.match(request).then((cached) => {
+      const fresh = fetch(request).then((response) => {
+        // Only cache successful same-origin responses
+        if (response.ok && request.url.startsWith(self.location.origin)) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      });
+
+      if (!cached) return fresh;
+
+      // Let the refresh finish after we've already replied; offline simply
+      // means we keep serving what we had.
+      event.waitUntil(fresh.catch(() => {}));
+      return cached;
+    }),
   );
 });
