@@ -36,7 +36,7 @@ export function mountApp(root: HTMLElement): void {
     header.className = "app-header";
     header.innerHTML = `
       ${createLogo()}
-      <p class="subtitle">Fair team rotation for youth sports</p>
+      <p class="subtitle">Fair rotations for youth rugby and team sports</p>
     `;
     headerBar.appendChild(header);
 
