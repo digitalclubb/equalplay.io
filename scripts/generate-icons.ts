@@ -101,13 +101,18 @@ try {
     Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 5000))]),
   );
 
-  // Both faces matter: Outfit sets the wordmark, DM Sans the tagline.
+  // Both faces matter: Outfit sets the wordmark, DM Sans the tagline. Running
+  // this offline would otherwise quietly replace the committed share image with
+  // a system-font render, so leave the good one in place and fail loudly.
   const missing = await og.evaluate(() =>
     ["700 104px Outfit", "700 44px 'DM Sans'"].filter((font) => !document.fonts.check(font)),
   );
-  if (missing.length) console.warn(`Web fonts fell back to the system stack: ${missing.join(", ")}`);
-
-  writeFileSync(join(publicDir, "og-image.png"), await og.screenshot());
+  if (missing.length) {
+    console.error(`Skipped og-image.png — web fonts unavailable: ${missing.join(", ")}`);
+    process.exitCode = 1;
+  } else {
+    writeFileSync(join(publicDir, "og-image.png"), await og.screenshot());
+  }
   await og.close();
 } finally {
   await browser.close();

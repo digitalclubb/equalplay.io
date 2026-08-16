@@ -1,6 +1,6 @@
 // Service worker — cache-first strategy for offline support.
 // Cache name includes a version so we can bust stale caches on deploy.
-const CACHE_NAME = "equalplay-v1";
+const CACHE_NAME = "equalplay-v2";
 
 // The build output filenames are hashed, so we cache them at runtime
 // rather than listing them statically. We pre-cache only the shell.
