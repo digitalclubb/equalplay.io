@@ -51,6 +51,23 @@ pnpm test:watch   # Run tests in watch mode
 pnpm lint         # Run OXC linter
 ```
 
+## IMPORTANT: How every request finishes
+
+Nothing is finished until both of these have happened. This applies to every request,
+however small it looked when it started.
+
+1. **Review the diff.** Run `/code-review`, or read the diff yourself with the same
+   attention when that is not available. Act on what comes back, then run `pnpm test`
+   and `pnpm lint` again. A review nobody acted on is worse than no review.
+2. **Commit to `main`.** Straight to the branch, no feature branch and no pull
+   request. Prefix the message the way the history does, so `feat:`, `fix:`, `docs:`
+   or `chore:`. Say what changed rather than which files moved. One commit per idea,
+   so two unrelated changes in one session are two commits.
+
+Push only when asked for it. Tests and lint pass before the commit rather than after.
+The e2e suite (`pnpm test:e2e`) belongs in that check whenever the change touches the
+hub, the planner or anything either of them renders.
+
 ## IMPORTANT: Run tests when changing core logic
 
 **Always run `pnpm test` after touching:**
