@@ -157,7 +157,7 @@ function aside(): string {
       up in a U8 session. There is no setting that lets one through.</p>
       <p><strong>It keeps working with no signal.</strong> What you type is saved on your
       phone straight away. It reaches your account later, whenever there is a signal.</p>
-      <p class="hub-auth-aside-foot">The match-day planner stays free without any of
+      <p class="hub-auth-aside-foot">Match day stays free without any of
       this. <a href="/planner">Open it here</a>.</p>
     </aside>`;
 }

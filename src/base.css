@@ -297,6 +297,7 @@ html {
 
 .hub-tab {
   min-height: var(--touch-min);
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   padding: 0 var(--sp-md);

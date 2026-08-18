@@ -17,7 +17,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: "catalogue", label: "Drills" },
-  { key: "planner", label: "Planner" },
+  { key: "planner", label: "Match day" },
   { key: "plans", label: "Sessions" },
   { key: "account", label: "Account" },
 ];
