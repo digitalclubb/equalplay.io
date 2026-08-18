@@ -30,7 +30,7 @@ function squad(count: number): { players: Player[]; ids: string[] } {
 }
 
 // ====================================================================
-// RULE 1: BASE ROTATION — NO CONSECUTIVE BENCH
+// RULE 1: BASE ROTATION. NO CONSECUTIVE BENCH
 //
 // Without any events or subs, the generated plan should never bench
 // the same player in two consecutive games.
@@ -250,7 +250,7 @@ describe("overall fairness with recommended subs", () => {
 // RULE 5: SUB-OFF THEN SUB-TARGET NEXT GAME
 //
 // A player subbed off in game N should NOT be the first sub-off
-// recommendation in game N+1. They just sat down — give someone
+// recommendation in game N+1. They just sat down. Give someone
 // else a turn.
 // ====================================================================
 

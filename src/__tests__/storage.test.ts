@@ -69,13 +69,13 @@ describe("saveTeams + loadTeams", () => {
   });
 });
 
-describe("loadTeams — empty storage", () => {
+describe("loadTeams. Empty storage", () => {
   it("returns null when nothing saved", () => {
     expect(loadTeams()).toBeNull();
   });
 });
 
-describe("loadTeams — legacy migration", () => {
+describe("loadTeams. Legacy migration", () => {
   it("migrates old single-team format", () => {
     const legacyData = {
       players: [{ id: "p1", name: "Alice" }],
@@ -118,7 +118,7 @@ describe("loadTeams — legacy migration", () => {
   });
 });
 
-describe("loadTeams — corrupt data", () => {
+describe("loadTeams. Corrupt data", () => {
   it("returns null for invalid JSON", () => {
     localStorage.setItem("equalplay_teams", "not json");
     expect(loadTeams()).toBeNull();

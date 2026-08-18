@@ -1,0 +1,487 @@
+/* Foundations shared by the rotation planner and the coaching hub:
+   reset, skip link, design tokens, focus ring, reduced motion. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: var(--sp-xs);
+  left: var(--sp-xs);
+  width: auto;
+  height: auto;
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--brand);
+  color: #fff;
+  font-weight: var(--weight-semi);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  outline: 2px solid #fff;
+}
+
+:root {
+  /* Spacing scale: 2 / 4 / 6 / 8 / 12 / 16 / 24 */
+  --sp-3xs: 0.125rem;
+  --sp-2xs: 0.25rem;
+  --sp-xs: 0.5rem;
+  --sp-sm: 0.75rem;
+  --sp-md: 1rem;
+  --sp-lg: 1.5rem;
+
+  /* Type scale */
+  --text-display: 2.2rem;
+  --text-lg: 1.1rem;
+  --text-base: 1rem;
+  --text-sm: 0.85rem;
+  --text-xs: 0.75rem;
+  --text-2xs: 0.65rem;
+  --text-badge: 0.6rem;
+
+  /* Font weights */
+  --weight-normal: 500;
+  --weight-semi: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.25, 0, 0.3, 1);
+  --duration-fast: 80ms;
+  --duration-normal: 150ms;
+
+  /* Touch */
+  --touch-min: 48px;
+
+  /* Brand palette */
+  --color-brand: #e75333;
+  --color-brand-dark: #cf3918;
+  --color-brand-light: #ec7961;
+  --color-navy: #000537;
+
+  /* Surfaces */
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-border: #e6e6e6;
+
+  /* Text */
+  --color-text: #000537;
+  --color-secondary: #3d3d5c;
+  --color-muted: #6b6b80;
+  --color-on-dark: #ffffff;
+
+  /* Semantic aliases */
+  --color-primary: #cf3918;
+  --color-primary-hover: #e75333;
+  --color-danger: #cf3918;
+
+  /* Status. Warning */
+  --color-warning-bg: #fef3c7;
+  --color-warning-border: #f59e0b;
+  --color-warning-text: #78350f;
+
+  /* Drill kinds. Cool for a warm-up, warm for an exercise, so the two are told
+     apart at a glance rather than by reading. Both checked for AA on their own
+     background: 16.3 and 6.1. */
+  --color-warmup-bg: #e8eaf6;
+  --color-warmup-text: #000537;
+  --color-exercise-bg: #fdf0e6;
+  --color-exercise-text: #8a4a1a;
+
+  /* Player states. Neutral system, no green */
+  --color-field-bg: #e8eaf6;
+  --color-field-text: #000537;
+  --color-bench-bg: #f0f0f0;
+  --color-bench-text: #6b6b80;
+  --color-late-bg: #e6e6e6;
+  --color-late-text: #8c8c8c;
+  --color-late-border: #c0c0c0;
+  --color-injured-bg: #fce4e4;
+  --color-injured-text: #cf3918;
+  /* #cf3918 on --color-injured-bg is 4.08:1, under AA. This is 5.73:1 and is what
+     any text sitting on that background uses, including the age gate error. */
+  --color-injured-text-strong: #a82c0e;
+  --color-injured-border: #f0b0a0;
+  --color-joined-border: #e6e6e6;
+
+  /* Contextual */
+  --color-urgent-bg: #fef8f8;
+  --color-success: #22c55e;
+  --color-overlay: rgba(0, 0, 0, 0.3);
+  --color-shadow: rgba(0, 0, 0, 0.12);
+  --color-shadow-toast: rgba(0, 0, 0, 0.15);
+  --color-toast-bg: #000537;
+  --color-toast-text: #ffffff;
+}
+
+/* ---- Focus visible. Global fallback for all interactive elements ---- */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- Toast ---- */
+
+.toast {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--sp-sm));
+  left: var(--sp-sm);
+  right: var(--sp-sm);
+  max-width: 460px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--color-toast-bg);
+  color: var(--color-toast-text);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--color-shadow-toast);
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-message {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-normal);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.toast-undo {
+  background: transparent;
+  color: var(--color-brand-light);
+  border: none;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  padding: var(--sp-2xs) var(--sp-sm);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.toast-undo:active {
+  opacity: 0.7;
+}
+
+/* ---- Header Bar ---- */
+
+.header-bar {
+  background: var(--color-navy);
+  padding: var(--sp-md) var(--sp-md) var(--sp-sm);
+  margin: 0 calc(-1 * var(--sp-md)) var(--sp-lg);
+}
+
+.app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--sp-md);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  margin-bottom: var(--sp-2xs);
+}
+
+.logo-whistle {
+  height: 60px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  color: var(--color-on-dark);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.logo-text-play {
+  color: var(--color-brand);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0.02em;
+}
+
+/* ---- App navigation ----
+
+   One navigation, two entries. The rotation planner renders it as static markup
+   and the hub renders it from `src/lib/nav.ts`, so these rules cannot live in
+   `hub/styles.css`, which the planner does not load. The rail layout at 900px
+   stays there, because only the hub becomes a rail. */
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  text-decoration: none;
+  color: inherit;
+}
+
+.hub-nav {
+  display: flex;
+  gap: var(--sp-2xs);
+  justify-content: center;
+}
+
+.hub-nav:empty {
+  display: none;
+}
+
+.hub-tab {
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--sp-md);
+  border-radius: var(--radius-full);
+  color: #b9bacb;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.hub-tab.is-active {
+  background: var(--color-surface);
+  color: var(--color-navy);
+}
+
+.hub-tab:active {
+  opacity: 0.8;
+}
+
+@media (max-width: 360px) {
+  .hub-tab {
+    padding: 0 var(--sp-sm);
+    font-size: var(--text-xs);
+  }
+}
+
+@media (hover: hover) {
+  .hub-tab:hover {
+    color: var(--color-on-dark);
+  }
+}
+
+/* ---- App shell ----
+
+   One layout for both entries. A navy bar across the top on a phone, the same
+   markup as a full-height rail at 900px. It lives here rather than in
+   `hub/styles.css` because the match-day planner is the same product and has to
+   look like it, while still loading none of the hub's bundle.
+
+   `.app-view` is the content column. The hub puts it on `#hub-view` and the
+   planner on `#app`, so the selector is a class rather than either id. */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100dvh;
+  /* Gutters and rhythm grow with the viewport rather than jumping at a breakpoint */
+  --gutter: clamp(var(--sp-sm), 3vw, var(--sp-lg));
+  --stack: clamp(var(--sp-md), 2.5vw, var(--sp-lg));
+}
+
+.app-view {
+  padding: 0 var(--gutter);
+}
+
+.app-view:focus {
+  outline: none;
+}
+
+.site-links {
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+.app-chrome {
+  padding: var(--sp-sm) var(--gutter);
+  margin: 0 0 var(--stack);
+}
+
+.app-chrome .app-header {
+  margin-bottom: var(--sp-xs);
+}
+
+.app-chrome .logo {
+  margin-bottom: 0;
+}
+
+.app-chrome .logo-whistle {
+  height: 40px;
+}
+
+.app-chrome .logo-text {
+  font-size: 1.6rem;
+}
+
+/* ---- 900px: a tool with a rail, not a phone in a window ---- */
+
+@media (min-width: 56.25rem) {
+  .app-shell {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .app-chrome {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-lg);
+    padding: var(--sp-lg) var(--sp-md);
+    margin: 0;
+    /* Stays put while the content scrolls */
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+  }
+
+  .app-chrome .app-header {
+    align-items: flex-start;
+    margin-bottom: 0;
+  }
+
+  .app-view {
+    grid-column: 2;
+    grid-row: 1;
+    /* Reading measure, generous but not endless. Left aligned on purpose. */
+    max-width: 78rem;
+    padding: var(--sp-lg) var(--gutter);
+  }
+
+  .site-links {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: 78rem;
+    margin-top: 0;
+  }
+
+  .app-shell .site-links nav {
+    justify-content: flex-start;
+  }
+
+  /* Nav becomes a stacked rail */
+  .hub-nav {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--sp-3xs);
+  }
+
+  .hub-tab {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 0 var(--sp-sm);
+    border-radius: var(--radius);
+    font-size: var(--text-base);
+  }
+
+  .hub-tab.is-active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-on-dark);
+  }
+}
+
+/* ---- Site footer links ---- */
+
+.site-links {
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--sp-lg);
+  padding: var(--sp-lg) var(--sp-md) calc(var(--sp-lg) + env(safe-area-inset-bottom));
+}
+
+.site-links nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2xs) var(--sp-md);
+  justify-content: center;
+}
+
+.site-links a {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.site-links a:hover,
+.site-links a:focus-visible {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+@media print {
+  .site-links {
+    display: none;
+  }
+}

@@ -1,63 +1,123 @@
-# EqualPlay
+# Equal Play
 
-Fair player rotations for youth team sports. A mobile-first web app that helps coaches manage substitutions, handle late arrivals and injuries, and ensure every player gets balanced playing time.
+One rugby coaching app for minis and junior coaches, U7 to U12. It ships as three
+documents, which is a build decision rather than a product one. See
+`docs/one-product.md`.
 
-## Features
+**Marketing homepage** at `/`. Static HTML, no bundle, no JavaScript, one call to
+action.
 
-- **Fair rotation generation** — fairness-debt algorithm ensures balanced play time across all players
-- **Live match management** — mark players as late, injured, or leaving early during games
-- **Auto-substitution** — injured players are automatically subbed off with the fairest replacement
-- **Multi-team support** — manage multiple teams independently in a single session
-- **Game progression** — advance through games with locked past lineups and rebalanced future games
-- **Offline-ready** — PWA with service worker, works without internet after first load
-- **Persistent state** — automatically saves to localStorage, restores on reload
+**The app** at `/hub`. Drills, session planner, account. `noindex`. Pick an age grade
+and the whole catalogue for it is readable with no account. An account is needed only
+for what has to persist, meaning saved sessions and starred drills.
+
+**Match-day planner** at `/planner`. Fair playing time on match day. Free for good, no
+account, indexed, everything stays on the device. Its own entry so
+`@supabase/supabase-js` never lands on it. This is the top of the funnel.
+
+No data about any child is stored or transmitted anywhere.
 
 ## Getting started
 
 ```bash
 pnpm install
+cp .env.example .env.local   # fill in from your Supabase project
 pnpm dev
 ```
 
-Open http://localhost:5173 in a mobile browser (or use device emulation).
+`http://localhost:5173` is the marketing homepage, `/hub` the app, `/planner` the
+match-day planner. Without `.env.local` the app says so plainly rather than failing
+oddly; the match-day planner needs nothing.
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start development server with HMR |
-| `pnpm build` | Type-check and build for production |
-| `pnpm test` | Run all tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm lint` | Run OXC linter |
-| `pnpm preview` | Preview production build locally |
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Dev server |
+| `pnpm build` | Type-check then build |
+| `pnpm test` | Unit and integration tests |
+| `pnpm test:watch` | The same, watching |
+| `pnpm test:e2e` | Playwright, all three entries |
+| `pnpm lint` | OXC over `src/` and `api/` |
+| `pnpm preview` | Preview the build |
+| `pnpm preview:demo` | Build and preview with throwaway Supabase credentials |
+| `pnpm generate-icons` | Rasterise the PWA icons and OG image |
 
-## Tech stack
+**Never write `.env.local` from a script.** It holds real credentials, it is gitignored
+so there is no copy to restore, which means overwriting it destroys them. `pnpm preview:demo`
+passes throwaway values inline instead.
 
-- **TypeScript** (strict mode, no framework)
-- **Vite** (build tool)
-- **Vitest** (testing, 61 tests)
-- **OXC** (linting)
-- **pnpm** (package manager)
+## The rotation planner
 
-## How it works
+Enter your squad, set players per team and number of matches, tap **Sort my team**. Then
+run the session: mark players late, injured or leaving early, make substitutions, advance
+through the games. A fairness-debt algorithm tracks each child's actual playing time
+against their fair share and rebalances the remaining games to compensate.
 
-1. **Add players** — enter player names in the squad panel
-2. **Configure** — set players per team and number of matches
-3. **Generate** — tap "Generate rotation" to create the plan
-4. **Manage live** — tap player chips to mark late/injured/leaving, use "Make sub" for substitutions
-5. **Advance games** — tap "Start game N" to progress through the session
+Nothing leaves the device. No account, no team code, nothing to delete if a parent asks.
 
-The fairness algorithm tracks each player's actual play time against their expected fair share, and aggressively rebalances future games to compensate for disruptions.
+## The coaching hub
+
+104 drills and 13 ready-made sessions covering U7 to U12, written from scratch.
+
+The point of it is the age gate. RFU Regulation 15 introduces contact in stages, so the
+catalogue only ever offers what your grade is allowed to do: tackling from U9, rucks,
+mauls and the uncontested scrum from U10, the lineout from U12. Every claim links out to
+the RFU's own rules of play so a coach can check it.
+
+- Filter by age grade, focus, warm-up or exercise, or free text
+- Star drills and filter to favourites
+- Build a session that fits the pitch time you booked, with water breaks counted
+- A kit list per session, plus a printable sheet
+- A session opens to be read at the pitch, with coaching points on the page. Edits sit
+  behind an Edit button
+
+## Supabase
+
+Auth is set up. Everything else is a numbered migration in `supabase/migrations/`, run in
+order. See `supabase/README.md`.
+
+The hub holds as little as possible: the coach's name, club and age group live in
+`auth.users.raw_user_meta_data`. The only tables are `session_plans` and `favourites`,
+both scoped by row level security. Drill content is not in the database at
+all. It ships in the bundle, which is what makes the catalogue readable at a pitch with
+no signal.
+
+## Testing
+
+```
+pnpm test       474 unit and integration tests across 14 files
+pnpm test:e2e    60 Playwright tests, 7 rotation planner and 53 hub
+```
+
+The hub end-to-end tests stub auth in localStorage and run against a build carrying
+throwaway credentials, so every Supabase request fails on purpose. That is what proves
+the hub still works with no signal.
+
+Three test files are load bearing rather than incidental:
+
+- `content-age-gate.test.ts` stops a ruck drill reaching a U8 coach
+- `plans.test.ts` mocks the client so persistence can be exercised with the server off
+- `copy-style.test.ts` enforces the house style across drills, interface and pages
 
 ## Deployment
 
-Static site — deploy the `dist/` folder to any host. Configured for Vercel.
+Static, on Vercel. `dist/` holds two entries, `index.html` and `hub/index.html`, plus the
+static guide pages copied from `public/`. One serverless function, `api/delete-account.ts`.
 
-```bash
-pnpm build
-# Output in dist/
-```
+Environment variables in Vercel: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and
+`SUPABASE_SERVICE_ROLE_KEY`. The last one is server only and must never carry a `VITE_`
+prefix, or it ships to the browser and walks past every policy.
+
+## Further reading
+
+| File | What is in it |
+| --- | --- |
+| `CLAUDE.md` | Architecture, design decisions and the rules that must not be broken |
+| `docs/content-sourcing.md` | How drill content gets written, plus the copyright position |
+| `docs/roadmap.md` | What is built, what is left, what is deliberately out of scope |
+| `supabase/README.md` | Migrations and auth settings |
+| `.impeccable.md` | Who this is for and how it should feel |
 
 ## Licence
 

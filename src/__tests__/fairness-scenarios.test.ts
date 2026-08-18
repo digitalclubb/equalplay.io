@@ -142,7 +142,7 @@ describe("fairness after game 1 sub", () => {
 });
 
 // ====================================================================
-// SCENARIO: Multi-game sub chain — fairness over 4 games
+// SCENARIO: Multi-game sub chain. Fairness over 4 games
 // ====================================================================
 
 describe("fairness across multiple games with subs", () => {
@@ -264,14 +264,14 @@ describe("late arrival sub fairness", () => {
     const candidates = getSubCandidates(updated, 2, unavailable, events);
     if (!candidates) return;
 
-    // Late player should NOT be first recommended off — they have maximum debt
+    // Late player should NOT be first recommended off. They have maximum debt
     const recommendedOff = candidates.fieldRanked[0];
     expect(recommendedOff).not.toBe(latePlayer);
   });
 });
 
 // ====================================================================
-// SCENARIO: Specific reproduction — 7v5, check every game's sub
+// SCENARIO: Specific reproduction. 7v5, check every game's sub
 // recommendation doesn't bench an already-underplayed player
 // ====================================================================
 
@@ -284,7 +284,7 @@ describe("no underplayed player recommended off (exhaustive check)", () => {
   ];
 
   for (const { squad, perTeam, games } of configs) {
-    it(`${squad} players, ${perTeam}v${perTeam}, ${games} games — recommended off always has ≥ average play time`, () => {
+    it(`${squad} players, ${perTeam}v${perTeam}, ${games} games. Recommended off always has ≥ average play time`, () => {
       const players = makePlayers(squad);
       const ids = playerIds(players);
       const plan = generateInitialPlan({ players, playersPerTeam: perTeam, numberOfGames: games });

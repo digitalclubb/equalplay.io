@@ -20,6 +20,7 @@ import {
   iconLeaving,
   iconReset,
 } from "./icons.js";
+import { esc } from "../lib/esc.js";
 
 type PlayerMap = Map<string, Player>;
 
@@ -108,7 +109,7 @@ export function renderResults(
     container.appendChild(finishedBanner);
   }
 
-  // Completed games — collapsed
+  // Completed games. Collapsed
   for (const game of plan.games) {
     if (game.gameNumber >= currentGame) break;
     const unavailable = getUnavailableForGame(game.gameNumber, allPlayerIds, events);
@@ -310,7 +311,7 @@ export function renderResults(
           actionsZone.appendChild(endGameBtn);
         }
 
-        // Recovery link — coach can step back if they advanced by mistake.
+        // Recovery link. Coach can step back if they advanced by mistake.
         if (currentGame > 1) {
           const backLink = document.createElement("button");
           backLink.type = "button";
@@ -350,6 +351,9 @@ export function renderResults(
   container.appendChild(renderFairnessSummary(stats, playerMap));
 
   if (!readOnly) {
+    // Below the totals, which is the point at which match day is dealt with and
+    // the session is the next thing on the list. See docs/one-product.md.
+    container.appendChild(renderNextStep());
     ensureActionSheet();
   }
 }
@@ -581,7 +585,7 @@ function formatMatchDetails(d: { pitch: string; time: string; opponent: string }
 
 /**
  * Game header: "Game 1 LIVE" title + match details row.
- * Details show as "Pitch 6 · 11:30 · Tigers" — tappable to edit.
+ * Details show as "Pitch 6 · 11:30 · Tigers". Tappable to edit.
  */
 function createGameTitle(
   gameNumber: number,
@@ -613,7 +617,7 @@ function createGameTitle(
   if (!formatted) displayText.classList.add("match-details-empty");
   displayRow.appendChild(displayText);
 
-  // Edit row — 3 compact inputs on one line
+  // Edit row. 3 compact inputs on one line
   const editRow = document.createElement("div");
   editRow.className = "match-details-edit";
   editRow.hidden = true;
@@ -1122,6 +1126,28 @@ function renderReplacementRow(
   `;
 }
 
+/**
+ * The one place the free planner points at the rest of the app.
+ *
+ * It sits under the playing time totals rather than anywhere earlier, because
+ * that is where a coach has finished with match day. Nothing is being withheld
+ * here; the drills it points at need no account either.
+ */
+function renderNextStep(): HTMLElement {
+  const section = document.createElement("div");
+  section.className = "next-step";
+  section.innerHTML = `
+    <h4>Planning the training session too?</h4>
+    <p>
+      There are 104 drills in here filtered to what your age group is allowed to do,
+      with a planner that adds the minutes up as you build. Free to look round with
+      no account.
+    </p>
+    <a class="next-step-link" href="/hub#/catalogue" data-route="catalogue">See the drills</a>
+  `;
+  return section;
+}
+
 // ---- Fairness summary ----
 
 function renderFairnessSummary(
@@ -1187,8 +1213,8 @@ const COLLAPSED_COUNT = 3;
  * Returns ALL matching actions, most-recent-first.
  *
  * Game-scoped events (sub, injured, joined) filter by gameNumber.
- * Session-level events (late, leaving) are included unfiltered —
- * they're rare, important, and the coach needs to see them.
+ * Session-level events (late, leaving) are included unfiltered because they are
+ * rare, important and the coach needs to see them.
  */
 function getGameActions(
   events: RotationEvent[],
@@ -1264,7 +1290,7 @@ function renderRecentSection(
   section.appendChild(collapsedList);
 
   if (hasMore) {
-    // Overflow container — CSS grid animation for smooth expand/collapse
+    // Overflow container. CSS grid animation for smooth expand/collapse
     const overflowOuter = document.createElement("div");
     overflowOuter.className = "recent-actions-overflow";
     const overflowInner = document.createElement("div");
@@ -1297,8 +1323,3 @@ function renderRecentSection(
 
 // ---- Helpers ----
 
-function esc(text: string): string {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

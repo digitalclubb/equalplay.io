@@ -22,7 +22,7 @@ export interface TeamState {
   gameLabels: Record<string, string>;
   matchMode: MatchMode;
   teamSizeOverrides: Record<string, number>;
-  /** Draft player names — saved before generation so they survive tab switches */
+  /** Draft player names. Saved before generation so they survive tab switches */
   draftPlayerNames: string[];
 }
 

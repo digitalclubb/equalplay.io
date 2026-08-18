@@ -1,10 +1,10 @@
-// Service worker — cache-first strategy for offline support.
+// Service worker. Cache-first strategy for offline support.
 // Cache name includes a version so we can bust stale caches on deploy.
-const CACHE_NAME = "equalplay-v2";
+const CACHE_NAME = "equalplay-v5";
 
 // The build output filenames are hashed, so we cache them at runtime
 // rather than listing them statically. We pre-cache only the shell.
-const PRECACHE_URLS = ["/"];
+const PRECACHE_URLS = ["/", "/planner", "/hub"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -32,7 +32,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Only handle GET requests — let others pass through
+  // Only handle GET requests. Let others pass through
   if (request.method !== "GET") return;
 
   // For navigation requests, try network first so users get fresh HTML,
@@ -51,8 +51,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   // For all other assets (JS, CSS, images): stale-while-revalidate. Answer from
-  // cache for speed, but always refresh behind it — the build hashes JS, but
-  // pages.css and the icons are served at stable URLs, and plain cache-first
+  // cache for speed, but always refresh behind it. The build hashes JS, but
+  // pages.css and the icons are served at stable URLs and plain cache-first
   // would pin those to a stale copy until the next CACHE_NAME bump.
   event.respondWith(
     caches.match(request).then((cached) => {

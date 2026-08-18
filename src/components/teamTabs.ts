@@ -1,3 +1,4 @@
+import { esc } from "../lib/esc.js";
 export interface TeamTab {
   id: string;
   name: string;
@@ -255,8 +256,3 @@ function dismissTeamSheet(): void {
   document.removeEventListener("keydown", sheetKeyHandler);
 }
 
-function esc(text: string): string {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

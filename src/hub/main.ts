@@ -1,0 +1,263 @@
+import "./styles.css";
+import { renderAuth } from "./views/authView.js";
+import { renderAccount } from "./views/account.js";
+import { forgetWelcome, renderCatalogue } from "./views/catalogue.js";
+import {
+  clearPrintable,
+  flushPlanPush,
+  renderPlanEditor,
+  renderPlanList,
+  renderPlanView,
+  resetPlanner,
+  type PlannerContext,
+} from "./views/planner.js";
+import { clearLocalPlans, retryPending } from "./plans.js";
+import { clearLocalFavourites, retryFavourites } from "./favourites.js";
+import { showToast } from "../components/toast.js";
+import {
+  cacheProfile,
+  cachedProfile,
+  clearCachedProfile,
+  getSession,
+  onAuthChange,
+  profileFromUser,
+  type Profile,
+} from "./auth.js";
+import { isConfigured } from "./supabase.js";
+import { currentRoute, go, onRoute, type Route } from "./router.js";
+import { navHtml } from "../lib/nav.js";
+import { chosenAge } from "./ageChoice.js";
+import { renderAgePicker } from "./views/agePicker.js";
+
+/**
+ * Routes that belong to a tab of another name. The plan editor lives under
+ * #/plan/<id> but is part of Sessions. A bare hash renders the catalogue.
+ */
+const TAB_FOR_ROUTE: Record<string, string> = { plan: "plans", home: "catalogue" };
+
+/**
+ * What a coach was reaching for when a gate stopped them, keyed by the `#/join`
+ * parameter. Everything gated here is gated because it has to persist, never
+ * because the content is being held back.
+ */
+const GATE_REASON: Record<string, string> = {
+  plans:
+    "Sessions live in your account, so the one you build tonight is still there next week on whatever phone you have with you.",
+  favourites:
+    "A starred drill needs somewhere to live beyond this browser, which is what the account is for.",
+};
+
+const view = document.getElementById("hub-view");
+const nav = document.getElementById("hub-nav");
+
+if (!view || !nav) {
+  console.error("Hub shell elements missing");
+} else if (!isConfigured) {
+  view.innerHTML = `
+    <section class="hub-panel">
+      <h2>Not configured</h2>
+      <p>
+        This build has no Supabase credentials. Set VITE_SUPABASE_URL and
+        VITE_SUPABASE_ANON_KEY and rebuild.
+      </p>
+    </section>`;
+} else {
+  start(view, nav);
+}
+
+function start(view: HTMLElement, nav: HTMLElement): void {
+  const cached = cachedProfile();
+  let profile: Profile | null = cached?.profile ?? null;
+  let userId: string | null = cached?.userId ?? null;
+  let email = "";
+  let signedIn = false;
+
+  function drawNav(): void {
+    // An honest hook for "is there a usable profile", rather than leaving that
+    // to be inferred from whatever text happens to be on screen.
+    document.body.dataset.signedIn = signedIn && profile ? "true" : "false";
+    highlight(currentRoute());
+  }
+
+  /**
+   * The nav is the same four tabs whatever the sign-in state, because it is one
+   * product. Tapping a tab you cannot use yet lands on the register prompt, which
+   * is a better answer than a nav that changes shape underneath you.
+   */
+  function highlight(route: Route): void {
+    nav.innerHTML = navHtml(TAB_FOR_ROUTE[route.name] ?? route.name);
+  }
+
+  function render(): void {
+    const route = currentRoute();
+    highlight(route);
+
+    if (!signedIn) {
+      renderSignedOut(route);
+      return;
+    }
+    if (!profile) {
+      // Signed in but the age group is missing, so there is nothing safe to show
+      // in the catalogue. The account form doubles as the setup screen.
+      renderAccount(view, null, email);
+      return;
+    }
+
+    const ctx: PlannerContext = { userId: userId ?? "", ageGroup: profile.ageGroup };
+
+    // The print sheet only belongs to the plan editor; leave it behind and a
+    // Ctrl+P anywhere else would print the last session instead of the page
+    if (route.name !== "plan") clearPrintable();
+
+    switch (route.name) {
+      case "account":
+        renderAccount(view, profile, email);
+        break;
+      case "plans":
+        renderPlanList(view, ctx);
+        break;
+      case "plan":
+        // Viewing is the default. Editing is the deliberate detour.
+        if (!route.param) go("plans");
+        else if (route.rest[0] === "edit") renderPlanEditor(view, ctx, route.param);
+        else renderPlanView(view, ctx, route.param);
+        break;
+      default:
+        renderCatalogue(view, profile.ageGroup, userId ?? "", route.param, route.rest);
+    }
+  }
+
+  /**
+   * Signed out is a real state rather than a wall.
+   *
+   * Drills are free to read, because the catalogue is the proof the thing is
+   * worth an account. What needs an account is anything that has to persist. It
+   * gets asked for at the point a coach reaches for it. See
+   * `docs/one-product.md`.
+   */
+  function renderSignedOut(route: Route): void {
+    if (route.name === "join") {
+      renderAuth(view, "signup", GATE_REASON[route.param ?? ""] ?? "");
+      return;
+    }
+    if (route.name === "plans" || route.name === "plan" || route.name === "account") {
+      const signIn = route.name === "account";
+      renderAuth(view, signIn ? "signin" : "signup", signIn ? "" : GATE_REASON.plans);
+      return;
+    }
+    const age = chosenAge();
+    // Nothing can be shown until the grade is known, so this comes first
+    if (!age) {
+      renderAgePicker(view, render);
+      return;
+    }
+    renderCatalogue(view, age, "", route.param, route.rest);
+  }
+
+  onRoute(() => {
+    // Never leave an edit sitting in a debounce timer across a navigation
+    if (userId) flushPlanPush(userId);
+    render();
+  });
+
+  // Backgrounding the tab is the last reliable moment to get an edit to the server
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && userId) flushPlanPush(userId);
+  });
+
+  // Coming back into signal is when a touchline edit can finally leave the device
+  window.addEventListener("online", () => {
+    if (!userId) return;
+    void retryPending(userId).then((stillWaiting) => {
+      if (stillWaiting === 0) render();
+    });
+    void retryFavourites(userId);
+  });
+
+  onAuthChange((session) => {
+    const user = session?.user ?? null;
+    signedIn = Boolean(user);
+    email = user?.email ?? "";
+
+    if (!user) {
+      profile = null;
+      userId = null;
+      clearCachedProfile();
+      clearLocalPlans();
+      clearLocalFavourites();
+      resetPlanner();
+      forgetWelcome();
+    } else {
+      if (userId && userId !== user.id) {
+        // A different coach on the same device. Drop everything belonging to the
+        // last one before any of it can be rendered
+        clearLocalPlans();
+        clearLocalFavourites();
+        resetPlanner();
+        forgetWelcome();
+      }
+      const fresh = profileFromUser(user);
+      if (fresh) {
+        profile = fresh;
+        userId = user.id;
+        cacheProfile(user.id, fresh);
+      } else if (userId !== user.id) {
+        profile = null;
+        userId = user.id;
+        clearCachedProfile();
+      }
+    }
+
+    drawNav();
+    render();
+  });
+
+  // Kick off. OnAuthChange fires with the restored session, but call getSession
+  // so a signed-out cold start paints immediately rather than waiting on it
+  void getSession().then((session) => {
+    reportLinkFailure(Boolean(session));
+    if (!session) {
+      drawNav();
+      render();
+    }
+  });
+
+  if (!window.location.hash) go("catalogue");
+}
+
+/**
+ * Confirmation and reset links carry a PKCE code that only exchanges against the
+ * verifier in the browser that asked for it. Open one on a different device and
+ * supabase-js quietly leaves the code in the URL, which used to dump the coach on
+ * the sign-in form with no explanation.
+ */
+function reportLinkFailure(hasSession: boolean): void {
+  const query = new URLSearchParams(window.location.search);
+  const fragment = new URLSearchParams(window.location.hash.replace(/^#\/?/, ""));
+  const described = query.get("error_description") ?? fragment.get("error_description");
+
+  if (described) showToast(described, undefined, 6000);
+  else if (query.has("code") && !hasSession) {
+    showToast("That link only works in the browser that asked for it.", undefined, 6000);
+  } else return;
+
+  // Don't leave a spent code sitting in the URL or the back stack
+  window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+}
+
+// Focus the content directly rather than jumping to a fragment. An href of
+// #hub-view would set the hash. The router watches the hash.
+document.getElementById("skip-link")?.addEventListener("click", () => {
+  document.getElementById("hub-view")?.focus();
+});
+
+// Deferred: service worker + analytics, same pattern as the rotation planner
+function onIdle(fn: () => void): void {
+  if ("requestIdleCallback" in window) requestIdleCallback(fn);
+  else setTimeout(fn, 2000);
+}
+
+onIdle(() => {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+  import("@vercel/analytics").then(({ inject }) => inject());
+});

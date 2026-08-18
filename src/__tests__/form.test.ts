@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createForm } from "../components/form.js";
 
-describe("form — draft player names", () => {
+describe("form. Draft player names", () => {
   it("starts with 2 empty rows when no initial names provided", () => {
     const form = createForm(() => {});
     const rawNames = form.getRawNames();

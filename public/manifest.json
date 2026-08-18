@@ -1,8 +1,8 @@
 {
   "name": "Equal Play",
   "short_name": "EqualPlay",
-  "description": "Fair player rotations for youth team sports",
-  "start_url": "/",
+  "description": "Drills, session plans and fair playing time for youth rugby coaches",
+  "start_url": "/hub",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#000537",

@@ -27,7 +27,7 @@ export function showToast(
     activeTimer = null;
   }
 
-  // If replacing a visible toast, skip fade-in — just swap content
+  // If replacing a visible toast, skip fade-in. Just swap content
   const wasVisible = toast.classList.contains("toast-visible");
 
   // Build content
@@ -116,7 +116,7 @@ function setupSwipeDismiss(toast: HTMLElement): void {
       toast.style.opacity = String(Math.max(0, 1 - Math.abs(dx) / 200));
     } else {
       const dy = e.touches[0].clientY - startY;
-      // Only allow upward swipe (negative dy) — ignore downward
+      // Only allow upward swipe (negative dy). Ignore downward
       if (dy < 0) {
         toast.style.transform = `translateY(${dy}px)`;
         toast.style.opacity = String(Math.max(0, 1 - Math.abs(dy) / 100));

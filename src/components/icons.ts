@@ -1,17 +1,17 @@
 /**
- * Inline SVG icons — 16×16, stroke-based, consistent weight.
- * Used across section labels, buttons, and action sheet options.
+ * Inline SVG icons. 16×16, stroke-based, consistent weight.
+ * Used across section labels, buttons and action sheet options.
  */
 
 const ATTRS = 'width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
-/** Player on field — running figure */
+/** Player on field. Running figure */
 export const iconField = `<svg ${ATTRS}><circle cx="12" cy="5" r="2"/><path d="M7 21l3-7 2 2 4-6"/><path d="M17 21l-2-6"/></svg>`;
 
-/** Bench — pause/seat */
+/** Bench. Pause/seat */
 export const iconBench = `<svg ${ATTRS}><rect x="4" y="10" width="16" height="4" rx="1"/><path d="M6 14v4"/><path d="M18 14v4"/></svg>`;
 
-/** Unavailable — circle with line */
+/** Unavailable. Circle with line */
 export const iconUnavailable = `<svg ${ATTRS}><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`;
 
 /** Swap / substitution arrows */

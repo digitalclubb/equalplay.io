@@ -26,7 +26,7 @@ function playerIds(players: Player[]): string[] {
 // This is the exact flow a coach follows in the app
 // ====================================================================
 
-describe("matchday scenario: A,B,C — 2 per team, 3 games", () => {
+describe("matchday scenario: A,B,C. 2 per team, 3 games", () => {
   const A = "p1", B = "p2", C = "p3";
   const players: Player[] = [
     { id: A, name: "A" },
@@ -135,7 +135,7 @@ describe("matchday scenario: A,B,C — 2 per team, 3 games", () => {
 });
 
 // ====================================================================
-// generateInitialPlan — what a coach expects from the generated plan
+// generateInitialPlan. What a coach expects from the generated plan
 // ====================================================================
 
 describe("generateInitialPlan", () => {
@@ -234,7 +234,7 @@ describe("player marked late (never arrives)", () => {
 });
 
 // ====================================================================
-// Late then joined — the arrival flow
+// Late then joined. The arrival flow
 // ====================================================================
 
 describe("player arrives late (late then joined)", () => {
@@ -367,7 +367,7 @@ describe("substitutions", () => {
 });
 
 // ====================================================================
-// getReplacements — injury replacement suggestions
+// getReplacements. Injury replacement suggestions
 // ====================================================================
 
 describe("getReplacements", () => {
@@ -398,7 +398,7 @@ describe("getReplacements", () => {
 });
 
 // ====================================================================
-// getNextSubSuggestion — the "Make sub" recommendation
+// getNextSubSuggestion. The "Make sub" recommendation
 // ====================================================================
 
 describe("getNextSubSuggestion", () => {
@@ -416,7 +416,7 @@ describe("getNextSubSuggestion", () => {
 });
 
 // ====================================================================
-// getPlayerStats — the "Playing time" display
+// getPlayerStats. The "Playing time" display
 // ====================================================================
 
 describe("getPlayerStats", () => {
@@ -523,10 +523,10 @@ describe("edge cases", () => {
 });
 
 // ====================================================================
-// getSubCandidates — injury override
+// getSubCandidates. Injury override
 // ====================================================================
 
-describe("getSubCandidates — injury override", () => {
+describe("getSubCandidates. Injury override", () => {
   // 7 players, 5 per team → 5 on field, 2 on bench
   const players = makePlayers(7);
   const ids = playerIds(players);
@@ -569,7 +569,7 @@ describe("getSubCandidates — injury override", () => {
     const unavailable = getUnavailableForGame(1, ids, events);
     const result = getSubCandidates(rebalanced, 1, unavailable, events);
 
-    // After the sub, injuredOut should be false — the injury sub is done
+    // After the sub, injuredOut should be false. The injury sub is done
     if (result) {
       expect(result.injuredOut).toBe(false);
     }
@@ -593,7 +593,7 @@ describe("getSubCandidates — injury override", () => {
 });
 
 // ====================================================================
-// BUG: Late arrival + injury — late player never subbed on
+// BUG: Late arrival + injury. Late player never subbed on
 // Scenario: 10 players (A-J), 7 per team, 3 games.
 // Before game 1: A is late. Game 1 starts, A arrives. B injured → subbed off.
 // Expected: A should eventually be suggested as a sub in game 1.
@@ -627,8 +627,8 @@ describe("late arrival + injury: late player should be subbed on", () => {
     // A should be in benchRanked (not filtered out)
     expect(candidates!.benchRanked).toContain(A);
 
-    // With injury on field, late deprioritisation is skipped —
-    // A has the same debt as other bench players but should be eligible
+    // With injury on field, late deprioritisation is skipped, so A has the same
+    // debt as other bench players but should be eligible
     // as the top candidate (or tied for top, not pushed to the back).
     // A must not be last in benchRanked.
     const aIdx = candidates!.benchRanked.indexOf(A);

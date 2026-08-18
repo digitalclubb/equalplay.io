@@ -22,7 +22,7 @@
     <meta property="og:image" content="https://equalplay.io/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Equal Play — fair game time for every child, every match" />
+    <meta property="og:image:alt" content="Equal Play. Fair game time for every child, every match" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://equalplay.io/og-image.png" />
 
@@ -89,7 +89,7 @@
           </svg>
           Equal <span>Play</span>
         </a>
-        <a class="header-cta" href="/">Open the app</a>
+        <a class="header-cta" href="/planner">Open the app</a>
       </div>
     </div>
 
@@ -97,7 +97,7 @@
       <div class="wrap">
         <h1>Equal playing time calculator</h1>
         <p class="standfirst">
-          Enter your squad, how many go on at once and how long you are playing. It tells you the
+          Enter your squad, how many go on at once and how long you're playing. It tells you the
           minutes each child should get if game time is shared evenly.
         </p>
 
@@ -151,17 +151,16 @@
         </form>
 
         <p>
-          The calculator answers the arithmetic question. Actually delivering it on a Sunday
-          morning — deciding who comes off when, and coping with the child who turns up twenty
-          minutes late — is what the
-          <a href="/">Equal Play app</a> does.
+          The calculator answers the arithmetic question. Actually delivering it on a match morning, deciding who comes off when, coping with the child who turns up twenty
+          minutes late, is what the
+          <a href="/planner">Equal Play app</a> does.
         </p>
-        <p><a class="cta" href="/">Plan my rotation</a></p>
+        <p><a class="cta" href="/planner">Plan my rotation</a></p>
 
         <h2>How the calculation works</h2>
         <p>
           There is only one sum involved. Multiply the players on the pitch by the length of the
-          match, and you have the total pool of player-minutes available to give out:
+          match and you have the total pool of player-minutes available to give out:
         </p>
         <div class="panel">
           <p>
@@ -174,8 +173,8 @@
           share, which is 35.7 minutes each and about 14 minutes each on the side.
         </p>
         <p>
-          Count the whole session, not one match. Minis fixtures in particular are usually several
-          short games, and a child who sat out most of game one is only treated fairly if game three
+          Count the whole session rather than one match. Minis fixtures in particular are usually several
+          short games and a child who sat out most of game one is only treated fairly if game three
           knows about it.
         </p>
 
@@ -234,10 +233,10 @@
           </table>
         </div>
 
-        <h2>When the numbers do not divide evenly</h2>
+        <h2>When the numbers don't divide evenly</h2>
         <p>
-          They usually will not, and chasing an exact split inside a single match tends to produce
-          silly substitutions. Two things help more:
+          They usually won't. Chasing an exact split inside one match tends to produce silly
+          substitutions anyway. Two things help more:
         </p>
         <ul>
           <li>
@@ -255,7 +254,7 @@
         <h2>Playing time minimums</h2>
         <p>
           Equal playing time and required playing time are different things. Age grade rugby sets
-          minimum and maximum minutes per age group in RFU Regulation 15 — see
+          minimum and maximum minutes per age group in RFU Regulation 15. See
           <a href="/rfu-regulation-15-playing-time">Regulation 15 playing time for coaches</a> for
           how to check yours and make sure every child clears it.
         </p>
@@ -265,11 +264,11 @@
     <footer class="site-footer">
       <div class="wrap">
         <ul>
-          <li><a href="/">Equal Play app</a></li>
+          <li><a href="/planner">Equal Play app</a></li>
           <li><a href="/rugby-substitution-app">Rugby substitution app</a></li>
           <li><a href="/rfu-regulation-15-playing-time">Regulation 15 playing time</a></li>
         </ul>
-        <p>Free to use. Nothing leaves your device.</p>
+        <p>Free to use. Nothing leaves your phone.</p>
       </div>
     </footer>
 
@@ -284,7 +283,7 @@
         var announceTimer;
 
         // Screen readers get the result once the coach stops typing, not once
-        // per digit — and never the transient error from a half-typed number.
+        // per digit and never the transient error from a half-typed number.
         function say(text) {
           clearTimeout(announceTimer);
           announceTimer = setTimeout(function () {
@@ -306,7 +305,7 @@
           var pitch = Number(fields[1].value);
           var minutes = Number(fields[2].value);
 
-          // Players must be whole; minutes need not be — quarters of 7.5 are common.
+          // Players must be whole; minutes need not be. Quarters of 7.5 are common.
           var countsValid = [squad, pitch].every(function (n) {
             return Number.isInteger(n) && n > 0;
           });
@@ -319,7 +318,7 @@
           }
           if (pitch > squad) {
             var short =
-              "You have fewer players available than places on the pitch — you would be playing short.";
+              "You have fewer players available than places on the pitch. You would be playing short.";
             out.innerHTML = '<p class="calc-error">' + short + "</p>";
             say(short);
             return;
@@ -332,7 +331,7 @@
           var detail;
           if (sittingOut === 0) {
             detail =
-              "Everyone on the pitch for the whole match — there is nobody to rotate, so no substitutions are needed.";
+              "Everyone on the pitch for the whole match. There is nobody to rotate, so no substitutions are needed.";
           } else {
             detail =
               "That is out of " +

@@ -1,4 +1,5 @@
 import { mountApp } from "./app.js";
+import { track } from "./lib/track.js";
 
 const root = document.getElementById("app");
 if (!root) {
@@ -7,7 +8,18 @@ if (!root) {
   mountApp(root);
 }
 
-// Deferred: service worker + analytics — loaded only when browser is idle
+// The crossing from the free planner into the rest of the app, which is the
+// number the whole one-product change turns on. Delegated from the document so
+// it covers the nav and the card under the playing time totals both, including
+// the card, which does not exist yet when this runs.
+document.addEventListener("click", (event) => {
+  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[data-route]");
+  if (link?.getAttribute("href")?.startsWith("/hub")) {
+    track("planner_to_app", { to: link.dataset.route ?? "" });
+  }
+});
+
+// Deferred: service worker + analytics. Loaded only when browser is idle
 function onIdle(fn: () => void): void {
   if ("requestIdleCallback" in window) {
     requestIdleCallback(fn);
@@ -22,7 +34,7 @@ onIdle(() => {
     navigator.serviceWorker.register("/sw.js");
   }
 
-  // Vercel Analytics — lazy import so it doesn't block initial load
+  // Vercel Analytics. Lazy import so it doesn't block initial load
   import("@vercel/analytics").then(({ inject }) => {
     inject();
   });

@@ -306,7 +306,7 @@ describe("scenario 4: injury override", () => {
 // The system must handle injury first, then continue with fairness.
 // ====================================================================
 
-describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
+describe("scenario 5: combined chaos. Bench + injury + late arrival", () => {
   const { players, ids } = squad(8);
   const perTeam = 5;
   const plan = generateInitialPlan({ players, playersPerTeam: perTeam, numberOfGames: 4 });
@@ -341,7 +341,7 @@ describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
 
     events.push({ type: "injured", playerId: injuredPlayer, gameNumber: 2 });
 
-    // Step 4: Check sub recommendation — injury MUST take priority
+    // Step 4: Check sub recommendation. Injury MUST take priority
     const unavailable2 = getUnavailableForGame(2, ids, events);
     result = applyEvents(plan, events, ids, perTeam, 2);
     const candidates = getSubCandidates(result, 2, unavailable2, events);
@@ -359,7 +359,7 @@ describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
       playerIn: replacement,
     });
 
-    // Step 6: Advance to game 3 — verify fairness continues
+    // Step 6: Advance to game 3. Verify fairness continues
     result = applyEvents(plan, events, ids, perTeam, 3);
 
     // Injured player must be gone from future games
@@ -382,7 +382,7 @@ describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
     }
   });
 
-  it("no rules conflict — system does not crash or produce empty lineups", () => {
+  it("no rules conflict. System does not crash or produce empty lineups", () => {
     const g1 = plan.games[0];
     const latePlayer = g1.onField[1];
 
@@ -391,7 +391,7 @@ describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
       { type: "joined", playerId: latePlayer, duringGame: 1 },
     ];
 
-    // Advance through all 4 games — nothing should crash
+    // Advance through all 4 games. Nothing should crash
     for (let gameNum = 1; gameNum <= 4; gameNum++) {
       const result = applyEvents(plan, events, ids, perTeam, gameNum);
       const game = result.games[gameNum - 1];
@@ -406,14 +406,14 @@ describe("scenario 5: combined chaos — bench + injury + late arrival", () => {
 });
 
 // ====================================================================
-// SCENARIO 6: EDGE CASE — LIMITED PLAYERS
+// SCENARIO 6: EDGE CASE. LIMITED PLAYERS
 //
 // Small squad (4 players, 3 on field, 4 games) where perfect rotation
 // is mathematically impossible. The system should still distribute
-// fairly — no player should be excessively disadvantaged.
+// fairly. No player should be excessively disadvantaged.
 // ====================================================================
 
-describe("scenario 6: limited squad — imperfect rotation (4 players, 3 on field)", () => {
+describe("scenario 6: limited squad. Imperfect rotation (4 players, 3 on field)", () => {
   const { players, ids } = squad(4);
   const perTeam = 3;
   const numGames = 4;
@@ -554,7 +554,7 @@ describe("scenario 7: full matchday walkthrough (9 players, 7 on field, 3 games)
 // SCENARIO 8: LATE ARRIVAL MOMENTUM FAIRNESS
 //
 // A player misses the first half, then plays the second half.
-// The system must prioritise them for the next game — they should
+// The system must prioritise them for the next game. They should
 // NOT be immediately benched again if avoidable.
 //
 // This validates the "momentum fairness" rule: recent underplay
@@ -649,7 +649,7 @@ describe("scenario 8: late arrival momentum fairness", () => {
       ];
 
       const result = applyEvents(plan, events, ids, perTeam, 2);
-      // Late player got 0.5 credit from the sub — they should still start game 2
+      // Late player got 0.5 credit from the sub. They should still start game 2
       expect(result.games[1].onField).toContain(latePlayer);
     });
 
@@ -670,12 +670,12 @@ describe("scenario 8: late arrival momentum fairness", () => {
 
       // After sub in game 1 (0.5 credit) + game 2 (1.0) = 1.5 total
       // Others who played full game 1 have 1.0. So p1 may eventually
-      // be benched when they've caught up — but NOT immediately in game 2.
+      // be benched when they've caught up. But NOT immediately in game 2.
       expect(result.games[1].onField).toContain(latePlayer);
     });
   });
 
-  // ---- 8c: Tight squad — 6 players, 4 on field ----
+  // ---- 8c: Tight squad. 6 players, 4 on field ----
 
   describe("8c: tight squad late arrival (6 players, 4 on field, 3 games)", () => {
     const { players, ids } = squad(6);
@@ -698,7 +698,7 @@ describe("scenario 8: late arrival momentum fairness", () => {
     });
   });
 
-  // ---- 8d: Large squad — 10 players, 7 on field ----
+  // ---- 8d: Large squad. 10 players, 7 on field ----
 
   describe("8d: large squad late arrival (10 players, 7 on field, 4 games)", () => {
     const { players, ids } = squad(10);
@@ -730,7 +730,7 @@ describe("scenario 8: late arrival momentum fairness", () => {
     });
   });
 
-  // ---- 8e: Two late players — both should be prioritised ----
+  // ---- 8e: Two late players. Both should be prioritised ----
 
   describe("8e: two late players (9 players, 7 on field, 3 games)", () => {
     const { players, ids } = squad(9);
@@ -909,11 +909,11 @@ describe("scenario 9: dynamic team size (9 players, 7→6 in final game)", () =>
 });
 
 // ====================================================================
-// SCENARIO 10: TEAM SIZE DROP — EQUAL PLAY TIME EDGE CASE
+// SCENARIO 10: TEAM SIZE DROP. EQUAL PLAY TIME EDGE CASE
 //
 // 7 players, all 7 on field for games 1-2, then drop to 5 for game 3.
 // Everyone has identical play time. The algorithm can't be "fair" about
-// who sits — but it MUST still be structurally correct.
+// who sits. But it MUST still be structurally correct.
 // ====================================================================
 
 describe("scenario 10: team size drop when all players have equal time", () => {
@@ -935,7 +935,7 @@ describe("scenario 10: team size drop when all players have equal time", () => {
     expect(result.games[2].bench).toHaveLength(2);
   });
 
-  it("everyone accounted for — no player lost", () => {
+  it("everyone accounted for. No player lost", () => {
     const result = applyEvents(plan, [], ids, 7, 1, overrides);
     const all = [...result.games[2].onField, ...result.games[2].bench].sort();
     expect(all).toEqual([...ids].sort());

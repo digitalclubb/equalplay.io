@@ -1,3 +1,4 @@
+import { navHtml } from "./lib/nav.js";
 import { createForm } from "./components/form.js";
 import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
@@ -34,14 +35,16 @@ export function mountApp(root: HTMLElement): void {
 
     const header = document.createElement("header");
     header.className = "app-header";
-    header.innerHTML = `
-      ${createLogo()}
-      <p class="subtitle">Fair rotations for youth rugby and team sports</p>
-    `;
+    header.innerHTML = createLogo();
     headerBar.appendChild(header);
 
-    tabsContainer = document.createElement("div");
-    headerBar.appendChild(tabsContainer);
+    // Same nav as the static markup, from the same module, so this fallback
+    // cannot quietly drop a coach out of the rest of the app.
+    const appNav = document.createElement("nav");
+    appNav.className = "hub-nav";
+    appNav.setAttribute("aria-label", "Sections");
+    appNav.innerHTML = navHtml("planner", "/hub");
+    headerBar.appendChild(appNav);
 
     root.appendChild(headerBar);
   }
@@ -49,7 +52,8 @@ export function mountApp(root: HTMLElement): void {
   if (!tabsContainer) {
     tabsContainer = document.createElement("nav");
     tabsContainer.setAttribute("aria-label", "Teams");
-    headerBar.appendChild(tabsContainer);
+    // Into the planner's own view, above its inputs, matching the markup
+    root.prepend(tabsContainer);
   }
 
   const tabs = tabsContainer as HTMLElement;
@@ -364,7 +368,7 @@ export function mountApp(root: HTMLElement): void {
     }, 200);
   }
 
-  // Form container — rebuilt on every team switch so inputs are fresh
+  // Form container. Rebuilt on every team switch so inputs are fresh
   const formContainer =
     document.getElementById("main-content") ??
     document.createElement("div");

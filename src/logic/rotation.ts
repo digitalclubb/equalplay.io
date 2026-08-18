@@ -24,7 +24,7 @@ function createTracker(): PlayerTracker {
   return { playTimeUnits: 0, lastPlayedGame: 0, gamesAvailable: 0 };
 }
 
-/** Frozen sentinel for read-only fallback — avoids allocating in hot comparators */
+/** Frozen sentinel for read-only fallback. Avoids allocating in hot comparators */
 const EMPTY_TRACKER: Readonly<PlayerTracker> = Object.freeze(
   { playTimeUnits: 0, lastPlayedGame: 0, gamesAvailable: 0 },
 );
@@ -46,7 +46,7 @@ function selectOnField(
   const sorted = [...available].sort((a, b) => {
     const ta = trackers.get(a) ?? EMPTY_TRACKER;
     const tb = trackers.get(b) ?? EMPTY_TRACKER;
-    // Players subbed off last game get a 0.5 debt boost — they were
+    // Players subbed off last game get a 0.5 debt boost. They were
     // on the bench for half a game and should be prioritised to start.
     const aDebt = fairnessDebt(ta, playersPerTeam, avgPoolSize)
       + (subbedOffPrevGame.has(a) ? 0.5 : 0);
@@ -407,7 +407,7 @@ function extractSubMeta(events: RotationEvent[], currentGameNumber: number): {
 
 /**
  * Build play-time trackers from plan games up to (and including) a given game.
- * Uses resolved.subs for credit calculation — no extra event iteration needed.
+ * Uses resolved.subs for credit calculation. No extra event iteration needed.
  */
 function buildTrackers(
   plan: RotationPlan,
@@ -466,7 +466,7 @@ export function getNextSubSuggestion(
   const currentGame = plan.games[currentGameNumber - 1];
   if (!currentGame) return null;
 
-  // Late+joined players in their arrival game are available but deprioritised —
+  // Late+joined players in their arrival game are available but deprioritised, so
   // on-time bench players get subbed on first.
   const resolved = resolveEvents(events);
   const lateInArrivalGame = new Set<string>();
@@ -507,7 +507,7 @@ export function getNextSubSuggestion(
 
   const { subOffCount, subbedOffPrevGame, subbedOffThisGame, subbedOnThisGame } = extractSubMeta(events, currentGameNumber);
 
-  // Late arrivals who joined in the previous game were benched for part of it —
+  // Late arrivals who joined in the previous game were benched for part of it, so
   // they deserve the same recency boost as players who were subbed off.
   const prevGame = currentGameNumber - 1;
   for (const [id, arrivedDuring] of resolved.joinedDuring) {
@@ -529,9 +529,9 @@ export function getNextSubSuggestion(
 
   const playerIn = availableBench.reduce((best, id) => {
     // Late arrivals deprioritised behind original bench players (who haven't
-    // played yet). Players who were subbed off already had their turn —
+    // played yet). Players who were subbed off already had their turn, so
     // they don't jump the queue ahead of the late arrival.
-    // Skip deprioritisation when there's an injury — the late arrival should
+    // Skip deprioritisation when there's an injury. The late arrival should
     // be a candidate for the injury replacement based on fairness debt alone.
     if (!hasInjuryOnField) {
       const bestLate = lateInArrivalGame.has(best);
@@ -607,7 +607,7 @@ export function getSubCandidates(
   const currentGame = plan.games[currentGameNumber - 1];
   if (!currentGame) return null;
 
-  // Late+joined players in their arrival game are available but deprioritised —
+  // Late+joined players in their arrival game are available but deprioritised, so
   // on-time bench players get subbed on first.
   const resolved = resolveEvents(events);
   const lateInArrivalGame = new Set<string>();
@@ -654,7 +654,7 @@ export function getSubCandidates(
 
   const { subOffCount, subbedOffPrevGame, subbedOffThisGame, subbedOnThisGame } = extractSubMeta(events, currentGameNumber);
 
-  // Late arrivals who joined in the previous game were benched for part of it —
+  // Late arrivals who joined in the previous game were benched for part of it, so
   // they deserve the same recency boost as players who were subbed off.
   const prevGame = currentGameNumber - 1;
   for (const [id, arrivedDuring] of resolved.joinedDuring) {
@@ -674,14 +674,14 @@ export function getSubCandidates(
     debtCache.set(id, fairnessDebt(t, ppt, avgPool) + (subbedOffPrevGame.has(id) ? 0.5 : 0));
   }
 
-  // Injured on-field players forced to front — they must come off first
+  // Injured on-field players forced to front. They must come off first
   const hasInjury = injuredOnField.length > 0;
 
   const benchRanked = [...availableBench].sort((a, b) => {
     // Late arrivals deprioritised behind original bench players (who haven't
-    // played yet). Players who were subbed off already had their turn —
+    // played yet). Players who were subbed off already had their turn, so
     // they don't jump the queue ahead of the late arrival.
-    // Skip deprioritisation when there's an injury — the late arrival should
+    // Skip deprioritisation when there's an injury. The late arrival should
     // be a candidate for the injury replacement based on fairness debt alone.
     if (!hasInjury) {
       const aLate = lateInArrivalGame.has(a);
@@ -720,7 +720,7 @@ export function getSubCandidates(
   // Only recommend a sub if it would actually improve fairness:
   // the most deserving bench player must have higher debt than the
   // most overplayed field player.  When the lineup is already balanced
-  // (e.g. 10 players, 5 per team, game 2 — everyone has equal time),
+  // (e.g. 10 players, 5 per team, game 2. Everyone has equal time),
   // any sub would worsen fairness.  Injury overrides skip this check.
   if (!hasInjury) {
     if (debtCache.get(benchRanked[0])! <= debtCache.get(fieldRanked[0])! + 0.001) return null;
@@ -765,7 +765,7 @@ export function getPlayerStats(
   }
 
   for (const game of plan.games) {
-    // Increment gamesAvailable — iterate both arrays, no spread
+    // Increment gamesAvailable. Iterate both arrays, no spread
     for (const id of game.onField) {
       const t = trackers.get(id) ?? createTracker();
       t.gamesAvailable++;

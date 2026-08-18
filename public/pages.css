@@ -1,12 +1,12 @@
 /* Shared styles for the static content pages under public/.
-   Deliberately separate from src/styles.css — these pages ship no app bundle,
+   Deliberately separate from src/styles.css. These pages ship no app bundle,
    so they only need type, spacing and a couple of components. */
 
 :root {
   --navy: #000537;
   --brand: #e75333;
   /* Brand orange is only 3.69:1 against white, so anything carrying white text
-     uses the darker tone — same split as --color-primary in src/styles.css. */
+     uses the darker tone. Same split as --color-primary in src/styles.css. */
   --brand-solid: #cf3918;
   --text: #1b1f33;
   --muted: #5a6070;
@@ -349,5 +349,268 @@ th {
   .calc label,
   .calc-headline {
     color: #fff;
+  }
+}
+
+/* Homepage. Wider than an article page because it is laid out in two columns
+   above 48rem rather than being read as one line of prose. */
+
+.wrap-wide {
+  max-width: 64rem;
+}
+
+.home-hero {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 3.5rem;
+}
+
+.home-hero h1 {
+  font-size: clamp(2.1rem, 7vw, 3.1rem);
+  text-wrap: balance;
+  /* "kick-off" is a legal break point, so without this the headline can split
+     a hyphenated word across two lines at exactly the width the hero uses. */
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.cta-quiet {
+  background: transparent;
+  color: var(--text);
+  /* --line is a hairline and all but vanishes on the dark background, which
+     left the secondary button with no visible edge. --muted is a text colour,
+     so it is legible against the page in both schemes. */
+  border: 2px solid var(--muted);
+  padding: calc(0.8rem - 2px) calc(1.6rem - 2px);
+}
+
+.cta-quiet:hover,
+.cta-quiet:focus-visible {
+  background: var(--panel);
+  border-color: var(--brand);
+  color: var(--text);
+}
+
+.home-microcopy {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* The hero card. A stand-in for a screenshot, so it carries no meaning of its
+   own and is hidden from assistive tech at the markup. */
+
+.mock {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.mock-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--text);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mock-tag {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--brand-solid);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.mock-label {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.mock-row {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0;
+}
+
+.mock-row li {
+  margin: 0;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.mock-row-out li {
+  color: var(--muted);
+  font-weight: 400;
+  background: transparent;
+}
+
+.mock-foot {
+  margin: 1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.home-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* The session running order in the hero. Markup, so it costs nothing. */
+.mock-plan {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.mock-plan li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mock-plan li span:first-child {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mock-plan li span:last-child {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Cards sit side by side above 48rem, so the two calls to action line up
+   rather than landing wherever the copy above them happens to end. */
+.home-grid > .panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-grid ul {
+  margin-bottom: auto;
+}
+
+.panel-flush > :first-child {
+  margin-top: 0;
+}
+
+.panel-flush ul {
+  margin-bottom: 1.25rem;
+}
+
+/* A band rather than more prose, so the middle of the page has somewhere for the
+   eye to stop. Sits where somebody is weighing it up, with a call to action in
+   it, which is where proof does the most work. */
+
+.proof {
+  margin: 3rem 0;
+  padding: 1.75rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.proof h2 {
+  margin-top: 0;
+}
+
+.proof-facts {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.proof-facts li {
+  margin: 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.proof-facts li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+/* --navy is a fixed brand colour for chrome. It does not flip with the scheme, so
+   using it for text on --panel gives navy on dark navy, measured at 1.12:1. Text
+   on a themed surface uses --text, which does flip. */
+.proof-facts strong {
+  color: var(--text);
+}
+
+.proof-note {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+@media (min-width: 48rem) {
+  .proof-facts {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 2rem;
+  }
+}
+
+.home-close {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.home-close .standfirst {
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 48rem) {
+  .home-hero {
+    grid-template-columns: 1.2fr 1fr;
+    gap: 2.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .home-grid {
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1.75rem;
   }
 }

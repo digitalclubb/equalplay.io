@@ -1,5 +1,5 @@
 /**
- * Algorithm audit — exhaustive fairness validation
+ * Algorithm audit. Exhaustive fairness validation
  *
  * This file tests every rule that makes the algorithm trustworthy.
  * Each section maps to a specific real-world guarantee a coach relies on.
@@ -275,7 +275,7 @@ describe("rule 4: late arrival", () => {
         }
       });
 
-      it("4d: eligible from next game — on field in game 2", () => {
+      it("4d: eligible from next game. On field in game 2", () => {
         const result = applyEvents(plan, lateEvents, ids, p, 2);
         expect(result.games[1].onField).toContain(latePlayer);
       });
@@ -317,7 +317,7 @@ describe("rule 4: late arrival", () => {
 
 describe("rule 4 scenarios: late arrival sub queue", () => {
   it("4p 3v: A late, D on bench → D goes on, then A is next sub", () => {
-    // A, B, C, D — 3 on field. A is late, so D replaces A.
+    // A, B, C, D. 3 on field. A is late, so D replaces A.
     const players: Player[] = [
       { id: "A", name: "A" },
       { id: "B", name: "B" },
@@ -348,7 +348,7 @@ describe("rule 4 scenarios: late arrival sub queue", () => {
   });
 
   it("5p 3v: A late, D+E on bench → D goes on first, E next, then A", () => {
-    // A, B, C, D, E — 3 on field. A is late.
+    // A, B, C, D, E. 3 on field. A is late.
     // D and E are on bench (on-time). A arrives on bench (late).
     const players: Player[] = [
       { id: "A", name: "A" },
@@ -402,7 +402,7 @@ describe("rule 4 scenarios: late arrival sub queue", () => {
       // A should now be in benchRanked (available for selection)
       expect(cands2.benchRanked).toContain("A");
 
-      // The subbed-off player has already played (0.5 credit) — they
+      // The subbed-off player has already played (0.5 credit). They
       // should NOT jump the queue ahead of A who has zero play time.
       // A should rank by debt, which is higher than the subbed-off player.
       const aIdx = cands2.benchRanked.indexOf("A");
@@ -596,7 +596,7 @@ describe("rule 7: play slot accounting", () => {
 // ====================================================================
 
 describe("rule 8: combined disruptions", () => {
-  it("late arrival + injury + sub — no crashes, correct priority", () => {
+  it("late arrival + injury + sub. No crashes, correct priority", () => {
     const { players, ids } = squad(9);
     const plan = generateInitialPlan({
       players, playersPerTeam: 7, numberOfGames: 4,
@@ -640,7 +640,7 @@ describe("rule 8: combined disruptions", () => {
     }
   });
 
-  it("two late players — both prioritised from game 2", () => {
+  it("two late players. Both prioritised from game 2", () => {
     const { players, ids } = squad(10);
     const plan = generateInitialPlan({
       players, playersPerTeam: 7, numberOfGames: 3,
@@ -692,7 +692,7 @@ describe("rule 8: combined disruptions", () => {
 // ====================================================================
 
 describe("rule 9: edge cases", () => {
-  it("all players late — empty lineups, no crash", () => {
+  it("all players late. Empty lineups, no crash", () => {
     const { players, ids } = squad(5);
     const plan = generateInitialPlan({
       players, playersPerTeam: 3, numberOfGames: 2,
@@ -707,7 +707,7 @@ describe("rule 9: edge cases", () => {
     }
   });
 
-  it("squad smaller than team size — everyone plays", () => {
+  it("squad smaller than team size. Everyone plays", () => {
     const { players } = squad(3);
     const plan = generateInitialPlan({
       players, playersPerTeam: 7, numberOfGames: 2,
@@ -718,7 +718,7 @@ describe("rule 9: edge cases", () => {
     }
   });
 
-  it("single player squad — plays every game", () => {
+  it("single player squad. Plays every game", () => {
     const { players } = squad(1);
     const plan = generateInitialPlan({
       players, playersPerTeam: 1, numberOfGames: 3,
@@ -728,7 +728,7 @@ describe("rule 9: edge cases", () => {
     }
   });
 
-  it("dynamic team size — reduced game works", () => {
+  it("dynamic team size. Reduced game works", () => {
     const { players, ids } = squad(9);
     const plan = generateInitialPlan({
       players, playersPerTeam: 7, numberOfGames: 3,
@@ -739,7 +739,7 @@ describe("rule 9: edge cases", () => {
     expect(result.games[2].bench).toHaveLength(4);
   });
 
-  it("injury on game 1 + leaving on game 2 — no overlap bugs", () => {
+  it("injury on game 1 + leaving on game 2. No overlap bugs", () => {
     const { players, ids } = squad(8);
     const plan = generateInitialPlan({
       players, playersPerTeam: 5, numberOfGames: 4,

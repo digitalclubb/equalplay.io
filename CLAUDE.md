@@ -1,8 +1,35 @@
-# CLAUDE.md — Project instructions for Claude
+# CLAUDE.md: project instructions for Claude
 
 ## Project
 
-Equal Play — a mobile-first web app for youth sports coaches to generate fair player rotations and manage live match-day substitutions.
+Equal Play is one mobile-first web app for youth rugby coaches. It ships as three
+documents, which is a build decision rather than a product one. See
+`docs/one-product.md`.
+
+- **Marketing homepage** (`/`): static HTML, no bundle, no JavaScript. One call to
+  action, pointing at the app.
+- **The app** (`/hub`): drill catalogue, session planner, account. `noindex`. Drills
+  are free to read once an age grade is picked, no account needed. An account is
+  required only for what has to persist, meaning saved sessions and starred drills.
+- **Match-day planner** (`/planner`): fair player rotations and live substitutions.
+  Free for good, no account, indexed, everything in localStorage. Its own entry so
+  `@supabase/supabase-js` never lands on it. Never regress this.
+
+Content is gated by RFU age grade throughout. No data about any child is ever stored
+or transmitted, anywhere.
+
+**Read `docs/roadmap.md` first.** It says what is built, what is next, what is
+deliberately out of scope, plus what is still blocking. Most importantly it records that
+the hub has never run against the real Supabase project, so auth, email confirmation and
+account deletion are untested rather than working.
+
+| Where | What is in it |
+| --- | --- |
+| `docs/roadmap.md` | State of play, next steps, decisions not to relitigate |
+| `docs/content-sourcing.md` | How drill content gets written, plus the copyright position |
+| `supabase/README.md` | Migrations to run, auth settings to check |
+| `.impeccable.md` | Who this is for, where they use it, how it should feel |
+| `README.md` | The outside view, for a human arriving cold |
 
 ## Tech stack
 
@@ -17,6 +44,7 @@ Equal Play — a mobile-first web app for youth sports coaches to generate fair 
 
 ```bash
 pnpm dev          # Start dev server
+pnpm preview:demo # Build and preview with throwaway Supabase credentials
 pnpm build        # Type-check + production build
 pnpm test         # Run all tests (vitest)
 pnpm test:watch   # Run tests in watch mode
@@ -25,44 +53,112 @@ pnpm lint         # Run OXC linter
 
 ## IMPORTANT: Run tests when changing core logic
 
-**Always run `pnpm test` after modifying any file in:**
-- `src/logic/` (rotation.ts, validate.ts, storage.ts)
+**Always run `pnpm test` after touching:**
+
+- `src/logic/` (rotation.ts, validate.ts, storage.ts, sessionPlan.ts)
 - `src/types/index.ts`
+- `src/hub/content/` (types.ts, drills.ts, presets.ts, catalogue/), **especially when
+  adding a drill**
 
-These files contain the fairness algorithm, validation rules, and persistence logic. The test suite (61 tests) covers all critical paths including:
-- Fair rotation generation and distribution
-- Late player arrival and reintegration (critical bug was fixed here)
-- Injury handling with auto-substitution
-- Leaving early (partial availability)
-- Substitution swaps
-- Fairness debt recovery
-- Storage round-trip, legacy migration, and corruption handling
-- Input validation edge cases
+Do not skip them. A past bug where late and joined players were permanently benched after
+a game advanced was only caught by `"joined player stays on field after game advances"`.
 
-**Do not skip tests.** A past bug where late+joined players were permanently benched after game advancement was only caught by the test `"joined player stays on field after game advances"`.
+### Tests worth knowing about
+
+489 unit and integration tests across 16 files, 81 Playwright tests. Most are ordinary.
+These seven are load bearing and a failure means the code is wrong, not the test:
+
+| File | What it protects |
+| --- | --- |
+| `content-age-gate.test.ts` | A ruck drill can never reach a U8 coach. Theme floors, maxAge, presets, favourites, search |
+| `sessionPlan.test.ts` | Plan arithmetic, the kit list, water breaks, block indexes addressing `plan.blocks` |
+| `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
+| `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
+| `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
+| `nav.test.ts` | The planner's hard-coded nav matches `src/lib/nav.ts`, both entries share one chrome, nothing from `hub/` reaches the planner's bundle |
+| `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
+
+`rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
+rotation planner and predate the hub.
+
+### End to end
+
+`pnpm test:e2e` is 81 tests across four files: `matchday` (9), `home` (3), `hub` (64)
+and `contrast` (5). `contrast.spec.ts` is the load-bearing one of those. It measures
+text and control contrast in both colour schemes, because fixed brand colours sitting
+next to tokens that flip is a mistake that has shipped twice, once at 1.5:1 and once
+at 1.12:1. The hub specs stub auth by writing a session into localStorage, then wait
+on `body[data-signed-in]` rather than on anything the chrome renders. The build under test carries
+throwaway Supabase credentials passed inline from `playwright.config.ts`, so every request
+to Supabase fails on purpose. That is what proves the hub still works with no signal.
+
+`reuseExistingServer` is off deliberately. Reusing a server skips the build that inlines
+those credentials, which fails the whole hub suite in a way that looks like an app bug
+rather than a stale process.
 
 ## Architecture
 
+Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
+`hub/index.html` → `/hub`. Keeping them separate is deliberate:
+`@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
+homepage ships no JavaScript at all. Static SEO pages live in `public/` and are
+copied verbatim, sharing `public/pages.css` with the homepage.
+
+One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
+so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches
+`/`, `/planner` and `/hub`. Static pages point their "Open the app" links at
+`/planner` while the logo points home.
+
 ```
 src/
-  types/index.ts          # All domain types and interfaces
+  base.css                # Shared: reset, tokens, header, footer, toast
+  styles.css              # Rotation planner only (imports base.css)
+  lib/
+    esc.ts                # HTML and attribute escaping, used by both halves
+    rulesLink.ts          # Links out to the RFU, one wording in one place
+    nav.ts                # The four tabs, shared by both entries. Imports nothing
+    track.ts              # The two custom analytics events, lazily imported
+  types/index.ts          # Rotation planner domain types
   logic/
     rotation.ts           # Fairness algorithm (generateInitialPlan, applyEvents)
     validate.ts           # Input validation
     storage.ts            # localStorage persistence (multi-team)
-  components/
-    form.ts               # Squad panel + match settings
-    playerList.ts         # Dynamic player input list
-    results.ts            # Game cards, chips, action sheet, fairness summary
-    teamTabs.ts           # Multi-team tab switching
-    toast.ts              # Toast notifications
-    logo.ts               # SVG logo
-  app.ts                  # Main app orchestration and state
-  main.ts                 # Entry point
-  __tests__/
-    rotation.test.ts      # 36 tests — rotation logic
-    validate.test.ts      # 14 tests — input validation
-    storage.test.ts       # 11 tests — persistence
+    teamState.ts          # Multi-team store
+    sessionPlan.ts        # Hub: plan totals, warnings, kit list, breaks, reorder
+  hub/
+    main.ts               # Bootstrap, route dispatch, signed-out routing, online retry
+    ageChoice.ts          # The age grade picked before registering, in localStorage
+    supabase.ts           # Client (PKCE). Anon key is public, RLS is the boundary
+    auth.ts               # Sign up/in/out, profile, deletion, validation
+    router.ts             # Hash router, plus stillOn() for async guards
+    plans.ts              # session_plans CRUD, offline mirror, delete tombstones
+    favourites.ts         # Starred drills, same local-first shape
+    styles.css            # Hub only (imports base.css)
+    content/
+      types.ts            # Drill/Preset/KitItem, age grades, THEME_MIN_AGE,
+                          # THEME_SHORT, RULES_OF_PLAY
+      drills.ts           # Pulls the catalogue together, plus filterDrills
+      presets.ts          # 13 ready-made sessions, U7 to U12
+      catalogue/          # 104 drills by theme: warmups, handling, evasion,
+                          # gamesense, tackle, breakdown, setpiece
+    views/
+      agePicker.ts        # First run, before any account. Seeds the age grade
+      authView.ts         # Sign in, register, reset, gate reasons, password reveal
+      account.ts          # Details, password, sign out, delete. Also the setup form
+      catalogue.ts        # Drill list, filters, favourites, drill page
+      planner.ts          # Sessions list, reading view, editor, print sheet
+  components/             # Rotation planner only
+    form.ts, playerList.ts, results.ts, teamTabs.ts, toast.ts, logo.ts, icons.ts
+  app.ts                  # Rotation planner orchestration
+  main.ts                 # Rotation planner entry
+  __tests__/              # See "Tests worth knowing about" below
+
+index.html                # Marketing homepage. Static, zero JavaScript
+planner/index.html        # Rotation planner entry
+hub/index.html            # Hub entry, noindex
+api/delete-account.ts     # The only server code. Verifies the caller's own JWT
+supabase/migrations/      # Numbered, run in order. See supabase/README.md
+docs/                     # content-sourcing.md, roadmap.md
 ```
 
 ## Key design decisions
@@ -75,8 +171,8 @@ Uses a **fairness debt** model:
 - Tie-break: longest since last played
 
 **Two-phase event application:**
-- Phase 1: Past games (before currentGame) — locked lineups, late+joined players excluded
-- Phase 2: Current + future games — fully rebalanced, all available players eligible
+- Phase 1: Past games (before currentGame), locked lineups, late+joined players excluded
+- Phase 2: Current + future games, fully rebalanced, all available players eligible
 
 **Critical invariant:** Late+joined players must be excluded from Phase 1 (past games they missed) but FULLY eligible in Phase 2 (current and future games). The `gameNumber === currentGame` exclusion was removed because it caused the "permanent bench" bug when advancing games.
 
@@ -91,11 +187,178 @@ Uses a **fairness debt** model:
 
 Each team has independent state (players, plan, events, currentGame). Teams are stored as an array in localStorage under `equalplay_teams`. Legacy single-team data under `equalplay_state` is auto-migrated on first load.
 
+### Coaching hub
+
+#### Content and safety
+
+**Drill content is static data in `src/hub/content/`, not a database.** The service
+worker then makes the whole catalogue readable at a wet pitch with no signal, which is
+the only place it gets used. Content changes ship as a deploy and get reviewed as a diff.
+
+**Age gating is a safety feature, not a filter.** `THEME_MIN_AGE` in
+`src/hub/content/types.ts` records the earliest RFU age grade at which each theme is
+legal. Tackle at U9, ruck/maul/scrum at U10, lineout at U12, per Regulation 15. A drill
+must never surface for an age group that is not allowed to do it. Re-check the table
+against the live Reg 15 appendices each season; the RFU reissues it annually.
+
+**Age grade claims link out to the RFU.** `RULES_OF_PLAY` in
+`hub/content/types.ts` holds one appendix URL per grade, written out rather than
+built from a pattern so one broken link can be fixed on its own. Surfaced wherever
+the hub asserts what an age grade may do: the age-gate empty state, a drill's facts,
+the running order and the account page. Linked, never copied, because the wording is
+licensed and Reg 15 is reissued annually.
+
+**Drill copy must be written from scratch.** Drills as methods are not copyrightable, but
+the wording and diagrams in any source are and so is a curated compilation's selection
+and arrangement. Read widely, never mirror one source's list, write every word ourselves.
+
+**The "Safety note" badge is keyed off `drill.safety`, not off contact.** Movement prep
+carries a safety note and involves no contact, so labelling it "contact" would be
+wrong and would make the badge worthless everywhere else.
+
+**Warm-ups are cool, exercises are warm.** `--color-warmup-*` and
+`--color-exercise-*` in `base.css`, used by `.drill-kind` and `.kind-dot` so a
+warm-up looks the same in the catalogue, the add panel and the running order. Both
+pairs are checked for AA on their own background.
+
+#### Data and offline behaviour
+
+**Everything reaches the database. Offline is a state, not a storage mode.** Both
+`hub/plans.ts` and `hub/favourites.ts` write to localStorage synchronously then push,
+and nothing lives only on the device. `src/__tests__/plans.test.ts` mocks the client
+so the whole thing can be exercised with the server switched off.
+
+**Session plans are written locally first, pushed second.** `stagePlan` is synchronous
+and cannot fail; the network push is debounced behind it and flushed on navigation and
+on `visibilitychange`. A coach editing a plan on a dead connection must never lose work.
+Conflicts are last-write-wins on `updatedAt` and an unsynced local edit always beats a
+remote row.
+
+**Starring is local-first too.** `toggleFavourite` in `hub/favourites.ts` is
+synchronous and returns the new set, so the star flips with no signal and the push
+happens behind it. A drill id sits in `pending` until the server has heard about it,
+and on the next sync a pending id keeps its local state while everything else takes
+the server's word for it.
+
+**Deletes carry a tombstone.** A delete that cannot reach the server leaves the id in
+`deleted`. `syncPlans` then skips any remote row that is tombstoned. Without it,
+deleting a session with no signal un-deletes it, because the row is still on the
+server and the next pull cannot tell "never seen" from "deliberately gone". Staging
+the same id again cancels the tombstone.
+
+**Offline state is said out loud.** `syncPlans` returns `reachedServer` so the
+planner can show a notice when what you are looking at came off the device rather than
+the server. Silence would let a coach assume an edit had saved. `retryPending` is
+wired to the browser `online` event, which is the moment a touchline edit can leave
+the phone.
+
+**Anything crossing back in gets validated.** `isStoredPlan` in `hub/plans.ts` guards
+both localStorage and the database. A stale schema or a hand-edited row must not take
+the planner down.
+
+**Signing out clears everything belonging to that coach**: cached profile, local plans,
+planner module state. Clubs share tablets.
+
+#### Supabase and secrets
+
+**Supabase stores as little as possible.** The coach's name, club and age group live in
+`auth.users.raw_user_meta_data`. No `profiles` table, no trigger, no extra policy.
+The only table is `session_plans` (`supabase/migrations/`), RLS'd to `auth.uid()`.
+Add a `profiles` table only when something needs to query across coaches.
+
+**Account deletion is real.** `api/delete-account.ts` verifies the caller's own JWT and
+admin-deletes that user; plans go with them via `on delete cascade`.
+`SUPABASE_SERVICE_ROLE_KEY` is server-only. Never give it a `VITE_` prefix.
+
+**Never write `.env.local` from a script or a command.** It holds the real Supabase
+credentials. It is gitignored so there is no copy to restore, which means
+overwriting it destroys them. To build or preview against throwaway values use `pnpm preview:demo`,
+which passes them inline. Same rule for any test harness.
+
+#### Interface
+
+**Both entries use one shell.** `.app-shell`, `.app-chrome` and `.app-view` live in
+`src/base.css`, not in `hub/styles.css`, because the match-day planner is the same
+product and has to look like it while loading none of the hub's bundle. One markup
+shape, two layouts, switched by grid placement. Under 900px it is a phone app with a
+navy bar on top. At 900px the same markup becomes a navy rail down the side. Beyond
+the shell the hub goes further with the width: `auto-fill` card grids, the planner as two
+panes so adding a drill does not scroll you away from the session. A drill page is
+shaped like a document with its facts alongside.
+
+**The chrome is identity plus navigation. Nothing else.** No tagline, no "Coaching
+U10" pill. Anything only one entry can say makes the rail change shape depending on
+which route you are on, which is what a coach notices. `nav.test.ts` compares the two
+chromes structurally so the next tagline fails the build.
+
+**A session opens to be read, not edited.** `#/plan/<id>` is the running order at
+full size with coaching points on the page and safety expandable in place.
+`#/plan/<id>/edit` is the editor. Reading it on a wet Tuesday is the common case and
+editing it at the kitchen table is the rare one, so the route reflects that. Creating
+or duplicating lands in edit, because you have just made the thing.
+
+**Block controls address `plan.blocks`, not the render order.** `planDrills` drops
+blocks whose drill no longer exists, so its array index is not the block's index. It
+returns the real one and `blockRow` takes both: `index` for the controls, `position`
+for disabling up and down. Getting this wrong made the remove button delete a
+different block than the one tapped.
+
+**Async work checks the route before it paints.** `stillOn(name, param?)` in
+`hub/router.ts`. Every view renders into the same `#hub-view`, so a slow sync
+resolving after the coach has moved on will happily replace whatever is on screen.
+
+**Signed out is a real state, not a wall.** `render()` in `hub/main.ts` sends a coach
+with no session to the age picker, then to the catalogue, which takes the grade from
+`ageChoice.ts` instead of a profile. Drills are free to read because the catalogue is
+what proves the thing is worth an account. What needs an account is anything that has
+to persist: saved sessions and starred drills. Those gates route through
+`#/join/<reason>`, which renders the register form with a line saying what the coach
+was reaching for. Never gate a drill. A locked drill sits in the same list as one the
+age gate hid, in the same visual language, which makes a safety feature look like a
+paywall.
+
+**Sync calls are guarded on an empty user id.** `syncPlans` and `syncFavourites`
+return early rather than firing a request that can only fail. Both report
+`reachedServer: true` when they do, because nothing failed. Claiming to be offline
+when there is simply nobody signed in is a lie the interface would then repeat.
+
+**A fixed brand colour is never a text colour.** `--color-navy` and `--navy` do not
+flip with `prefers-color-scheme`. Using either for text on a surface that does flip
+gives navy on dark navy: it shipped at 1.5:1 on a button border, then again at 1.12:1
+on the homepage. Text on a themed surface uses `--color-text` or `--text`.
+`e2e/contrast.spec.ts` measures both schemes so this stops being a matter of noticing.
+
+**A control needs a visible edge.** Secondary buttons sit on `--color-surface` panels,
+so a `--color-surface` fill with a `--color-border` edge was 1.19:1 and effectively
+invisible. WCAG 1.4.11 wants 3:1 on a control's boundary. The same spec checks it.
+
+**`filterDrills` stays pure.** The starred set is passed in as `favourites` rather
+than read from storage inside it. The age check runs before the star check, so a
+starred drill the age grade cannot do is still hidden. There are tests for exactly
+that, because it is the obvious way to accidentally build a bypass.
+
+## Copy style
+
+Read `docs/content-sourcing.md` before writing any copy. Enforced mechanically by
+`src/__tests__/copy-style.test.ts` across drills, the interface and the static pages.
+
+- British English. Practise is the verb, practice is the noun
+- **No em dashes. No Oxford commas. No comma before "and"**
+- No phrasing that reads as machine-written. The test holds the ban list
+- Voice is a local dad passing on what he has learned. Second person, concrete over
+  abstract and no selling the drill to the reader
+- Coaching points are fragments under 120 characters with no full stop
+- **Prose is not a coaching point.** A coaching point stays clipped because it gets
+  read in the rain. Prose does not. In prose: vary the sentence length, use
+  contractions, no staccato triplets ("Free. No account. Works offline."), no "X, not
+  Y" and no counting before you list. See `docs/content-sourcing.md`, which explains
+  why each of those reads as machine-written
+
 ## Code style
 
-- British English in UI copy (no Oxford commas)
+- British English in UI copy
 - Sentence case for labels (not ALL CAPS)
 - `esc()` function used for all user-supplied text in innerHTML
-- No framework — vanilla DOM manipulation
+- No framework. Vanilla DOM manipulation
 - No external CSS frameworks
 - System font stack throughout

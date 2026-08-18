@@ -4,7 +4,7 @@ import { test, expect, type Page, type Locator } from "@playwright/test";
 
 /** Clear localStorage so each test starts fresh. */
 async function freshStart(page: Page) {
-  await page.goto("/");
+  await page.goto("/planner");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector(".btn-generate");
@@ -29,10 +29,17 @@ async function setNumberOfGames(page: Page, n: number) {
   await page.locator("#num-games").fill(String(n));
 }
 
-/** Click "Sort my team" and wait for game cards to appear. */
+/**
+ * Click "Sort my team", then start the match so game one is live.
+ *
+ * Generating leaves the squad in setup mode. Every scenario below is about what
+ * happens once the whistle has gone, so both steps belong in the helper.
+ */
 async function generate(page: Page) {
   await page.getByRole("button", { name: "Sort my team" }).click();
   await page.waitForSelector("[data-testid^='game-']");
+  await page.locator(".btn-start-match").click();
+  await page.waitForSelector(".game-card-current");
 }
 
 // ---- Locator helpers ----
@@ -67,10 +74,21 @@ async function allPlayersInGame(card: Locator): Promise<string[]> {
   return [...field, ...bench];
 }
 
-/** Tap a player chip by name within a game card to open the action sheet. */
+/**
+ * Tap a player chip by name within a game card to open the action sheet.
+ *
+ * Scoped to the squad sections on purpose. The live card also carries the
+ * substitution strip, which repeats two of the same names in its own chip list.
+ */
 async function tapPlayer(page: Page, name: string, card?: Locator) {
   const scope = card ?? liveGame(page);
-  await scope.locator(".chip-list").getByRole("button", { name, exact: true }).click();
+  // Matched on the visible text rather than the accessible name. Chips carry an
+  // aria-label of "Alice, field. Tap for actions" for screen readers, so a name
+  // match would have to duplicate that phrasing here.
+  await scope
+    .locator("[data-testid^='section-'] .chip-list .chip")
+    .filter({ hasText: new RegExp(`^${name}$`) })
+    .click();
   await expect(page.locator("#action-sheet")).toBeVisible();
 }
 
@@ -178,7 +196,7 @@ test("late player: excluded from current game, reintegrated after arrival", asyn
 
   // Mark Alice as arrived
   // She's shown as a late chip — tap her through the chip-list
-  await liveGame(page).locator(".chip-list .chip-late", { hasText: "Alice" }).click();
+  await liveGame(page).locator("[data-testid^='section-'] .chip-list .chip-late", { hasText: "Alice" }).click();
   await expect(page.locator("#action-sheet")).toBeVisible();
   await pickAction(page, "joined");
   const toast = await waitForToast(page);
@@ -216,8 +234,8 @@ test("injury: suggestion immediately shows injured player as the one to come off
   await waitForToast(page);
 
   // The sub strip should immediately reflect the injury:
-  // 1. Label changes to "Injury replacement"
-  await expect(page.locator(".sub-strip-label")).toHaveText("Injury replacement");
+  // 1. Label changes to "Injury replacements"
+  await expect(page.locator(".sub-strip-label")).toHaveText("Injury replacements");
 
   // 2. The "going off" player is the injured one
   expect(await subOutName(page)).toBe(injured);
@@ -407,7 +425,7 @@ test("chaos: late + injury + arrival all in one session produces valid state", a
   await expect(page.locator(".sub-strip-label")).toHaveText("Injury replacement");
 
   // Step 3: Alice arrives
-  await liveGame(page).locator(".chip-list .chip-late", { hasText: "Alice" }).click();
+  await liveGame(page).locator("[data-testid^='section-'] .chip-list .chip-late", { hasText: "Alice" }).click();
   await expect(page.locator("#action-sheet")).toBeVisible();
   await pickAction(page, "joined");
   await waitForToast(page);
@@ -448,4 +466,53 @@ test("chaos: late + injury + arrival all in one session produces valid state", a
   const g2Playing = await playersIn(liveGame(page), "field");
   expect(g2Playing).toHaveLength(3);
   expect(g2Playing).not.toContain(injured);
+});
+
+test("the planner points at the drills once match day is worked out", async ({ page }) => {
+  await freshStart(page);
+  await addPlayers(page, ["Alice", "Bob", "Charlie", "Dana"]);
+  await setPlayersPerTeam(page, 2);
+  await setNumberOfGames(page, 2);
+  await generate(page);
+
+  // Under the playing time totals, which is where match day is dealt with
+  const card = page.locator(".next-step");
+  await expect(card).toContainText("age group is allowed to do");
+  await card.locator(".next-step-link").click();
+  await expect(page).toHaveURL(/\/hub/);
+});
+
+test("teams belong to the planner, not to the navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await freshStart(page);
+
+  // Four extra teams, which is well past what the rail used to hold
+  for (let i = 0; i < 4; i++) {
+    await page.locator(".team-tab-add").click();
+  }
+  // The add button carries .team-tab too, so exclude it from the count
+  await expect(page.locator(".team-tab:not(.team-tab-add)")).toHaveCount(5);
+
+  // Nav is nav. Switching team is the planner's own control, so it lives in the
+  // planner's view, above its inputs, rather than in the chrome both entries share.
+  await expect(page.locator(".app-chrome .team-tabs")).toHaveCount(0);
+  await expect(page.locator("#app > .team-tabs")).toHaveCount(1);
+
+  const fits = await page.evaluate(() => {
+    const box = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+    const view = box("#app");
+    return {
+      tabsOverhang: Math.round(box(".team-tabs").right - view.right),
+      addOverhang: Math.round(box(".team-tab-add").right - view.right),
+      aboveInputs: box(".team-tabs").bottom <= box(".squad-panel").top,
+      pageScrollsSideways:
+        document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+
+  expect(fits.tabsOverhang).toBeLessThanOrEqual(0);
+  // Wrapped rather than scrolled sideways, so adding another team is still possible
+  expect(fits.addOverhang).toBeLessThanOrEqual(0);
+  expect(fits.aboveInputs).toBe(true);
+  expect(fits.pageScrollsSideways).toBe(false);
 });
