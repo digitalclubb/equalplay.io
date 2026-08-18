@@ -6,23 +6,32 @@ changes rather than letting it rot.
 Last updated 18 August 2026, after the one-product change. See `docs/one-product.md`
 for what that was and which of its phases are built.
 
-## Before anything else
+## Where the real project stands
 
-The coaching hub has **never run against the real Supabase project**. Every check so far
-used a stubbed session and a deliberately unreachable server, which proves the offline
-behaviour and proves nothing about auth. Until the list below is done, treat the sync,
-email confirmation and account deletion paths as untested rather than working.
+The hub now runs against the real Supabase project. It is committed, pushed, deployed
+and exercised in production, which clears the blocker this section used to carry. The
+migrations are applied. The environment variables are set in Vercel with the service
+role key correctly unprefixed. Registration, email confirmation, sync and favourites
+have been used for real rather than against a stub.
 
-| Step | Who |
+| Step | State |
 | --- | --- |
-| Run `supabase/migrations/0001_session_plans.sql` | you |
-| Run `supabase/migrations/0002_favourites.sql` | you |
-| Set the three environment variables in Vercel, service role key **without** a `VITE_` prefix | you |
-| Commit and push. Nothing is committed yet | either |
-| Register for real, confirm the email, build a session, star a drill, reload | either |
-| Delete the account and confirm the rows are gone | either |
+| `supabase/migrations/0001_session_plans.sql` applied | done |
+| `supabase/migrations/0002_favourites.sql` applied | done |
+| Environment variables set in Vercel, service role key without a `VITE_` prefix | done |
+| Committed, pushed, deployed | done |
+| Register for real, confirm the email, build a session, star a drill, reload | done |
+| Delete the account and confirm the rows are gone | done |
 
-`api/delete-account.ts` is the only server code in the project and it has never executed.
+Every path is now proven against the real project, account deletion included.
+`api/delete-account.ts` has executed: it verifies the caller's own JWT, admin-deletes
+that user, then their plans go with them through `on delete cascade`. It is the only
+server code in the project, so it is the only thing here that can destroy data. Any
+change to it wants a throwaway account to re-verify against.
+
+No credential ever reached the repository. `.env.local` matches `*.local` in
+`.gitignore` and has never appeared in git history. `.env.example` carries
+placeholders only.
 
 ## Built
 
@@ -68,20 +77,27 @@ are read one-handed in the rain.
 
 ## Next, in order
 
-1. **Ship what exists.** The table above. Everything after this is guesswork until a real
-   coach has registered and saved a session.
-2. **Session dates.** Turns "Your sessions" from a pile of titles into a record of the
+Shipping is done, so this is no longer guesswork about whether the thing works. It is
+still guesswork about what a coach wants next, until one who is not us has used it for
+a few weeks.
+
+1. **Session dates.** Turns "Your sessions" from a pile of titles into a record of the
    season. Cheapest real feature left. Needs migration `0003`.
-3. **Drill diagrams.** The only genuine table-stakes gap against the paid competition.
+2. **Drill diagrams.** The only genuine table-stakes gap against the paid competition.
    Generate SVG from coordinates held in the drill data, not images: consistent across
    104 drills, editable, a couple of KB each, works offline, no licensing risk. Decided
    against AI image generation, which gets rugby body positions wrong and would be
    dangerous on a safety illustration.
-4. **Present mode.** One drill fullscreen, big type, coaching points only. Sportplan's
+3. **Present mode.** One drill fullscreen, big type, coaching points only. Sportplan's
    marquee feature. About twenty lines here.
-5. **Your own drills.** Every club has three of its own. Without this the catalogue is
+4. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's.
-6. **Share a session with your co-coach.** A read-only link is enough.
+5. **Share a session with your co-coach.** A read-only link is enough.
+
+Instrumentation is live but has no data yet. `planner_to_app` and `register` are the
+two custom events, from `src/lib/track.ts`. A season of those answers whether the free
+planner actually feeds the app, which `docs/one-product.md` says is the number the
+whole shape of the product turns on.
 
 ## The competition
 

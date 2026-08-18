@@ -19,9 +19,9 @@ Content is gated by RFU age grade throughout. No data about any child is ever st
 or transmitted, anywhere.
 
 **Read `docs/roadmap.md` first.** It says what is built, what is next, what is
-deliberately out of scope, plus what is still blocking. Most importantly it records that
-the hub has never run against the real Supabase project, so auth, email confirmation and
-account deletion are untested rather than working.
+deliberately out of scope, plus what is still blocking. The hub runs against the real
+Supabase project in production. Auth, email confirmation, sync, favourites plus account
+deletion are all proven rather than assumed.
 
 | Where | What is in it |
 | --- | --- |
@@ -267,7 +267,9 @@ The only table is `session_plans` (`supabase/migrations/`), RLS'd to `auth.uid()
 Add a `profiles` table only when something needs to query across coaches.
 
 **Account deletion is real.** `api/delete-account.ts` verifies the caller's own JWT and
-admin-deletes that user; plans go with them via `on delete cascade`.
+admin-deletes that user; plans go with them via `on delete cascade`. It has run against
+the real project. It is the only server code here, so it is the only thing that can
+destroy data: re-verify any change to it against a throwaway account.
 `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never give it a `VITE_` prefix.
 
 **Never write `.env.local` from a script or a command.** It holds the real Supabase
