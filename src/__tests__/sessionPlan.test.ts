@@ -4,9 +4,11 @@ import {
   planDrills,
   moveBlock,
   hasBlockingProblem,
+  withWaterBreak,
   type SessionPlan,
 } from "../logic/sessionPlan.js";
 import { DRILLS } from "../hub/content/drills.js";
+import { PRESETS } from "../hub/content/presets.js";
 import { kitLabel, type AgeGroup, type Drill } from "../hub/content/types.js";
 
 function drill(id: string, over: Partial<Drill> = {}): Drill {
@@ -454,5 +456,64 @@ describe("planDrills carries the real block index", () => {
   it("and the indexes line up when nothing is missing", () => {
     const tidy = plan({ blocks: [{ drillId: "a", minutes: 5 }, { drillId: "b", minutes: 5 }] });
     expect(planDrills(tidy, catalogue).map((r) => r.index)).toEqual([0, 1]);
+  });
+});
+
+/**
+ * The presets are the first thing a coach opens, so they are held to the standard
+ * the planner itself sets. Every one of them, built the way `fromPreset` builds
+ * it, has to come up clean: nothing illegal, nothing missing, the time filled and
+ * a break in it. A ready-made session that opens on "22 minutes still to fill" is
+ * worse than no ready-made session.
+ */
+describe("presets as real sessions", () => {
+  const built = PRESETS.map((preset) =>
+    withWaterBreak({
+      id: preset.id,
+      title: preset.title,
+      ageGroup: preset.ageGroup,
+      theme: preset.theme,
+      sessionMinutes: preset.sessionMinutes,
+      blocks: preset.drillIds.flatMap((drillId) => {
+        const found = DRILLS.find((d) => d.id === drillId);
+        return found ? [{ drillId, minutes: found.minutes }] : [];
+      }),
+    }),
+  );
+
+  it("open without a single warning", () => {
+    for (const session of built) {
+      const totals = planTotals(session, DRILLS);
+      expect(totals.warnings.map((w) => w.message), `preset "${session.title}"`).toEqual([]);
+    }
+  });
+
+  it("carry a water break somewhere in the middle", () => {
+    for (const session of built) {
+      const at = session.blocks.findIndex((block) => block.breakAfter);
+      expect(at, `preset "${session.title}" has no break`).toBeGreaterThan(-1);
+      expect(at, `preset "${session.title}" breaks after the last block`).toBeLessThan(
+        session.blocks.length - 1,
+      );
+    }
+  });
+
+  it("leaves a plan that already has a break alone", () => {
+    const already = plan({
+      sessionMinutes: 60,
+      blocks: [
+        { drillId: "a", minutes: 20, breakAfter: 5 },
+        { drillId: "b", minutes: 20 },
+      ],
+    });
+    expect(withWaterBreak(already)).toBe(already);
+  });
+
+  it("leaves a short session alone", () => {
+    const short = plan({
+      sessionMinutes: 30,
+      blocks: [{ drillId: "a", minutes: 15 }, { drillId: "b", minutes: 15 }],
+    });
+    expect(withWaterBreak(short)).toBe(short);
   });
 });

@@ -15,6 +15,13 @@ import { test, expect, type Page } from "@playwright/test";
 
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 
+/**
+ * How many drills are in `preset-u10-rucking`, which nearly every session test
+ * below builds from. Named rather than typed out so editing a preset does not
+ * mean editing forty assertions.
+ */
+const BLOCKS = 6;
+
 function session(ageGroup: string) {
   return {
     access_token: "stub",
@@ -155,10 +162,17 @@ test("builds a session from a preset and totals it up", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
 
   await expect(page.locator(".preset-card")).not.toHaveCount(0);
+
+  // What the card promises is what the session length ends up being. The card
+  // used to count the drills, which reads short of the plan you get because
+  // building it adds a water break.
+  const card = page.locator('[data-preset="preset-u10-rucking"] .preset-meta');
+  const promised = (await card.innerText()).match(/(\d+) min/)?.[1];
   await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator("#plan-minutes")).toHaveValue(String(promised));
 
   await expect(page.locator("#plan-title")).toHaveValue("Rucking");
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   await expect(page.locator(".budget-text")).toContainText("min");
   await expect(page.locator(".kit-list li")).not.toHaveCount(0);
 
@@ -171,7 +185,7 @@ test("builds a session from a preset and totals it up", async ({ page }) => {
 test("reorders, removes and adds blocks", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const titles = async () => page.locator(".block-title").allInnerTexts();
 
   const [first, second] = await titles();
@@ -179,12 +193,12 @@ test("reorders, removes and adds blocks", async ({ page }) => {
   expect(await titles()).toEqual(expect.arrayContaining([second, first]));
 
   await page.locator('[data-remove="0"]').click();
-  expect(await page.locator(".block-row").count()).toBe(4);
+  expect(await page.locator(".block-row").count()).toBe(BLOCKS - 1);
 
   await page.locator("#add-search").fill("scrum shape");
   await page.locator("[data-peek]").first().click();
   await page.locator("[data-add]").first().click();
-  expect(await page.locator(".block-row").count()).toBe(5);
+  expect(await page.locator(".block-row").count()).toBe(BLOCKS);
 });
 
 test("the add-a-drill box is gated to the plan's age grade", async ({ page }) => {
@@ -211,7 +225,7 @@ test("the add-a-drill box is gated to the plan's age grade", async ({ page }) =>
 test("a session survives a reload with no server", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   await page.locator("#plan-title").fill("Tuesday night");
   await page.locator("#plan-title").dispatchEvent("input");
   await expect(page.locator("#plan-title")).toHaveValue("Tuesday night");
@@ -220,13 +234,13 @@ test("a session survives a reload with no server", async ({ page }) => {
   await page.reload();
   expect(await page.evaluate(() => location.hash)).toBe(hash);
   await expect(page.locator("#plan-title")).toHaveValue("Tuesday night");
-  expect(await page.locator(".block-row").count()).toBe(5);
+  expect(await page.locator(".block-row").count()).toBe(BLOCKS);
 });
 
 test("says so when it could not reach the server", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   await page.goto("/hub/#/plans");
 
   // Supabase is unreachable in this build, so the notice is the honest state.
@@ -240,10 +254,10 @@ test("says so when it could not reach the server", async ({ page }) => {
 test("a printable sheet is built for the session", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const sheet = page.locator("#plan-print-sheet");
-  await expect(sheet.locator(".print-block")).toHaveCount(5);
+  await expect(sheet.locator(".print-block")).toHaveCount(BLOCKS);
   await expect(sheet.locator("h1")).toHaveText("Rucking");
   await expect(sheet.locator(".print-safety").first()).toContainText("contact");
 
@@ -308,7 +322,7 @@ test("works on a 320px screen without sideways scroll", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 600 });
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -409,7 +423,7 @@ test("the drill page has its own star, in step with the list", async ({ page }) 
 test("a drill can be looked at before it is added", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   await page.locator("#add-search").fill("cheek to cheek");
   const row = page.locator("[data-peek]").first();
@@ -419,24 +433,24 @@ test("a drill can be looked at before it is added", async ({ page }) => {
   await expect(row).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator(".add-peek")).toBeVisible();
   await expect(page.locator(".add-peek-safety")).toContainText("size");
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   // Tapping again closes it, still without adding
   await row.click();
   await expect(page.locator(".add-peek")).toHaveCount(0);
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   // Only the explicit button adds it
   await row.click();
   await page.locator("[data-add]").click();
-  await expect(page.locator(".block-row")).toHaveCount(6);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS + 1);
   await expect(page.locator(".add-peek")).toHaveCount(0);
 });
 
 test("the add panel offers every match, not a truncated few", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const count = await page.locator("[data-peek]").count();
   expect(count).toBeGreaterThan(20);
@@ -457,7 +471,7 @@ test("favourites can be filtered inside the add panel", async ({ page }) => {
 
   await page.locator('a[href="#/plans"]').click();
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   await page.locator("#add-fav").click();
   await expect(page.locator("[data-peek]")).toHaveCount(1);
@@ -467,7 +481,7 @@ test("favourites can be filtered inside the add panel", async ({ page }) => {
 test("a safety note can be read without leaving the session", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const details = page.locator(".block-safety-details").first();
   await expect(details.locator("p")).toBeHidden();
@@ -480,27 +494,32 @@ test("a safety note can be read without leaving the session", async ({ page }) =
 test("water breaks are added, counted and removed", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
-  // A 60 minute session with no breaks says so. More than one warning can be up,
-  // so match against the list rather than a single element.
-  const warnings = () => page.locator(".plan-warnings").innerText();
-  expect(await warnings()).toContain("No water breaks");
-  const before = await page.locator(".budget-text").innerText();
-
-  await page.locator('[data-addbreak="0"]').first().click();
+  // A ready-made session arrives with the break the planner would ask for, so it
+  // opens clean: no warnings panel at all. More than one warning can be up, so
+  // read the whole list rather than a single element, and an absent list is
+  // nothing to say rather than a failure.
+  const warnings = async () => (await page.locator(".plan-warnings").allInnerTexts()).join(" ");
+  await expect(page.locator(".plan-warnings")).toHaveCount(0);
   await expect(page.locator(".break-row")).toHaveCount(1);
   await expect(page.locator(".budget-text")).toContainText("of it breaks");
-  expect(await page.locator(".budget-text").innerText()).not.toBe(before);
   expect(await warnings()).not.toContain("No water breaks");
 
   // The break shows on the printed sheet where it falls
   await expect(page.locator("#plan-print-sheet .print-break")).toHaveCount(1);
 
-  // And it can be taken out again
-  await page.locator('[data-nobreak="0"]').click();
+  // Take it out and a 60 minute session says so
+  const before = await page.locator(".budget-text").innerText();
+  await page.locator("[data-nobreak]").first().click();
   await expect(page.locator(".break-row")).toHaveCount(0);
+  expect(await page.locator(".budget-text").innerText()).not.toBe(before);
   expect(await warnings()).toContain("No water breaks");
+
+  // And it can go back somewhere else
+  await page.locator('[data-addbreak="0"]').first().click();
+  await expect(page.locator(".break-row")).toHaveCount(1);
+  expect(await warnings()).not.toContain("No water breaks");
 });
 
 test("the session length says what unit it wants", async ({ page }) => {
@@ -513,7 +532,7 @@ test("the session length says what unit it wants", async ({ page }) => {
 test("an open safety note survives an edit", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const details = page.locator(".block-safety-details").first();
   await details.locator("summary").click();
@@ -528,7 +547,7 @@ test("an open safety note survives an edit", async ({ page }) => {
 test("the add button sits above the drill description", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   await page.locator("#add-search").fill("cheek to cheek");
   await page.locator("[data-peek]").first().click();
@@ -541,7 +560,7 @@ test("the add button sits above the drill description", async ({ page }) => {
 test("the add button is readable, not white on grey", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   await page.locator("#add-search").fill("cheek to cheek");
   await page.locator("[data-peek]").first().click();
@@ -558,7 +577,7 @@ test("the add button is readable, not white on grey", async ({ page }) => {
 test("a drill opened from a session goes back to that session", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const planId = await page.evaluate(() => location.hash.split("/")[2]);
 
   await page.locator(".block-title").first().click();
@@ -571,7 +590,7 @@ test("a drill opened from a session goes back to that session", async ({ page })
   await page.locator(".hub-back a").click();
   // Back to the session, which lands on the reading view rather than the editor
   expect(await page.evaluate(() => location.hash)).toBe(`#/plan/${planId}`);
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
 });
 
 test("a drill opened from the catalogue still goes back to drills", async ({ page }) => {
@@ -582,7 +601,7 @@ test("a drill opened from the catalogue still goes back to drills", async ({ pag
 test("expanding a drill does not throw the page around", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   // Get down to the add panel, and scroll inside its list as well
   await page.locator("#add-search").scrollIntoViewIfNeeded();
@@ -607,7 +626,7 @@ test("expanding a drill does not throw the page around", async ({ page }) => {
 test("editing minutes does not throw the page around either", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   // Edit the last block, which needs scrolling to reach. Reading the position
   // after the input is in view, because Playwright scrolls to an element before
@@ -626,7 +645,7 @@ test("editing minutes does not throw the page around either", async ({ page }) =
 test("says whether the session is saved", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   await page.locator("#plan-title").fill("Tuesday night");
   await page.locator("#plan-title").dispatchEvent("input");
@@ -640,7 +659,7 @@ test("says whether the session is saved", async ({ page }) => {
   // And Done takes you to the session as it will be read, with the work kept
   await page.locator(".hub-btn-done").click();
   await expect(page.locator(".run-head h2")).toHaveText("Tuesday night");
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
 });
 
 
@@ -649,14 +668,14 @@ test("says whether the session is saved", async ({ page }) => {
 test("opening a session shows it to read, not to edit", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const planId = await page.evaluate(() => location.hash.split("/")[2]);
 
   // Coming at it fresh from the list, the way a coach would at a pitch
   await page.goto("/hub/#/plans");
   await page.locator(`a[href="#/plan/${planId}"]`).click();
 
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
   // None of the editing furniture is in the way
   await expect(page.locator("#add-search")).toHaveCount(0);
   await expect(page.locator("[data-minutes]")).toHaveCount(0);
@@ -675,7 +694,7 @@ test("edit and back again", async ({ page }) => {
   const planId = await page.evaluate(() => location.hash.split("/")[2]);
 
   await page.goto(`/hub/#/plan/${planId}`);
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
 
   await page.locator(".hub-btn-edit").click();
   expect(await page.evaluate(() => location.hash)).toBe(`#/plan/${planId}/edit`);
@@ -689,8 +708,7 @@ test("edit and back again", async ({ page }) => {
 test("a break shows in the running order", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
-  await page.locator('[data-addbreak="0"]').first().click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   await expect(page.locator(".break-row")).toHaveCount(1);
 
   await page.locator(".hub-btn-done").click();
@@ -716,7 +734,7 @@ test("a safety note can be read in the running order", async ({ page }) => {
 test("the add panel filters by warm-up or exercise", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const all = await page.locator("[data-peek]").count();
 
@@ -761,11 +779,11 @@ test("a slow favourites sync does not replace the session you opened", async ({ 
   await page.goto("/hub/#/catalogue");
   await page.locator('a[href="#/plans"]').click();
   await page.locator(`a[href="#/plan/${planId}"]`).click();
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
 
   // Long enough for the pull to fail and try to render
   await page.waitForTimeout(12_000);
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
   await expect(page.locator(".drill-list")).toHaveCount(0);
   expect(await page.evaluate(() => location.hash)).toBe(`#/plan/${planId}`);
 });
@@ -790,7 +808,7 @@ test("a slow plans sync does not drag you off a drill page", async ({ page }) =>
 test("removing a block removes that block even with a missing drill in the list", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const planId = await page.evaluate(() => location.hash.split("/")[2]);
 
   // Put a block pointing at a drill that no longer exists at the front, the way a
@@ -803,7 +821,7 @@ test("removing a block removes that block even with a missing drill in the list"
   }, planId);
 
   await page.reload();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const titles = await page.locator(".block-title").allInnerTexts();
 
   // Remove the first visible block. It lives at index 1, not 0.
@@ -817,7 +835,7 @@ test("removing a block removes that block even with a missing drill in the list"
 test("the minutes stepper edits the block you tapped", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
-  await expect(page.locator(".block-row")).toHaveCount(5);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
   const planId = await page.evaluate(() => location.hash.split("/")[2]);
 
   await page.evaluate((id) => {
@@ -883,7 +901,7 @@ test("the running order carries the rules link for the pitch", async ({ page }) 
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await page.locator(".hub-btn-done").click();
-  await expect(page.locator(".run-block")).toHaveCount(5);
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS);
   await expect(page.locator(".run-head .rules-link")).toContainText("RFU rules of play for U10");
 });
 

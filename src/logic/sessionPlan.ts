@@ -177,6 +177,28 @@ export function planTotals(plan: SessionPlan, catalogue: Drill[]): PlanTotals {
   };
 }
 
+/**
+ * Drops a water break into a plan that has not got one, three minutes after the
+ * block that crosses halfway. Used when a preset becomes a real session: the
+ * planner asks for a break in anything this long, so a ready-made session should
+ * arrive with one rather than opening on a warning the coach did not cause.
+ */
+export function withWaterBreak(plan: SessionPlan, minutes = 3): SessionPlan {
+  if (plan.sessionMinutes < BREAK_EXPECTED_FROM_MINUTES) return plan;
+  if (plan.blocks.length < 2 || plan.blocks.some((block) => block.breakAfter)) return plan;
+
+  const half = plan.blocks.reduce((sum, block) => sum + block.minutes, 0) / 2;
+  let run = 0;
+  const crosses = plan.blocks.findIndex((block) => (run += block.minutes) >= half);
+  // Never after the last block. A break at the end is just going home.
+  const at = Math.min(crosses, plan.blocks.length - 2);
+
+  return {
+    ...plan,
+    blocks: plan.blocks.map((block, i) => (i === at ? { ...block, breakAfter: minutes } : block)),
+  };
+}
+
 /** Blocks a coach can act on before they run the session. */
 export function hasBlockingProblem(totals: PlanTotals): boolean {
   return totals.warnings.some((w) => w.level === "error");

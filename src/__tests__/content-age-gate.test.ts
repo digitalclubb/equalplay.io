@@ -148,6 +148,19 @@ describe("presets", () => {
     }
   });
 
+  it("finish with a game", () => {
+    // A session that ends on a drill ends on the coach talking. The drill was
+    // only ever there so they could use it in the game.
+    for (const preset of PRESETS) {
+      const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
+      const last = drills[drills.length - 1];
+      expect(
+        last?.themes.includes("gamesense"),
+        `preset "${preset.title}" ends on "${last?.title}", which is not a game`,
+      ).toBe(true);
+    }
+  });
+
   it("have unique ids and match their stated theme", () => {
     const ids = PRESETS.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);

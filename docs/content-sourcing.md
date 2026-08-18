@@ -92,6 +92,32 @@ machine-written. It cannot enforce rhythm or voice. That part is on you.
 - A stable `id`. Saved session plans point at it, so renaming one breaks somebody's
   Tuesday. Never rename, only add.
 
+## How a ready-made session gets built
+
+A preset is a running order. A running order is a compilation, so the same rule applies
+as to the words: read around, then build it ourselves out of our own drills.
+The shape below is not anybody's list. It is what the RFU's own coaching material,
+the county age grade pages and the coaching press all describe in slightly different
+words, which is to say it is the ordinary shape of a Tuesday.
+
+- Something to do the moment they arrive, then movement prep, then the skill, then a
+  game where the skill is the thing that wins it.
+- One focus. A session that covers three things covers none of them.
+- It ends with a game. Every time. A session ending on a drill ends on the coach
+  talking and eighteen children going cold.
+- It fills the time it claims, allowing for the water break `fromPreset` drops in the
+  middle. Nothing opens saying "22 minutes still to fill".
+- Every drill in it is legal at that grade. That one is a safety matter.
+  `content-age-gate.test.ts` will not let it through otherwise.
+
+One session per theme per age grade, so a coach who opens the planner at U10 finds a
+rucking night, a scrum night, a tackle night, a handling night, a beat-your-man night
+and a match week. `sessionPlan.test.ts` builds all thirty into real plans and fails if
+any of them raises a single warning.
+
+Ages move at the pace of the regulation, not our own: the tag grades get games and
+hands, tackling appears at U9, ruck and scrum at U10, the lineout at U12.
+
 ## Where things live
 
 ```

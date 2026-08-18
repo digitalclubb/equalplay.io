@@ -34,6 +34,7 @@ import {
   moveBlock,
   planDrills,
   planTotals,
+  withWaterBreak,
   type PlanBlock,
   type PlanTotals,
   type SessionPlan,
@@ -169,13 +170,15 @@ function syncNotice(state: "loading" | "synced" | "offline", pending: number): s
 
 function presetCard(preset: Preset): string {
   const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
-  const minutes = drills.reduce((sum, d) => sum + d.minutes, 0);
+  // The session length rather than the drill total. `fromPreset` adds a water
+  // break, so the drills alone read three minutes short of the plan the coach
+  // ends up with. This is the number they check their pitch slot against.
   return `
     <button type="button" class="preset-card" data-preset="${esc(preset.id)}">
       <span class="preset-title">${esc(preset.title)}</span>
       <span class="preset-meta">
         ${AGE_GROUP_LABELS[preset.ageGroup]} · ${esc(THEME_LABELS[preset.theme])} ·
-        ${drills.length} drills · ${minutes} min
+        ${drills.length} drills · ${preset.sessionMinutes} min
       </span>
     </button>`;
 }
@@ -207,7 +210,7 @@ function blankPlan(ageGroup: AgeGroup): SessionPlan {
 }
 
 function fromPreset(preset: Preset): SessionPlan {
-  return {
+  return withWaterBreak({
     id: newPlanId(),
     title: preset.title,
     ageGroup: preset.ageGroup,
@@ -217,7 +220,7 @@ function fromPreset(preset: Preset): SessionPlan {
       const drill = findDrill(drillId);
       return drill ? [{ drillId, minutes: drill.minutes }] : [];
     }),
-  };
+  });
 }
 
 function create(ctx: PlannerContext, plan: SessionPlan): void {

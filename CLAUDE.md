@@ -138,7 +138,7 @@ src/
       types.ts            # Drill/Preset/KitItem, age grades, THEME_MIN_AGE,
                           # THEME_SHORT, RULES_OF_PLAY
       drills.ts           # Pulls the catalogue together, plus filterDrills
-      presets.ts          # 13 ready-made sessions, U7 to U12
+      presets.ts          # 30 ready-made sessions, one per theme per age grade
       catalogue/          # 104 drills by theme: warmups, handling, evasion,
                           # gamesense, tackle, breakdown, setpiece
     views/
