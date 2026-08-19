@@ -105,7 +105,11 @@ actually putting down rather than spacing eight evenly to make the count.
   of the primitives that exist.
 - Do not put a second fixed colour in the renderer. One diagram serves both
   colour schemes and `diagram.test.ts` fails the build over it.
-- Do not add diagrams to the catalogue cards until every drill that should have
-  one does. A grid where a fifth of the cards carry a picture looks broken rather
-  than partial. One drill deliberately has none, so a card grid needs to handle
-  that gap rather than assume it away.
+- Do not announce a diagram twice. A catalogue card renders it with
+  `{ decorative: true }`, because the title beside it already says which drill it
+  is. Only the drill page, where the picture carries something the words do not,
+  gets the description. A new place that shows one has to decide which it is.
+- Do not assume every card has a picture. One drill deliberately has none, so the
+  card keeps an empty figure slot to hold the phone layout's left edge and drops
+  the reserved band in the grid. Anywhere else showing drills needs the same
+  answer for that gap.

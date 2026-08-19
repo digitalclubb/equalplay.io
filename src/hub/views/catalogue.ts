@@ -333,17 +333,27 @@ function favButton(drill: Drill): string {
  * inside an anchor would be invalid and would swallow the tap.
  */
 function card(drill: Drill): string {
+  // Decorative here. The title beside it already says which drill this is, so a
+  // screen reader working down the catalogue would otherwise get a hundred set
+  // up descriptions read out between the names it came for.
+  const figure = drill.diagram ? renderDiagram(drill.diagram, { decorative: true }) : "";
+  // The slot stays in the markup either way. Empty for the one drill with no
+  // diagram, so a phone list keeps every title on the same left edge rather
+  // than having one row jump out of the column.
   return `
-    <article class="drill-card">
-      <span class="drill-card-head">
-        <a class="drill-card-title drill-card-link" href="#/catalogue/${esc(drill.id)}">${esc(drill.title)}</a>
-        <span class="drill-kind drill-kind-${drill.kind}">${drill.kind === "warmup" ? "Warm-up" : "Exercise"}</span>
-        ${favButton(drill)}
+    <article class="drill-card drill-card-illustrated${drill.diagram ? "" : " is-unillustrated"}">
+      <span class="drill-card-figure">${figure}</span>
+      <span class="drill-card-body">
+        <span class="drill-card-head">
+          <a class="drill-card-title drill-card-link" href="#/catalogue/${esc(drill.id)}">${esc(drill.title)}</a>
+          <span class="drill-kind drill-kind-${drill.kind}">${drill.kind === "warmup" ? "Warm-up" : "Exercise"}</span>
+          ${favButton(drill)}
+        </span>
+        <span class="drill-meta">
+          ${drill.minutes} min · ${playersLabel(drill)} · ${esc(drill.space)}
+        </span>
+        <span class="drill-themes">${drill.themes.map((t) => esc(THEME_LABELS[t])).join(" · ")}</span>
       </span>
-      <span class="drill-meta">
-        ${drill.minutes} min · ${playersLabel(drill)} · ${esc(drill.space)}
-      </span>
-      <span class="drill-themes">${drill.themes.map((t) => esc(THEME_LABELS[t])).join(" · ")}</span>
     </article>`;
 }
 

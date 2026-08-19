@@ -515,6 +515,42 @@ body {
   text-decoration: none;
 }
 
+/* A card carrying a diagram puts it beside the text on a phone. The catalogue is
+   a scrolling list there. A full width picture on every row would make it about
+   four screens taller for no gain in scanning it. Above 900px the same
+   markup becomes a picture on top, where a grid has the room. `.drill-card` on
+   its own is left alone, because the sessions list uses it too. */
+.drill-card-illustrated {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-sm);
+}
+
+.drill-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.drill-card-figure {
+  display: block;
+  flex: 0 0 4.75rem;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem;
+}
+
+.drill-card-figure .drill-diagram {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* The drill with no diagram keeps the slot so the titles stay in one column,
+   but not the panel, which would only read as a picture that failed to load. */
+.drill-card-figure:empty {
+  background: none;
+}
+
 .drill-card-head {
   display: flex;
   align-items: center;
@@ -1425,6 +1461,39 @@ body {
   .drill-card {
     margin-bottom: 0;
     height: 100%;
+  }
+
+  /* Room for a picture, so the same figure goes on top at full width. */
+  .drill-card-illustrated {
+    display: block;
+  }
+
+  .drill-card-figure {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    margin-bottom: var(--sp-sm);
+    padding: var(--sp-2xs);
+  }
+
+  /* Capped rather than filling the card's width. A square diagram at full width
+     ran to about 390px, which left a three line card mostly picture and cut how
+     many a coach could scan at once. */
+  .drill-card-figure .drill-diagram {
+    width: auto;
+    max-width: 100%;
+    height: 11.5rem;
+  }
+
+  /* Nothing to show, so no reserved band. Cards match heights across a row,
+     which for this one would mean a card of empty panel under three lines of
+     text. Short is honest, stretched looks broken. */
+  .drill-card-figure:empty {
+    display: none;
+  }
+
+  .drill-card.is-unillustrated {
+    height: auto;
   }
 
   .preset-grid {

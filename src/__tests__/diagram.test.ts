@@ -255,6 +255,25 @@ group("the diagram renderer", () => {
     }
   });
 
+  /**
+   * A catalogue card already has the drill's title as a link. Announcing the
+   * diagram as well would put a set up description between every name a coach
+   * is scanning for, a hundred times down the page. The drill page keeps its
+   * label, because there the diagram carries information the words do not.
+   */
+  it("hides itself on a card and describes itself on a page", () => {
+    const one = withDiagram[0].diagram;
+    const card = renderDiagram(one, { decorative: true });
+    expect(card).toContain('aria-hidden="true"');
+    expect(card).not.toContain("aria-label");
+    expect(card).not.toContain('role="img"');
+
+    const page = renderDiagram(one);
+    expect(page).toContain('role="img"');
+    expect(page).toContain("aria-label=");
+    expect(page).not.toContain("aria-hidden");
+  });
+
   it("escapes a label rather than letting it break the markup", () => {
     const svg = renderDiagram({ space: [10, 10], label: 'Ten by ten "grid" & a <cone>' });
     expect(svg).toContain("&quot;grid&quot;");

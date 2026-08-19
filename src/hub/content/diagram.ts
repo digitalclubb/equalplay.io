@@ -142,8 +142,16 @@ export function describe(d: Diagram): string {
   return parts.length ? `Set up diagram. ${parts.join(", ")}.` : "Set up diagram.";
 }
 
-/** Builds the diagram as inline SVG. Safe to drop straight into innerHTML. */
-export function renderDiagram(d: Diagram): string {
+/**
+ * Builds the diagram as inline SVG. Safe to drop straight into innerHTML.
+ *
+ * `decorative` drops the description and hides the whole thing from assistive
+ * technology. That is right on a catalogue card, where the drill's title is
+ * already a link saying what it is and reading a hundred set up descriptions
+ * out in a row would bury it. On a drill page the diagram is the only place
+ * some of that information appears, so there it keeps its label.
+ */
+export function renderDiagram(d: Diagram, options: { decorative?: boolean } = {}): string {
   const p = projector(d.space);
   const uid = `dg${(sequence += 1)}`;
   const out: string[] = [];
@@ -219,5 +227,5 @@ export function renderDiagram(d: Diagram): string {
     );
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BOX} ${BOX}" class="drill-diagram" role="img" aria-label="${esc(describe(d))}"><defs><marker id="${uid}-run" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="currentColor"/></marker><marker id="${uid}-pass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="${PRIMARY}"/></marker></defs>${out.join("")}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BOX} ${BOX}" class="drill-diagram" ${options.decorative ? 'aria-hidden="true" focusable="false"' : `role="img" aria-label="${esc(describe(d))}"`}><defs><marker id="${uid}-run" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="currentColor"/></marker><marker id="${uid}-pass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="${PRIMARY}"/></marker></defs>${out.join("")}</svg>`;
 }

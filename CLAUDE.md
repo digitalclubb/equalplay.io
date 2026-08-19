@@ -239,7 +239,11 @@ across the whole hub. The one without is a mobility warm-up whose setup is
 "everyone with a bit of space around them", where a box with six dots in it says
 less than no picture. `diagram` is optional for exactly that reason.
 
-Two conventions the code cannot check. Every drill runs bottom to top, so a
+The catalogue shows them too. A thumbnail beside the title on a phone, where the
+list has to stay scannable, becomes the same figure as a picture on top once the
+grid has the room. On a card it is `decorative`, because the title says which drill it
+is and a coach on a screen reader does not want a hundred set up descriptions
+read out between the names. Two conventions the code cannot check. Every drill runs bottom to top, so a
 channel runs up the long axis whatever order `space` puts the numbers in. Red is
 whoever has the ball or is doing the work, which in a pairs drill means the
 thrower rather than an opponent. `.claude/skills/drill-diagram/` has the rest,
