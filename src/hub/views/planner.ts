@@ -3,6 +3,7 @@ import { ageRulesLink } from "../../lib/rulesLink.js";
 import { showToast } from "../../components/toast.js";
 import { go, stillOn } from "../router.js";
 import { DRILLS, filterDrills, findDrill } from "../content/drills.js";
+import { renderDiagram } from "../content/diagram.js";
 import { PRESETS, presetsForAge } from "../content/presets.js";
 import {
   AGE_GROUP_LABELS,
@@ -335,6 +336,13 @@ function runBlock(block: PlanBlock, drill: Drill, index: number, planId: string)
           : ""
       }
 
+      ${
+        // Described rather than decorative. The running order never shows the
+        // drill's `setup`, so here the picture is the only place that
+        // information appears.
+        drill.diagram ? `<div class="run-block-figure">${renderDiagram(drill.diagram)}</div>` : ""
+      }
+
       <ul class="run-points">${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
       <p class="run-more"><a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">How it runs, plus how to change it</a></p>
     </article>
@@ -633,12 +641,22 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
         return `
         <li${open ? ' class="is-open"' : ""}>
           <button type="button" class="add-row" data-peek="${esc(drill.id)}" aria-expanded="${open}">
-            <span class="add-title">${esc(drill.title)}${starred.has(drill.id) ? ` ${starIcon(true)}` : ""}</span>
-            <span class="add-meta">${kindPill(drill)} ${drill.minutes} min · ${esc(drill.space)}</span>
+            <span class="add-row-figure">${
+              drill.diagram ? renderDiagram(drill.diagram, { decorative: true }) : ""
+            }</span>
+            <span class="add-row-body">
+              <span class="add-title">${esc(drill.title)}${starred.has(drill.id) ? ` ${starIcon(true)}` : ""}</span>
+              <span class="add-meta">${kindPill(drill)} ${drill.minutes} min · ${esc(drill.space)}</span>
+            </span>
           </button>
           ${
             open
               ? `<div class="add-peek">
+                   ${
+                     drill.diagram
+                       ? `<div class="add-peek-figure">${renderDiagram(drill.diagram)}</div>`
+                       : ""
+                   }
                    <p class="add-peek-facts">${playersLabel(drill)} · ${esc(drill.equipment.map(kitLabel).join(", ")) || "no kit"}</p>
                    <div class="add-peek-actions">
                      <button type="button" class="hub-btn hub-btn-primary" data-add="${esc(drill.id)}">Add ${drill.minutes} min to the session</button>

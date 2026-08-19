@@ -1178,6 +1178,51 @@ body {
   color: var(--color-muted);
 }
 
+/* The running order's picture. Capped by height rather than width, because the
+   viewBox is square whatever shape the pitch is, so a wide grid sized off the
+   column spent most of its height on nothing. This view is read at arm's length
+   with a whistle in the other hand: the picture supports the coaching points
+   under it rather than pushing them a screen further down. */
+.run-block-figure .drill-diagram {
+  width: auto;
+  max-width: 100%;
+  height: 11rem;
+  margin: var(--sp-sm) auto;
+}
+
+/* The add list is a 26rem scroller, so a thumbnail sits inside the row's
+   existing height rather than on top of the text. Growing the row would mean
+   fewer drills visible at once, which is the thing the scroller exists to fix. */
+.add-row-figure {
+  flex: 0 0 2.5rem;
+  align-self: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.add-row-figure .drill-diagram {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.add-row-figure:empty {
+  background: none;
+}
+
+.add-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Capped hard. Opening a preview does not scroll the list, so anything taller
+   here pushes the Add button out of the scroller and a coach has to go looking
+   for the thing they came to press. */
+.add-peek-figure .drill-diagram {
+  max-width: 9rem;
+  margin: 0 0 var(--sp-xs);
+}
+
 .add-list {
   list-style: none;
   padding: 0;
@@ -1231,7 +1276,9 @@ body {
 }
 
 .add-row {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
   width: 100%;
   min-height: var(--touch-min);
   text-align: left;
@@ -1580,6 +1627,13 @@ body {
   .run-break,
   .hub-back + .hub-panel.hub-empty {
     max-width: 46rem;
+  }
+
+  /* The reading column is about 44rem here, where an 11rem picture sat marooned
+     in the middle of it. A coach at a pitch is on a phone, so this width is the
+     kitchen table case and can afford the room. */
+  .run-block-figure .drill-diagram {
+    height: 15rem;
   }
 
   /* Two panes so adding a drill does not mean scrolling away from the session */
