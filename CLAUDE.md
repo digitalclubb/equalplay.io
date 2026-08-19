@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-515 unit and integration tests across 17 files, 81 Playwright tests. Most are ordinary.
+519 unit and integration tests across 17 files, 83 Playwright tests. Most are ordinary.
 These eight are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -92,7 +92,7 @@ These eight are load bearing and a failure means the code is wrong, not the test
 | `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
 | `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
-| `nav.test.ts` | The planner's hard-coded nav matches `src/lib/nav.ts`, both entries share one chrome, nothing from `hub/` reaches the planner's bundle |
+| `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
@@ -101,11 +101,12 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 81 tests across four files: `matchday` (9), `home` (3), `hub` (64)
-and `contrast` (5). `contrast.spec.ts` is the load-bearing one of those. It measures
-text and control contrast in both colour schemes, because fixed brand colours sitting
-next to tokens that flip is a mistake that has shipped twice, once at 1.5:1 and once
-at 1.12:1. The hub specs stub auth by writing a session into localStorage, then wait
+`pnpm test:e2e` is 83 tests across four files: `matchday` (9), `home` (3), `hub` (64)
+and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
+text and control contrast in both colour schemes, plus a hovered nav tab at both nav
+widths, because fixed brand colours sitting next to tokens that flip is a mistake that
+has shipped three times: 1.5:1 on a button border, 1.12:1 on the homepage, then 1:1
+on the tab you were already standing on. The hub specs stub auth by writing a session into localStorage, then wait
 on `body[data-signed-in]` rather than on anything the chrome renders. The build under test carries
 throwaway Supabase credentials passed inline from `playwright.config.ts`, so every request
 to Supabase fails on purpose. That is what proves the hub still works with no signal.

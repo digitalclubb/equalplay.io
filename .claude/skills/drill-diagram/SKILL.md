@@ -16,7 +16,7 @@ in this skill is about how it looks. It is about where things go.
 
 ## The rules that are not in the code
 
-The renderer cannot check these. They are what makes 104 diagrams look like one
+The renderer cannot check these. They are what makes 103 diagrams look like one
 person drew them.
 
 **Every drill runs bottom to top.** `y` increases towards the coach, so the
@@ -70,14 +70,11 @@ actually putting down rather than spacing eight evenly to make the count.
 2. Write `diagram: { ... }` under the `space` line. Coordinates in metres.
 3. Preview. Do not skip this and do not trust the coordinates in your head:
 
-   ```
-   # a throwaway test that writes an html file, then screenshot it
-   npx vitest run src/__tests__/_preview.test.ts
-   ```
-
-   Render each one at full size **and** at about 130 px, which is card size.
-   Things that look fine at 280 px turn to mush at 130. Delete the throwaway
-   test afterwards.
+   Write a throwaway test under `src/__tests__/` that imports `renderDiagram`,
+   writes an HTML file of every diagram, then screenshot it. Render each one at
+   full size **and** at about 130 px, which is card size. Things that look fine
+   at 280 px turn to mush at 130. Delete the throwaway test afterwards, it is
+   not something to commit.
 4. `pnpm test`. `diagram.test.ts` will tell you if the cone count, the
    dimensions or the bounds disagree with the drill.
 5. `pnpm lint`, `pnpm build`, and `pnpm test:e2e` because this is the hub.
