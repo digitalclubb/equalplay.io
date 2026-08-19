@@ -74,16 +74,16 @@ hub, the planner or anything either of them renders.
 
 - `src/logic/` (rotation.ts, validate.ts, storage.ts, sessionPlan.ts)
 - `src/types/index.ts`
-- `src/hub/content/` (types.ts, drills.ts, presets.ts, catalogue/), **especially when
-  adding a drill**
+- `src/hub/content/` (types.ts, drills.ts, presets.ts, diagram.ts, catalogue/),
+  **especially when adding a drill**
 
 Do not skip them. A past bug where late and joined players were permanently benched after
 a game advanced was only caught by `"joined player stays on field after game advances"`.
 
 ### Tests worth knowing about
 
-489 unit and integration tests across 16 files, 81 Playwright tests. Most are ordinary.
-These seven are load bearing and a failure means the code is wrong, not the test:
+512 unit and integration tests across 17 files, 81 Playwright tests. Most are ordinary.
+These eight are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -94,6 +94,7 @@ These seven are load bearing and a failure means the code is wrong, not the test
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
 | `nav.test.ts` | The planner's hard-coded nav matches `src/lib/nav.ts`, both entries share one chrome, nothing from `hub/` reaches the planner's bundle |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
+| `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
 rotation planner and predate the hub.
@@ -228,6 +229,19 @@ licensed and Reg 15 is reissued annually.
 **Drill copy must be written from scratch.** Drills as methods are not copyrightable, but
 the wording and diagrams in any source are and so is a curated compilation's selection
 and arrangement. Read widely, never mirror one source's list, write every word ourselves.
+
+**A drill diagram is data, not a picture.** A drill says where things stand in
+metres and `hub/content/diagram.ts` renders it at load. Shipping one SVG file per
+drill would cost around 210 kB across 104 precache entries. It would also put
+the stroke weights, colours and marker sizes into 104 places where they drift.
+The renderer owns them once. Fifteen handling drills carry one so far, for 2.8 kB
+gzipped across the whole hub.
+
+Two conventions the code cannot check. Every drill runs bottom to top, so a
+channel runs up the long axis whatever order `space` puts the numbers in. Red is
+whoever has the ball or is doing the work, which in a pairs drill means the
+thrower rather than an opponent. `.claude/skills/drill-diagram/` has the rest,
+plus the authoring loop. Preview at card size before believing any of it.
 
 **The "Safety note" badge is keyed off `drill.safety`, not off contact.** Movement prep
 carries a safety note and involves no contact, so labelling it "contact" would be
