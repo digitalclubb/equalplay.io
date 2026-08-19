@@ -131,9 +131,15 @@ half a coach landed on.
 
 **A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
 true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
-row and session title to what `filterDrills` would return for that grade, so a new
-drill fails the build rather than quietly making seven pages lie. Note `maxAge`: one
-tag drill stops at U8, which is why no grade above U8 sees all 104.
+row, card and session title to what `filterDrills` would return for that grade, plus
+the site-wide 104 to `DRILLS.length`, so a new drill fails the build rather than
+quietly making seven pages lie. Note `maxAge`: one tag drill stops at U8, which is
+why no grade above U8 sees all 104.
+
+**A theme row is labelled by what the grade may do.** `THEME_LABELS.setpiece` is
+"Scrum and lineout", but every lineout drill is `minAge: "u12"`. Printing the full
+label on a U10 table reads as five lineout drills at a grade the same page says has
+no lineout, so below U12 the row says "Scrum". The test holds that rule.
 
 One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
 so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches

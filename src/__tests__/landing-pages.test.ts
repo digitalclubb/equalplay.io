@@ -9,6 +9,7 @@ import {
   THEMES,
   THEME_LABELS,
   type AgeGroup,
+  type Theme,
 } from "../hub/content/types.js";
 
 /**
@@ -33,6 +34,17 @@ function drillsFor(age: AgeGroup) {
 
 function presetsFor(age: AgeGroup) {
   return PRESETS.filter((preset) => preset.ageGroup === age);
+}
+
+/**
+ * The catalogue calls this theme "Scrum and lineout", but every lineout drill is
+ * `minAge: "u12"`. Printing the full label on a U10 table reads as five lineout
+ * drills at a grade the same page says has no lineout, so the page says what the
+ * grade can do rather than what the theme is called.
+ */
+function themeLabelFor(theme: Theme, age: AgeGroup): string {
+  if (theme !== "setpiece") return THEME_LABELS[theme];
+  return age === "u12" ? THEME_LABELS[theme] : "Scrum";
 }
 
 describe("age group landing pages", () => {
@@ -78,16 +90,25 @@ describe("age group landing pages", () => {
       const html = agePage(age);
       for (const theme of THEMES) {
         const count = drills.filter((drill) => drill.themes.includes(theme)).length;
-        const row = `<tr><td>${THEME_LABELS[theme]}</td><td>${count}</td></tr>`;
+        const row = `<tr><td>${themeLabelFor(theme, age)}</td><td>${count}</td></tr>`;
         if (count === 0) {
           // A theme the grade cannot do has no row at all, rather than a zero.
           expect(html, `${age}: ${theme} should not be listed`).not.toContain(
-            `<td>${THEME_LABELS[theme]}</td>`,
+            `<td>${themeLabelFor(theme, age)}</td>`,
           );
         } else {
           expect(html, `${age}: ${theme}`).toContain(row);
         }
       }
+    }
+  });
+
+  it("promises no lineout below U12", () => {
+    for (const age of AGE_GROUPS) {
+      if (age === "u12") continue;
+      expect(agePage(age).toLowerCase(), `${age} mentions a lineout it cannot have`).not.toContain(
+        "<td>scrum and lineout</td>",
+      );
     }
   });
 
@@ -106,7 +127,7 @@ describe("age group landing pages", () => {
       for (const theme of THEMES) {
         if (drills.some((drill) => drill.themes.includes(theme))) continue;
         expect(html, `${age} lists ${theme} in its table`).not.toContain(
-          `<td>${THEME_LABELS[theme]}</td>`,
+          `<td>${themeLabelFor(theme, age)}</td>`,
         );
       }
     }
@@ -120,6 +141,15 @@ describe("the drills by age group page", () => {
       const drills = drillsFor(age).length;
       const sessions = presetsFor(age).length;
       expect(html, `${age} row`).toContain(`<td>${drills}</td> <td>${sessions}</td>`);
+    }
+  });
+
+  it("says the same count in its cards as in its table", () => {
+    // Two places on one page, so the table can be right while the cards below it
+    // have quietly gone stale.
+    const html = page(CLUSTER).replace(/\s+/g, " ");
+    for (const age of AGE_GROUPS) {
+      expect(html, `${age} card`).toContain(`${drillsFor(age).length} drills the grade is allowed`);
     }
   });
 
@@ -161,6 +191,27 @@ describe("every static page reaches the product", () => {
     }
   });
 
+  it("states the catalogue total the catalogue actually has", () => {
+    // "104 drills" is repeated across the homepage and the match-day pages with
+    // nothing tying it to DRILLS. It is the number most likely to move. These
+    // are the pages that talk about the catalogue as a whole rather than
+    // about one grade, so every count on them is the total or it is wrong.
+    const TALKS_ABOUT_THE_WHOLE_CATALOGUE = [
+      "index.html",
+      "public/rugby-substitution-app/index.html",
+      "public/equal-playing-time-calculator/index.html",
+      "public/rfu-regulation-15-playing-time/index.html",
+    ];
+    for (const path of TALKS_ABOUT_THE_WHOLE_CATALOGUE) {
+      const html = page(path).replace(/\s+/g, " ");
+      const claims = html.match(/\b\d+ drills\b/g) ?? [];
+      expect(claims.length, `${path} states no drill count at all`).toBeGreaterThan(0);
+      for (const claim of claims) {
+        expect(Number(claim.split(" ")[0]), `${path}: "${claim}"`).toBe(DRILLS.length);
+      }
+    }
+  });
+
   it("is in the sitemap, exactly once", () => {
     const sitemap = page("public/sitemap.xml");
     const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
@@ -187,6 +238,26 @@ describe("structured data on the static pages", () => {
     return [...html.matchAll(/<h3>([^<]+\?)<\/h3>/g)].map((m) => m[1]);
   }
 
+  const strip = (fragment: string): string =>
+    fragment.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+  /** Each visible question with the paragraph under it. */
+  function answersOnPage(html: string): Array<[string, string]> {
+    return [...html.matchAll(/<h3>([^<]+\?)<\/h3>\s*<p>([\s\S]*?)<\/p>/g)].map((m) => [
+      m[1],
+      strip(m[2]),
+    ]);
+  }
+
+  function faqEntity(html: string): Array<{ name: string; acceptedAnswer: { text: string } }> {
+    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    if (!block) throw new Error("no JSON-LD");
+    const parsed = JSON.parse(block[1]);
+    const nodes = parsed["@graph"] ?? [parsed];
+    const faq = nodes.find((node: { "@type": string }) => node["@type"] === "FAQPage");
+    return faq ? faq.mainEntity : [];
+  }
+
   function faqQuestions(html: string): string[] {
     const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
     if (!block) throw new Error("no JSON-LD");
@@ -210,6 +281,18 @@ describe("structured data on the static pages", () => {
     for (const path of WITH_LD) {
       const html = page(path);
       expect(faqQuestions(html), path).toEqual(questionsOnPage(html));
+    }
+  });
+
+  it("gives the answers the page gives", () => {
+    for (const path of WITH_LD) {
+      const html = page(path);
+      const onPage = new Map(answersOnPage(html));
+      for (const entry of faqEntity(html)) {
+        expect(entry.acceptedAnswer.text, `${path}: answer to "${entry.name}"`).toBe(
+          onPage.get(entry.name),
+        );
+      }
     }
   });
 
