@@ -3,8 +3,8 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 18 August 2026, after the one-product change. See `docs/one-product.md`
-for what that was and which of its phases are built.
+Last updated 19 August 2026, after the search audit. See `docs/one-product.md` for the
+one-product change that preceded it and which of its phases are built.
 
 ## Where the real project stands
 
@@ -54,6 +54,15 @@ gzipped. It carries `WebSite`, `Organization`, `SoftwareApplication` and `FAQPag
 structured data, the last generated from the page itself so the two cannot drift.
 There are no testimonials, because there are no users to quote. The proof band is
 checkable instead: counts that match the code plus links to the RFU's own appendices.
+
+**Search.** Two clusters of static pages in `public/`. Match day covers substitution,
+the playing time calculator and Regulation 15. Drills covers the age grades, one page
+each from U7 to U12 plus an index. Every one carries `BreadcrumbList` and `FAQPage`
+structured data whose questions are visible on the page, points its chrome at `/hub`
+and shares one footer. `landing-pages.test.ts` holds the drill counts to the
+catalogue, so adding a drill cannot leave seven pages quietly wrong. The sitemap was
+never submitted to Search Console until 19 August 2026, which is most of why four of
+five URLs had never been crawled.
 
 **Copy.** Rewritten away from the rhythms that read as machine-written. Staccato
 triplets, negative parallelism, anaphora, no contractions. `docs/content-sourcing.md`
@@ -124,8 +133,11 @@ planner as the funnel, is defensible without matching anyone's drill count.
 - **Contact load and FITT modelling.** RFU guidance for that is written for U13 to U18, so
   it would be guesswork at minis level. Revisit if the hub ever goes above U12.
 - **WRU content.** Later phase. RFU first, because that is the grade being coached.
-- **A public indexed drill catalogue.** A factual "RFU rules by age group" page would be a
-  strong SEO play, but it is separate work rather than part of the hub.
+- **A public indexed drill catalogue.** Still out. The separate work it named is now done:
+  `public/rugby-drills-by-age-group` plus a page per grade say what each age group may
+  practise and how many drills it has, without reproducing a word of a drill. The hub
+  itself stays `noindex`. Publishing the drill copy is a different decision with its own
+  copyright question and it has not been taken.
 - **Payments and tiers.** Not until somebody other than us has used it for a season.
 
 ## Known issues

@@ -46,31 +46,52 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
+        "@graph": [
           {
-            "@type": "Question",
-            "name": "How do you calculate equal playing time?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Multiply the number of players on the pitch by the length of the match to get the total player-minutes available, then divide by the number of players in your squad. That is each child's fair share."
-            }
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://equalplay.io/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Equal playing time calculator",
+                "item": "https://equalplay.io/equal-playing-time-calculator"
+              }
+            ]
           },
           {
-            "@type": "Question",
-            "name": "How many minutes does each player get with a squad of 14 and 10 on the pitch?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "In a 50 minute match with 10 players on the pitch there are 500 player-minutes to share. Divided between 14 players that is about 35.7 minutes each, so each child spends roughly 14 minutes off the pitch."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Does equal playing time mean everyone plays the same amount every match?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Not necessarily. When a squad does not divide evenly it is usually fairer to balance game time across a whole session or season, giving a child who was short last time first call this time, rather than forcing every single match to come out level."
-            }
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How do you calculate equal playing time?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Multiply the number of players on the pitch by the length of the match to get the total player-minutes available, then divide by the number of players in your squad. That is each child's fair share."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How many minutes does each player get with a squad of 14 and 10 on the pitch?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "In a 50 minute match with 10 players on the pitch there are 500 player-minutes to share. Divided between 14 players that is about 35.7 minutes each, so each child spends roughly 14 minutes off the pitch."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does equal playing time mean everyone plays the same amount every match?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Not necessarily. When a squad does not divide evenly it is usually fairer to balance game time across a whole session or season, giving a child who was short last time first call this time, rather than forcing every single match to come out level."
+                }
+              }
+            ]
           }
         ]
       }
@@ -89,7 +110,7 @@
           </svg>
           Equal <span>Play</span>
         </a>
-        <a class="header-cta" href="/planner">Open the app</a>
+        <a class="header-cta" href="/hub">Open Equal Play</a>
       </div>
     </div>
 
@@ -258,17 +279,44 @@
           <a href="/rfu-regulation-15-playing-time">Regulation 15 playing time for coaches</a> for
           how to check yours and make sure every child clears it.
         </p>
+        <h2>Common questions</h2>
+        <h3>How do you calculate equal playing time?</h3>
+        <p>Multiply the number of players on the pitch by the length of the match to get the total player-minutes available, then divide by the number of players in your squad. That is each child's fair share.</p>
+        <h3>How many minutes does each player get with a squad of 14 and 10 on the pitch?</h3>
+        <p>In a 50 minute match with 10 players on the pitch there are 500 player-minutes to share. Divided between 14 players that is about 35.7 minutes each, so each child spends roughly 14 minutes off the pitch.</p>
+        <h3>Does equal playing time mean everyone plays the same amount every match?</h3>
+        <p>Not necessarily. When a squad does not divide evenly it is usually fairer to balance game time across a whole session or season, giving a child who was short last time first call this time, rather than forcing every single match to come out level.</p>
+
+        <h2>The rest of Equal Play</h2>
+        <p>
+          Match day is one half of it. The other half is the Tuesday before: a catalogue of 104
+          drills for minis rugby, filtered to what your age grade is allowed to do under
+          Regulation 15, plus a session planner that adds the minutes up while you build so you
+          find out at the kitchen table rather than at the pitch.
+        </p>
+        <ul>
+          <li><a href="/rugby-drills-by-age-group">Rugby drills by age group</a>, U7 to U12, with what arrives when</li>
+          <li><a href="/rugby-drills-u9">U9 drills</a>, the tackle year, plus <a href="/rugby-drills-u10">U10</a> once rucks arrive</li>
+          <li>Ready-made sessions for every grade, free to read with no account</li>
+        </ul>
+        <p><a class="cta-quiet" href="/hub">Open Equal Play</a></p>
+
+
       </div>
     </main>
 
     <footer class="site-footer">
       <div class="wrap">
         <ul>
-          <li><a href="/planner">Equal Play app</a></li>
+          <li><a href="/hub">Open Equal Play</a></li>
+          <li><a href="/rugby-drills-by-age-group">Rugby drills by age group</a></li>
+          <li><a href="/planner">Match day</a></li>
           <li><a href="/rugby-substitution-app">Rugby substitution app</a></li>
+          <li><a href="/equal-playing-time-calculator">Equal playing time calculator</a></li>
           <li><a href="/rfu-regulation-15-playing-time">Regulation 15 playing time</a></li>
+          <li><a href="/privacy">Privacy</a></li>
         </ul>
-        <p>Free to use. Nothing leaves your phone.</p>
+        <p>Built by a volunteer coach who got fed up doing this on the back of a team sheet.</p>
       </div>
     </footer>
 

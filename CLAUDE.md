@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-519 unit and integration tests across 17 files, 83 Playwright tests. Most are ordinary.
-These eight are load bearing and a failure means the code is wrong, not the test:
+534 unit and integration tests across 18 files, 83 Playwright tests. Most are ordinary.
+These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -94,6 +94,7 @@ These eight are load bearing and a failure means the code is wrong, not the test
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
 | `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
+| `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -121,12 +122,24 @@ Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `hub/index.html` → `/hub`. Keeping them separate is deliberate:
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
 homepage ships no JavaScript at all. Static SEO pages live in `public/` and are
-copied verbatim, sharing `public/pages.css` with the homepage.
+copied verbatim, sharing `public/pages.css` with the homepage. They fall into two
+clusters: match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
+`rfu-regulation-15-playing-time`) and drills (`rugby-drills-by-age-group` plus one
+page per grade, `rugby-drills-u7` through `rugby-drills-u12`). Both point their
+chrome at `/hub`, because the chrome belongs to the product rather than to whichever
+half a coach landed on.
+
+**A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
+true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
+row and session title to what `filterDrills` would return for that grade, so a new
+drill fails the build rather than quietly making seven pages lie. Note `maxAge`: one
+tag drill stops at U8, which is why no grade above U8 sees all 104.
 
 One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
 so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches
-`/`, `/planner` and `/hub`. Static pages point their "Open the app" links at
-`/planner` while the logo points home.
+`/`, `/planner` and `/hub`. Static pages point their header at `/hub` while the logo
+points home. A match-day page still sends its own in-body calls to action to
+`/planner`, because that is what the coach came for.
 
 ```
 src/
