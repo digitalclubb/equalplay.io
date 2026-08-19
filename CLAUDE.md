@@ -316,6 +316,19 @@ which passes them inline. Same rule for any test harness.
 
 #### Interface
 
+**Both entries write their nav into their HTML.** Neither waits on a bundle to
+paint the chrome. The hub used to ship an empty `.hub-nav` and fill it once 400 kB
+of JavaScript had arrived, so leaving Match day gave you a logo on navy and then a
+124px jump. `nav.test.ts` holds both copies to `lib/nav.ts`. The active tab is
+still the router's job, because `is-active` only paints a background and so moves
+nothing when it lands.
+
+**`.app-shell` names its rows.** Chrome to its content, view takes the slack,
+footer at the foot. They are all `auto` otherwise. A grid with `min-height: 100dvh`
+then shares the spare height between them, so an empty view swelled the chrome by
+156px until the first route rendered. Both entries measure 0px of movement
+through boot now, at both widths.
+
 **Both entries use one shell.** `.app-shell`, `.app-chrome` and `.app-view` live in
 `src/base.css`, not in `hub/styles.css`, because the match-day planner is the same
 product and has to look like it while loading none of the hub's bundle. One markup

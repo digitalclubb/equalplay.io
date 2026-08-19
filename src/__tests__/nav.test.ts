@@ -27,18 +27,35 @@ function chromeShape(html: string): string[] {
   });
 }
 
-/** The nav markup as written into the planner entry, with the pretty-printing out. */
-function plannerNav(): string {
-  const found = plannerHtml.match(/<nav class="hub-nav"[^>]*>([\s\S]*?)<\/nav>/);
-  if (!found) throw new Error("planner/index.html has no .hub-nav");
+/** The nav markup as written into an entry's HTML, with the pretty-printing out. */
+function staticNav(html: string, where: string): string {
+  const found = html.match(/<nav class="hub-nav"[^>]*>([\s\S]*?)<\/nav>/);
+  if (!found) throw new Error(`${where} has no .hub-nav`);
   return found[1].replace(/\s*\n\s*/g, "");
 }
 
 describe("app navigation", () => {
   it("renders the same markup on both entries", () => {
-    // The planner writes this by hand because its header paints before the bundle
-    // arrives, which is that page's LCP. This is what stops the copy rotting.
-    expect(plannerNav()).toBe(navHtml("planner", "/hub"));
+    // Both entries write this into their HTML so the chrome paints with the
+    // document rather than waiting on a bundle. This is what stops the copies
+    // rotting.
+    expect(staticNav(plannerHtml, "planner/index.html")).toBe(navHtml("planner", "/hub"));
+  });
+
+  /**
+   * The hub used to ship an empty nav and fill it once 400 kB of JavaScript had
+   * arrived. `.hub-nav:empty` hid it until then, so the chrome was a logo on
+   * navy and jumped 124px when the tabs turned up. Coming from Match day, whose
+   * nav is in its HTML, that read as the app losing its styling.
+   *
+   * No active tab in the markup. The router adds it, and `is-active` only paints
+   * a background, so nothing moves when it lands.
+   */
+  it("writes the hub's nav into its html too, with no tab marked", () => {
+    const written = staticNav(hubHtml, "hub/index.html");
+    expect(written).toBe(navHtml(""));
+    expect(written).not.toContain("is-active");
+    expect(written).not.toContain("aria-current");
   });
 
   it("marks the page you are on, once", () => {

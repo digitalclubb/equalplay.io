@@ -291,10 +291,6 @@ html {
   justify-content: center;
 }
 
-.hub-nav:empty {
-  display: none;
-}
-
 /* Icon over label on the phone bar. Four tabs with the icon beside the words
    came to about 450px, wider than the phone this is designed for. Dropping the
    labels to fix that would leave a coach guessing at a cone. */
@@ -363,6 +359,11 @@ html {
 .app-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  /* Chrome to its content, the view takes the slack, footer at the foot. Without
+     the explicit rows these are all `auto`. A grid with spare height shares it
+     out between them, so an empty view meant the chrome swelled by 156px, then
+     snapped back the moment the first route rendered. */
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 100dvh;
   /* Gutters and rhythm grow with the viewport rather than jumping at a breakpoint */
   --gutter: clamp(var(--sp-sm), 3vw, var(--sp-lg));
