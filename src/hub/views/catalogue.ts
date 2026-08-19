@@ -1,7 +1,6 @@
 import { esc } from "../../lib/esc.js";
 import { ageRulesLink, rulesLink } from "../../lib/rulesLink.js";
-import { go, stillOn } from "../router.js";
-import { currentRoute } from "../router.js";
+import { currentRoute, go } from "../router.js";
 import {
   localFavourites,
   syncFavourite,
@@ -27,6 +26,20 @@ import {
   type DrillKind,
   type Theme,
 } from "../content/types.js";
+
+/**
+ * Favourites is a route rather than a filter, so it is somewhere a coach can
+ * land, link to and come back to. Everything else about the list is the same,
+ * which is why it renders through here instead of getting a view of its own.
+ */
+function onFavourites(): boolean {
+  return currentRoute().name === "favourites";
+}
+
+/** The route the list is under, so a card and a back link agree with where they are. */
+function listRoute(): string {
+  return onFavourites() ? "favourites" : "catalogue";
+}
 
 /**
  * Filters live here rather than in the URL so they survive the trip into a drill
@@ -132,7 +145,10 @@ export function renderCatalogue(
       favourites = result.ids;
       // Checked now rather than remembered from when this started. The coach may
       // be three views away by the time a slow sync comes back.
-      if (stillOn("catalogue") && !currentRoute().param) renderList(container);
+      const route = currentRoute();
+      if ((route.name === "catalogue" || route.name === "favourites") && !route.param) {
+        renderList(container);
+      }
     });
   }
 
@@ -143,7 +159,7 @@ export function renderCatalogue(
       return;
     }
     // Stale link, e.g. a bookmark from before a drill was renamed
-    go("catalogue");
+    go(listRoute());
     return;
   }
 
@@ -153,8 +169,11 @@ export function renderCatalogue(
 // ---- List ----
 
 function renderList(container: HTMLElement): void {
-  const active = filters as DrillFilter;
+  // Taken from the route rather than held in `filters`, so the URL says which
+  // list this is and a reload lands back on the same one.
+  const active: DrillFilter = { ...(filters as DrillFilter), onlyFavourites: onFavourites() };
   const results = filterDrills(DRILLS, { ...active, favourites });
+  const base = listRoute();
 
   container.innerHTML = `
     ${welcome(AGE_GROUP_LABELS[active.ageGroup])}
@@ -200,7 +219,7 @@ function renderList(container: HTMLElement): void {
     ${
       results.length === 0
         ? emptyState(active)
-        : `<div class="drill-list">${results.map(card).join("")}</div>`
+        : `<div class="drill-list">${results.map((drill) => card(drill, base)).join("")}</div>`
     }`;
 
   container.querySelector<HTMLSelectElement>("#f-age")?.addEventListener("change", (e) => {
@@ -233,7 +252,7 @@ function renderList(container: HTMLElement): void {
   }
 
   container.querySelector("#f-fav")?.addEventListener("click", () => {
-    update({ onlyFavourites: !active.onlyFavourites });
+    go(active.onlyFavourites ? "catalogue" : "favourites");
   });
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
@@ -256,7 +275,10 @@ function renderList(container: HTMLElement): void {
 
   container.querySelector("#clear-filters")?.addEventListener("click", () => {
     filters = { ageGroup: active.ageGroup };
-    renderList(container);
+    // The star is a route now, so clearing the filters alone would leave the list
+    // just as empty and the button doing nothing you can see.
+    if (active.onlyFavourites) go("catalogue");
+    else renderList(container);
   });
 
   function update(patch: Partial<DrillFilter>, after?: () => void): void {
@@ -332,7 +354,7 @@ function favButton(drill: Drill): string {
  * whole card with a pseudo-element and the star sits above it. Nesting a button
  * inside an anchor would be invalid and would swallow the tap.
  */
-function card(drill: Drill): string {
+function card(drill: Drill, base: string): string {
   // Decorative here. The title beside it already says which drill this is, so a
   // screen reader working down the catalogue would otherwise get a hundred set
   // up descriptions read out between the names it came for.
@@ -345,7 +367,7 @@ function card(drill: Drill): string {
       <span class="drill-card-figure">${figure}</span>
       <span class="drill-card-body">
         <span class="drill-card-head">
-          <a class="drill-card-title drill-card-link" href="#/catalogue/${esc(drill.id)}">${esc(drill.title)}</a>
+          <a class="drill-card-title drill-card-link" href="#/${base}/${esc(drill.id)}">${esc(drill.title)}</a>
           <span class="drill-kind drill-kind-${drill.kind}">${drill.kind === "warmup" ? "Warm-up" : "Exercise"}</span>
           ${favButton(drill)}
         </span>
@@ -374,6 +396,11 @@ function backLink(origin: string[]): { href: string; label: string } {
   const [marker, planId] = origin;
   if (marker === "from" && planId) {
     return { href: `#/plan/${planId}`, label: "← Back to the session" };
+  }
+  // Signed out the bare route is the gate, so a drill read from a shared link
+  // would back out into a registration form for favourites nobody has.
+  if (onFavourites() && currentUserId) {
+    return { href: "#/favourites", label: "← Back to your favourites" };
   }
   return { href: "#/catalogue", label: "← Back to drills" };
 }

@@ -373,6 +373,9 @@ test("a star survives a reload with no server", async ({ page }) => {
   await page.waitForSelector(".hub-tab");
   await expect(page.locator("#f-fav")).toContainText("(1)");
   await page.locator("#f-fav").click();
+  // Favourites is a route, so the list arrives on the hashchange rather than in
+  // the click. Wait on the count before reading a title out of it.
+  await expect(page.locator(".drill-card")).toHaveCount(1);
   await expect(page.locator(".drill-card-title")).toHaveText(name);
 });
 
@@ -395,6 +398,7 @@ test("the star filter never gets round the age gate", async ({ page }) => {
   // Drop the age group to U8 and it must not come back, starred or not
   await page.selectOption("#f-age", "u8");
   await page.locator("#f-fav").click();
+  await expect(page).toHaveURL(/#\/favourites$/);
   await expect(page.locator(".drill-card").filter({ hasText: "Two second ruck" })).toHaveCount(0);
 });
 
@@ -404,6 +408,88 @@ test("teaches what the star is for when nothing is starred", async ({ page }) =>
   await expect(page.locator(".hub-empty")).toContainText("Star a drill and it'll show up here");
   // No "start again" button, because clearing filters is not the fix here
   await expect(page.locator("#clear-filters")).toHaveCount(0);
+});
+
+test("favourites is a place, not a filter setting", async ({ page }) => {
+  await signedIn(page, "u10");
+  const name = await page.locator(".drill-card-title").first().innerText();
+  await page.locator(".drill-card").first().locator(".fav-btn").click();
+
+  await page.locator("#f-fav").click();
+  await expect(page).toHaveURL(/#\/favourites$/);
+  // It is still the drill catalogue, so that is the tab that stays lit
+  await expect(page.locator('.hub-tab[data-route="catalogue"]')).toHaveClass(/is-active/);
+
+  // The whole point of a route: this survives a reload rather than a redraw
+  await page.reload();
+  await page.waitForSelector(".hub-tab");
+  await expect(page.locator(".drill-card-title")).toHaveText(name);
+});
+
+test("a drill opened out of favourites comes back to favourites", async ({ page }) => {
+  await signedIn(page, "u10");
+  await page.locator(".drill-card").first().locator(".fav-btn").click();
+  await page.locator("#f-fav").click();
+
+  await page.locator(".drill-card-link").first().click();
+  await expect(page).toHaveURL(/#\/favourites\/./);
+  await expect(page.locator(".drill-detail")).toBeVisible();
+
+  await page.getByRole("link", { name: /Back to your favourites/ }).click();
+  await expect(page).toHaveURL(/#\/favourites$/);
+  await expect(page.locator(".drill-card")).toHaveCount(1);
+});
+
+test("favourites with no account asks for one, and says why", async ({ page }) => {
+  await signedOut(page, "u10", "#/favourites");
+  await expect(page.locator(".hub-gate")).toContainText("beyond this browser");
+  await expect(page.locator("#auth-form")).toBeVisible();
+});
+
+test("the gate hands a coach on to what they were reaching for", async ({ page }) => {
+  // Landing on the gate with a session is what signing up through it looks like
+  await signedIn(page, "u10", "#/join/favourites");
+  await expect(page).toHaveURL(/#\/favourites$/);
+
+  await page.goto("/hub/#/join/plans");
+  await expect(page).toHaveURL(/#\/plans$/);
+});
+
+test("the gate does not trap the back button behind it", async ({ page }) => {
+  await signedIn(page, "u10");
+  await page.evaluate(() => {
+    location.hash = "#/join/favourites";
+  });
+  await expect(page).toHaveURL(/#\/favourites$/);
+
+  // The gate is gone rather than sitting one step back, sending them forwards again
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/catalogue$/);
+});
+
+test("a drill read with no account backs out to the drills", async ({ page }) => {
+  await signedOut(page, "u10", "#/favourites/warmup-tail-snatch");
+  await expect(page.locator(".drill-detail")).toBeVisible();
+
+  // Not "back to your favourites": with no account that is the register form
+  await page.getByRole("link", { name: /Back to drills/ }).click();
+  await expect(page).toHaveURL(/#\/catalogue$/);
+  await expect(page.locator(".hub-count")).toBeVisible();
+});
+
+test("start again gets out of an empty favourites list", async ({ page }) => {
+  await signedIn(page, "u10");
+  await pickTheme(page, "breakdown");
+  await page.locator(".drill-card").filter({ hasText: "Two second ruck" }).locator(".fav-btn").click();
+
+  // A U8 squad cannot do the one drill they starred, so the list is empty
+  await page.selectOption("#f-age", "u8");
+  await page.locator("#f-fav").click();
+  await expect(page.locator(".hub-empty")).toBeVisible();
+
+  await page.locator("#clear-filters").click();
+  await expect(page).toHaveURL(/#\/catalogue$/);
+  expect(await page.locator(".drill-card").count()).toBeGreaterThan(20);
 });
 
 test("the drill page has its own star, in step with the list", async ({ page }) => {

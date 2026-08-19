@@ -30,9 +30,14 @@ import { renderAgePicker } from "./views/agePicker.js";
 
 /**
  * Routes that belong to a tab of another name. The plan editor lives under
- * #/plan/<id> but is part of Sessions. A bare hash renders the catalogue.
+ * #/plan/<id> but is part of Sessions. A bare hash renders the catalogue. So does
+ * #/favourites, which is the same list with the stars kept in.
  */
-const TAB_FOR_ROUTE: Record<string, string> = { plan: "plans", home: "catalogue" };
+const TAB_FOR_ROUTE: Record<string, string> = {
+  plan: "plans",
+  home: "catalogue",
+  favourites: "catalogue",
+};
 
 /**
  * What a coach was reaching for when a gate stopped them, keyed by the `#/join`
@@ -109,6 +114,20 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     if (route.name !== "plan") clearPrintable();
 
     switch (route.name) {
+      // The gate is a signed-out screen. Arriving here with a session means the
+      // coach has just got one, so send them on to whatever they were reaching
+      // for rather than dropping them on the catalogue with nothing to show for it.
+      //
+      // Replaced rather than pushed. `go()` would leave the gate sitting in
+      // history, where a Back tap lands on it and gets sent forwards again, which
+      // is a coach who can no longer leave. Keyed off GATE_REASON so a third gate
+      // cannot be added without a landing.
+      case "join": {
+        const reaching = route.param && route.param in GATE_REASON ? route.param : "catalogue";
+        history.replaceState(null, "", `#/${reaching}`);
+        render();
+        break;
+      }
       case "account":
         renderAccount(view, profile, email);
         break;
@@ -137,6 +156,12 @@ function start(view: HTMLElement, nav: HTMLElement): void {
   function renderSignedOut(route: Route): void {
     if (route.name === "join") {
       renderAuth(view, "signup", GATE_REASON[route.param ?? ""] ?? "");
+      return;
+    }
+    // The list of starred drills needs an account to exist. A drill under it
+    // does not, so `#/favourites/<id>` stays readable like any other drill.
+    if (route.name === "favourites" && !route.param) {
+      renderAuth(view, "signup", GATE_REASON.favourites);
       return;
     }
     if (route.name === "plans" || route.name === "plan" || route.name === "account") {

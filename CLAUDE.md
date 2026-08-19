@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-534 unit and integration tests across 18 files, 83 Playwright tests. Most are ordinary.
+538 unit and integration tests across 18 files, 90 Playwright tests. Most are ordinary.
 These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -102,7 +102,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 83 tests across four files: `matchday` (9), `home` (3), `hub` (64)
+`pnpm test:e2e` is 90 tests across four files: `matchday` (9), `home` (3), `hub` (71)
 and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -400,7 +400,10 @@ with no session to the age picker, then to the catalogue, which takes the grade 
 what proves the thing is worth an account. What needs an account is anything that has
 to persist: saved sessions and starred drills. Those gates route through
 `#/join/<reason>`, which renders the register form with a line saying what the coach
-was reaching for. Never gate a drill. A locked drill sits in the same list as one the
+was reaching for. Landing on that route with a session is what signing up through it
+looks like, so `render()` sends them straight on to the thing they were reaching for
+rather than dropping them on the catalogue with nothing to show for it. Never gate a
+drill. A locked drill sits in the same list as one the
 age gate hid, in the same visual language, which makes a safety feature look like a
 paywall.
 
@@ -421,6 +424,13 @@ white on white, which measured 1:1.
 **A control needs a visible edge.** Secondary buttons sit on `--color-surface` panels,
 so a `--color-surface` fill with a `--color-border` edge was 1.19:1 and effectively
 invisible. WCAG 1.4.11 wants 3:1 on a control's boundary. The same spec checks it.
+
+**Favourites is a route, not a filter setting.** `#/favourites` is the catalogue
+with the stars kept in, rendered by `renderCatalogue` off `currentRoute()` rather
+than off anything held in `filters`. So it survives a reload, it can be linked to, a
+drill opened from it comes back to it. The join gate gets somewhere to hand a new
+coach as well. The Drills tab stays lit, because it is the same list. Signed out, the
+bare route is a gate but `#/favourites/<id>` is not: a drill is never gated.
 
 **`filterDrills` stays pure.** The starred set is passed in as `favourites` rather
 than read from storage inside it. The age check runs before the star check, so a
