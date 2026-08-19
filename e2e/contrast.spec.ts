@@ -140,3 +140,49 @@ test("controls have a visible edge against what they sit on", async ({ page }) =
     .map((c) => `"${c.label}" at ${ratio(c.edge, c.behind).toFixed(2)}:1`);
   expect(invisible, "controls with no visible boundary").toEqual([]);
 });
+
+/**
+ * Hover states, which the resting sweep above cannot see.
+ *
+ * A hover rule that lifts a tab's colour is written for the tabs you are not
+ * on. The one you are on is a white pill with navy text at this width, so the
+ * same rule painted white on white and the tab went blank: no label, no icon,
+ * just a shape. It measured 1:1, which is worse than either of the two that
+ * made this file necessary in the first place.
+ */
+for (const [where, width] of [
+  ["the phone bar", 390],
+  ["the rail", 1100],
+] as const) {
+  test(`a hovered nav tab stays readable on ${where}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript(() => localStorage.setItem("equalplay_age_group", "u10"));
+    await page.goto("/hub/#/catalogue");
+    await page.waitForSelector(".hub-tab.is-active");
+
+    const failures: string[] = [];
+    for (const tab of await page.locator(".hub-tab").all()) {
+      await tab.hover();
+      const seen = await tab.evaluate((el) => {
+        const rgb = (value: string) =>
+          (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
+        let node: Element | null = el;
+        let bg = [255, 255, 255];
+        while (node) {
+          const parts = (getComputedStyle(node).backgroundColor.match(/[\d.]+/g) ?? []).map(Number);
+          if (parts.length >= 3 && (parts.length < 4 || parts[3] > 0.9)) {
+            bg = parts.slice(0, 3);
+            break;
+          }
+          node = node.parentElement;
+        }
+        return { label: el.textContent?.trim() ?? "", fg: rgb(getComputedStyle(el).color), bg };
+      });
+      const contrast = ratio(seen.fg, seen.bg);
+      // The label is small text, so AA wants 4.5:1.
+      if (contrast < 4.5) failures.push(`"${seen.label}" hovered at ${contrast.toFixed(2)}:1`);
+    }
+
+    expect(failures, `hovered tab contrast on ${where}`).toEqual([]);
+  });
+}

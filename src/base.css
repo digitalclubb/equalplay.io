@@ -341,7 +341,11 @@ html {
 }
 
 @media (hover: hover) {
-  .hub-tab:hover {
+  /* Not the tab you are already on. On the phone bar that one is a white pill
+     with navy text, so lifting the colour to white left an empty white shape
+     where the icon and the label had been. Nothing on the rail changes: the
+     active tab there is already white text on a translucent panel. */
+  .hub-tab:hover:not(.is-active) {
     color: var(--color-on-dark);
   }
 }

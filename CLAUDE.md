@@ -374,6 +374,9 @@ flip with `prefers-color-scheme`. Using either for text on a surface that does f
 gives navy on dark navy: it shipped at 1.5:1 on a button border, then again at 1.12:1
 on the homepage. Text on a themed surface uses `--color-text` or `--text`.
 `e2e/contrast.spec.ts` measures both schemes so this stops being a matter of noticing.
+It measures hover as well, at both nav widths. A hover rule lifting a tab's colour
+to white was written for the tabs you are not on. Over the one you are it painted
+white on white, which measured 1:1.
 
 **A control needs a visible edge.** Secondary buttons sit on `--color-surface` panels,
 so a `--color-surface` fill with a `--color-border` edge was 1.19:1 and effectively
