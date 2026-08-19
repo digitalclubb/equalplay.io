@@ -35,10 +35,28 @@ queue is `defence`. Nothing about it implies opposition.
 one three. Six pairs on the pitch is a smudge at card size. The test caps you at
 `players.max` and nothing stops you going far below it.
 
-**Set `label` when the generated description would mislead.** `describe()` says
+**Do not set `label` out of habit.** Twenty one of the first hundred needed the
+label taking off again, because the generated wording already said exactly what
+the picture showed. Read what `describe()` would produce before you write one.
+Set `label` when the generated description would mislead. `describe()` says
 "N players with the ball, N without" off the colour convention. That is honest
 for a game and wrong for a relay, where four runners are drawn red but there is
 one ball between them. Five of the handling drills carry a label for this.
+
+**Keep lines clear of the things they join.** A run or a pass that starts inside
+a player marker, or lands its arrowhead on top of one, reads as a smudge at card
+size. Start about a metre clear and stop about a metre and a half short. This was
+the single most common correction when 89 of these were drawn at once.
+
+**Keep the ball about a metre and a half off the nearest player.** Closer and the
+two discs merge into one blob on a card. The ball is drawn about the same size as
+a player, so it needs the same room.
+
+**Not every drill gets one.** `diagram` is optional. A mobility warm-up whose
+setup is "everyone with a bit of space around them" has nothing to draw, and an
+empty box with six dots in it is worse than no picture at all. `warmup-ankles-and-knees`
+is the one that failed this and has none. If your diagram would fit any drill in
+the theme, either find what makes this one different or leave it out.
 
 **Cones are the ones in the kit list, in the places the setup names.** "8 cones"
 with "a scoring box in each far corner" means four marking the square and two
@@ -73,7 +91,9 @@ actually putting down rather than spacing eight evenly to make the count.
   merely the right number?
 - At 130 px, can you still tell what the drill is?
 - Read the `aria-label` out loud. Does it claim a contest the drill has not got?
-- Anything overlapping? Balls sitting under players is the common one.
+- Anything overlapping? A ball under a player and an arrowhead on a marker are
+  the two that keep happening.
+- Is the `label` earning its place, or does it repeat the generated wording?
 
 ## What not to do
 
@@ -85,5 +105,7 @@ actually putting down rather than spacing eight evenly to make the count.
   of the primitives that exist.
 - Do not put a second fixed colour in the renderer. One diagram serves both
   colour schemes and `diagram.test.ts` fails the build over it.
-- Do not add diagrams to the catalogue cards until every drill has one. A grid
-  where a fifth of the cards carry a picture looks broken rather than partial.
+- Do not add diagrams to the catalogue cards until every drill that should have
+  one does. A grid where a fifth of the cards carry a picture looks broken rather
+  than partial. One drill deliberately has none, so a card grid needs to handle
+  that gap rather than assume it away.

@@ -17,6 +17,17 @@ export const BREAKDOWN: Drill[] = [
     minutes: 12,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A carrier down with the ball placed long, a shield holder in front and two support players arriving from five metres back.",
+      space: [15, 15],
+      cones: [[0, 0], [15, 0], [0, 7.5], [15, 7.5], [0, 15], [15, 15]],
+      shields: [[7.5, 7.5]],
+      defence: [[5.5, 14.2], [9.5, 14.2]],
+      attack: [[7.5, 9.2]],
+      runs: [[[5.5, 13.3], [6.3, 11.8]], [[9.5, 13.3], [8.2, 3.5], -1.6]],
+      ball: [[7.5, 10.8]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }, { item: "tackle shield", qty: 2 }],
     setup: "Fours. A carrier, a shield holder and two support players five metres behind the carrier.",
     howItRuns:
@@ -43,6 +54,15 @@ export const BREAKDOWN: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Three pairs. In each one a player lies on the ground with the ball placed long while their partner steps over it.",
+      space: [10, 10],
+      defence: [[2, 4], [5, 4], [8, 4]],
+      attack: [[2, 6], [5, 6], [8, 6]],
+      runs: [[[2.8, 5.9], [2.8, 4.4]], [[5.8, 5.9], [5.8, 4.4]], [[8.8, 5.9], [8.8, 4.4]]],
+      ball: [[2, 5], [5, 5], [8, 5]],
+    },
     equipment: [{ item: "ball", qty: 1, per: "pair" }],
     setup: "Pairs. One lies on their side with a ball placed long. The other stands two metres away.",
     howItRuns:
@@ -65,6 +85,16 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 18 },
     space: "12 x 12 m",
+    diagram: {
+      label:
+        "Set up diagram. A ball on the floor with a shield holder crouched over it, a clearer three metres back and a second player waiting to pick up.",
+      space: [12, 12],
+      shields: [[6, 6.6]],
+      defence: [[9, 9.4]],
+      attack: [[6, 9.6]],
+      runs: [[[6, 8.7], [6, 7.4]], [[8.8, 8.5], [7.2, 6.4]]],
+      ball: [[6, 5.6]],
+    },
     equipment: [{ item: "ball", qty: 1 }, { item: "tackle shield", qty: 1, per: "pair" }],
     setup: "A ball on the floor. A shield holder crouched over it. A clearer three metres back.",
     howItRuns:
@@ -88,6 +118,17 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 9, max: 21 },
     space: "20 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A carrier down at the contact with two support players arriving and a scrum half clearing the ball.",
+      space: [15, 20],
+      shields: [[7, 11.5]],
+      defence: [[4.5, 18.2], [7.5, 18.6], [9.6, 15.4]],
+      attack: [[7, 13.2]],
+      runs: [[[4.5, 17.4], [5.6, 15.9]], [[7.5, 17.7], [7, 16.4]]],
+      passes: [[[10.4, 15.8], [13, 18.2]]],
+      ball: [[7, 14.8]],
+    },
     equipment: [{ item: "ball", qty: 1 }, { item: "tackle shield", qty: 2 }],
     setup: "A carrier, two support players and a scrum half who will clear the ball.",
     howItRuns:
@@ -111,6 +152,19 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 10, max: 21 },
     space: "25 x 20 m",
+    diagram: {
+      space: [25, 20],
+      cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
+      defence: [[10.2, 8.8], [13.6, 8.6]],
+      attack: [[11, 11.6], [7.8, 17.4], [14.2, 17.2], [4, 15.2], [19, 15.7]],
+      runs: [
+        [[7.8, 16.5], [9.8, 14.8]],
+        [[14.2, 16.3], [12.3, 14.8]],
+        [[4, 14.3], [4.6, 11.6]],
+        [[19, 14.8], [18, 11.8]],
+      ],
+      ball: [[11, 13.9]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "Five attackers, two defenders, playing live contact under age grade rules.",
     howItRuns:
@@ -134,6 +188,16 @@ export const BREAKDOWN: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "20 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. A line of players spread up a narrow channel with the ball on the floor at the start.",
+      space: [10, 20],
+      cones: [[2, 18], [8, 18], [2, 10], [8, 10], [2, 2], [8, 2]],
+      defence: [[4.2, 14.6], [5.8, 12.6], [4.2, 10.6], [5.8, 8.6]],
+      attack: [[5, 16.6]],
+      runs: [[[5, 15.6], [5, 3.2]]],
+      ball: [[5, 18.6]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "A line of players a metre apart up a narrow channel. Ball on the floor at the start.",
     howItRuns:
@@ -156,6 +220,15 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. One attacker standing over the ball with two defenders bound together arriving from three metres away.",
+      space: [15, 15],
+      defence: [[6.7, 11], [8.3, 11]],
+      attack: [[7.5, 6.3]],
+      runs: [[[6.7, 10.1], [7.1, 8.9]], [[8.3, 10.1], [7.9, 8.9]]],
+      ball: [[7.5, 7.9]],
+    },
     equipment: [{ item: "ball", qty: 1 }, { item: "tackle shield", qty: 2 }],
     setup: "A ball on the floor with one attacker over it. Two defenders three metres away.",
     howItRuns:
@@ -179,6 +252,15 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 18 },
     space: "15 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. A carrier held up by one opponent, a team mate bound on behind and the ball going to the back.",
+      space: [10, 15],
+      defence: [[5, 6.2]],
+      attack: [[5, 7.5], [5.9, 8.9]],
+      passes: [[[7, 7.8], [7.2, 10.2]]],
+      ball: [[6.7, 7]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "A carrier held up by one opponent. One team mate ready to bind on.",
     howItRuns:
@@ -202,6 +284,15 @@ export const BREAKDOWN: Drill[] = [
     minutes: 12,
     players: { min: 12, max: 24 },
     space: "30 x 25 m",
+    diagram: {
+      space: [30, 25],
+      cones: [[0, 0], [15, 0], [30, 0], [0, 12.5], [30, 12.5], [0, 25], [15, 25], [30, 25]],
+      defence: [[10, 12.4], [17, 11.8], [24, 12.6]],
+      attack: [[11.6, 17.4], [13.8, 18.3], [16.6, 19.4], [20.6, 18.4], [24.2, 19.6]],
+      runs: [[[20.6, 17.5], [21.4, 12.8], -1], [[24.2, 18.7], [23.8, 15.4]]],
+      passes: [[[17.5, 19.2], [19.6, 18.6]]],
+      ball: [[12.7, 20.8]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Two teams playing live contact. Three defenders only so the attack usually gets through.",
     howItRuns:
@@ -225,6 +316,14 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 10, max: 21 },
     space: "25 x 20 m",
+    diagram: {
+      space: [25, 20],
+      cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
+      defence: [[10.4, 9.4], [14.6, 9.4], [7.8, 9], [17.2, 9], [4.6, 8.2], [20.2, 8.2], [23.4, 7]],
+      attack: [[11.4, 11.6], [13.6, 11.6], [8.6, 15.2], [16.4, 15.2]],
+      runs: [[[8.6, 14.3], [9, 11.4]], [[16.4, 14.3], [16, 11.4]]],
+      ball: [[12.5, 13.8]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "A ruck already formed. Two defenders either side of it as guards, three more spread wide.",
     howItRuns:
@@ -248,6 +347,15 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 10, max: 21 },
     space: "30 x 25 m",
+    diagram: {
+      space: [30, 25],
+      cones: [[6, 14], [12, 14], [6, 8], [12, 8], [18, 14], [24, 14], [18, 8], [24, 8]],
+      defence: [[12.8, 14.6], [15.4, 14.2], [17.6, 14.8]],
+      attack: [[15, 17], [18.2, 19.6], [10.5, 19], [21.5, 19.4]],
+      runs: [[[21.5, 18.5], [21, 12]], [[10.5, 18.1], [9.6, 11.6], 1]],
+      passes: [[[17.4, 19.7], [20.6, 19.5]]],
+      ball: [[15, 20]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Live contact, four attackers against three defenders. Two channels marked either side of the ruck.",
     howItRuns:
@@ -271,6 +379,17 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 12, max: 24 },
     space: "35 x 25 m",
+    diagram: {
+      label:
+        "Set up diagram. A ruck with the ball going to the scrum half and two defenders taking their five metre advance for slow ball.",
+      space: [35, 25],
+      cones: [[0, 0], [17.5, 0], [35, 0], [0, 12.5], [35, 12.5], [0, 25], [17.5, 25], [35, 25]],
+      defence: [[9, 10.4], [14, 10], [19, 10.2], [24, 10.6], [29, 11]],
+      attack: [[14, 15.4], [17.5, 19], [21.5, 19.6], [25.5, 20], [9.5, 19.2]],
+      runs: [[[19, 10.9], [19, 15.9]], [[24, 11.3], [24, 16.3]]],
+      passes: [[[18.4, 19.2], [20.6, 19.5]]],
+      ball: [[14, 18.4]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Two teams. You referee and count every ruck out loud.",
     howItRuns:
@@ -294,6 +413,14 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 12, max: 24 },
     space: "40 x 30 m",
+    diagram: {
+      space: [30, 40],
+      cones: [[0, 0], [15, 0], [30, 0], [0, 20], [30, 20], [0, 40], [15, 40], [30, 40]],
+      defence: [[8, 22.5], [22.5, 21.5], [5, 17.5], [26, 18.5], [15, 11.5]],
+      attack: [[13.2, 27.4], [17, 27.8], [20.8, 29], [10, 29.2], [24.5, 31]],
+      runs: [[[20.8, 28.1], [17.5, 5], -2.5], [[10, 28.3], [11, 14]]],
+      ball: [[15.2, 24.2]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Two teams playing live. Defence is trying to win the ball at the ruck.",
     howItRuns:

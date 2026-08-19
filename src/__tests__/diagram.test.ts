@@ -76,6 +76,31 @@ group("drill diagrams", () => {
     }
   });
 
+  /**
+   * Balls and shields are not cones. Every cone goes down on the pitch before
+   * the drill starts, so that count is exact. A kit list packing two balls may
+   * be a spare or a rotation, and the diagram draws one moment of the drill, so
+   * fewer is fine. More is not: you cannot use a ball nobody brought.
+   */
+  it("draws no more kit than the drill packs", () => {
+    for (const drill of withDiagram) {
+      for (const [item, drawn] of [
+        ["ball", drill.diagram.ball?.length ?? 0],
+        ["tackle shield", drill.diagram.shields?.length ?? 0],
+      ] as const) {
+        if (!drawn) continue;
+        const packed = drill.equipment.find((k) => k.item === item);
+        expect(packed, `"${drill.title}" draws ${drawn} ${item} with none in the kit list`).toBeDefined();
+        if (packed && !packed.per) {
+          expect(
+            drawn,
+            `"${drill.title}" draws ${drawn} ${item} but packs ${packed.qty}`,
+          ).toBeLessThanOrEqual(packed.qty);
+        }
+      }
+    }
+  });
+
   it("never draws a cone for a drill that needs none", () => {
     for (const drill of withDiagram) {
       if (drill.equipment.some((k) => k.item === "cone")) continue;
@@ -176,14 +201,19 @@ group("the diagram renderer", () => {
   });
 
   /**
-   * A drill with no opposition in it must not be described as having any. Five
-   * of these are pairs work or a relay, where "attackers against defenders"
-   * would be a confident lie to the one reader who cannot check it against the
-   * picture.
+   * The generated wording must not invent opposition, because it cannot know:
+   * it only sees which markers are red. Plenty of these are pairs work or a
+   * relay, where "attackers against defenders" would be a confident lie to the
+   * one reader who cannot check it against the picture.
+   *
+   * A hand-written `label` is exempt, and has to be. A counter ruck really does
+   * have an attacker over the ball, and an author who has read the drill is
+   * allowed to say so.
    */
-  it("claims no contest that the drill does not have", () => {
+  it("generates no contest that the drill does not have", () => {
     for (const drill of withDiagram) {
-      expect(describe(drill.diagram), `"${drill.title}"`).not.toMatch(/against|defender|attacker/i);
+      const generated = describe({ ...drill.diagram, label: undefined });
+      expect(generated, `"${drill.title}"`).not.toMatch(/against|defender|attacker/i);
     }
   });
 
@@ -193,6 +223,19 @@ group("the diagram renderer", () => {
     expect(said).toContain("1 shield holder");
     expect(said).not.toContain("1 cones");
     expect(said).not.toContain("1 shield holders");
+  });
+
+  /** Twenty of these draw a single carrier, so the two sided wording has to count too. */
+  it("counts one player as one on both sides of the ball", () => {
+    const one = describe({ space: [10, 10], attack: [[2, 2]], defence: [[8, 8], [5, 5]] });
+    expect(one).toContain("1 player with the ball");
+    expect(one).not.toContain("1 players");
+  });
+
+  it("never says a plural of one anywhere", () => {
+    for (const drill of withDiagram) {
+      expect(describe(drill.diagram), `"${drill.title}"`).not.toMatch(/\b1 \w+s\b/);
+    }
   });
 
   it("mentions the passing when passing is all the picture shows", () => {

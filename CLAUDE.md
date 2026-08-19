@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-512 unit and integration tests across 17 files, 81 Playwright tests. Most are ordinary.
+515 unit and integration tests across 17 files, 81 Playwright tests. Most are ordinary.
 These eight are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -234,8 +234,10 @@ and arrangement. Read widely, never mirror one source's list, write every word o
 metres and `hub/content/diagram.ts` renders it at load. Shipping one SVG file per
 drill would cost around 210 kB across 104 precache entries. It would also put
 the stroke weights, colours and marker sizes into 104 places where they drift.
-The renderer owns them once. Fifteen handling drills carry one so far, for 2.8 kB
-gzipped across the whole hub.
+The renderer owns them once. 103 of the 104 drills carry one, for 10.6 kB gzipped
+across the whole hub. The one without is a mobility warm-up whose setup is
+"everyone with a bit of space around them", where a box with six dots in it says
+less than no picture. `diagram` is optional for exactly that reason.
 
 Two conventions the code cannot check. Every drill runs bottom to top, so a
 channel runs up the long axis whatever order `space` puts the numbers in. Red is

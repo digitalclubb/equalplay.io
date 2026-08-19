@@ -127,7 +127,7 @@ export function describe(d: Diagram): string {
   // confident lie on a pairs drill or a relay. A drill the wording still
   // misreads sets its own `label`.
   if (d.attack?.length && d.defence?.length) {
-    parts.push(`${d.attack.length} players with the ball, ${d.defence.length} without`);
+    parts.push(`${count(d.attack.length, "player")} with the ball, ${d.defence.length} without`);
   } else if (d.attack?.length) {
     parts.push(count(d.attack.length, "player") + " with the ball");
   } else if (d.defence?.length) {

@@ -18,6 +18,15 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 24 },
     space: "20 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. Eight players loose in a square, every one of them wearing two tags. Three of them are closing in on somebody.",
+      space: [20, 20],
+      cones: [[0, 0], [10, 0], [20, 0], [0, 10], [20, 10], [0, 20], [10, 20], [20, 20]],
+      defence: [[4, 6], [16, 4.5], [8.5, 12], [17, 13], [5, 17.5]],
+      attack: [[6.5, 9.5], [13.5, 8], [10.5, 16]],
+      runs: [[[5.9, 8.7], [4.9, 7.2]], [[14.1, 7.2], [15.1, 5.7]], [[10.1, 15.1], [9.2, 13.3]]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "tag", qty: 2, per: "player" }],
     setup:
       "Four cones in a square. Every player wears two tags. No balls for the first round.",
@@ -43,6 +52,14 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 8, max: 20 },
     space: "15 x 15 m",
+    diagram: {
+      space: [15, 15],
+      cones: [[0, 0], [15, 0], [0, 15], [15, 15]],
+      defence: [[6.5, 13.5], [4.5, 8], [8.5, 7], [13, 9], [6, 4], [11.5, 3.5]],
+      attack: [[3.5, 11.5], [11.5, 12]],
+      passes: [[[4.2, 10.9], [7.5, 7.9]], [[11.5, 11.1], [11.5, 4.9]]],
+      ball: [[2.3, 12.6], [12.7, 13]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
     setup: "Players spread inside a square. Two balls, given to players standing well apart.",
     howItRuns:
@@ -64,6 +81,13 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 8, max: 20 },
     space: "12 x 12 m",
+    diagram: {
+      space: [12, 12],
+      defence: [[6, 1.5], [9.2, 2.8], [10.5, 6], [9.2, 9.2], [2.8, 9.2], [1.5, 6], [2.8, 2.8]],
+      attack: [[6, 10.5]],
+      passes: [[[6.3, 9.6], [8.8, 3.7]]],
+      ball: [[4.5, 11.2]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "Everyone in a loose circle, one ball.",
     howItRuns:
@@ -85,6 +109,17 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 6 },
     space: "20 x 20 m",
+    diagram: {
+      space: [20, 20],
+      cones: [[0, 0], [20, 0], [0, 20], [20, 20]],
+      defence: [[4, 15], [9, 17], [15, 14], [6, 8], [12, 9], [17, 5]],
+      runs: [
+        [[4, 14], [5, 7], 1.2],
+        [[9, 16], [10.5, 12.5], -1],
+        [[15, 13], [15.5, 11]],
+        [[12, 8], [12.8, 6]],
+      ],
+    },
     equipment: [{ item: "cone", qty: 4 }],
     setup: "A square. Everyone inside it, jogging.",
     howItRuns:
@@ -106,6 +141,15 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 8, max: 24 },
     space: "20 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A channel with a safe zone marked at each end. Six runners set off from the near zone while two sharks wait in the middle.",
+      space: [15, 20],
+      cones: [[1, 16], [7.5, 16], [14, 16], [1, 4], [7.5, 4], [14, 4]],
+      defence: [[5.5, 10], [10, 10.5]],
+      attack: [[2, 18.2], [5, 18.8], [8, 18.2], [11, 18.8], [14, 18.2], [9.5, 16.8]],
+      runs: [[[2, 17.2], [3, 3.2], 1.5], [[14, 17.2], [12.5, 3.2], -1.5]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "tag", qty: 2, per: "player" }],
     setup: "A channel with a safe zone at each end. Two sharks in the middle, everyone else at one end.",
     howItRuns:
@@ -127,6 +171,15 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 6 },
     space: "20 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. Three pairs spread round a square, each follower a step behind their leader on a winding path.",
+      space: [20, 20],
+      cones: [[0, 0], [20, 0], [0, 20], [20, 20]],
+      defence: [[3.4, 11.6], [11.6, 6.9], [7.6, 17.9]],
+      attack: [[4, 10], [13, 6], [9, 17]],
+      runs: [[[4, 9], [6, 3.5], 2], [[13, 5], [17, 2.5], -1.5], [[9, 16], [15, 12], 2.5]],
+    },
     equipment: [{ item: "cone", qty: 4 }],
     setup: "Pairs, one behind the other, spread around a square.",
     howItRuns:
@@ -148,6 +201,43 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 8, max: 24 },
     space: "25 x 25 m",
+    diagram: {
+      label:
+        "Set up diagram. Four nests of three cones, one in each corner, with all eight balls piled in the middle. One runner from each team is on the way in.",
+      space: [25, 25],
+      cones: [
+        [0.8, 3],
+        [2.1, 2.1],
+        [3, 0.8],
+        [24.2, 3],
+        [22.9, 2.1],
+        [22, 0.8],
+        [0.8, 22],
+        [2.1, 22.9],
+        [3, 24.2],
+        [24.2, 22],
+        [22.9, 22.9],
+        [22, 24.2],
+      ],
+      defence: [[3.5, 3.5], [21.5, 3.5], [3.5, 21.5], [21.5, 21.5]],
+      attack: [[5.5, 6], [19.5, 6], [5.5, 19], [19.5, 19]],
+      runs: [
+        [[6.5, 6.9], [9.5, 9.7]],
+        [[18.5, 6.9], [15.5, 9.7]],
+        [[6.5, 18.1], [9.5, 15.3]],
+        [[18.5, 18.1], [15.5, 15.3]],
+      ],
+      ball: [
+        [10.6, 11.2],
+        [12.5, 11.2],
+        [14.4, 11.2],
+        [10.6, 12.6],
+        [12.5, 12.6],
+        [14.4, 12.6],
+        [11.5, 14],
+        [13.5, 14],
+      ],
+    },
     equipment: [{ item: "cone", qty: 12 }, { item: "ball", qty: 8 }],
     setup:
       "Four teams, one in each corner with a hoop of cones for a nest. All the balls in a pile in the middle.",
@@ -170,6 +260,24 @@ export const WARMUPS: Drill[] = [
     minutes: 7,
     players: { min: 8, max: 20 },
     space: "15 x 15 m",
+    diagram: {
+      space: [15, 15],
+      cones: [[0, 0], [15, 0], [0, 15], [15, 15]],
+      defence: [
+        [2, 1.5],
+        [2, 3.2],
+        [13, 1.5],
+        [13, 3.2],
+        [2, 13.5],
+        [2, 11.8],
+        [13, 13.5],
+        [13, 11.8],
+      ],
+      attack: [[5.5, 9.5], [9.5, 5.5]],
+      runs: [[[5, 8.5], [3.1, 4.7], 2], [[10, 6.5], [11.9, 10.3], 2]],
+      passes: [[[5, 8.6], [2.7, 4.4]], [[10, 6.4], [12.3, 10.6]]],
+      ball: [[7, 10.2], [8, 4.8]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
     setup: "A group at each corner of a square. Balls at two opposite corners.",
     howItRuns:
@@ -193,6 +301,20 @@ export const WARMUPS: Drill[] = [
     minutes: 8,
     players: { min: 6 },
     space: "20 m channel",
+    diagram: {
+      label:
+        "Set up diagram. Two lines of cones ten metres apart. A wave of four works up the channel while the next wave waits behind.",
+      space: [12, 20],
+      cones: [[2, 15], [6, 15], [10, 15], [2, 5], [6, 5], [10, 5]],
+      defence: [[1.5, 17.5], [4.5, 17.5], [7.5, 17.5], [10.5, 17.5]],
+      attack: [[1.5, 13.2], [4.5, 13.2], [7.5, 13.2], [10.5, 13.2]],
+      runs: [
+        [[1.5, 12.2], [1.5, 6.4]],
+        [[4.5, 12.2], [4.5, 6.4]],
+        [[7.5, 12.2], [7.5, 6.4]],
+        [[10.5, 12.2], [10.5, 6.4]],
+      ],
+    },
     equipment: [{ item: "cone", qty: 6 }],
     setup: "Two lines of cones ten metres apart. Work in waves of four or five so nobody queues.",
     howItRuns:
@@ -239,6 +361,20 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 6 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Two pairs two metres apart, each one staying square as their partner steps sideways.",
+      space: [10, 10],
+      cones: [[0, 0], [10, 0], [0, 10], [10, 10]],
+      defence: [[2.5, 5], [7, 5]],
+      attack: [[2.5, 7], [7, 7]],
+      runs: [
+        [[3.4, 7], [4.9, 7]],
+        [[3.4, 5], [4.9, 5]],
+        [[7.9, 7], [9.4, 7]],
+        [[7.9, 5], [9.4, 5]],
+      ],
+    },
     equipment: [{ item: "cone", qty: 4 }],
     setup: "Pairs facing each other, two metres apart, in a small grid.",
     howItRuns:
@@ -260,6 +396,16 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. A loose group of six in a small square. One of them holds the ball and places it back towards the coach.",
+      space: [10, 10],
+      cones: [[0, 0], [10, 0], [0, 10], [10, 10]],
+      defence: [[6.5, 3.5], [9, 6], [2, 7.5], [5.5, 8], [8.5, 9]],
+      attack: [[3, 4.5]],
+      passes: [[[3, 5.3], [3, 6.9]]],
+      ball: [[1.5, 4.3]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1 }],
     setup: "A loose group inside a small square. Grass only, never a hard surface.",
     howItRuns:
@@ -283,6 +429,14 @@ export const WARMUPS: Drill[] = [
     minutes: 7,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Two pairs, a shield held low in each. The other player goes in from their knees.",
+      space: [10, 10],
+      shields: [[3, 4], [7, 4]],
+      attack: [[3, 6.2], [7, 6.2]],
+      runs: [[[3, 5.6], [3, 4.5]], [[7, 5.6], [7, 4.5]]],
+    },
     equipment: [{ item: "tackle shield", qty: 1, per: "pair" }],
     setup: "Pairs of similar size. One holds a shield low, the other kneels in front of it.",
     howItRuns:
@@ -306,6 +460,18 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "15 m channel",
+    diagram: {
+      space: [12, 15],
+      cones: [[0, 0], [12, 0], [0, 15], [12, 15]],
+      attack: [[1.5, 12], [4.5, 12], [7.5, 12], [10.5, 12]],
+      runs: [
+        [[0.4, 11], [0.4, 7.4]],
+        [[3.4, 11], [3.4, 7.4]],
+        [[6.4, 11], [6.4, 7.4]],
+        [[9.4, 11], [9.4, 7.4]],
+      ],
+      ball: [[1.5, 8.2], [4.5, 8.2], [7.5, 8.2], [10.5, 8.2]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1, per: "pair" }],
     setup: "Waves of four, ball each, jogging up a short channel.",
     howItRuns:
@@ -328,6 +494,13 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    diagram: {
+      label: "Set up diagram. Two pairs kneeling face to face with a ball held between them.",
+      space: [10, 10],
+      defence: [[3, 3.4], [7, 3.4]],
+      attack: [[3, 6.6], [7, 6.6]],
+      ball: [[3, 5], [7, 5]],
+    },
     equipment: [{ item: "ball", qty: 1, per: "pair" }],
     setup: "Pairs of similar size, both kneeling, one ball held between them.",
     howItRuns:
@@ -351,6 +524,15 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "15 m channel",
+    diagram: {
+      label:
+        "Set up diagram. Six cones a metre and a half apart. The front of the wave walks the line dropping into a crouch at each cone.",
+      space: [10, 15],
+      cones: [[5, 10], [5, 8.5], [5, 7], [5, 5.5], [5, 4], [5, 2.5]],
+      defence: [[5, 12.9], [5, 14.4]],
+      attack: [[5, 11.4]],
+      runs: [[[6.3, 10.8], [6.3, 1.9]]],
+    },
     equipment: [{ item: "cone", qty: 6 }],
     setup: "Six cones in a line, a metre and a half apart. Waves of three or four.",
     howItRuns:
@@ -373,6 +555,11 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 3 },
     space: "10 x 10 m",
+    diagram: {
+      label: "Set up diagram. A front row of three bound together with nobody opposite.",
+      space: [10, 10],
+      attack: [[3.9, 5.5], [5, 5.5], [6.1, 5.5]],
+    },
     equipment: [],
     setup: "Threes. Hooker in the middle, prop either side. No opposition at all.",
     howItRuns:
@@ -396,6 +583,14 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 3 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. A jumper standing still with a lifter in front and a lifter behind. The ball waits at the side until the lift is solid.",
+      space: [10, 10],
+      defence: [[5, 3.8], [5, 6.2]],
+      attack: [[5, 5]],
+      ball: [[1.8, 5]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "Threes. A jumper with a lifter either side. Grass only, checked first.",
     howItRuns:
@@ -419,6 +614,15 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 8, max: 24 },
     space: "20 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. A square with everyone jogging inside it. Three have grouped up on the call while the rest run to find their group.",
+      space: [20, 20],
+      cones: [[0, 0], [20, 0], [0, 20], [20, 20]],
+      defence: [[4, 5], [7.5, 12], [3, 15.5], [10, 17.5], [17.5, 13.5]],
+      attack: [[13, 7], [14.6, 8], [13.2, 9.4]],
+      runs: [[[8.7, 11.2], [11.9, 9.4]], [[10.5, 16.2], [13.4, 11]]],
+    },
     equipment: [{ item: "cone", qty: 4 }],
     setup: "Everyone jogging inside a square.",
     howItRuns:
@@ -440,6 +644,14 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 18 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. Two pairs six metres apart, deliberately throwing each other a pass that is wide or short.",
+      space: [15, 15],
+      defence: [[4, 5], [11, 5]],
+      attack: [[4, 11], [11, 11]],
+      passes: [[[4, 10.1], [5.7, 5.9], 0.8], [[11, 10.1], [9.8, 6.6], -0.8]],
+    },
     equipment: [{ item: "ball", qty: 1, per: "pair" }],
     setup: "Pairs, six metres apart, one ball each.",
     howItRuns:
@@ -461,6 +673,15 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. Three cones in a triangle ten metres a side with a start cone beside them. One runner works round it while the rest of the wave waits.",
+      space: [15, 15],
+      cones: [[2.5, 12.5], [12.5, 12.5], [7.5, 3.8], [1, 14.2]],
+      defence: [[2.8, 14.2], [4.6, 14.2]],
+      attack: [[3.6, 11.2]],
+      runs: [[[4.3, 10.3], [7.1, 5.2]], [[8, 4.6], [11.9, 11.4]], [[11.9, 13.3], [5.9, 13.3]]],
+    },
     equipment: [{ item: "cone", qty: 4 }],
     setup: "Three cones in a triangle, about ten metres a side. Waves of three or four.",
     howItRuns:
@@ -482,6 +703,18 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 4 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Four players spread out with a couple of metres each, rolling over a shoulder and back to their feet.",
+      space: [10, 10],
+      attack: [[3, 3], [7, 3], [3, 7], [7, 7]],
+      runs: [
+        [[2, 4.2], [4, 4.2], 0.9],
+        [[8, 4.2], [6, 4.2], -0.9],
+        [[2, 8.2], [4, 8.2], 0.9],
+        [[8, 8.2], [6, 8.2], -0.9],
+      ],
+    },
     equipment: [],
     setup: "Everyone with a couple of metres of space. Grass, checked first.",
     howItRuns:
@@ -505,6 +738,13 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    diagram: {
+      label: "Set up diagram. One pair already in contact, driving the shield back three steps.",
+      space: [10, 10],
+      shields: [[5, 6.5]],
+      attack: [[5, 7.4]],
+      runs: [[[6.2, 6.9], [6.2, 3.4]]],
+    },
     equipment: [{ item: "tackle shield", qty: 1, per: "pair" }],
     setup: "Pairs of similar size. One holds a shield low, the other in a crouch in front of it.",
     howItRuns:
@@ -528,6 +768,21 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 8 },
     space: "30 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. A rectangle with a pair jogging the lap, passing back and forward as they go.",
+      space: [30, 20],
+      cones: [[0, 0], [30, 0], [0, 20], [30, 20]],
+      defence: [[9, 15]],
+      attack: [[3.5, 14]],
+      runs: [
+        [[3, 11.5], [3, 3.5]],
+        [[4.5, 2.5], [25.5, 2.5]],
+        [[27, 4], [27, 16.5]],
+        [[25.5, 17.5], [12, 17.5]],
+      ],
+      passes: [[[4.7, 14.2], [7.8, 14.8]]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1, per: "pair" }],
     setup: "A rectangle. Pairs with a ball between them.",
     howItRuns:

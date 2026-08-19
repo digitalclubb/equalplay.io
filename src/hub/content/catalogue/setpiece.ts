@@ -20,6 +20,15 @@ export const SETPIECE: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 16 },
     space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Two three player front rows facing each other with the ball in the tunnel between them.",
+      space: [10, 10],
+      cones: [[0, 0], [10, 0], [0, 10], [10, 10]],
+      defence: [[3.8, 4.3], [5, 4.3], [6.2, 4.3]],
+      attack: [[3.8, 5.7], [5, 5.7], [6.2, 5.7]],
+      ball: [[5, 5]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1 }],
     setup: "Two threes facing each other a metre apart. Hooker in the middle, a prop either side.",
     howItRuns:
@@ -43,6 +52,13 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 4, max: 16 },
     space: "10 x 10 m",
+    diagram: {
+      space: [10, 10],
+      defence: [[3.4, 5.5], [5, 5.5], [6.6, 5.5]],
+      attack: [[8.6, 4.6]],
+      passes: [[[7.8, 4.6], [5.8, 4.6]], [[5.1, 4.7], [5.8, 7.2], -0.6]],
+      ball: [[9.4, 6.2], [9.4, 3.2]],
+    },
     equipment: [{ item: "ball", qty: 2 }],
     setup: "One three-player front row, set and holding. A scrum half with two balls.",
     howItRuns:
@@ -66,6 +82,23 @@ export const SETPIECE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 16 },
     space: "25 x 20 m",
+    diagram: {
+      space: [25, 20],
+      cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
+      defence: [[3.8, 10.4], [5.7, 10.4], [7.6, 10.4], [16.5, 9], [21, 9.6]],
+      attack: [
+        [3.8, 12.4],
+        [5.7, 12.4],
+        [7.6, 12.4],
+        [8.6, 14.6],
+        [13.2, 15.5],
+        [17, 16.5],
+        [20.8, 17.3],
+      ],
+      runs: [[[13.2, 14.5], [13.4, 10.3]], [[17, 15.5], [17.6, 11.2]]],
+      passes: [[[9.6, 14.8], [12.2, 15.3]], [[14.2, 15.7], [16, 16.3]]],
+      ball: [[5.7, 14.1]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "A three-player scrum with a back line behind it and two defenders out wide.",
     howItRuns:
@@ -89,6 +122,15 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 20 },
     space: "30 x 25 m",
+    diagram: {
+      space: [30, 25],
+      cones: [[0, 0], [30, 0], [0, 10], [30, 10], [0, 25], [30, 25]],
+      defence: [[9, 17], [18, 17], [4, 13.8], [22.5, 14.2], [27.5, 16], [8, 20], [20.5, 20.5]],
+      attack: [[13.5, 12.8]],
+      runs: [[[10, 15.9], [12.3, 13.6]], [[17, 15.9], [14.7, 13.6]]],
+      passes: [[[15.5, 2.5], [13.9, 11.2], 1.5]],
+      ball: [[19.5, 2.5], [22.5, 2.5]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }],
     setup: "A receiving team spread across the pitch. You throw or kick the restarts in.",
     howItRuns:
@@ -112,6 +154,15 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 16 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. Two three player front rows with a referee alongside and both hookers striking for the ball.",
+      space: [15, 15],
+      defence: [[6, 6.5], [7.5, 6.5], [9, 6.5], [12.2, 7.5]],
+      attack: [[6, 8.5], [7.5, 8.5], [9, 8.5]],
+      passes: [[[7, 7.8], [6, 10.8]], [[8, 7.2], [9, 4.2]]],
+      ball: [[7.5, 7.5]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "Two threes. A referee calling the sequence at a proper pace.",
     howItRuns:
@@ -135,6 +186,15 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 8, max: 21 },
     space: "30 x 25 m",
+    diagram: {
+      space: [30, 25],
+      cones: [[0, 0], [30, 0], [0, 10], [30, 10], [0, 25], [30, 25]],
+      defence: [[8, 9.6], [14, 9.6], [20, 9.6]],
+      attack: [[10, 17], [8, 19], [12, 19], [17, 17.4], [22, 18]],
+      runs: [[[10, 14.8], [10.2, 11.2]], [[22.2, 16.6], [24.6, 11.4]]],
+      passes: [[[11.2, 17.2], [15.6, 17.3]]],
+      ball: [[10, 15]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "A free kick or free pass position. Attacking team set up around it.",
     howItRuns:
@@ -156,6 +216,15 @@ export const SETPIECE: Drill[] = [
     minutes: 11,
     players: { min: 10, max: 20 },
     space: "15 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A five player pack either side, three in each front row and two bound on behind, with the ball channelled back.",
+      space: [15, 15],
+      defence: [[6, 6.5], [7.5, 6.5], [9, 6.5], [6.75, 4.9], [8.25, 4.9]],
+      attack: [[6, 8.5], [7.5, 8.5], [9, 8.5], [6.75, 10.1], [8.25, 10.1]],
+      passes: [[[6.4, 7.2], [5, 11.4], 2]],
+      ball: [[7.5, 7.5]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "Two fives. Three in the front row, two in the second row behind them.",
     howItRuns:
@@ -179,6 +248,14 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 4, max: 16 },
     space: "15 x 10 m",
+    diagram: {
+      space: [10, 15],
+      cones: [[2, 13], [8, 13], [2, 8], [8, 8]],
+      defence: [[5, 8]],
+      attack: [[5, 13]],
+      passes: [[[5, 12], [5, 9.1]]],
+      ball: [[7, 14.3], [8.6, 14.3]],
+    },
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
     setup: "A throwing line marked with cones. A target player standing five metres in.",
     howItRuns:
@@ -201,6 +278,15 @@ export const SETPIECE: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 18 },
     space: "20 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A line of four with a thrower, the throw going to the jumper and the ball away to the scrum half.",
+      space: [15, 20],
+      defence: [[4.6, 14], [8.4, 14], [11, 14], [9.6, 17.2]],
+      attack: [[1.2, 14.2], [6.5, 14]],
+      passes: [[[2.1, 13.9], [5.6, 13.9], -2.4], [[7.1, 14.7], [8.9, 16.4]]],
+      ball: [[1.5, 12.6]],
+    },
     equipment: [{ item: "ball", qty: 1 }],
     setup: "A line of three or four with a thrower. Grass checked first.",
     howItRuns:
@@ -224,6 +310,30 @@ export const SETPIECE: Drill[] = [
     minutes: 11,
     players: { min: 12, max: 22 },
     space: "35 x 30 m",
+    diagram: {
+      space: [35, 30],
+      cones: [[0, 0], [35, 0], [0, 30], [35, 30], [4, 10], [13, 10], [22, 10], [31, 10]],
+      defence: [[9, 16], [18, 16], [27, 16]],
+      attack: [
+        [1, 22],
+        [5, 22],
+        [9, 22],
+        [13, 22],
+        [17, 22],
+        [12, 26],
+        [18, 26.8],
+        [23, 27.6],
+        [28, 28.2],
+        [32.5, 28.6],
+      ],
+      runs: [[[23.2, 26], [22.7, 19.8]]],
+      passes: [
+        [[2.6, 21.8], [7.3, 21.9], -3.5],
+        [[10.2, 23.2], [11.2, 24.3]],
+        [[14, 26.4], [16.2, 26.5]],
+      ],
+      ball: [[1.6, 19.6]],
+    },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "A lineout with a full back line behind it. Three defenders.",
     howItRuns:
@@ -247,6 +357,23 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 10, max: 22 },
     space: "35 x 30 m",
+    diagram: {
+      label:
+        "Set up diagram. A chase line spread across the pitch behind the kick-off spot, going forward together as the ball goes up.",
+      space: [35, 30],
+      cones: [[0, 0], [35, 0], [0, 30], [35, 30], [0, 22], [35, 22]],
+      attack: [[17.5, 22], [4, 22.6], [9, 22.6], [14, 22.6], [22, 22.6], [27, 22.6], [32, 22.6]],
+      runs: [
+        [[4, 21], [4.5, 12.5]],
+        [[9, 21], [9.4, 12.5]],
+        [[14, 21], [14.2, 12.5]],
+        [[22, 21], [22.2, 12.5]],
+        [[27, 21], [26.8, 12.5]],
+        [[32, 21], [31.6, 12.5]],
+      ],
+      passes: [[[17.5, 20.4], [17, 8.5], 2.5]],
+      ball: [[19, 25.5], [22.5, 25.5]],
+    },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }],
     setup: "A chasing team lined up behind the kick-off spot.",
     howItRuns:
