@@ -325,6 +325,14 @@ the shell the hub goes further with the width: `auto-fill` card grids, the plann
 panes so adding a drill does not scroll you away from the session. A drill page is
 shaped like a document with its facts alongside.
 
+**The nav is ordered by when a coach reaches for it.** Drills to find something,
+Sessions to build it, Match day on the Sunday. Account is not a place anyone
+opens the app to get to, so it goes last. Once there is a rail it is pinned to
+the foot of it with `margin-top: auto`. Each tab carries an inline icon,
+written out in `lib/nav.ts` rather than imported so that module keeps pulling in
+nothing. Icon over label on the phone bar: beside the label came to about 450px
+across four tabs. Dropping the labels would leave a coach guessing at a cone.
+
 **The chrome is identity plus navigation. Nothing else.** No tagline, no "Coaching
 U10" pill. Anything only one entry can say makes the rail change shape depending on
 which route you are on, which is what a coach notices. `nav.test.ts` compares the two

@@ -59,13 +59,26 @@ describe("app navigation", () => {
     expect(navHref("planner", "/hub")).toBe("/planner");
   });
 
-  it("offers the same four places from anywhere", () => {
+  it("offers the same four places from anywhere, in the order a coach uses them", () => {
+    // Drills to find something, Sessions to build it, Match day on the Sunday.
+    // Account last because it is the odd one out, and pinned to the foot of the
+    // rail once the layout is wide enough to have one.
     expect(NAV_ITEMS.map((item) => item.key)).toEqual([
       "catalogue",
-      "planner",
       "plans",
+      "planner",
       "account",
     ]);
+  });
+
+  it("gives every tab an icon, hidden from a screen reader", () => {
+    for (const item of NAV_ITEMS) {
+      expect(item.icon, `${item.key} has no icon`).toMatch(/^<svg\b/);
+      // The label is right beside it, so announcing the icon as well would say
+      // everything twice all the way down the rail.
+      expect(item.icon, `${item.key}'s icon is not hidden`).toContain('aria-hidden="true"');
+      expect(item.icon, `${item.key}'s icon has a fixed colour`).not.toMatch(/#[0-9a-f]{3,8}/i);
+    }
   });
 
   it("pulls nothing from the hub into the planner's bundle", () => {
