@@ -751,13 +751,6 @@ body {
     max-width: 26rem;
   }
 
-  /* `.hub-btn` is full width because that is right on a phone. In a panel this
-     wide it turned Delete my account into a banner, which is the last control
-     on the page that should be easy to hit without meaning to. */
-  .account-layout .hub-btn {
-    width: auto;
-    min-width: 11rem;
-  }
 }
 
 /* ---- Session planner ---- */
@@ -1796,5 +1789,54 @@ body {
 
   .hub-seg:not(.is-active):hover {
     color: var(--color-text);
+  }
+}
+
+/* ---- Buttons, once there is room ---- */
+
+@media (min-width: 56.25rem) {
+  /* `.hub-btn` is full width because that is right on a phone, where a thumb
+     wants the whole row. Carried into a panel eleven hundred pixels across it
+     turned "Got it" and "Build one from scratch" into banners. It also made
+     Delete this session the easiest thing on the page to hit by accident. A
+     button should be about as wide as what it says. */
+  .hub-btn {
+    width: auto;
+    min-width: 10rem;
+  }
+
+  /* Stacked with a top margin on a phone. Side by side here, which is what two
+     or three actions on one panel should look like. */
+  .hub-btn + .hub-btn {
+    margin-top: 0;
+    margin-left: var(--sp-xs);
+  }
+
+  /* The age grid sizes its own cells, down to 7rem, so a minimum wider than
+     that would push the buttons out of them. The gap does the spacing. */
+  .age-picker-grid .hub-btn {
+    min-width: 0;
+  }
+
+  .age-picker-grid .hub-btn + .hub-btn {
+    margin-left: 0;
+  }
+
+  /* A destructive action does not join the row. Print it and Duplicate sitting
+     next to Delete this session only stayed apart because the panel happened to
+     be too narrow for all three. A wider one would have put delete a few pixels
+     from duplicate. */
+  .hub-btn + .hub-btn-danger {
+    display: block;
+    width: fit-content;
+    margin-top: var(--sp-sm);
+    margin-left: 0;
+  }
+
+  /* Still full width where the column is already narrow and the button is the
+     single thing the panel exists for. */
+  .hub-auth .hub-btn,
+  .add-peek-actions .hub-btn {
+    width: 100%;
   }
 }
