@@ -341,7 +341,7 @@ function card(drill: Drill): string {
   // diagram, so a phone list keeps every title on the same left edge rather
   // than having one row jump out of the column.
   return `
-    <article class="drill-card drill-card-illustrated${drill.diagram ? "" : " is-unillustrated"}">
+    <article class="drill-card drill-card-illustrated">
       <span class="drill-card-figure">${figure}</span>
       <span class="drill-card-body">
         <span class="drill-card-head">

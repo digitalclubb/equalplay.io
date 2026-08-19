@@ -1469,9 +1469,16 @@ body {
   }
 
   .drill-card-figure {
+    /* One number for the band and the picture in it. A min-height on the empty
+       one and an intrinsic height on the rest put the titles eight pixels out
+       from each other, which is exactly the sort of thing you see without being
+       able to say why. */
+    --figure-height: 11.5rem;
+
     display: grid;
     place-items: center;
     width: 100%;
+    height: calc(var(--figure-height) + var(--sp-2xs) * 2);
     margin-bottom: var(--sp-sm);
     padding: var(--sp-2xs);
   }
@@ -1482,19 +1489,13 @@ body {
   .drill-card-figure .drill-diagram {
     width: auto;
     max-width: 100%;
-    height: 11.5rem;
+    height: var(--figure-height);
   }
 
-  /* Nothing to show, so no reserved band. Cards match heights across a row,
-     which for this one would mean a card of empty panel under three lines of
-     text. Short is honest, stretched looks broken. */
-  .drill-card-figure:empty {
-    display: none;
-  }
-
-  .drill-card.is-unillustrated {
-    height: auto;
-  }
+  /* The drill with no diagram keeps the band, empty and unpainted. Collapsing
+     it left a short card in a row of tall ones and started its title higher up
+     than every sibling. Holding the height instead puts the text on the same
+     line as the rest of the row, which is the thing the eye actually reads. */
 
   .preset-grid {
     display: grid;
