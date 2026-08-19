@@ -679,7 +679,11 @@ body {
   color: var(--color-secondary);
 }
 
-.hub-panel ul {
+/* The indent belongs to prose lists, meaning the bare ones. A list that carries
+   a class owns its own padding, because this rule out-specifies the `padding: 0`
+   such a list sets on itself and left `.plan-warnings` and `.add-list` inset down
+   one side only. */
+.hub-panel ul:not([class]) {
   padding-left: var(--sp-md);
 }
 
@@ -1339,6 +1343,7 @@ body {
 
 .kit-list {
   columns: 2;
+  padding-left: var(--sp-md);
   font-size: var(--text-sm);
 }
 
