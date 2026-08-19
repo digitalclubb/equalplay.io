@@ -29,7 +29,8 @@ export function renderAccount(
   ).join("");
 
   container.innerHTML = `
-    <section class="hub-panel">
+    <div class="account-layout">
+    <section class="hub-panel account-main">
       <h2>${profile ? "Your details" : "Finish setting up"}</h2>
       ${
         profile
@@ -72,6 +73,7 @@ export function renderAccount(
       <p class="hub-fineprint">Signed in as ${esc(email)}.</p>
     </section>
 
+    <div class="account-side">
     <section class="hub-panel">
       <h2>Password</h2>
       <form id="password-form" novalidate>
@@ -94,7 +96,9 @@ export function renderAccount(
       <button type="button" class="hub-btn hub-btn-danger" id="delete-account">
         Delete my account
       </button>
-    </section>`;
+    </section>
+    </div>
+    </div>`;
 
   const accountForm = container.querySelector<HTMLFormElement>("#account-form");
   accountForm?.addEventListener("submit", (event) => {

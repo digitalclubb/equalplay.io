@@ -720,6 +720,46 @@ body {
   color: var(--color-text);
 }
 
+/* The account page. Three panels, one of which is the reason a coach came and
+   two of which are housekeeping, so on a wide screen they sit beside each other
+   rather than in one column a metre wide.
+
+   The fields inside stay in one column at every width. Side by side form fields
+   read slower and put the tab order in doubt. Neither of those changes because
+   there is room for them. What is capped is how wide any one field gets: a name
+   input stretched to 1100px was telling a coach to write an essay. */
+.account-layout > .hub-panel:last-child,
+.account-side > .hub-panel:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 56.25rem) {
+  .account-layout {
+    display: grid;
+    /* Capped rather than filling the view. Two columns across the full 78rem
+       left a 26rem field sitting in a 56rem panel, which moved the empty space
+       inside the panel instead of getting rid of it. */
+    max-width: 62rem;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    column-gap: var(--stack);
+    align-items: start;
+  }
+
+  /* A field should look about as long as what goes in it. */
+  .account-layout .hub-field input,
+  .account-layout .hub-field select {
+    max-width: 26rem;
+  }
+
+  /* `.hub-btn` is full width because that is right on a phone. In a panel this
+     wide it turned Delete my account into a banner, which is the last control
+     on the page that should be easy to hit without meaning to. */
+  .account-layout .hub-btn {
+    width: auto;
+    min-width: 11rem;
+  }
+}
+
 /* ---- Session planner ---- */
 
 .visually-hidden {
