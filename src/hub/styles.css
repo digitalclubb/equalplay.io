@@ -671,6 +671,19 @@ body {
   font-size: var(--text-sm);
 }
 
+/* The drill diagram. Sized off the text column rather than given a fixed width,
+   so it stays readable on a phone without dominating the setup it illustrates.
+   Everything structural inside it is `currentColor`, which is why it takes its
+   colour from here rather than carrying one of its own. */
+.drill-diagram {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  margin: var(--sp-sm) auto 0;
+  color: var(--color-text);
+}
+
 /* ---- Session planner ---- */
 
 .visually-hidden {

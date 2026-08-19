@@ -9,6 +9,7 @@ import {
   toggleFavourite,
 } from "../favourites.js";
 import { DRILLS, filterDrills, findDrill, type DrillFilter } from "../content/drills.js";
+import { renderDiagram } from "../content/diagram.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
@@ -391,6 +392,7 @@ function renderDetail(
 
         <h3>Set up</h3>
         <p>${esc(drill.setup)}</p>
+        ${drill.diagram ? renderDiagram(drill.diagram) : ""}
 
         <h3>How it runs</h3>
         <p>${esc(drill.howItRuns)}</p>

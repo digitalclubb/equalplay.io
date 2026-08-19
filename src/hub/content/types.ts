@@ -5,6 +5,8 @@
 // the whole catalogue readable at a wet training pitch with no signal, which is
 // the only place it actually gets used.
 
+import type { Diagram } from "./diagram.js";
+
 /**
  * RFU age grades covered by the hub. Order matters. Comparisons use the index,
  * so keep this ascending.
@@ -180,6 +182,8 @@ export interface Drill {
   regressions?: string[];
   /** Contact drills only. */
   safety?: string;
+  /** Where everything stands, in metres. Rendered by `diagram.ts`. */
+  diagram?: Diagram;
 }
 
 /**
