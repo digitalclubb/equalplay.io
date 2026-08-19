@@ -11,6 +11,7 @@ import { NAV_ITEMS, navHref, navHtml } from "../lib/nav.js";
 const plannerHtml = readFileSync("planner/index.html", "utf8");
 const navSource = readFileSync("src/lib/nav.ts", "utf8");
 const hubHtml = readFileSync("hub/index.html", "utf8");
+const mainSource = readFileSync("src/hub/main.ts", "utf8");
 
 /**
  * The tag and class of everything inside an entry's chrome, with the logo's SVG
@@ -102,6 +103,26 @@ describe("app navigation", () => {
     // @supabase/supabase-js is ~220 kB and `createClient` runs at module load, so
     // a single import from hub/ here would land the lot on the indexed page.
     expect(navSource).not.toMatch(/from\s+"[^"]*hub\//);
+  });
+
+  /**
+   * Both entries link their stylesheet from the document. The hub used to
+   * import it from `hub/main.ts` instead, which gives the browser nothing to
+   * hold paint on: it put up the bare HTML first, logo at its intrinsic 374px,
+   * then styled it when the module graph arrived. `inline-css` in
+   * vite.config.ts turns both links into a <style> in the head at build, so
+   * this is also what keeps dev looking like production.
+   */
+  it("lets both entries block on their own stylesheet", () => {
+    for (const [name, html] of [["planner", plannerHtml], ["hub", hubHtml]] as const) {
+      const links = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]*>/g)].map((m) => m[0]);
+      const own = links.filter((tag) => !tag.includes("fonts.googleapis.com"));
+      expect(own, `${name}/index.html does not link its own stylesheet`).toHaveLength(1);
+      expect(own[0], `${name}'s stylesheet is deferred`).not.toMatch(/media="print"/);
+    }
+    expect(mainSource, "hub/main.ts imports css, so the browser cannot block on it").not.toMatch(
+      /import\s+["'][^"']*\.css["']/,
+    );
   });
 
   it("gives both entries the same chrome", () => {

@@ -316,6 +316,13 @@ which passes them inline. Same rule for any test harness.
 
 #### Interface
 
+**Both entries link their own stylesheet from their HTML.** Never `import "./x.css"`
+from an entry's TypeScript. A JS import gives the browser nothing to hold paint on,
+so it puts the bare markup up first, logo at its intrinsic 374px, then styles it
+once the module graph lands. `inline-css` in `vite.config.ts` turns both links into a
+`<style>` in the head at build, which is why production never showed it and the dev
+server did. `nav.test.ts` fails if the import comes back.
+
 **Both entries write their nav into their HTML.** Neither waits on a bundle to
 paint the chrome. The hub used to ship an empty `.hub-nav` and fill it once 400 kB
 of JavaScript had arrived, so leaving Match day gave you a logo on navy and then a

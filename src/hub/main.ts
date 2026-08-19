@@ -1,4 +1,3 @@
-import "./styles.css";
 import { renderAuth } from "./views/authView.js";
 import { renderAccount } from "./views/account.js";
 import { forgetWelcome, renderCatalogue } from "./views/catalogue.js";

@@ -21,6 +21,13 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
+    <!-- Linked from the document rather than imported by `hub/main.ts`. A JS
+         import means the browser has nothing to block paint on, so it can put
+         the page up unstyled and the logo at its intrinsic size first. The
+         planner has always done it this way. `inline-css` in vite.config.ts
+         turns both into a <style> in the head at build. -->
+    <link rel="stylesheet" href="/src/hub/styles.css" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
