@@ -21,6 +21,35 @@ test("the homepage has one call to action, into the app", async ({ page }) => {
   await expect(page).toHaveURL(/\/hub/);
 });
 
+test("no static page scrolls sideways on the smallest phone", async ({ page }) => {
+  // The header is a flex row of two things that cannot shrink: the wordmark is
+  // nowrap and so is the call to action. Held on one line they came to 343px, so
+  // a 320px phone scrolled sideways on all twelve pages. It wraps below 344px now.
+  await page.setViewportSize({ width: 320, height: 800 });
+
+  for (const path of [
+    "/",
+    "/rugby-drills-by-age-group",
+    "/rugby-drills-u7",
+    "/rugby-drills-u8",
+    "/rugby-drills-u9",
+    "/rugby-drills-u10",
+    "/rugby-drills-u11",
+    "/rugby-drills-u12",
+    "/rugby-substitution-app",
+    "/equal-playing-time-calculator",
+    "/rfu-regulation-15-playing-time",
+    "/privacy",
+  ]) {
+    await page.goto(path);
+    const width = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+    }));
+    expect(width.scroll, path).toBeLessThanOrEqual(width.client);
+  }
+});
+
 test("the app and the planner are the same product", async ({ page }) => {
   await page.goto("/planner");
   await expect(page.locator(".btn-generate")).toBeVisible();

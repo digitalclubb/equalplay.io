@@ -45,8 +45,12 @@ body {
   padding: 1rem 0;
 }
 
+/* Wraps because neither child can shrink: the wordmark is nowrap and so is the
+   call to action. Held on one row they came to 343px, so a 320px phone scrolled
+   sideways on every static page. */
 .site-header .wrap {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
