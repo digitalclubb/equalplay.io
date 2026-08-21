@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-539 unit and integration tests across 18 files, 90 Playwright tests. Most are ordinary.
+539 unit and integration tests across 18 files, 91 Playwright tests. Most are ordinary.
 These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -102,7 +102,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 90 tests across four files: `matchday` (9), `home` (3), `hub` (71)
+`pnpm test:e2e` is 91 tests across four files: `matchday` (9), `home` (3), `hub` (72)
 and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -355,6 +355,13 @@ footer at the foot. They are all `auto` otherwise. A grid with `min-height: 100d
 then shares the spare height between them, so an empty view swelled the chrome by
 156px until the first route rendered. Both entries measure 0px of movement
 through boot now, at both widths.
+
+**The shell owns the gutters, so neither entry adds its own.** `--gutter` on
+`.app-shell` insets the chrome's contents and the view. The hub used to put side
+padding on `body` below 360px as well, which moved the shell instead of what is
+in it, so the navy stopped short and every hub route wore a pair of background
+gutters the planner did not have. `e2e/hub.spec.ts` measures the chrome against
+the viewport at 320px on both entries.
 
 **Both entries use one shell.** `.app-shell`, `.app-chrome` and `.app-view` live in
 `src/base.css`, not in `hub/styles.css`, because the match-day planner is the same

@@ -1078,6 +1078,30 @@ test("the chrome stays put when you move between routes", async ({ page }) => {
   }
 });
 
+test("the chrome runs edge to edge on a small phone", async ({ page }) => {
+  // The hub used to put 8px of side padding on `body` below 360px, which inset
+  // the whole shell. The navy went with it, so every hub route wore a pair of
+  // background-coloured gutters that /planner, sharing the same shell, did not.
+  const WIDTH = 320;
+  await page.setViewportSize({ width: WIDTH, height: 844 });
+
+  const chrome = () =>
+    page.locator(".app-chrome").evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { left: Math.round(box.left), width: Math.round(box.width) };
+    });
+
+  await signedOut(page, "u10");
+  for (const route of ["catalogue", "plans", "account"]) {
+    await page.goto(`/hub/#/${route}`);
+    await expect(page.locator(".app-chrome")).toBeVisible();
+    expect(await chrome(), `#/${route}`).toEqual({ left: 0, width: WIDTH });
+  }
+
+  await page.goto("/planner");
+  expect(await chrome(), "/planner").toEqual({ left: 0, width: WIDTH });
+});
+
 // ---- Auth form ----
 
 test("the sign-up fields stay in one column", async ({ page }) => {
