@@ -497,7 +497,7 @@ export function renderSharedPlan(
 
       ${blocks.map(({ block, drill }, position) => runBlock(block, drill, position)).join("")}
 
-      <section class="hub-panel plan-share">
+      <section class="hub-panel">
         <h3>Build your own</h3>
         <p>
           Equal Play is free for volunteer coaches. Every drill is gated by what

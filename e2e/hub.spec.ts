@@ -1174,6 +1174,23 @@ test("stopping without signal says the link is still live", async ({ page }) => 
   await expect(page.locator("#share-note")).toContainText("keeps working");
 });
 
+test("a link wearing the button class is a button", async ({ page }) => {
+  // `.hub-btn` is worn by anchors as often as by buttons, and an inline box
+  // ignores min-height and width. Every link wearing it came out underlined and
+  // 23px tall inside a 48px pill, the shared view's and the empty plan's alike.
+  await signedOut(page, "u10", "#/shared/8f3a1c2d-4e5f-4a6b-8c9d-0e1f2a3b4c5d");
+
+  const link = page.locator(".hub-empty a.hub-btn");
+  await expect(link).toBeVisible();
+  const drawn = await link.evaluate((el) => ({
+    decoration: getComputedStyle(el).textDecorationLine,
+    height: Math.round(el.getBoundingClientRect().height),
+  }));
+  expect(drawn.decoration).toBe("none");
+  // The project's own touch minimum, which an inline box silently ignores
+  expect(drawn.height).toBeGreaterThanOrEqual(44);
+});
+
 test("a link that is not a token is not treated as one", async ({ page }) => {
   await signedOut(page, "u10", "#/shared/nonsense");
   await expect(page.locator(".hub-empty")).toContainText("doesn't work any more");

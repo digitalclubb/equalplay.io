@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-551 unit and integration tests across 18 files, 97 Playwright tests. Most are ordinary.
+551 unit and integration tests across 18 files, 98 Playwright tests. Most are ordinary.
 These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -102,7 +102,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 97 tests across four files: `matchday` (9), `home` (4), `hub` (77)
+`pnpm test:e2e` is 98 tests across four files: `matchday` (9), `home` (4), `hub` (78)
 and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -453,6 +453,13 @@ on the homepage. Text on a themed surface uses `--color-text` or `--text`.
 It measures hover as well, at both nav widths. A hover rule lifting a tab's colour
 to white was written for the tabs you are not on. Over the one you are it painted
 white on white, which measured 1:1.
+
+**`.hub-btn` is worn by anchors as often as by buttons.** So it cannot lean on
+anything a `<button>` does for free. An inline box ignores `min-height` and `width`,
+which left every link wearing it underlined and 23px tall inside a 48px pill: the
+empty session, the shared view, both. The base rule carries the display, the centring
+plus the underline reset now. The `-edit` and `-done` variants change only what is
+actually different about them. `e2e/hub.spec.ts` measures one.
 
 **A control needs a visible edge.** Secondary buttons sit on `--color-surface` panels,
 so a `--color-surface` fill with a `--color-border` edge was 1.19:1 and effectively

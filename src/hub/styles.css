@@ -141,11 +141,19 @@ body {
 /* A secondary button sits on a panel. A panel is --color-surface, so a
    --color-surface button with a --color-border edge was white on white at
    1.19:1. WCAG wants 3:1 on the boundary of a control, so the edge is now a
-   text colour and the fill steps away from the panel it sits on. */
+   text colour and the fill steps away from the panel it sits on.
+
+   This is worn by anchors as often as by buttons, so it cannot lean on what a
+   <button> does for free. An inline box ignores min-height and width, which
+   left every link wearing it underlined and 23px tall inside a 48px pill. */
 .hub-btn {
   min-height: var(--touch-min);
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 var(--sp-md);
+  text-decoration: none;
   font-family: inherit;
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
@@ -673,6 +681,14 @@ body {
   margin: var(--sp-md) 0 var(--sp-2xs);
 }
 
+/* The panel's own padding is the gap. A heading opening a panel does not need a
+   second one on top of it. Child combinator on purpose: `.hub-panel h3` would
+   also catch any h3 that happens to open a div inside a panel, which is every
+   drill title in a running order. */
+.hub-panel > h3:first-child {
+  margin-top: 0;
+}
+
 .hub-panel p,
 .hub-panel li {
   font-size: var(--text-base);
@@ -865,10 +881,6 @@ body {
 .hub-btn-edit {
   width: auto;
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--sp-md);
-  text-decoration: none;
 }
 
 .run-meta {
@@ -886,10 +898,6 @@ body {
 }
 
 /* ---- Sharing ---- */
-
-.plan-share h3 {
-  margin-top: 0;
-}
 
 .share-from {
   margin-bottom: var(--sp-2xs);
@@ -1053,10 +1061,7 @@ body {
 .hub-btn-done {
   width: auto;
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
   padding: 0 var(--sp-lg);
-  text-decoration: none;
 }
 
 /* ---- Warnings ---- */
