@@ -23,11 +23,14 @@ import {
 import { localFavourites } from "../favourites.js";
 import {
   deletePlan,
+  fetchSharedPlan,
   localPlans,
   newPlanId,
   pendingCount,
   savePlan,
   stagePlan,
+  startSharing,
+  stopSharing,
   syncPlans,
   type StoredPlan,
 } from "../plans.js";
@@ -299,11 +302,14 @@ export function renderPlanView(
         : blocks.map(({ block, drill }, position) => runBlock(block, drill, position, plan.id)).join("")
     }
 
+    ${sharePanel(found)}
+
     <section class="hub-panel">
       <button type="button" class="hub-btn" id="plan-print">Print it</button>
     </section>`;
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
+  wireShare(container, ctx, planId);
   for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
     details.addEventListener("toggle", () => {
       const id = details.dataset.safety ?? "";
@@ -315,8 +321,210 @@ export function renderPlanView(
   renderPrintable(plan, blocks, totals);
 }
 
-/** One block, sized to be read at arm's length with a whistle in the other hand. */
-function runBlock(block: PlanBlock, drill: Drill, index: number, planId: string): string {
+// ---- Sharing ----
+
+/** Where the link points, written out so a coach can read it before they send it. */
+function shareUrl(token: string): string {
+  // `/hub`, not `/hub/`. The service worker precaches the first and matches on
+  // the exact URL, so the trailing slash would miss the cache and hand a reader
+  // with no signal the browser's own error page.
+  return `${window.location.origin}/hub#/shared/${token}`;
+}
+
+/**
+ * Sharing lives at the foot of the reading view rather than beside Edit.
+ *
+ * Reading the session is what this page is for. Sharing it is a thing a coach
+ * does once, so it sits after the running order instead of competing with it.
+ */
+const shareNote = '<p class="share-note" id="share-note" role="status"></p>';
+
+function sharePanel(plan: StoredPlan): string {
+  if (!plan.shareToken) {
+    return `
+      <section class="hub-panel plan-share">
+        <h3>Share it</h3>
+        <p>
+          Whoever else takes the age group can read this on their own phone. They
+          won't be able to change it and they don't need an account.
+        </p>
+        <button type="button" class="hub-btn" id="plan-share">Create a link</button>
+        ${shareNote}
+      </section>`;
+  }
+
+  return `
+    <section class="hub-panel plan-share">
+      <h3>Share it</h3>
+      <p class="hub-fineprint">Anyone with this link can read the session as it stands.</p>
+      <div class="hub-field">
+        <label class="visually-hidden" for="share-url">Link to this session</label>
+        <input id="share-url" class="share-url" type="text" readonly value="${esc(shareUrl(plan.shareToken))}" />
+      </div>
+      ${shareNote}
+      <div class="share-actions">
+        <button type="button" class="hub-btn hub-btn-primary" id="plan-copy">Copy the link</button>
+        <button type="button" class="hub-btn" id="plan-unshare">Stop sharing</button>
+      </div>
+    </section>`;
+}
+
+function wireShare(container: HTMLElement, ctx: PlannerContext, planId: string): void {
+  const note = (message: string): void => {
+    const target = container.querySelector("#share-note");
+    if (target) target.textContent = message;
+  };
+
+  container.querySelector("#plan-share")?.addEventListener("click", () => {
+    void startSharing(ctx.userId, planId).then((result) => {
+      if (!stillOn("plan", planId)) return;
+      renderPlanView(container, ctx, planId);
+      // Said out loud rather than left to be discovered by the person it was
+      // sent to. The token is staged locally, so the link exists before the
+      // server has heard about it and will not resolve until it has.
+      if (!result.reachedServer) {
+        note("Made on this phone. It starts working once you're back in signal.");
+      }
+    });
+  });
+
+  container.querySelector("#plan-copy")?.addEventListener("click", () => {
+    const field = container.querySelector<HTMLInputElement>("#share-url");
+    if (!field) return;
+    field.select();
+    // Refused is one thing. Absent is another: there is no clipboard at all
+    // outside a secure context, which is how a phone reaches the dev server.
+    // The field is selected either way, so there is still something to do.
+    const refused = (): void => {
+      note("Couldn't copy it. The link is selected, so copy it yourself.");
+    };
+    if (!navigator.clipboard) {
+      refused();
+      return;
+    }
+    void navigator.clipboard
+      .writeText(field.value)
+      .then(() => showToast("Link copied."))
+      .catch(refused);
+  });
+
+  container.querySelector("#plan-unshare")?.addEventListener("click", () => {
+    void stopSharing(ctx.userId, planId).then((result) => {
+      if (!stillOn("plan", planId)) return;
+      // Repainted first, so this writes into the panel that is on screen now
+      // rather than the one the click came from.
+      renderPlanView(container, ctx, planId);
+      if (!result.reachedServer) {
+        note("Stopped on this phone. The link you sent keeps working until this reaches the server.");
+      }
+    });
+  });
+}
+
+/**
+ * Somebody else's session, read by token.
+ *
+ * No account, no age grade of their own, nothing cached. The plan says which
+ * grade it was written for and links the RFU's own rules for it, the same as it
+ * does for the coach who wrote it.
+ */
+export function renderSharedPlan(
+  container: HTMLElement,
+  token: string,
+  /** The reader's own grade, when there is one. A stranger with no account has none. */
+  readerAge?: AgeGroup,
+): void {
+  container.innerHTML = `<section class="hub-panel"><p class="hub-fineprint">Fetching the session…</p></section>`;
+
+  void fetchSharedPlan(token).then(({ plan, reachedServer }) => {
+    if (!stillOn("shared", token)) return;
+
+    if (!plan) {
+      container.innerHTML = `
+        <section class="hub-panel hub-empty">
+          <p>${
+            reachedServer
+              ? "That link doesn't work any more. The coach who sent it may have stopped sharing."
+              : "We couldn't reach the server. A session somebody shared with you needs signal the first time you open it."
+          }</p>
+          <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
+        </section>`;
+      return;
+    }
+
+    const totals = planTotals(plan, DRILLS);
+    const blocks = planDrills(plan, DRILLS);
+    const tooOld = readerAge && !ageAtLeast(readerAge, plan.ageGroup);
+    // Errors only. "26 minutes still to fill" is a nudge for whoever wrote the
+    // session. The person reading it cannot act on that anyway.
+    const problems: PlanTotals = {
+      ...totals,
+      warnings: totals.warnings.filter((w) => w.level === "error"),
+    };
+
+    container.innerHTML = `
+      <section class="hub-panel run-head">
+        <p class="share-from">A coach shared this session with you</p>
+        <h2>${esc(plan.title)}</h2>
+        ${
+          // The catalogue would never put this in front of them, so the one
+          // place a drill can reach a grade that is not allowed to do it says
+          // so out loud. Still rendered: the coach who sent it meant to.
+          tooOld
+            ? `<p class="share-grade" role="alert">
+                 Written for ${AGE_GROUP_LABELS[plan.ageGroup]}. You coach
+                 ${AGE_GROUP_LABELS[readerAge]}, so some of this is above what
+                 your players are allowed to do yet.
+               </p>`
+            : ""
+        }
+        <p class="run-meta">
+          ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min${
+            totals.breakMinutes > 0 ? ` including ${totals.breakMinutes} of breaks` : ""
+          } · ${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}
+        </p>
+        ${
+          totals.equipment.length > 0
+            ? `<p class="run-kit"><strong>Pack</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
+            : ""
+        }
+        <p class="hub-fineprint">${ageRulesLink(
+          AGE_GROUP_LABELS[plan.ageGroup],
+          RULES_OF_PLAY[plan.ageGroup],
+        )}</p>
+        ${warningList(problems)}
+      </section>
+
+      ${blocks.map(({ block, drill }, position) => runBlock(block, drill, position)).join("")}
+
+      <section class="hub-panel plan-share">
+        <h3>Build your own</h3>
+        <p>
+          Equal Play is free for volunteer coaches. Every drill is gated by what
+          your age grade is allowed to do, so you'll only ever see the ones your
+          players can practise.
+        </p>
+        <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
+      </section>`;
+
+    for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
+      details.addEventListener("toggle", () => {
+        const id = details.dataset.safety ?? "";
+        if (details.open) openSafety.add(id);
+        else openSafety.delete(id);
+      });
+    }
+  });
+}
+
+/**
+ * One block, sized to be read at arm's length with a whistle in the other hand.
+ *
+ * `planId` is absent on a shared session. The link it draws goes into the
+ * catalogue and back out through a session the reader does not have, so on a
+ * shared page the running order is the whole document.
+ */
+function runBlock(block: PlanBlock, drill: Drill, index: number, planId?: string): string {
   return `
     <article class="hub-panel run-block">
       <div class="run-block-head">
@@ -344,7 +552,11 @@ function runBlock(block: PlanBlock, drill: Drill, index: number, planId: string)
       }
 
       <ul class="run-points">${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
-      <p class="run-more"><a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">How it runs, plus how to change it</a></p>
+      ${
+        planId
+          ? `<p class="run-more"><a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">How it runs, plus how to change it</a></p>`
+          : ""
+      }
     </article>
     ${
       block.breakAfter
@@ -386,7 +598,7 @@ export function renderPlanEditor(
 }
 
 function stripMeta(plan: StoredPlan): SessionPlan {
-  const { updatedAt: _updatedAt, ...rest } = plan;
+  const { updatedAt: _updatedAt, shareToken: _shareToken, ...rest } = plan;
   return rest;
 }
 

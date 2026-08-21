@@ -7,6 +7,7 @@ import {
   renderPlanEditor,
   renderPlanList,
   renderPlanView,
+  renderSharedPlan,
   resetPlanner,
   type PlannerContext,
 } from "./views/planner.js";
@@ -100,6 +101,12 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       renderSignedOut(route);
       return;
     }
+    // Ahead of the setup form for the same reason it is ahead of the age picker
+    // signed out: being asked which grade you coach is no answer to a link.
+    if (route.name === "shared" && route.param) {
+      renderSharedPlan(view, route.param, profile?.ageGroup);
+      return;
+    }
     if (!profile) {
       // Signed in but the age group is missing, so there is nothing safe to show
       // in the catalogue. The account form doubles as the setup screen.
@@ -140,6 +147,11 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         else if (route.rest[0] === "edit") renderPlanEditor(view, ctx, route.param);
         else renderPlanView(view, ctx, route.param);
         break;
+      // Handled above the profile check, because a link is not a reason to ask
+      // somebody which grade they coach. A bare #/shared has no session in it.
+      case "shared":
+        go("plans");
+        break;
       default:
         renderCatalogue(view, profile.ageGroup, userId ?? "", route.param, route.rest);
     }
@@ -156,6 +168,13 @@ function start(view: HTMLElement, nav: HTMLElement): void {
   function renderSignedOut(route: Route): void {
     if (route.name === "join") {
       renderAuth(view, "signup", GATE_REASON[route.param ?? ""] ?? "");
+      return;
+    }
+    // A shared session is a document somebody sent you. It comes before the age
+    // picker, because being asked which grade you coach is no answer to a link,
+    // and the session says which grade it was written for anyway.
+    if (route.name === "shared" && route.param) {
+      renderSharedPlan(view, route.param, chosenAge() ?? undefined);
       return;
     }
     // The list of starred drills needs an account to exist. A drill under it

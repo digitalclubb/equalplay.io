@@ -82,12 +82,12 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-539 unit and integration tests across 18 files, 92 Playwright tests. Most are ordinary.
+551 unit and integration tests across 18 files, 97 Playwright tests. Most are ordinary.
 These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
-| `content-age-gate.test.ts` | A ruck drill can never reach a U8 coach. Theme floors, maxAge, presets, favourites, search |
+| `content-age-gate.test.ts` | A ruck drill can never reach a U8 coach. Theme floors, maxAge, presets, favourites, search, plus the one exception a shared link makes and the warning that pays for it |
 | `sessionPlan.test.ts` | Plan arithmetic, the kit list, water breaks, block indexes addressing `plan.blocks` |
 | `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
 | `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
@@ -102,7 +102,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 92 tests across four files: `matchday` (9), `home` (4), `hub` (72)
+`pnpm test:e2e` is 97 tests across four files: `matchday` (9), `home` (4), `hub` (77)
 and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -169,7 +169,8 @@ src/
     supabase.ts           # Client (PKCE). Anon key is public, RLS is the boundary
     auth.ts               # Sign up/in/out, profile, deletion, validation
     router.ts             # Hash router, plus stillOn() for async guards
-    plans.ts              # session_plans CRUD, offline mirror, delete tombstones
+    plans.ts              # session_plans CRUD, offline mirror, delete tombstones,
+                          # share tokens and the read-only fetch behind them
     favourites.ts         # Starred drills, same local-first shape
     styles.css            # Hub only (imports base.css)
     content/
@@ -297,6 +298,17 @@ happens behind it. A drill id sits in `pending` until the server has heard about
 and on the next sync a pending id keeps its local state while everything else takes
 the server's word for it.
 
+**A shared session is read through a function, never through the table.** A coach
+sends a link to whoever else takes the age group. The reader is usually signed out,
+so RLS has no `auth.uid()` to match them against. A policy loose enough to let a
+token through would also let anyone list every shared plan and its `user_id`. So
+`shared_plan(token)` in migration `0003` takes the token as an argument, returns at
+most one row and writes its columns out so `user_id` can never come back. The token
+is the whole permission: null until the author asks for a link. Clearing it takes
+every copy of that link out of service. `stagePlan` carries it forward through an
+edit, because the editor works in `SessionPlan` and would otherwise drop it, quietly
+breaking a link a coach had already sent.
+
 **Deletes carry a tombstone.** A delete that cannot reach the server leaves the id in
 `deleted`. `syncPlans` then skips any remote row that is tombstoned. Without it,
 deleting a session with no signal un-deletes it, because the row is still on the
@@ -384,6 +396,20 @@ across four tabs. Dropping the labels would leave a coach guessing at a cone.
 U10" pill. Anything only one entry can say makes the rail change shape depending on
 which route you are on, which is what a coach notices. `nav.test.ts` compares the two
 chromes structurally so the next tagline fails the build.
+
+**A shared session is a document, not a route into the app.** `#/shared/<token>`
+comes before the age picker signed out, because asking which grade somebody coaches
+is no answer to a link. It states the grade it was written for and links the RFU's
+rules for it, the same as the author's own view. It shows no authoring nudges, only
+errors. Its blocks carry no link through to the catalogue either. The reader has no
+session of their own to come back to. Nor should a share link hand a U8 coach a
+route into U10 drill pages.
+
+It is also the one path by which a drill reaches a grade that is not allowed to do
+it, because a coach deliberately sent it. It renders as written rather than being
+filtered down to the reader. The reader is told instead: below the plan's grade a
+banner says so, above the drills. `content-age-gate.test.ts` pins that, because
+`filterDrills` no longer covers every route drill copy takes to a screen.
 
 **A session opens to be read, not edited.** `#/plan/<id>` is the running order at
 full size with coaching points on the page and safety expandable in place.

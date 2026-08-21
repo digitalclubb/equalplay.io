@@ -8,6 +8,13 @@ import type { PlanBlock, SessionPlan } from "../logic/sessionPlan.js";
  */
 export interface StoredPlan extends SessionPlan {
   updatedAt: string;
+  /**
+   * Set once the author asks for a share link, absent otherwise. Persistence
+   * metadata like `updatedAt`, so the editor never sees it, but unlike
+   * `updatedAt` it has to survive an edit rather than be replaced. A link a
+   * coach has already sent must not stop working because they changed a title.
+   */
+  shareToken?: string;
 }
 
 /**
@@ -121,7 +128,8 @@ function isStoredPlan(value: unknown): value is StoredPlan {
     typeof plan?.sessionMinutes === "number" &&
     Array.isArray(plan?.blocks) &&
     plan.blocks.every(isBlock) &&
-    isString(plan?.updatedAt)
+    isString(plan?.updatedAt) &&
+    (plan?.shareToken === undefined || isString(plan?.shareToken))
   );
 }
 
@@ -135,6 +143,8 @@ interface PlanRow {
   session_minutes: number | null;
   blocks: unknown;
   updated_at: string;
+  /** Absent on a shared read: `shared_plan` never returns it. */
+  share_token?: string | null;
 }
 
 function fromRow(row: PlanRow): StoredPlan | null {
@@ -147,6 +157,7 @@ function fromRow(row: PlanRow): StoredPlan | null {
     sessionMinutes: row.session_minutes ?? 60,
     blocks: Array.isArray(row.blocks) ? row.blocks.filter(isBlock) : [],
     updatedAt: row.updated_at,
+    shareToken: row.share_token ?? undefined,
   };
   return isStoredPlan(candidate) ? candidate : null;
 }
@@ -161,6 +172,10 @@ function toRow(plan: StoredPlan, userId: string): Record<string, unknown> {
     session_minutes: plan.sessionMinutes,
     blocks: plan.blocks,
     updated_at: plan.updatedAt,
+    // ponytail: last-write-wins on one column. A second device holding an
+    // unsynced edit from before the coach shared this will push null over a live
+    // token. Give the token its own row if sharing ever needs to survive that.
+    share_token: plan.shareToken ?? null,
   };
 }
 
@@ -190,7 +205,7 @@ export async function syncPlans(userId: string): Promise<SyncResult> {
 
   const { data, error } = await supabase
     .from("session_plans")
-    .select("id, title, age_group, theme, session_minutes, blocks, updated_at");
+    .select("id, title, age_group, theme, session_minutes, blocks, updated_at, share_token");
 
   if (error) {
     return { plans: localPlans(userId), reachedServer: false, pending: local.unsynced.length };
@@ -284,8 +299,16 @@ async function remove(userId: string, id: string): Promise<boolean> {
  * work. The network push is debounced behind it and is allowed to be slow.
  */
 export function stagePlan(userId: string, plan: SessionPlan): StoredPlan {
-  const stamped: StoredPlan = { ...plan, updatedAt: new Date().toISOString() };
   const current = store(userId);
+  const held = current.plans.find((p) => p.id === plan.id);
+  // The editor works in `SessionPlan`, which carries no token. Spreading an edit
+  // straight over the stored plan would drop it. A link the coach had already
+  // sent their co-coach would then quietly stop working.
+  const stamped: StoredPlan = {
+    ...plan,
+    updatedAt: new Date().toISOString(),
+    shareToken: held?.shareToken,
+  };
   writeLocal({
     userId,
     plans: [stamped, ...current.plans.filter((p) => p.id !== stamped.id)],
@@ -341,4 +364,102 @@ export async function deletePlan(userId: string, id: string): Promise<void> {
 export function newPlanId(): string {
   // Generated client-side so a plan can be created with no connection
   return crypto.randomUUID();
+}
+
+// ---- Sharing ----
+
+/**
+ * Turning a session into a link, then taking it back.
+ *
+ * The token is minted here rather than by a column default, for the same reason
+ * plan ids are: the coach gets their link the moment they ask. The push happens
+ * behind it like every other write. `reachedServer` is what lets the interface
+ * be honest that a link made in a car park does not work until the phone finds
+ * signal.
+ */
+export interface ShareResult {
+  token: string | null;
+  reachedServer: boolean;
+}
+
+async function setToken(
+  userId: string,
+  planId: string,
+  token: string | null,
+): Promise<ShareResult> {
+  const current = store(userId);
+  const held = current.plans.find((p) => p.id === planId);
+  if (!held) return { token: null, reachedServer: true };
+
+  const next: StoredPlan = {
+    ...held,
+    shareToken: token ?? undefined,
+    updatedAt: new Date().toISOString(),
+  };
+  writeLocal({
+    userId,
+    plans: [next, ...current.plans.filter((p) => p.id !== planId)],
+    unsynced: [...new Set([...current.unsynced, planId])],
+    deleted: current.deleted.filter((id) => id !== planId),
+  });
+
+  const pushed = await push(next, userId);
+  if (pushed) {
+    const after = store(userId);
+    writeLocal({
+      userId,
+      plans: after.plans,
+      unsynced: after.unsynced.filter((id) => id !== planId),
+      deleted: after.deleted,
+    });
+  }
+  return { token, reachedServer: pushed };
+}
+
+/** Starts sharing, or hands back the link that already exists. */
+export async function startSharing(userId: string, planId: string): Promise<ShareResult> {
+  if (!userId) return { token: null, reachedServer: true };
+  const held = store(userId).plans.find((p) => p.id === planId);
+  if (held?.shareToken) return { token: held.shareToken, reachedServer: true };
+  return setToken(userId, planId, crypto.randomUUID());
+}
+
+/** Clearing the token takes every copy of that link out of service at once. */
+export async function stopSharing(userId: string, planId: string): Promise<ShareResult> {
+  if (!userId) return { token: null, reachedServer: true };
+  return setToken(userId, planId, null);
+}
+
+/** A token is the whole permission, so anything that is not one is not asked about. */
+export function isShareToken(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+export interface SharedPlanResult {
+  plan: StoredPlan | null;
+  /** False when the server could not be reached, which is not the same as a dead link. */
+  reachedServer: boolean;
+}
+
+/**
+ * Reads somebody else's session by its token.
+ *
+ * Goes through the `shared_plan` function rather than the table, because the
+ * reader is usually anonymous and row level security has no `auth.uid()` to
+ * match them against. See `supabase/migrations/0003_share_session.sql`.
+ *
+ * Nothing is cached. This is the one thing in the hub a coach cannot read with
+ * no signal, because it was never theirs to hold on the device.
+ */
+export async function fetchSharedPlan(token: string): Promise<SharedPlanResult> {
+  if (!isShareToken(token)) return { plan: null, reachedServer: true };
+
+  const { data, error } = await supabase.rpc("shared_plan", { token });
+  // An error carrying a Postgres code came back from the server, so the phone is
+  // not the problem. Reporting a missing function or a revoked grant as "no
+  // signal" sends whoever hits it looking in the wrong place entirely.
+  if (error) return { plan: null, reachedServer: Boolean(error.code) };
+
+  const row = (data as PlanRow[] | null)?.[0];
+  return { plan: row ? fromRow(row) : null, reachedServer: true };
 }

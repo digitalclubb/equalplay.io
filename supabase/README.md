@@ -12,9 +12,28 @@ from `0001`.
 | --- | --- | --- |
 | `0001_session_plans.sql` | `session_plans` table, index, row level security | the session planner can save anything |
 | `0002_favourites.sql` | `favourites` table, index, row level security | starred drills sync between devices |
+| `0003_share_session.sql` | `share_token` column, unique index, the `shared_plan` function | a coach can send a session to whoever else takes the age group |
 
-As of 18 August 2026 neither has been run against the live project, so the hub works
-on the device and nothing reaches the server. `docs/roadmap.md` tracks that.
+`0001` and `0002` are applied. `0003` is not yet, so the share button stages a token
+locally and the link will not resolve until it has been run. `docs/roadmap.md` tracks
+the state of play.
+
+## About `shared_plan`
+
+The one function in the database. It is the second piece of server code in the
+project after `api/delete-account.ts`, so it is worth understanding before it is
+changed.
+
+Whoever opens a shared link is usually not signed in, so row level security has
+nothing to match them against. A policy loose enough to let the token through would
+also let anyone list every shared plan along with the `user_id` on each one. So the
+token goes in as an argument instead: the function is the only way to that row and
+it returns at most one. Its columns are written out so `user_id` can never come back
+with it.
+
+`security definer` is what lets it see past the policy. `set search_path = public`
+is not decoration: without it a definer function can be pointed at somebody else's
+schema. Keep both if you touch it.
 
 ## Auth settings to check
 

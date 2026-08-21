@@ -17,6 +17,7 @@ interface Row {
   session_minutes: number | null;
   blocks: unknown;
   updated_at: string;
+  share_token?: string | null;
 }
 
 /** Stands in for the one table this module touches. */
@@ -34,6 +35,21 @@ const ERROR = { message: "no connection" };
 vi.mock("../hub/supabase.js", () => ({
   isConfigured: true,
   supabase: {
+    /**
+     * Stands in for `shared_plan` in migration 0003. Deliberately searches every
+     * row rather than the caller's, because that is the whole point of it: the
+     * reader is somebody else and the token is all they have.
+     */
+    rpc(name: string, args: { token: string }) {
+      if (!server.online) return Promise.resolve({ data: null, error: ERROR });
+      if (name !== "shared_plan") return Promise.resolve({ data: null, error: ERROR });
+      const found = server.rows.filter((r) => r.share_token === args.token);
+      // The real function never returns user_id, so neither does this
+      return Promise.resolve({
+        data: found.map(({ user_id: _user_id, ...rest }) => rest),
+        error: null,
+      });
+    },
     from() {
       return {
         select() {
@@ -73,10 +89,14 @@ vi.mock("../hub/supabase.js", () => ({
 
 const {
   deletePlan,
+  fetchSharedPlan,
+  isShareToken,
   localPlans,
   pendingCount,
   savePlan,
   stagePlan,
+  startSharing,
+  stopSharing,
   syncPlans,
   retryPending,
   clearLocalPlans,
@@ -271,5 +291,104 @@ describe("the local mirror belongs to one coach", () => {
       }),
     );
     expect(localPlans(USER).map((p) => p.id)).toEqual(["ok"]);
+  });
+});
+
+/**
+ * Sharing a session with whoever else takes the age group.
+ *
+ * The token is the whole permission, so what matters is that it survives an
+ * edit, that clearing it really does close the door, and that a reader who is
+ * not the author can still get the plan.
+ */
+describe("sharing", () => {
+  it("hands back a link and puts the token on the row", async () => {
+    await savePlan(USER, plan("a"));
+    const { token, reachedServer } = await startSharing(USER, "a");
+
+    expect(token && isShareToken(token)).toBe(true);
+    expect(reachedServer).toBe(true);
+    expect(server.rows[0].share_token).toBe(token);
+  });
+
+  it("gives the same link back rather than minting a second one", async () => {
+    await savePlan(USER, plan("a"));
+    const first = await startSharing(USER, "a");
+    const second = await startSharing(USER, "a");
+    expect(second.token).toBe(first.token);
+  });
+
+  it("lets somebody who is not the author read it", async () => {
+    await savePlan(USER, plan("a", "Tuesday"));
+    const { token } = await startSharing(USER, "a");
+
+    const { plan: shared, reachedServer } = await fetchSharedPlan(token as string);
+    expect(reachedServer).toBe(true);
+    expect(shared?.title).toBe("Tuesday");
+    expect(shared?.blocks).toHaveLength(1);
+  });
+
+  it("keeps the link working after the author edits the session", async () => {
+    await savePlan(USER, plan("a", "Tuesday"));
+    const { token } = await startSharing(USER, "a");
+
+    // The editor works in SessionPlan, which carries no token at all
+    await savePlan(USER, plan("a", "Wednesday"));
+
+    expect(server.rows[0].share_token).toBe(token);
+    const { plan: shared } = await fetchSharedPlan(token as string);
+    expect(shared?.title).toBe("Wednesday");
+  });
+
+  it("closes the link when the author stops sharing", async () => {
+    await savePlan(USER, plan("a"));
+    const { token } = await startSharing(USER, "a");
+    await stopSharing(USER, "a");
+
+    expect(server.rows[0].share_token).toBeNull();
+    const { plan: shared, reachedServer } = await fetchSharedPlan(token as string);
+    expect(reachedServer).toBe(true);
+    expect(shared).toBeNull();
+  });
+
+  it("tells a dead link apart from no signal", async () => {
+    await savePlan(USER, plan("a"));
+    const { token } = await startSharing(USER, "a");
+
+    server.online = false;
+    const offline = await fetchSharedPlan(token as string);
+    expect(offline.reachedServer).toBe(false);
+    expect(offline.plan).toBeNull();
+  });
+
+  it("does not ask the server about something that is not a token", async () => {
+    const { plan: shared, reachedServer } = await fetchSharedPlan("../../etc/passwd");
+    expect(shared).toBeNull();
+    // Nothing failed. There was simply nothing worth asking
+    expect(reachedServer).toBe(true);
+  });
+
+  it("says a link made with no signal is not live yet", async () => {
+    await savePlan(USER, plan("a"));
+    server.online = false;
+
+    const { token, reachedServer } = await startSharing(USER, "a");
+    expect(token && isShareToken(token)).toBe(true);
+    expect(reachedServer).toBe(false);
+    // Staged, so it goes up with everything else once the phone finds signal
+    expect(pendingCount(USER)).toBe(1);
+
+    server.online = true;
+    await retryPending(USER);
+    expect(server.rows[0].share_token).toBe(token);
+  });
+
+  it("never hands the author's user id to a reader", async () => {
+    await savePlan(USER, plan("a"));
+    const { token } = await startSharing(USER, "a");
+
+    const { plan: shared } = await fetchSharedPlan(token as string);
+    expect(shared).not.toBeNull();
+    expect(JSON.stringify(shared)).not.toContain(USER);
   });
 });

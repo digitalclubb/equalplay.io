@@ -885,6 +885,59 @@ body {
   font-size: var(--text-sm);
 }
 
+/* ---- Sharing ---- */
+
+.plan-share h3 {
+  margin-top: 0;
+}
+
+.share-from {
+  margin-bottom: var(--sp-2xs);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--color-secondary);
+}
+
+/* Readonly rather than disabled, so a coach can select it by hand when the
+   clipboard is refused. It is a field, so it is styled as one. Hand-rolling it
+   dropped the 16px that stops iOS zooming the page, which Copy triggers by
+   focusing it. */
+.share-url {
+  margin-top: var(--sp-xs);
+  text-overflow: ellipsis;
+}
+
+/* Loud on purpose. This is the one place a drill can reach a grade that is not
+   allowed to do it, because a coach deliberately sent it. */
+.share-grade {
+  margin-top: var(--sp-xs);
+  padding: var(--sp-xs) var(--sp-sm);
+  background: var(--color-warning-bg);
+  border-left: 3px solid var(--color-warning-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-warning-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+}
+
+.share-note:not(:empty) {
+  margin-top: var(--sp-xs);
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
+  margin-top: var(--sp-sm);
+}
+
+.share-actions .hub-btn {
+  width: auto;
+  flex: 1 1 10rem;
+}
+
 .run-block {
   margin-bottom: var(--sp-xs);
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { DRILLS, filterDrills, isAvailableAt, findDrill } from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
@@ -261,6 +262,38 @@ describe("favourites never get round the age gate", () => {
     const all = filterDrills(DRILLS, { ageGroup: "u12" });
     const withEmptySet = filterDrills(DRILLS, { ageGroup: "u12", favourites: new Set() });
     expect(withEmptySet).toHaveLength(all.length);
+  });
+});
+
+/**
+ * The one path a drill can reach a grade that is not allowed to do it.
+ *
+ * A shared session is a document somebody deliberately sent, so it renders as
+ * written rather than being filtered down to the reader's grade. That is a
+ * decision rather than an oversight, and it is pinned here so it cannot be made
+ * again by accident: the reader is told, in the markup, before the drills.
+ */
+describe("a shared session is the exception, and says so", () => {
+  it("holds every catalogue path to the gate", () => {
+    // filterDrills is the only way a drill is surfaced by the app itself. What
+    // arrives through a link arrives because a coach sent it.
+    const u8 = filterDrills(DRILLS, { ageGroup: "u8" });
+    expect(u8.some((drill) => drill.themes.includes("breakdown"))).toBe(false);
+  });
+
+  it("warns the reader when the session is above their grade", () => {
+    const planner = readFileSync("src/hub/views/planner.ts", "utf8");
+    // The comparison, the banner and its role. Drop any one and a U8 coach reads
+    // a U12 lineout session with nothing said about it.
+    expect(planner).toContain("!ageAtLeast(readerAge, plan.ageGroup)");
+    expect(planner).toContain('class="share-grade" role="alert"');
+  });
+
+  it("gives the reader's own grade to the view on both routes", () => {
+    const main = readFileSync("src/hub/main.ts", "utf8");
+    // Signed in it comes off the profile, signed out off the age they picked.
+    expect(main).toContain("renderSharedPlan(view, route.param, profile?.ageGroup)");
+    expect(main).toContain("renderSharedPlan(view, route.param, chosenAge() ?? undefined)");
   });
 });
 

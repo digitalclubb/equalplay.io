@@ -489,6 +489,9 @@ test("start again gets out of an empty favourites list", async ({ page }) => {
 
   await page.locator("#clear-filters").click();
   await expect(page).toHaveURL(/#\/catalogue$/);
+  // The hash moves in the click, the list on the hashchange after it. `count()`
+  // does not retry, so it has to wait on something that does.
+  await expect(page.locator(".hub-empty")).toHaveCount(0);
   expect(await page.locator(".drill-card").count()).toBeGreaterThan(20);
 });
 
@@ -1100,6 +1103,80 @@ test("the chrome runs edge to edge on a small phone", async ({ page }) => {
 
   await page.goto("/planner");
   expect(await chrome(), "/planner").toEqual({ left: 0, width: WIDTH });
+});
+
+// ---- Sharing ----
+
+/**
+ * The build under test carries throwaway Supabase credentials, so every request
+ * fails. That is the point: a coach makes a link in a car park, and what the
+ * interface says about it has to be true.
+ */
+
+test("a session can be turned into a link", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page).toHaveURL(/#\/plan\/.+\/edit/);
+  await page.getByRole("link", { name: "Done" }).click();
+
+  await page.locator("#plan-share").click();
+
+  const field = page.locator("#share-url");
+  // `/hub`, not `/hub/`. The service worker precaches the first and matches
+  // exactly, so the trailing slash would miss the cache with no signal.
+  await expect(field).toHaveValue(
+    /\/hub#\/shared\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+  );
+  // The server is unreachable, so the link exists before it works. Say so
+  await expect(page.locator("#share-note")).toContainText("back in signal");
+});
+
+test("sharing can be taken back", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await page.getByRole("link", { name: "Done" }).click();
+
+  await page.locator("#plan-share").click();
+  await expect(page.locator("#share-url")).toBeVisible();
+
+  await page.locator("#plan-unshare").click();
+  await expect(page.locator("#share-url")).toHaveCount(0);
+  await expect(page.locator("#plan-share")).toBeVisible();
+});
+
+test("a shared session opens with no account and no age grade picked", async ({ page }) => {
+  // Not even the age picker first. Being asked which grade you coach is no
+  // answer to a link somebody sent you.
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem("__seeded", "1");
+  });
+  await page.goto("/hub/#/shared/8f3a1c2d-4e5f-4a6b-8c9d-0e1f2a3b4c5d");
+
+  await expect(page.locator(".hub-empty")).toContainText("needs signal");
+  await expect(page.locator(".age-picker-grid")).toHaveCount(0);
+  await expect(page.locator("#auth-form")).toHaveCount(0);
+});
+
+test("stopping without signal says the link is still live", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await page.getByRole("link", { name: "Done" }).click();
+
+  await page.locator("#plan-share").click();
+  await expect(page.locator("#share-url")).toBeVisible();
+
+  await page.locator("#plan-unshare").click();
+  // The panel goes back to "Create a link" while the server still has the token,
+  // so the note has to survive that repaint rather than be written into the
+  // panel the click came from.
+  await expect(page.locator("#plan-share")).toBeVisible();
+  await expect(page.locator("#share-note")).toContainText("keeps working");
+});
+
+test("a link that is not a token is not treated as one", async ({ page }) => {
+  await signedOut(page, "u10", "#/shared/nonsense");
+  await expect(page.locator(".hub-empty")).toContainText("doesn't work any more");
 });
 
 // ---- Auth form ----

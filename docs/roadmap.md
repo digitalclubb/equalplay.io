@@ -3,8 +3,20 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 19 August 2026, after the search audit. See `docs/one-product.md` for the
+Last updated 21 August 2026, after session sharing. See `docs/one-product.md` for the
 one-product change that preceded it and which of its phases are built.
+
+## Blocking: run `0003` before the next deploy
+
+`syncPlans` selects `share_token` and every upsert sends it. Against a schema without
+that column PostgREST rejects both, so a deploy that lands ahead of the migration
+takes out session sync for every coach, not just sharing. They would see the offline
+notice on a working connection and their edits would sit in `unsynced` until it ran.
+Nothing is lost, because the local mirror holds everything and retries, but it looks
+like the app has broken.
+
+Paste `supabase/migrations/0003_share_session.sql` into the SQL editor first, then
+push.
 
 ## Where the real project stands
 
@@ -18,6 +30,7 @@ have been used for real rather than against a stub.
 | --- | --- |
 | `supabase/migrations/0001_session_plans.sql` applied | done |
 | `supabase/migrations/0002_favourites.sql` applied | done |
+| `supabase/migrations/0003_share_session.sql` applied | **not yet** |
 | Environment variables set in Vercel, service role key without a `VITE_` prefix | done |
 | Committed, pushed, deployed | done |
 | Register for real, confirm the email, build a session, star a drill, reload | done |
@@ -69,6 +82,14 @@ triplets, negative parallelism, anaphora, no contractions. `docs/content-sourcin
 records which patterns and why. Coaching points stay clipped on purpose, because they
 are read one-handed in the rain.
 
+**Sharing.** A session goes out as a link to whoever else takes the age group. They
+read it, they cannot change it and they need no account, because the person who turns
+up on a Tuesday to help is not going to register first. The token is the whole
+permission and clearing it takes every copy of that link out of service. Read through
+`shared_plan` in migration `0003` rather than through the table, because the reader is
+usually anonymous and RLS has nothing to match them against. Needs `0003` run against
+the live project before a link resolves.
+
 **Coaching hub.**
 
 - Account: register with name, club and age group, sign in, reset, change password, edit
@@ -90,18 +111,18 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **Session dates.** Turns "Your sessions" from a pile of titles into a record of the
-   season. Cheapest real feature left. Needs migration `0003`.
-2. **Drill diagrams.** The only genuine table-stakes gap against the paid competition.
-   Generate SVG from coordinates held in the drill data, not images: consistent across
-   104 drills, editable, a couple of KB each, works offline, no licensing risk. Decided
-   against AI image generation, which gets rugby body positions wrong and would be
-   dangerous on a safety illustration.
-3. **Present mode.** One drill fullscreen, big type, coaching points only. Sportplan's
+1. **"Eight turned up."** You planned for twenty, eight came, so you have to decide in
+   the car park. Nobody does this, free or paid. It is the most real problem a
+   volunteer has. Every drill already carries `players: { min, max? }`, so this is a
+   number input and a filter over the blocks, flagging what will not work.
+2. **Present mode.** One drill fullscreen, big type, coaching points only. Sportplan's
    marquee feature. About twenty lines here.
+3. **What you have already run.** Framed as coverage rather than as a diary: handling
+   four weeks running and nothing on evasion since June is the failure a volunteer
+   actually has. Needs migration `0004`. Stores nothing about a child.
 4. **Your own drills.** Every club has three of its own. Without this the catalogue is
-   always somebody else's.
-5. **Share a session with your co-coach.** A read-only link is enough.
+   always somebody else's. The expensive part is not storage: a coach can tag a ruck
+   drill U8 and the one safety promise is gone. Scope the gate before building it.
 
 Instrumentation is live but has no data yet. `planner_to_app` and `register` are the
 two custom events, from `src/lib/track.ts`. A season of those answers whether the free
@@ -121,8 +142,14 @@ Volume is the wrong race. Nobody browses 3,000 drills, which their own 350 pre-m
 quietly admit. **Not one of them gates content by what an age grade is legally allowed to
 do**. That gap widens the more they add.
 
-RCW's £108/yr is the price anchor. £24 to £36/yr for one age group, with the free rotation
-planner as the funnel, is defensible without matching anyone's drill count.
+Rugby Coach Weekly organises by skill rather than by grade, which is what breadth costs
+them: covering U6 to U17+ from one library means no page can know who is reading it. Our
+gap widens the more they add.
+
+**Decided 21 August 2026: free, for good.** This is for volunteers giving up their
+Sundays, so there is no paid tier to design around and the earlier £24 to £36/yr note is
+withdrawn. That settles what to build: things that help one unpaid coach on a Tuesday,
+never things that would justify a price.
 
 ## Out of scope, with reasons
 
@@ -138,11 +165,21 @@ planner as the funnel, is defensible without matching anyone's drill count.
   practise and how many drills it has, without reproducing a word of a drill. The hub
   itself stays `noindex`. Publishing the drill copy is a different decision with its own
   copyright question and it has not been taken.
-- **Payments and tiers.** Not until somebody other than us has used it for a season.
+- **Payments and tiers.** Free for good, decided 21 August 2026. See above.
+- **Competing on drill count.** 104 a coach can trust beats 3,000 they have to check.
+- **A magazine or any editorial cadence.** That is Rugby Coach Weekly's business and it
+  is a treadmill a volunteer project cannot keep up with.
 
 ## Known issues
 
-- **Drill diagrams: 0 of 104.** Text only, deliberately, for now.
+- **A shared link needs signal the first time.** It was never the reader's plan to hold
+  on their device, so there is nothing to cache. The view says so rather than looking
+  broken.
+- **`0003_share_session.sql` is not applied yet.** See the blocker at the top.
+- **A stale second device can revoke a live link.** `share_token` is last-write-wins
+  like the rest of the row, so a tablet holding an unsynced edit from before the coach
+  shared will push null over the token. Marked `ponytail:` in `plans.ts`. The fix is
+  the token getting its own row, which is not worth it yet.
 - The skip link leaves `#hub-view` in the URL, so a reload lands on Drills rather than the
   view you were on. Cosmetic.
 - No way to add a drill to a session from the drill page. The planner's own search is the
@@ -155,6 +192,9 @@ planner as the funnel, is defensible without matching anyone's drill count.
 - `e2e/hub.spec.ts:146` opens a drill by clicking `.drill-card` rather than the link
   inside it. That aims at the element's centre, which moves when the web font swaps, so
   it can miss under load. One test was fixed this way already.
+- Anything the router reaches by changing the hash renders a task after the click, so a
+  `count()` straight after one reads the old view. Wait on a retrying assertion first.
+  Two tests have been fixed for this.
 
 ## Decisions worth not relitigating
 
