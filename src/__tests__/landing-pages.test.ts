@@ -180,6 +180,19 @@ describe("every static page reaches the product", () => {
     }
   });
 
+  it("keeps the two words of the logo in one flex item", () => {
+    // `.brand` is a flex row, so a bare "Equal" next to <span>Play</span> is two
+    // items with the whitespace between them trimmed away. The 0.6rem gap then
+    // prints where the space should be: 0.44em on the homepage against the hub's
+    // 0.176em for the same mark.
+    for (const path of [...PAGES, "public/privacy/index.html"]) {
+      expect(page(path), path).toContain('<span class="brand-text">Equal <span>Play</span></span>');
+    }
+    // The wrapper is what carries the orange word now. Rename it on one side only
+    // and "Play" goes white on navy across all twelve with this test still green.
+    expect(page("public/pages.css")).toContain(".brand-text span");
+  });
+
   it("carries the same footer", () => {
     for (const path of PAGES) {
       const html = page(path);

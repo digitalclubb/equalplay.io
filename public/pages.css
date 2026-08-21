@@ -70,7 +70,14 @@ body {
   flex: none;
 }
 
-.brand span {
+/* One flex item, so the space between the two words is a space rather than the
+   0.6rem gap. A bare text node beside a span makes two items. Flex trims the
+   whitespace between them, so nothing but the gap is left to hold them apart. */
+.brand-text {
+  white-space: nowrap;
+}
+
+.brand-text span {
   color: var(--brand);
 }
 

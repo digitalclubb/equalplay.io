@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-538 unit and integration tests across 18 files, 90 Playwright tests. Most are ordinary.
+539 unit and integration tests across 18 files, 90 Playwright tests. Most are ordinary.
 These nine are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
