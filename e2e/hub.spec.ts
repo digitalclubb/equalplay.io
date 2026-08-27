@@ -274,9 +274,9 @@ test("an account with no age grade lands on the setup form", async ({ page }) =>
   await page.goto("/hub/");
   await expect(page.locator("#hub-view h2").first()).toHaveText("Finish setting up");
   await expect(page.locator("#acc-age")).toHaveValue("");
-  // The nav is the same four tabs whatever state you are in, because it is one
+  // The nav is the same five tabs whatever state you are in, because it is one
   // product. What changes is where a tab lands you, not whether it exists.
-  await expect(page.locator(".hub-tab")).toHaveCount(4);
+  await expect(page.locator(".hub-tab")).toHaveCount(5);
   await expect(page.locator("#sign-out")).toBeVisible();
 });
 
@@ -1103,6 +1103,92 @@ test("the chrome runs edge to edge on a small phone", async ({ page }) => {
 
   await page.goto("/planner");
   expect(await chrome(), "/planner").toEqual({ left: 0, width: WIDTH });
+});
+
+test("all five tabs fit the phone bar, uncut, at every phone width", async ({ page }) => {
+  // The tabs used to size to their own labels. Four fitted; the fifth put them
+  // at 340px against a 320px phone and both entries scrolled sideways. The bar
+  // shares its width evenly now, and "Match day" wraps where it will not fit
+  // rather than turning into "Match da...".
+  //
+  // Swept rather than sampled. The first fix at 320px used a 360px breakpoint
+  // for the wrap, which left 361px and 362px truncating. One width proves one
+  // width, and phones are not all 320.
+  await signedOut(page, "u10");
+
+  for (const path of ["/hub/#/catalogue", "/planner"]) {
+    for (let width = 320; width <= 480; width += 1) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(path);
+      await expect(page.locator(".hub-tab").first()).toBeVisible();
+
+      const bar = await page.locator(".hub-nav").evaluate((el) => {
+        const tabs = [...el.querySelectorAll(".hub-tab")].map((tab) => {
+          const label = tab.querySelector(".hub-tab-label") as HTMLElement;
+          return {
+            text: label.textContent,
+            height: tab.getBoundingClientRect().height,
+            cut: label.scrollWidth > label.clientWidth + 0.5,
+          };
+        });
+        return { scroll: el.scrollWidth, client: el.clientWidth, tabs };
+      });
+
+      const where = `${path} at ${width}px`;
+      expect(bar.scroll, `${where}: the nav overflows its bar`).toBeLessThanOrEqual(bar.client);
+      expect(bar.tabs, `${where}: tab count`).toHaveLength(5);
+      for (const tab of bar.tabs) {
+        expect(tab.cut, `${where}: "${tab.text}" is truncated`).toBe(false);
+        // Still a target a thumb can hit.
+        expect(tab.height, `${where}: "${tab.text}" is too short to tap`).toBeGreaterThanOrEqual(44);
+      }
+    }
+  }
+});
+
+test("the Guide tab reaches the guides from either entry", async ({ page }) => {
+  await signedOut(page, "u10");
+
+  await page.goto("/hub/#/catalogue");
+  await page.locator('.hub-tab[data-route="guide"]').click();
+  await expect(page).toHaveURL(/#\/guide$/);
+  await expect(page.locator(".guide-card")).toHaveCount(6);
+  // Still inside the app, with the tab lit and the chrome unchanged.
+  await expect(page.locator('.hub-tab[data-route="guide"]')).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+
+  // From the planner it is a different document, so it is a path rather than a
+  // fragment, and it has to land on the same place.
+  await page.goto("/planner");
+  await page.locator('.hub-tab[data-route="guide"]').click();
+  await expect(page).toHaveURL(/\/hub#\/guide$/);
+  await expect(page.locator(".guide-card")).toHaveCount(6);
+});
+
+test("a guide reads with no account and no grade picked", async ({ page }) => {
+  // The guide is what every grade may do, so being asked which one you coach is
+  // no answer to it. It comes before the age picker, like a shared session.
+  await page.goto("/hub/#/guide/u10");
+  await expect(page.locator(".guide h2")).toHaveText("What changes at U10");
+  await expect(page.locator(".age-picker")).toHaveCount(0);
+
+  // And a coach can walk the grades from there.
+  await page.locator('.guide-steps a[href="#/guide/u11"]').click();
+  await expect(page.locator(".guide h2")).toHaveText("What changes at U11");
+});
+
+test("the guide shows a grade above the coach's own", async ({ page }) => {
+  // The catalogue must never do this. The guide has to: the grade you are going
+  // up to in September is the one you want to read in August.
+  await signedOut(page, "u8");
+  await page.goto("/hub/#/guide");
+  await expect(page.locator(".guide-card.is-yours")).toHaveCount(1);
+
+  await page.locator('.guide-card[href="#/guide/u12"]').click();
+  await expect(page.locator(".guide h2")).toHaveText("What changes at U12");
+  await expect(page.locator(".guide")).toContainText("The scrum goes to five");
 });
 
 // ---- Sharing ----

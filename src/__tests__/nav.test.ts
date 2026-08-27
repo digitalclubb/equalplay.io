@@ -77,14 +77,23 @@ describe("app navigation", () => {
     expect(navHref("planner", "/hub")).toBe("/planner");
   });
 
-  it("offers the same four places from anywhere, in the order a coach uses them", () => {
+  it("routes Guide inside the hub", () => {
+    // The guides are hub content, not static pages, so Guide is an ordinary
+    // fragment on the hub and a path-qualified one from the planner. Match day
+    // is the only tab that is a document of its own.
+    expect(navHref("guide")).toBe("#/guide");
+    expect(navHref("guide", "/hub")).toBe("/hub#/guide");
+  });
+
+  it("offers the same five places from anywhere, in the order a coach uses them", () => {
     // Drills to find something, Sessions to build it, Match day on the Sunday.
-    // Account last because it is the odd one out, and pinned to the foot of the
-    // rail once the layout is wide enough to have one.
+    // Then the two nobody opens the app to reach: Guide, which is an August
+    // read, and Account, pinned to the foot of the rail once there is one.
     expect(NAV_ITEMS.map((item) => item.key)).toEqual([
       "catalogue",
       "plans",
       "planner",
+      "guide",
       "account",
     ]);
   });

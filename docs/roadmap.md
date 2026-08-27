@@ -55,9 +55,15 @@ the manifest, so it reads as one thing. Signed out is a real state: pick an age 
 and the whole catalogue for it is readable with no account. Gates are on persistence
 only, meaning saved sessions and starred drills. See `docs/one-product.md`.
 
+**Age grade rules guides.** `#/guide` in the hub, one page per grade from U7 to
+U12, written from the RFU's own rules of play and checked against the appendices
+in August 2026. Data in `hub/content/guides.ts`, so it ships in the bundle and
+opens with no signal. Not gated by the coach's own grade: reading what U10 allows
+is the point of it when you are coaching U9 in May.
+
 **Match-day planner.** Unchanged in behaviour. It now uses the shared shell in
 `src/base.css`, so it has the same navy bar on a phone, the same rail at 900px and the
-same four tabs as the app, while still shipping 13.9 kB gzipped with no Supabase in it.
+same five tabs as the app, while still shipping 13.9 kB gzipped with no Supabase in it.
 Team switching moved out of the chrome into the planner's own view, above the squad
 inputs, because the chrome is navigation only.
 

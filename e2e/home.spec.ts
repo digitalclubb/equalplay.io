@@ -34,7 +34,6 @@ test("no static page scrolls sideways on the smallest phone", async ({ page }) =
     "/rugby-drills-u8",
     "/rugby-drills-u9",
     "/rugby-drills-u10",
-    "/rugby-rules-u10",
     "/rugby-drills-u11",
     "/rugby-drills-u12",
     "/rugby-substitution-app",
@@ -55,8 +54,8 @@ test("the app and the planner are the same product", async ({ page }) => {
   await page.goto("/planner");
   await expect(page.locator(".btn-generate")).toBeVisible();
 
-  // Same four tabs as the app, with this page marked as where you are
-  await expect(page.locator(".hub-tab")).toHaveCount(4);
+  // Same five tabs as the app, with this page marked as where you are
+  await expect(page.locator(".hub-tab")).toHaveCount(5);
   await expect(page.locator('.hub-tab[data-route="planner"]')).toHaveAttribute(
     "aria-current",
     "page",

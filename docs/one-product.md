@@ -91,7 +91,8 @@ Upsell moments, all at the point where a coach has just done the work:
 
 ### Phase 1. One shell
 
-- `src/lib/nav.ts`: the nav items and their render, in one place, importing nothing
+- `src/lib/nav.ts`: the nav items and their render, in one place, importing nothing.
+  Match day is the only one of the five that is a document of its own
   from `supabase.js`. Both entries use it. The planner renders it statically, so the
   planner page still ships no auth code.
 - Same navigation on both entries, whatever the sign-in state. Tapping Sessions

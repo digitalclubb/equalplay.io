@@ -31,6 +31,12 @@ const iconSessions = `<svg class="hub-tab-icon" ${ICON}><rect x="4" y="3.5" widt
 /** Two arrows swapping, which is the whole of match day. */
 const iconMatchDay = `<svg class="hub-tab-icon" ${ICON}><path d="M16 3.5 20 7.5l-4 4"/><path d="M20 7.5H4"/><path d="M8 20.5 4 16.5l4-4"/><path d="M4 16.5h16"/></svg>`;
 
+/**
+ * A book, open. Distinct from the Sessions sheet at 20px because of the spine
+ * down the middle: that one is a ruled rectangle, this one is two curved pages.
+ */
+const iconGuide = `<svg class="hub-tab-icon" ${ICON}><path d="M12 7.2C10.4 5.6 8 5 4.5 5v12.5c3.5 0 5.9.6 7.5 2.2 1.6-1.6 4-2.2 7.5-2.2V5c-3.5 0-5.9.6-7.5 2.2z"/><path d="M12 7.2v12.5"/></svg>`;
+
 /** One person, because an account belongs to one coach. */
 const iconAccount = `<svg class="hub-tab-icon" ${ICON}><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.5c.6-3.8 3.7-5.8 7.2-5.8s6.6 2 7.2 5.8"/></svg>`;
 
@@ -44,13 +50,15 @@ export interface NavItem {
 
 /**
  * Order is the order a coach uses them. Drills to find something, Sessions to
- * build it, Match day on the Sunday. Account is the odd one out and sits last,
+ * build it, Match day on the Sunday. Then the two nobody opens the app to get
+ * to. Guide is an August read rather than a weekly one. Account goes last,
  * pinned to the foot of the rail once there is a rail to pin it to.
  */
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: "catalogue", label: "Drills", icon: iconDrills },
   { key: "plans", label: "Sessions", icon: iconSessions },
   { key: "planner", label: "Match day", icon: iconMatchDay },
+  { key: "guide", label: "Guide", icon: iconGuide },
   { key: "account", label: "Account", icon: iconAccount },
 ];
 
@@ -58,6 +66,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
  * `hubBase` is "" on the hub itself, so its links stay bare fragments and never
  * reload the document. A path-qualified href would, because `/hub` and `/hub/`
  * are different paths and the host serves both.
+ *
+ * Match day is the one entry that is its own document, so it is a path from
+ * either side. Guide is an ordinary hub route.
  */
 export function navHref(key: string, hubBase = ""): string {
   return key === "planner" ? "/planner" : `${hubBase}#/${key}`;

@@ -28,6 +28,7 @@ import { currentRoute, go, onRoute, type Route } from "./router.js";
 import { navHtml } from "../lib/nav.js";
 import { chosenAge } from "./ageChoice.js";
 import { renderAgePicker } from "./views/agePicker.js";
+import { renderGuide } from "./views/guide.js";
 
 /**
  * Routes that belong to a tab of another name. The plan editor lives under
@@ -96,6 +97,17 @@ function start(view: HTMLElement, nav: HTMLElement): void {
   function render(): void {
     const route = currentRoute();
     highlight(route);
+
+    // The guide is what every grade is allowed to do, so it needs neither an
+    // account nor a grade of your own. Being asked which one you coach is no
+    // answer to "can we ruck yet". The grade you are moving up to in September
+    // is also the one you want to read in August. Ahead of both checks for the
+    // same reason a shared session is.
+    if (route.name === "guide") {
+      clearPrintable();
+      renderGuide(view, route.param, profile?.ageGroup ?? chosenAge() ?? undefined);
+      return;
+    }
 
     if (!signedIn) {
       renderSignedOut(route);

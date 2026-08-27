@@ -329,10 +329,31 @@ html {
   opacity: 0.8;
 }
 
-@media (max-width: 360px) {
+/* The phone bar shares its width between the tabs rather than letting each one
+   size to its own label. With four tabs the padding could be generous. The
+   fifth made "Drills Sessions Match day Guide Account" 340px at their natural
+   widths, so a 320px phone scrolled sideways on both entries. Even columns with
+   the padding taken off fit five and would fit a sixth.
+
+   The label wraps rather than truncating. "Match day" is the only one that ever
+   needs to: it fits on one line from about 363px up and takes two below that.
+   Letting it wrap where it does not fit avoids a breakpoint that has to be
+   right to the pixel. The first go put one at 360px and left 361px and 362px
+   rendering "Match da...". Dropping the label instead would leave a coach
+   guessing at a cone. Shortening it renames the product's own word for
+   Sunday. */
+@media (max-width: 480px) {
   .hub-tab {
-    padding: 0 var(--sp-sm);
-    font-size: var(--text-xs);
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 var(--sp-3xs);
+  }
+
+  .hub-tab-label {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
   }
 }
 

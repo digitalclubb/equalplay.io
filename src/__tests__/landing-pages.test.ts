@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { DRILLS, filterDrills } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
@@ -104,7 +104,6 @@ describe("age group landing pages", () => {
       "index.html",
       CLUSTER,
       ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
-      "public/rugby-rules-u10/index.html",
     ]) {
       const html = page(path).replace(/\s+/g, " ");
       expect(CLAIMS.test(html), `${path}: ${html.match(CLAIMS)?.[0]}`).toBe(false);
@@ -161,12 +160,41 @@ describe("the drills by age group page", () => {
   });
 });
 
+describe("the marketing pages reach the guides", () => {
+  /**
+   * The guides are a hub route rather than static pages, so the only thing the
+   * marketing site owes them is a way in. Somebody who lands on the U9 drills
+   * page from a search is exactly who wants the U9 rules, and `/hub` is noindex
+   * so nothing else will send them there.
+   */
+  it("links each grade's guide from that grade's drills page", () => {
+    for (const age of AGE_GROUPS) {
+      expect(agePage(age), age).toContain(`href="/hub#/guide/${age}"`);
+    }
+  });
+
+  it("links every grade's guide from the cluster page", () => {
+    const html = page(CLUSTER);
+    for (const age of AGE_GROUPS) {
+      expect(html, age).toContain(`href="/hub#/guide/${age}"`);
+    }
+  });
+
+  it("has no static guide pages left behind", () => {
+    // They shipped as `public/rugby-rules-*` for one commit. A stray copy would
+    // be a second version of every age grade claim, indexed, drifting.
+    expect(existsSync("public/rugby-rules-by-age-group"), "guide index").toBe(false);
+    for (const age of AGE_GROUPS) {
+      expect(existsSync(`public/rugby-rules-${age}`), age).toBe(false);
+    }
+  });
+});
+
 describe("every static page reaches the product", () => {
   const PAGES = [
     "index.html",
     CLUSTER,
     ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
-    "public/rugby-rules-u10/index.html",
     "public/rugby-substitution-app/index.html",
     "public/equal-playing-time-calculator/index.html",
     "public/rfu-regulation-15-playing-time/index.html",
@@ -234,7 +262,9 @@ describe("every static page reaches the product", () => {
       expect(urls, age).toContain(`https://equalplay.io/rugby-drills-${age}`);
     }
     expect(urls).toContain("https://equalplay.io/rugby-drills-by-age-group");
-    expect(urls).toContain("https://equalplay.io/rugby-rules-u10");
+    // The guides live at #/guide inside the hub, which is noindex, so nothing
+    // about them belongs in here.
+    expect(urls.filter((u) => u.includes("rugby-rules")), "guides in the sitemap").toEqual([]);
     expect(urls).toContain("https://equalplay.io/");
   });
 });
@@ -243,7 +273,6 @@ describe("structured data on the static pages", () => {
   const WITH_LD = [
     CLUSTER,
     ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
-    "public/rugby-rules-u10/index.html",
     "public/rugby-substitution-app/index.html",
     "public/rfu-regulation-15-playing-time/index.html",
     "public/equal-playing-time-calculator/index.html",

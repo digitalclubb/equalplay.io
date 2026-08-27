@@ -92,9 +92,9 @@ These nine are load bearing and a failure means the code is wrong, not the test:
 | `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
 | `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
-| `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle |
+| `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle. Guide and Match day resolve to paths rather than fragments |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
-| `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed |
+| `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules guide, linked from its drills page and from the index |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -122,12 +122,13 @@ Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `hub/index.html` → `/hub`. Keeping them separate is deliberate:
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
 homepage ships no JavaScript at all. Static SEO pages live in `public/` and are
-copied verbatim, sharing `public/pages.css` with the homepage. They fall into two
+copied verbatim, sharing `public/pages.css` with the homepage. They fall into three
 clusters: match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
-`rfu-regulation-15-playing-time`) and drills (`rugby-drills-by-age-group` plus one
-page per grade, `rugby-drills-u7` through `rugby-drills-u12`). Both point their
-chrome at `/hub`, because the chrome belongs to the product rather than to whichever
-half a coach landed on.
+`rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group` plus one
+page per grade, `rugby-drills-u7` through `rugby-drills-u12`) and the rules guides
+(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`). All
+of them point their chrome at `/hub`, because the chrome belongs to the product
+rather than to whichever half a coach landed on.
 
 **A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
 true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
@@ -157,7 +158,7 @@ src/
   lib/
     esc.ts                # HTML and attribute escaping, used by both halves
     rulesLink.ts          # Links out to the RFU, one wording in one place
-    nav.ts                # The four tabs, shared by both entries. Imports nothing
+    nav.ts                # The five tabs, shared by both entries. Imports nothing
     track.ts              # The two custom analytics events, lazily imported
   types/index.ts          # Rotation planner domain types
   logic/
@@ -389,12 +390,36 @@ panes so adding a drill does not scroll you away from the session. A drill page 
 shaped like a document with its facts alongside.
 
 **The nav is ordered by when a coach reaches for it.** Drills to find something,
-Sessions to build it, Match day on the Sunday. Account is not a place anyone
-opens the app to get to, so it goes last. Once there is a rail it is pinned to
-the foot of it with `margin-top: auto`. Each tab carries an inline icon,
+Sessions to build it, Match day on the Sunday. Then the two nobody opens the app
+to reach. Guide is an August read. Account goes last, pinned to the foot of the
+rail with `margin-top: auto`. Each tab carries an inline icon,
 written out in `lib/nav.ts` rather than imported so that module keeps pulling in
 nothing. Icon over label on the phone bar: beside the label came to about 450px
 across four tabs. Dropping the labels would leave a coach guessing at a cone.
+
+**The phone bar shares its width between the tabs.** They used to size to their
+own labels, which fitted four and put five at 340px against a 320px phone. Even
+columns fit five with room for a sixth. "Match day" is the only label that ever
+needs two lines, so it wraps wherever it will not fit rather than truncating.
+The first fix put a breakpoint at 360px for that and left 361px and 362px
+rendering "Match da...", so `e2e/hub.spec.ts` sweeps every width from 320 to 480
+on both entries rather than sampling one. A breakpoint that has to be right to
+the pixel is a breakpoint that is wrong somewhere.
+
+**The guide is hub content, not a marketing page.** `#/guide` and
+`#/guide/<age>`, rendered by `hub/views/guide.ts` off `hub/content/guides.ts`.
+It shipped as seven static pages under `public/rugby-rules-*` for one commit,
+which made Guide the only tab that left the app shell and the only one that
+would not open with no signal, since `sw.js` precaches `/hub` rather than each
+page. As hub content it is in the bundle the catalogue is already in.
+
+**The guide is the one thing in the hub the age gate does not touch.** Every
+other route hides what the coach's grade may not do, because handing an U8 a
+ruck drill is a safety problem. A guide is the opposite: a coach going up to U10
+in September wants to read the U10 page in August, so hiding the grade above
+yours hides the thing they came for. It also needs no account and no grade at
+all, so `render()` takes it before both checks, the same way a shared session
+comes before the age picker.
 
 **The chrome is identity plus navigation. Nothing else.** No tagline, no "Coaching
 U10" pill. Anything only one entry can say makes the rail change shape depending on
