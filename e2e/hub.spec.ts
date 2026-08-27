@@ -338,6 +338,52 @@ test("works on a 320px screen without sideways scroll", async ({ page }) => {
 
 // ---- Favourites ----
 
+test("the small space filter narrows the list and survives a drill", async ({ page }) => {
+  await signedIn(page, "u10", "#/catalogue");
+  const count = async () => page.locator(".drill-card").count();
+
+  const all = await count();
+  await page.locator("#f-space").click();
+  await expect(page.locator("#f-space")).toHaveAttribute("aria-pressed", "true");
+
+  const small = await count();
+  expect(small).toBeLessThan(all);
+  expect(small).toBeGreaterThan(0);
+  await expect(page.locator(".hub-count")).toContainText("sports hall");
+
+  // Filters live above the route, so a trip into a drill and back keeps it
+  await page.locator(".drill-card-link").first().click();
+  await expect(page.locator(".drill-detail")).toBeVisible();
+  await page.locator(".hub-back a").click();
+  await expect(page.locator("#f-space")).toHaveAttribute("aria-pressed", "true");
+  expect(await count()).toBe(small);
+});
+
+test("the small space filter cannot get round the age gate", async ({ page }) => {
+  await signedIn(page, "u8", "#/catalogue");
+  await page.locator("#f-space").click();
+  await expect(page.locator("#f-space")).toHaveAttribute("aria-pressed", "true");
+
+  // A tight square does not make a ruck legal for an U8 grade
+  for (const theme of ["breakdown", "tackle", "setpiece"]) {
+    await pickTheme(page, theme);
+    await expect(page.locator(".drill-card")).toHaveCount(0);
+  }
+});
+
+test("a session can be built for the hall when the pitch is frozen", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+
+  const all = Number((await page.locator(".add-count").innerText()).match(/(\d+)/)?.[1]);
+  await page.locator("#add-space").click();
+  await expect(page.locator("#add-space")).toHaveAttribute("aria-pressed", "true");
+  const small = Number((await page.locator(".add-count").innerText()).match(/(\d+)/)?.[1]);
+  expect(small).toBeLessThan(all);
+  expect(small).toBeGreaterThan(0);
+});
+
 test("stars a drill and filters to it", async ({ page }) => {
   await signedIn(page, "u10");
 

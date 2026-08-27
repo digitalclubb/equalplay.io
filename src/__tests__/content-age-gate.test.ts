@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
 import { localPlans, stagePlan } from "../hub/plans.js";
-import { DRILLS, filterDrills, isAvailableAt, findDrill } from "../hub/content/drills.js";
+import { DRILLS, filterDrills, fitsSmallSpace, isAvailableAt, findDrill } from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
 import {
   AGE_GROUPS,
@@ -416,5 +416,66 @@ describe("adding a drill to a session from the drill page", () => {
     renderCatalogue(container, "u12", "", "drill-two-second-ruck");
     container.querySelector<HTMLButtonElement>("#drill-add")?.click();
     expect(window.location.hash).toBe("#/join/plans");
+  });
+});
+
+/**
+ * The pitch is frozen and you are in the sports hall, or another age group has
+ * the rest of the field. The filter is worked out from each drill's diagram
+ * rather than from a field somebody has to keep true by hand.
+ */
+describe("drills that fit a small space", () => {
+  it("keeps a tight drill and drops one that needs a pitch", () => {
+    const tight = DRILLS.filter((drill) => drill.diagram && drill.diagram.space[0] <= 10);
+    const wide = DRILLS.filter((drill) => drill.diagram && drill.diagram.space[0] >= 40);
+    expect(tight.length, "no tight drills to check").toBeGreaterThan(0);
+    expect(wide.length, "no wide drills to check").toBeGreaterThan(0);
+    for (const drill of tight) expect(fitsSmallSpace(drill), drill.id).toBe(true);
+    for (const drill of wide) expect(fitsSmallSpace(drill), drill.id).toBe(false);
+  });
+
+  it("counts either orientation, because a room can be turned round", () => {
+    for (const drill of DRILLS) {
+      if (!drill.diagram) continue;
+      const [width, depth] = drill.diagram.space;
+      const turned = { ...drill, diagram: { ...drill.diagram, space: [depth, width] as [number, number] } };
+      expect(fitsSmallSpace(turned), drill.id).toBe(fitsSmallSpace(drill));
+    }
+  });
+
+  it("never gets round the age gate", () => {
+    // Age is checked before the space is. A ruck drill in a tight square is
+    // still a ruck drill, and a U8 hall does not make it legal.
+    const u8 = filterDrills(DRILLS, { ageGroup: "u8", smallSpace: true });
+    for (const drill of u8) {
+      expect(isAvailableAt(drill, "u8"), drill.id).toBe(true);
+      expect(drill.themes.includes("breakdown"), drill.id).toBe(false);
+    }
+  });
+
+  it("leaves every grade something to run rather than emptying the young ones", () => {
+    // A tighter box was tried and left U7 two drills out of eighteen, because
+    // tag games need running room while contact work happens in a square. A
+    // filter that is useless at exactly the grades most likely to be indoors is
+    // not a filter worth having.
+    for (const age of AGE_GROUPS) {
+      const all = filterDrills(DRILLS, { ageGroup: age });
+      const small = filterDrills(DRILLS, { ageGroup: age, smallSpace: true });
+      expect(small.length, `${age} has too few`).toBeGreaterThan(all.length / 4);
+      expect(small.length, `${age} is barely filtered`).toBeLessThan(all.length);
+    }
+  });
+
+  it("holds a drill with no diagram to the space it states", () => {
+    // The rule says a drill with no diagram needs no marked area, which is true
+    // of the one mobility warm-up that has none. This stops a later drill
+    // arriving with no diagram and a full pitch and being offered for a hall.
+    const undrawn = DRILLS.filter((drill) => !drill.diagram);
+    for (const drill of undrawn) {
+      const metres = (drill.space.match(/\d+/g) ?? []).map(Number);
+      expect(metres.length, `${drill.id} states no size`).toBeGreaterThan(0);
+      expect(Math.max(...metres), drill.id).toBeLessThanOrEqual(25);
+      expect(Math.min(...metres), drill.id).toBeLessThanOrEqual(15);
+    }
   });
 });

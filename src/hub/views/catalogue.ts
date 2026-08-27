@@ -194,10 +194,11 @@ function renderList(container: HTMLElement): void {
       </div>
 
       <div class="chip-scroll-wrap">
-      <div class="chip-scroll" role="group" aria-label="What you're working on">
+      <div class="chip-scroll" role="group" aria-label="Narrow the drills down">
         <button type="button" id="f-fav" class="chip-filter chip-fav${active.onlyFavourites ? " is-active" : ""}" aria-pressed="${Boolean(active.onlyFavourites)}">
           ${star(Boolean(active.onlyFavourites))} Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}
         </button>
+        <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">Small space</button>
         <span class="chip-divider" aria-hidden="true"></span>
         <button type="button" data-theme="" class="chip-filter${active.theme ? "" : " is-active"}" aria-pressed="${active.theme ? "false" : "true"}">Anything</button>
         ${THEMES.map(
@@ -265,6 +266,10 @@ function renderList(container: HTMLElement): void {
     go(active.onlyFavourites ? "catalogue" : "favourites");
   });
 
+  container.querySelector("#f-space")?.addEventListener("click", () => {
+    update({ smallSpace: !active.smallSpace });
+  });
+
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
     button.addEventListener("click", (event) => {
       // The whole card is a link, so stop the tap turning into navigation
@@ -300,13 +305,14 @@ function renderList(container: HTMLElement): void {
 
 function countLabel(count: number, filter: DrillFilter): string {
   const age = AGE_GROUP_LABELS[filter.ageGroup];
+  const room = filter.smallSpace ? " in a sports hall or a corner of the pitch" : "";
   if (count === 0) return `Nothing for ${age} matches that.`;
   if (filter.onlyFavourites) {
     return count === 1
-      ? `One favourite your ${age} squad can do.`
-      : `${count} favourites your ${age} squad can do.`;
+      ? `One favourite your ${age} squad can do${room}.`
+      : `${count} favourites your ${age} squad can do${room}.`;
   }
-  return `${count} ${count === 1 ? "drill" : "drills"} your ${age} squad can do.`;
+  return `${count} ${count === 1 ? "drill" : "drills"} your ${age} squad can do${room}.`;
 }
 
 function emptyState(filter: DrillFilter): string {
@@ -321,6 +327,10 @@ function emptyState(filter: DrillFilter): string {
     // We know exactly when it arrives, so say so
     const from = AGE_GROUP_LABELS[THEME_MIN_AGE[filter.theme]];
     reason = `${THEME_LABELS[filter.theme]} starts at ${from}. Nothing here for your ${age}s yet.`;
+  } else if (filter.smallSpace && filter.search?.trim()) {
+    reason = `Nothing that small for ${age} matches "${filter.search.trim()}".`;
+  } else if (filter.smallSpace) {
+    reason = `Nothing for ${age} fits a small space with that on as well.`;
   } else if (filter.search?.trim()) {
     reason = `No ${age} drill matches "${filter.search.trim()}".`;
   } else if (filter.theme) {

@@ -61,6 +61,8 @@ let addSearch = "";
 let addTheme: Theme | undefined;
 let addKind: DrillKind | undefined;
 let addFavouritesOnly = false;
+/** The pitch is frozen and you are in the hall. Same filter the catalogue has. */
+let addSmallSpace = false;
 /** Which drill in the add list is expanded for a look before committing to it. */
 let previewing: string | null = null;
 let starred: Set<string> = new Set();
@@ -1038,6 +1040,7 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
           <button type="button" id="add-fav" class="chip-filter chip-fav${addFavouritesOnly ? " is-active" : ""}" aria-pressed="${addFavouritesOnly}">
             ${starIcon(addFavouritesOnly)} Favourites${starred.size > 0 ? ` (${starred.size})` : ""}
           </button>
+          <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">Small space</button>
           <span class="chip-divider" aria-hidden="true"></span>
           <button type="button" data-addtheme="" class="chip-filter${addTheme ? "" : " is-active"}" aria-pressed="${!addTheme}">Anything</button>
           ${THEMES.filter((t) => ageAtLeast(plan.ageGroup, THEME_MIN_AGE[t]))
@@ -1172,13 +1175,16 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
     kind: addKind,
     onlyFavourites: addFavouritesOnly,
     favourites: starred,
+    smallSpace: addSmallSpace,
   });
 
   if (matches.length === 0) {
     return `<p class="hub-fineprint">${
       addFavouritesOnly && starred.size === 0
         ? "No favourites yet. Star a drill under Drills and it'll show up here."
-        : `Nothing for ${AGE_GROUP_LABELS[ageGroup]} matches that.`
+        : addSmallSpace
+          ? `Nothing for ${AGE_GROUP_LABELS[ageGroup]} fits a small space with that on as well.`
+          : `Nothing for ${AGE_GROUP_LABELS[ageGroup]} matches that.`
     }</p>`;
   }
 
@@ -1363,6 +1369,12 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
     draw(container, ctx);
   });
 
+  container.querySelector("#add-space")?.addEventListener("click", () => {
+    addSmallSpace = !addSmallSpace;
+    previewing = null;
+    draw(container, ctx);
+  });
+
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-addkind]")) {
     button.addEventListener("click", () => {
       const value = button.dataset.addkind ?? "";
@@ -1523,6 +1535,7 @@ export function resetPlanner(): void {
   addTheme = undefined;
   addKind = undefined;
   addFavouritesOnly = false;
+  addSmallSpace = false;
   previewing = null;
   openSafety = new Set();
   saveState = "saved";
