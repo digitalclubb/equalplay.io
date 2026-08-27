@@ -627,8 +627,13 @@ function renderDetail(
       plansPulledFor = currentUserId;
       plansPulling = true;
       const pulledFor = currentUserId;
-      void syncPlans(currentUserId).then(() => {
+      void syncPlans(currentUserId).then((result) => {
         plansPulling = false;
+        // Only counted as asked when it actually got there. A first open with no
+        // signal would otherwise latch for the whole tab, so the panel would keep
+        // saying the coach has no sessions long after the signal came back. That
+        // is the failure this pull exists to prevent.
+        if (!result.reachedServer) plansPulledFor = null;
         // Checked now rather than remembered. The coach may have closed the
         // picker or walked to another drill while this was in the air.
         if (addOpen && currentUserId === pulledFor && currentRoute().param === drill.id) {

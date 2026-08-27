@@ -87,7 +87,7 @@ export function renderAccount(
       </form>
     </section>
 
-    <section class="hub-panel">
+    <section class="hub-panel" id="device-panel">
       <h2>On this device</h2>
       ${deviceState()}
     </section>
@@ -113,8 +113,14 @@ export function renderAccount(
       if (outcome === "installed") showToast("Added to your home screen.");
       else if (outcome === "dismissed") showToast("No bother. It works in the browser too.");
       else showToast("Your browser has it in its own menu instead.");
-      // The prompt is spent either way, so the button has nothing left to do
-      install.remove();
+
+      // The whole panel, not just the button. Dropping the button on its own
+      // left the copy around it still explaining how to install, underneath a
+      // message saying it had just been installed.
+      const panel = container.querySelector<HTMLElement>("#device-panel");
+      if (panel) {
+        panel.innerHTML = `<h2>On this device</h2>${deviceState(outcome === "installed")}`;
+      }
     });
   });
 
@@ -213,7 +219,7 @@ function message(error: unknown): string {
  * screen, so repainting this panel under a coach who is halfway through typing
  * their club name would cost more than a button appearing a visit late.
  */
-function deviceState(): string {
+function deviceState(justInstalled = false): string {
   const offline = savedForOffline()
     ? `<p class="device-state device-state-ready">
          Ready for the pitch. The drills, your sessions and the rules guides are
@@ -223,6 +229,14 @@ function deviceState(): string {
          Not saved for offline yet. It happens on its own a moment after the app
          opens, so look again in a minute.
        </p>`;
+
+  if (justInstalled) {
+    return `${offline}
+      <p class="hub-fineprint">
+        Added. Open it from your home screen next time for the icon with no
+        browser bar around it.
+      </p>`;
+  }
 
   if (isInstalled()) {
     return `${offline}

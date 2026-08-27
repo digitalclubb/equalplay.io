@@ -453,11 +453,17 @@ function holdScreenAwake(): void {
 
   lockPending = true;
   const generation = lockGeneration;
+  // Only a lock handed over and given straight back is worth asking for again.
+  // A refusal must not be, or a phone on battery saver spins rejected requests
+  // for the length of the session: `request` is rejected outright there, which
+  // is the very case the catch below is written for.
+  let abandoned = false;
   void api
     .request("screen")
     .then((lock) => {
       // Present mode was left while this was in flight, so nobody wants it now
       if (generation !== lockGeneration) {
+        abandoned = true;
         void lock.release().catch(() => {});
         return;
       }
@@ -477,7 +483,7 @@ function holdScreenAwake(): void {
       // A request that started, was abandoned on leaving and then came back to a
       // coach who had gone straight back in. It released what it was handed, so
       // without this present mode runs on with no lock and nothing to ask again.
-      if (runTimer !== undefined && !screenLock) holdScreenAwake();
+      if (abandoned && runTimer !== undefined && !screenLock) holdScreenAwake();
     });
 }
 

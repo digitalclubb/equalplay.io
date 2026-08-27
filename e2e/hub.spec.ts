@@ -1609,11 +1609,14 @@ test("coming back to a block keeps the time it had already used", async ({ page 
   await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
   await page.goBack();
   await expect(page.locator(".run-stage-count")).toHaveText(`1 of ${BLOCKS}`);
-  expect((await page.locator("#run-time").innerText()).trim()).toBe(held);
+  // Retrying rather than read once. The clock paints in its own pass just after
+  // the view, so a single read can catch it between the two and fail on an
+  // empty string rather than on anything being wrong.
+  await expect(page.locator("#run-time")).toHaveText(held);
 
   // Reset is the deliberate way to start the block again
   await page.locator("#run-reset").click();
-  expect((await page.locator("#run-time").innerText()).trim()).not.toBe(held);
+  await expect(page.locator("#run-time")).not.toHaveText(held);
 });
 
 test("present mode says when a block is one the grade may not do", async ({ page }) => {

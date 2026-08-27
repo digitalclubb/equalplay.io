@@ -122,4 +122,23 @@ describe("the account page says which state the device is in", () => {
     draw();
     expect(container.querySelector("#install-app")).not.toBeNull();
   });
+
+  it("stops explaining how to install once it is installed", async () => {
+    offerInstall("accepted");
+    draw();
+    const button = container.querySelector<HTMLButtonElement>("#install-app");
+    if (!button) throw new Error("no install button");
+
+    button.click();
+    // The prompt and the choice are two awaits deep
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(panel()).toContain("Added");
+    // The copy around the button used to survive it, so a coach was told it had
+    // been added and then told how to add it
+    expect(panel()).not.toContain("Add to Home Screen");
+    expect(container.querySelector("#install-app")).toBeNull();
+  });
 });
