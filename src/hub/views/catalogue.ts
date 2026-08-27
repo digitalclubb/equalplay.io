@@ -426,6 +426,25 @@ function backLink(origin: string[]): { href: string; label: string } {
  * A coach browsing a grade above their own can reach a ruck drill. Dropping that
  * into their U8 session would put it in front of players who may not do it.
  */
+/**
+ * The grade a session started from a drill page gets created at.
+ *
+ * A drill page is never age gated, so the grade being browsed can be one this
+ * drill is not legal at. That happens in both directions: a bookmarked ruck
+ * drill opened while browsing U8, or the one tag drill capped at U8 opened
+ * while browsing U12. Neither should produce a session labelled a grade that
+ * cannot run the only block in it. The nearest grade at or below what the coach
+ * was looking at is the honest answer, falling back to the drill's own floor
+ * when the thing has not arrived for them yet.
+ */
+function gradeForNewPlan(drill: Drill, browsing: AgeGroup): AgeGroup {
+  for (let i = AGE_GROUPS.indexOf(browsing); i >= 0; i -= 1) {
+    const age = AGE_GROUPS[i];
+    if (isAvailableAt(drill, age)) return age;
+  }
+  return drill.minAge;
+}
+
 function addPanel(drill: Drill): string {
   if (!addOpen) {
     return `
@@ -437,6 +456,10 @@ function addPanel(drill: Drill): string {
   const all = currentUserId ? localPlans(currentUserId) : [];
   const usable = all.filter((plan) => isAvailableAt(drill, plan.ageGroup));
   const hidden = all.length - usable.length;
+  // Named on the button rather than decided silently. A coach who was browsing
+  // U8 and lands on a U10 session otherwise has no idea it happened. The editor
+  // shows the grade as text with no way to change it either.
+  const newPlanAge = gradeForNewPlan(drill, filters?.ageGroup ?? drill.minAge);
 
   return `
     <section class="hub-panel drill-add">
@@ -474,7 +497,9 @@ function addPanel(drill: Drill): string {
              }`
       }
       <div class="add-plan-actions">
-        <button type="button" class="hub-btn" id="drill-add-new">Start a new session with it</button>
+        <button type="button" class="hub-btn" id="drill-add-new" data-newplan="${newPlanAge}">
+          Start a new ${AGE_GROUP_LABELS[newPlanAge]} session with it
+        </button>
         <button type="button" class="hub-btn" id="drill-add-cancel">Not now</button>
       </div>
     </section>`;
@@ -546,7 +571,7 @@ function renderDetail(
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
     button.addEventListener("click", () => {
-      toggleStar(button.dataset.fav ?? "", () => renderDetail(container, drill, back));
+      toggleStar(button.dataset.fav ?? "", () => renderDetail(container, drill, back, false));
     });
   }
 
@@ -571,18 +596,12 @@ function renderDetail(
     reopen();
   });
 
-  container.querySelector("#drill-add-new")?.addEventListener("click", () => {
-    // The grade being browsed rather than the coach's own, so every block in the
-    // new session is legal at the grade the session says it is for.
-    //
-    // A drill page is never age gated, which is deliberate: a link or a bookmark
-    // has to open. So the grade being browsed can be one this drill is not legal
-    // at. Starting a session there would put a ruck drill in a U8 plan. The
-    // drill's own floor is the lowest grade that can hold it.
-    const browsing = filters?.ageGroup;
-    const ageGroup =
-      browsing && isAvailableAt(drill, browsing) ? browsing : drill.minAge;
-    newPlanWithDrill(currentUserId, ageGroup, drill);
+  const newPlan = container.querySelector<HTMLButtonElement>("#drill-add-new");
+  newPlan?.addEventListener("click", () => {
+    // Read back off the button, so the grade created is the one the coach was
+    // just told about rather than one worked out a second time
+    const ageGroup = newPlan.dataset.newplan ?? "";
+    if (isAgeGroup(ageGroup)) newPlanWithDrill(currentUserId, ageGroup, drill);
   });
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-addto]")) {

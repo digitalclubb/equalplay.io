@@ -396,6 +396,17 @@ describe("adding a drill to a session from the drill page", () => {
     expect(started.blocks.map((b) => b.drillId)).toEqual(["drill-two-second-ruck"]);
   });
 
+  it("comes down to the nearest grade rather than the drill's floor", () => {
+    // Browsing U12 and opening the one drill capped at U8. Falling back to the
+    // drill's own minAge would hand a U12 coach a U7 session.
+    openPicker("drill-tag-and-turn", "u12");
+    const button = container.querySelector<HTMLButtonElement>("#drill-add-new");
+    expect(button?.dataset.newplan).toBe("u8");
+    // Said out loud, because the editor shows the grade as text and the coach
+    // has no way to change it afterwards
+    expect(button?.textContent).toContain("U8");
+  });
+
   it("gates on an account rather than hiding the button", () => {
     renderCatalogue(container, "u12", USER, "drill-two-second-ruck");
     expect(container.querySelector("#drill-add")).not.toBeNull();
