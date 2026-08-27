@@ -663,6 +663,56 @@ test("the add button is readable, not white on grey", async ({ page }) => {
   expect(seen.background).toBe("rgb(207, 57, 24)");
 });
 
+test("a drill goes into a session from the drill page", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+
+  await page.goto("/hub/#/catalogue/drill-two-second-ruck");
+  await page.locator("#drill-add").click();
+  await expect(page.locator("[data-addto]")).toHaveCount(1);
+  await page.locator("[data-addto]").first().click();
+
+  await page.locator(".hub-tab[data-route='plans']").click();
+  await page.locator(".drill-card").first().click();
+  await expect(page.locator(".run-block")).toHaveCount(BLOCKS + 1);
+});
+
+test("opening the session picker does not throw the page back to the title", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+
+  await page.goto("/hub/#/catalogue/drill-two-second-ruck");
+  const button = page.locator("#drill-add");
+  await button.scrollIntoViewIfNeeded();
+  const pageScroll = await page.evaluate(() => window.scrollY);
+  expect(pageScroll).toBeGreaterThan(0);
+
+  await button.click();
+  // The picker replaces the button at the foot of a long drill. Scrolling back
+  // to the title would put what the coach just asked for off the screen.
+  await expect(page.locator("[data-addto]").first()).toBeInViewport();
+  expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll);
+});
+
+test("a session the drill's grade cannot do is not offered", async ({ page }) => {
+  await signedIn(page, "u8", "#/plans");
+  await page.locator(".preset-card").first().click();
+  await expect(page.locator(".block-row")).not.toHaveCount(0);
+
+  // A bookmark to a ruck drill opens for anyone. The U8 session must not be a
+  // place it can be put, and the new session it offers has to be a grade that
+  // is allowed the drill.
+  await page.goto("/hub/#/catalogue/drill-two-second-ruck");
+  await page.locator("#drill-add").click();
+  await expect(page.locator("[data-addto]")).toHaveCount(0);
+  await expect(page.locator(".drill-add")).toContainText("cannot do this drill");
+
+  await page.locator("#drill-add-new").click();
+  await expect(page.locator(".plan-age")).not.toHaveText("U8");
+});
+
 test("a drill opened from a session goes back to that session", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();

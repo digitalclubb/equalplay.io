@@ -227,6 +227,38 @@ function fromPreset(preset: Preset): SessionPlan {
   });
 }
 
+/**
+ * Append a drill to a session from outside the editor.
+ *
+ * The editor holds whatever it is working on in `editing`, so a block added
+ * anywhere else has to reach that copy too. Without it the next keystroke in the
+ * editor stages the plan from before the add and the block quietly disappears.
+ *
+ * Returns the session's title for the confirmation, or null when the id no
+ * longer resolves.
+ */
+export function addDrillToPlan(userId: string, planId: string, drill: Drill): string | null {
+  const found = localPlans(userId).find((plan) => plan.id === planId);
+  if (!found) return null;
+  const next: SessionPlan = {
+    ...stripMeta(found),
+    blocks: [...found.blocks, { drillId: drill.id, minutes: drill.minutes }],
+  };
+  // `savePlan` stages before its first await, so the local write has already
+  // happened by the time this returns. A coach with no signal keeps the block.
+  if (editing?.id === planId) editing = next;
+  void savePlan(userId, next);
+  return next.title;
+}
+
+/** A session that starts life with one drill in it. Lands in the editor. */
+export function newPlanWithDrill(userId: string, ageGroup: AgeGroup, drill: Drill): void {
+  create(
+    { userId, ageGroup },
+    { ...blankPlan(ageGroup), blocks: [{ drillId: drill.id, minutes: drill.minutes }] },
+  );
+}
+
 function create(ctx: PlannerContext, plan: SessionPlan): void {
   // Staged synchronously so the plan exists before the route changes, even offline
   stagePlan(ctx.userId, plan);

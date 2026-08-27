@@ -7,7 +7,10 @@ import {
   syncFavourites,
   toggleFavourite,
 } from "../favourites.js";
-import { DRILLS, filterDrills, findDrill, type DrillFilter } from "../content/drills.js";
+import { DRILLS, filterDrills, findDrill, isAvailableAt, type DrillFilter } from "../content/drills.js";
+import { localPlans } from "../plans.js";
+import { addDrillToPlan, newPlanWithDrill } from "./planner.js";
+import { showToast } from "../../components/toast.js";
 import { renderDiagram } from "../content/diagram.js";
 import {
   AGE_GROUPS,
@@ -57,6 +60,13 @@ let seededFor: AgeGroup | null = null;
 let favourites: Set<string> = new Set();
 let currentUserId = "";
 let pulledFor: string | null = null;
+/**
+ * Whether the drill page has its session picker open.
+ *
+ * Reset on every route change rather than remembered. A coach who opened it,
+ * thought better of it and moved on should not find it waiting on the next drill.
+ */
+let addOpen = false;
 
 const WELCOME_KEY = "equalplay_hub_welcomed";
 
@@ -136,6 +146,7 @@ export function renderCatalogue(
   }
   currentUserId = userId;
   favourites = localFavourites(userId);
+  addOpen = false;
 
   // Pull the server's list once per visit, then redraw if it differs
   if (!pulledFor || pulledFor !== userId) {
@@ -404,10 +415,83 @@ function backLink(origin: string[]): { href: string; label: string } {
   return { href: "#/catalogue", label: "← Back to drills" };
 }
 
+/**
+ * Putting a drill into a session from the page where the coach decided to.
+ *
+ * The planner's own search was the only way in, which meant reading a drill,
+ * remembering the title, going to Sessions and finding it again. The decision
+ * gets made here, so the verb belongs here.
+ *
+ * Sessions the drill is not legal in are left out rather than shown and refused.
+ * A coach browsing a grade above their own can reach a ruck drill. Dropping that
+ * into their U8 session would put it in front of players who may not do it.
+ */
+function addPanel(drill: Drill): string {
+  if (!addOpen) {
+    return `
+      <section class="hub-panel drill-add">
+        <button type="button" class="hub-btn hub-btn-primary" id="drill-add">Add to a session</button>
+      </section>`;
+  }
+
+  const all = currentUserId ? localPlans(currentUserId) : [];
+  const usable = all.filter((plan) => isAvailableAt(drill, plan.ageGroup));
+  const hidden = all.length - usable.length;
+
+  return `
+    <section class="hub-panel drill-add">
+      <h3 id="drill-add-heading" tabindex="-1">Which session?</h3>
+      ${
+        usable.length === 0
+          ? `<p class="hub-fineprint">${
+              hidden > 0
+                ? hidden === 1
+                  ? "Your one session is for a grade that cannot do this drill."
+                  : "None of your sessions are for a grade that can do this drill."
+                : "Nothing saved yet."
+            }</p>`
+          : `<ul class="add-plan-list">${usable
+              .map(
+                (plan) => `
+                <li>
+                  <button type="button" class="add-row" data-addto="${esc(plan.id)}">
+                    <span class="add-row-body">
+                      <span class="add-title">${esc(plan.title)}</span>
+                      <span class="add-meta">
+                        ${AGE_GROUP_LABELS[plan.ageGroup]} &middot;
+                        ${plan.blocks.length} ${plan.blocks.length === 1 ? "block" : "blocks"} &middot;
+                        ${plan.sessionMinutes} min
+                      </span>
+                    </span>
+                  </button>
+                </li>`,
+              )
+              .join("")}</ul>
+             ${
+               hidden > 0
+                 ? `<p class="hub-fineprint">${hidden} more ${hidden === 1 ? "session is" : "sessions are"} for a grade that cannot do this drill.</p>`
+                 : ""
+             }`
+      }
+      <div class="add-plan-actions">
+        <button type="button" class="hub-btn" id="drill-add-new">Start a new session with it</button>
+        <button type="button" class="hub-btn" id="drill-add-cancel">Not now</button>
+      </div>
+    </section>`;
+}
+
 function renderDetail(
   container: HTMLElement,
   drill: Drill,
   back: { href: string; label: string },
+  /**
+   * False when the panel below the drill is being reopened rather than the drill
+   * being arrived at. The picker sits under the whole article, so scrolling back
+   * to the title on every redraw took the coach away from the thing they tapped
+   * and left it off the bottom of the screen. Same problem `draw()` in the
+   * planner solves with its `redraw` flag.
+   */
+  scrollToTop = true,
 ): void {
   const ages = drill.maxAge
     ? `${AGE_GROUP_LABELS[drill.minAge]} to ${AGE_GROUP_LABELS[drill.maxAge]}`
@@ -456,7 +540,9 @@ function renderDetail(
           <div><dt>Kit</dt><dd>${esc(drill.equipment.map(kitLabel).join(", ")) || "none"}</dd></div>
         </dl>
       </aside>
-    </article>`;
+    </article>
+
+    ${addPanel(drill)}`;
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
     button.addEventListener("click", () => {
@@ -464,7 +550,52 @@ function renderDetail(
     });
   }
 
-  container.querySelector<HTMLElement>("h2")?.scrollIntoView({ block: "start" });
+  const reopen = (): void => renderDetail(container, drill, back, false);
+
+  container.querySelector("#drill-add")?.addEventListener("click", () => {
+    // A session has to persist, so signed out this is the moment to ask. Same
+    // answer the star gives, for the same reason.
+    if (!currentUserId) {
+      go("join/plans");
+      return;
+    }
+    addOpen = true;
+    reopen();
+    // The button that was just pressed no longer exists, so without this focus
+    // drops to the body and the next Tab starts again from the top of the page.
+    container.querySelector<HTMLElement>("#drill-add-heading")?.focus({ preventScroll: true });
+  });
+
+  container.querySelector("#drill-add-cancel")?.addEventListener("click", () => {
+    addOpen = false;
+    reopen();
+  });
+
+  container.querySelector("#drill-add-new")?.addEventListener("click", () => {
+    // The grade being browsed rather than the coach's own, so every block in the
+    // new session is legal at the grade the session says it is for.
+    //
+    // A drill page is never age gated, which is deliberate: a link or a bookmark
+    // has to open. So the grade being browsed can be one this drill is not legal
+    // at. Starting a session there would put a ruck drill in a U8 plan. The
+    // drill's own floor is the lowest grade that can hold it.
+    const browsing = filters?.ageGroup;
+    const ageGroup =
+      browsing && isAvailableAt(drill, browsing) ? browsing : drill.minAge;
+    newPlanWithDrill(currentUserId, ageGroup, drill);
+  });
+
+  for (const button of container.querySelectorAll<HTMLButtonElement>("[data-addto]")) {
+    button.addEventListener("click", () => {
+      const title = addDrillToPlan(currentUserId, button.dataset.addto ?? "", drill);
+      if (!title) return;
+      addOpen = false;
+      reopen();
+      showToast(`Added to ${title}.`);
+    });
+  }
+
+  if (scrollToTop) container.querySelector<HTMLElement>("h2")?.scrollIntoView({ block: "start" });
 }
 
 function list(heading: string, items?: string[]): string {

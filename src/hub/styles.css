@@ -2283,3 +2283,30 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ---- Add a drill to a session, from the drill page ---- */
+
+/* Sits under the drill rather than beside it. The page is a document with its
+   facts alongside, so the one thing a coach does with a drill goes at the foot
+   of what they just read rather than competing with the title. The rows
+   themselves wear `.add-row`, because they are the editor's add list seen from
+   the other side and two copies of it would drift. */
+.drill-add {
+  margin-top: var(--sp-md);
+}
+
+.drill-add h3 {
+  margin-top: 0;
+}
+
+.add-plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--sp-sm);
+}
+
+.add-plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
+}

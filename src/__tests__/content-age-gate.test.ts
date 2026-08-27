@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
+import { renderCatalogue } from "../hub/views/catalogue.js";
+import { localPlans, stagePlan } from "../hub/plans.js";
 import { DRILLS, filterDrills, isAvailableAt, findDrill } from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
 import {
@@ -321,5 +323,87 @@ describe("links out to the RFU's own rules", () => {
     for (const age of AGE_GROUPS) {
       expect(RULES_OF_PLAY[age], age).toContain(`-${age}-rules-of-play`);
     }
+  });
+});
+
+/**
+ * A drill page can offer to drop the drill straight into a session. That is a
+ * second way a drill reaches a plan, so it needs the same gate the planner's own
+ * search has. A coach can browse a grade above their own, so without this an U8
+ * session could be handed a ruck drill from two taps away.
+ */
+describe("adding a drill to a session from the drill page", () => {
+  const USER = "00000000-0000-4000-8000-000000000009";
+  let container: HTMLElement;
+
+  const offered = (): string[] =>
+    [...container.querySelectorAll("[data-addto] .add-title")].map(
+      (el) => el.textContent?.trim() ?? "",
+    );
+
+  const openPicker = (drillId: string, age: AgeGroup): void => {
+    renderCatalogue(container, age, USER, drillId);
+    container.querySelector<HTMLButtonElement>("#drill-add")?.click();
+  };
+
+  beforeEach(() => {
+    // jsdom has no layout, so the drill page's own scroll to the title throws
+    Element.prototype.scrollIntoView = (): void => {};
+    localStorage.clear();
+    window.location.hash = "";
+    container = document.createElement("div");
+    document.body.replaceChildren(container);
+    stagePlan(USER, {
+      id: "plan-u7",
+      title: "Tag night",
+      ageGroup: "u7",
+      sessionMinutes: 45,
+      blocks: [],
+    });
+    stagePlan(USER, {
+      id: "plan-u12",
+      title: "Ruck night",
+      ageGroup: "u12",
+      sessionMinutes: 60,
+      blocks: [],
+    });
+  });
+
+  it("leaves out a session whose grade is not allowed the drill", () => {
+    openPicker("drill-two-second-ruck", "u12");
+    expect(offered()).toEqual(["Ruck night"]);
+  });
+
+  it("offers both when every grade may do the drill", () => {
+    openPicker("warmup-tail-snatch", "u12");
+    expect(offered().sort()).toEqual(["Ruck night", "Tag night"]);
+  });
+
+  it("says why a session is missing rather than pretending it is not there", () => {
+    openPicker("drill-two-second-ruck", "u12");
+    expect(container.querySelector(".drill-add")?.textContent).toContain("cannot do this drill");
+  });
+
+  it("starts a new session at a grade the drill is allowed in", () => {
+    // A drill page is never gated, so a bookmark can open a ruck drill while the
+    // catalogue is browsing U8. Starting a session there must not label it U8.
+    openPicker("drill-two-second-ruck", "u8");
+    container.querySelector<HTMLButtonElement>("#drill-add-new")?.click();
+
+    const started = localPlans(USER).find((plan) => plan.id !== "plan-u7" && plan.id !== "plan-u12");
+    if (!started) throw new Error("no session was started");
+    expect(isAvailableAt(findDrill("drill-two-second-ruck") as Drill, started.ageGroup)).toBe(true);
+    expect(started.blocks.map((b) => b.drillId)).toEqual(["drill-two-second-ruck"]);
+  });
+
+  it("gates on an account rather than hiding the button", () => {
+    renderCatalogue(container, "u12", USER, "drill-two-second-ruck");
+    expect(container.querySelector("#drill-add")).not.toBeNull();
+
+    // Signed out. The button is still there, because a drill is never gated. It
+    // asks for the account at the point the session would have to persist.
+    renderCatalogue(container, "u12", "", "drill-two-second-ruck");
+    container.querySelector<HTMLButtonElement>("#drill-add")?.click();
+    expect(window.location.hash).toBe("#/join/plans");
   });
 });
