@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
 import { localPlans, stagePlan } from "../hub/plans.js";
+import { addDrillToPlan } from "../hub/views/planner.js";
 import { DRILLS, filterDrills, fitsSmallSpace, isAvailableAt, findDrill } from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
 import {
@@ -405,6 +406,18 @@ describe("adding a drill to a session from the drill page", () => {
     // Said out loud, because the editor shows the grade as text and the coach
     // has no way to change it afterwards
     expect(button?.textContent).toContain("U8");
+  });
+
+  it("refuses at the door, not only in the list that draws it", () => {
+    // The picker leaves an illegal session out, and that is a render. This is
+    // the function every route into a plan goes through, so the gate lives here
+    // too rather than one new caller away from not existing.
+    const drill = findDrill("drill-two-second-ruck") as Drill;
+    expect(addDrillToPlan(USER, "plan-u7", drill)).toBeNull();
+    expect(localPlans(USER).find((p) => p.id === "plan-u7")?.blocks).toEqual([]);
+
+    expect(addDrillToPlan(USER, "plan-u12", drill)).toBe("Ruck night");
+    expect(localPlans(USER).find((p) => p.id === "plan-u12")?.blocks).toHaveLength(1);
   });
 
   it("gates on an account rather than hiding the button", () => {

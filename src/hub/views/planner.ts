@@ -2,7 +2,7 @@ import { esc } from "../../lib/esc.js";
 import { ageRulesLink } from "../../lib/rulesLink.js";
 import { showToast } from "../../components/toast.js";
 import { currentRoute, go, stillOn } from "../router.js";
-import { DRILLS, filterDrills, findDrill } from "../content/drills.js";
+import { DRILLS, filterDrills, findDrill, isAvailableAt } from "../content/drills.js";
 import { renderDiagram } from "../content/diagram.js";
 import { PRESETS, presetsForAge } from "../content/presets.js";
 import {
@@ -242,6 +242,10 @@ function fromPreset(preset: Preset): SessionPlan {
 export function addDrillToPlan(userId: string, planId: string, drill: Drill): string | null {
   const found = localPlans(userId).find((plan) => plan.id === planId);
   if (!found) return null;
+  // Checked here as well as in the picker that draws the list. This is the one
+  // door every route into a plan goes through. A gate that only exists in a
+  // render is a gate one new caller away from not existing.
+  if (!isAvailableAt(drill, found.ageGroup)) return null;
   const next: SessionPlan = {
     ...stripMeta(found),
     blocks: [...found.blocks, { drillId: drill.id, minutes: drill.minutes }],
@@ -403,6 +407,8 @@ interface RunClock {
  * fresh ten minutes when eight of them had gone.
  */
 const runClocks = new Map<number, RunClock>();
+/** Past this far beyond its end, a running clock belongs to a session that ended. */
+const STALE_CLOCK_MS = 60 * 60_000;
 let runPlanId = "";
 let runClock: RunClock | null = null;
 let runTimer: ReturnType<typeof setInterval> | undefined;
@@ -468,6 +474,10 @@ function holdScreenAwake(): void {
     })
     .finally(() => {
       lockPending = false;
+      // A request that started, was abandoned on leaving and then came back to a
+      // coach who had gone straight back in. It released what it was handed, so
+      // without this present mode runs on with no lock and nothing to ask again.
+      if (runTimer !== undefined && !screenLock) holdScreenAwake();
     });
 }
 
@@ -518,7 +528,11 @@ function startRunClock(
     runPlanId = planId;
   }
   let clock = runClocks.get(index);
-  if (!clock || clock.drillId !== drillId || clock.minutes !== minutes) {
+  // A clock left running an hour past its end is Sunday's read-through, not a
+  // block in progress, so Tuesday should not open on "51:22 over" in red. A
+  // paused one is left alone: it holds its own remaining time and stays right.
+  const abandoned = clock !== undefined && clock.pausedAt === null && Date.now() > clock.endsAt + STALE_CLOCK_MS;
+  if (!clock || abandoned || clock.drillId !== drillId || clock.minutes !== minutes) {
     clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null, drillId, minutes };
     runClocks.set(index, clock);
   }

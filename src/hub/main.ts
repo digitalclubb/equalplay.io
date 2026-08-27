@@ -1,6 +1,6 @@
 import { renderAuth } from "./views/authView.js";
 import { renderAccount } from "./views/account.js";
-import { forgetWelcome, renderCatalogue } from "./views/catalogue.js";
+import { renderCatalogue, resetCatalogue } from "./views/catalogue.js";
 import {
   clearPrintable,
   flushPlanPush,
@@ -249,7 +249,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       clearLocalPlans();
       clearLocalFavourites();
       resetPlanner();
-      forgetWelcome();
+      resetCatalogue();
     } else {
       if (userId && userId !== user.id) {
         // A different coach on the same device. Drop everything belonging to the
@@ -257,7 +257,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         clearLocalPlans();
         clearLocalFavourites();
         resetPlanner();
-        forgetWelcome();
+        resetCatalogue();
       }
       const fresh = profileFromUser(user);
       if (fresh) {

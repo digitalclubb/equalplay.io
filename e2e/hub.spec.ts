@@ -1700,3 +1700,23 @@ test("the account page says whether the app is ready for a pitch", async ({ page
   await expect(page.locator("body[data-signed-in]")).toBeVisible();
   await expect(page.locator(".device-state-ready")).toContainText("Ready for the pitch");
 });
+
+test("the session picker finds sessions that are only on the server", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+
+  // Wipe the local mirror without signing out, which is the shape of a first
+  // sign-in on a second phone. The picker used to say "Nothing saved yet" and
+  // offer to start a duplicate.
+  const saved = await page.evaluate(() => localStorage.getItem("equalplay_hub_plans"));
+  await page.evaluate(() => localStorage.removeItem("equalplay_hub_plans"));
+  await page.goto("/hub/#/catalogue/drill-two-second-ruck");
+  await page.locator("#drill-add").click();
+  await expect(page.locator(".drill-add")).toContainText("Fetching your sessions");
+
+  // The build under test cannot reach Supabase, so the pull comes back empty
+  // and it stops hedging rather than saying "fetching" for ever
+  await expect(page.locator(".drill-add")).toContainText("Nothing saved yet", { timeout: 10_000 });
+  expect(saved).not.toBeNull();
+});

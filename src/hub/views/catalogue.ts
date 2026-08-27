@@ -8,7 +8,7 @@ import {
   toggleFavourite,
 } from "../favourites.js";
 import { DRILLS, filterDrills, findDrill, isAvailableAt, type DrillFilter } from "../content/drills.js";
-import { localPlans } from "../plans.js";
+import { localPlans, syncPlans } from "../plans.js";
 import { addDrillToPlan, newPlanWithDrill } from "./planner.js";
 import { showToast } from "../../components/toast.js";
 import { renderDiagram } from "../content/diagram.js";
@@ -67,11 +67,35 @@ let pulledFor: string | null = null;
  * thought better of it and moved on should not find it waiting on the next drill.
  */
 let addOpen = false;
+/**
+ * Which coach's sessions have been pulled for the picker, plus whether a pull
+ * is in the air. The local mirror stays empty until something has been to the
+ * server. Only the planner ever goes, so without this a coach signing in on a
+ * second phone opens the picker and is told they have no sessions.
+ */
+let plansPulledFor: string | null = null;
+let plansPulling = false;
 
 const WELCOME_KEY = "equalplay_hub_welcomed";
 
-/** Called on sign-out, so a shared tablet greets the next coach properly. */
-export function forgetWelcome(): void {
+/**
+ * Called on sign-out and on a second coach signing in, so a shared tablet holds
+ * nothing belonging to the one who left.
+ *
+ * The pulled-once markers matter as much as the data. Signing out clears the
+ * local mirrors, so a marker still naming that coach means the re-fetch never
+ * runs and the catalogue shows an empty set of stars for the rest of the tab's
+ * life. Clubs share tablets, so this is a same-coach-again path as well.
+ */
+export function resetCatalogue(): void {
+  filters = null;
+  seededFor = null;
+  favourites = new Set();
+  currentUserId = "";
+  pulledFor = null;
+  plansPulledFor = null;
+  plansPulling = false;
+  addOpen = false;
   try {
     localStorage.removeItem(WELCOME_KEY);
   } catch {
@@ -426,17 +450,6 @@ function backLink(origin: string[]): { href: string; label: string } {
 }
 
 /**
- * Putting a drill into a session from the page where the coach decided to.
- *
- * The planner's own search was the only way in, which meant reading a drill,
- * remembering the title, going to Sessions and finding it again. The decision
- * gets made here, so the verb belongs here.
- *
- * Sessions the drill is not legal in are left out rather than shown and refused.
- * A coach browsing a grade above their own can reach a ruck drill. Dropping that
- * into their U8 session would put it in front of players who may not do it.
- */
-/**
  * The grade a session started from a drill page gets created at.
  *
  * A drill page is never age gated, so the grade being browsed can be one this
@@ -455,6 +468,17 @@ function gradeForNewPlan(drill: Drill, browsing: AgeGroup): AgeGroup {
   return drill.minAge;
 }
 
+/**
+ * Putting a drill into a session from the page where the coach decided to.
+ *
+ * The planner's own search was the only way in, which meant reading a drill,
+ * remembering the title, going to Sessions and finding it again. The decision
+ * gets made here, so the verb belongs here.
+ *
+ * Sessions the drill is not legal in are left out rather than shown and refused.
+ * A coach browsing a grade above their own can reach a ruck drill. Dropping that
+ * into their U8 session would put it in front of players who may not do it.
+ */
 function addPanel(drill: Drill): string {
   if (!addOpen) {
     return `
@@ -481,7 +505,9 @@ function addPanel(drill: Drill): string {
                 ? hidden === 1
                   ? "Your one session is for a grade that cannot do this drill."
                   : "None of your sessions are for a grade that can do this drill."
-                : "Nothing saved yet."
+                : plansPulling
+                  ? "Fetching your sessions…"
+                  : "Nothing saved yet."
             }</p>`
           : `<ul class="add-plan-list">${usable
               .map(
@@ -595,6 +621,21 @@ function renderDetail(
       return;
     }
     addOpen = true;
+    // Asked for on opening rather than on every catalogue visit. The list is
+    // only needed here. A coach who has been to Sessions already has it.
+    if (plansPulledFor !== currentUserId) {
+      plansPulledFor = currentUserId;
+      plansPulling = true;
+      const pulledFor = currentUserId;
+      void syncPlans(currentUserId).then(() => {
+        plansPulling = false;
+        // Checked now rather than remembered. The coach may have closed the
+        // picker or walked to another drill while this was in the air.
+        if (addOpen && currentUserId === pulledFor && currentRoute().param === drill.id) {
+          reopen();
+        }
+      });
+    }
     reopen();
     // The button that was just pressed no longer exists, so without this focus
     // drops to the body and the next Tab starts again from the top of the page.
