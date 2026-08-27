@@ -422,10 +422,10 @@ levels and the body all at 16px, so weight carried the whole hierarchy; the
 second kept the app's grey behind it and ran a bar of colour down the side of
 whichever grade was yours.
 
-**The index is cards, and the card title carries the link colour.** Six grades
-laid out as a grid is how somebody picks one, and a card gives the whole row a
-hit area. Replacing them with bordered rows of body-coloured text was an
-over-correction: it took the affordance out with the decoration, and nothing
+**The index is cards. The card title carries the link colour.** Six grades
+laid out as a grid is how somebody picks one. A card gives the whole row a hit
+area. Replacing them with bordered rows of body-coloured text was an
+over-correction: it took the affordance out with the decoration, so nothing
 about the list said it went anywhere. The grade a coach takes is marked by its
 edge plus the words in it, never a bar down the side.
 
