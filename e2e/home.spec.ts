@@ -24,7 +24,7 @@ test("the homepage has one call to action, into the app", async ({ page }) => {
 test("no static page scrolls sideways on the smallest phone", async ({ page }) => {
   // The header is a flex row of two things that cannot shrink: the wordmark is
   // nowrap and so is the call to action. Held on one line they came to 343px, so
-  // a 320px phone scrolled sideways on all twelve pages. It wraps below 344px now.
+  // a 320px phone scrolled sideways on every one of them. It wraps below 344px now.
   await page.setViewportSize({ width: 320, height: 800 });
 
   for (const path of [
@@ -34,6 +34,7 @@ test("no static page scrolls sideways on the smallest phone", async ({ page }) =
     "/rugby-drills-u8",
     "/rugby-drills-u9",
     "/rugby-drills-u10",
+    "/rugby-rules-u10",
     "/rugby-drills-u11",
     "/rugby-drills-u12",
     "/rugby-substitution-app",

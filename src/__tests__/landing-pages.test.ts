@@ -166,6 +166,7 @@ describe("every static page reaches the product", () => {
     "index.html",
     CLUSTER,
     ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
+    "public/rugby-rules-u10/index.html",
     "public/rugby-substitution-app/index.html",
     "public/equal-playing-time-calculator/index.html",
     "public/rfu-regulation-15-playing-time/index.html",
@@ -233,6 +234,7 @@ describe("every static page reaches the product", () => {
       expect(urls, age).toContain(`https://equalplay.io/rugby-drills-${age}`);
     }
     expect(urls).toContain("https://equalplay.io/rugby-drills-by-age-group");
+    expect(urls).toContain("https://equalplay.io/rugby-rules-u10");
     expect(urls).toContain("https://equalplay.io/");
   });
 });
@@ -241,6 +243,7 @@ describe("structured data on the static pages", () => {
   const WITH_LD = [
     CLUSTER,
     ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
+    "public/rugby-rules-u10/index.html",
     "public/rugby-substitution-app/index.html",
     "public/rfu-regulation-15-playing-time/index.html",
     "public/equal-playing-time-calculator/index.html",
