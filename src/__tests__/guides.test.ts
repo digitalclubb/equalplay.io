@@ -231,3 +231,20 @@ describe("the guide view", () => {
     expect(container.querySelector(".guide")).toBeTruthy();
   });
 });
+
+describe("the guide index table names its own columns", () => {
+  it("does not read out Row where the content says Grade", () => {
+    // The first column of a comparison table is blank and wants a label only a
+    // screen reader hears. The arrivals table is not blank: it says Grade. The
+    // substitution used to be unconditional, so that one rendered an empty cell
+    // and announced the wrong word. Same defect shipped in `seo/rulesPage.ts`.
+    const container = document.createElement("div");
+    document.body.replaceChildren(container);
+    renderGuide(container, undefined);
+
+    const headers = [...container.querySelectorAll(".guide-table thead th")].map(
+      (cell) => cell.textContent?.trim() ?? "",
+    );
+    expect(headers).toEqual(ARRIVALS.head);
+  });
+});

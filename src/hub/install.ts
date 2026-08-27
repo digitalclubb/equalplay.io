@@ -69,10 +69,13 @@ export type InstallOutcome = "installed" | "dismissed" | "unavailable";
 export async function promptInstall(): Promise<InstallOutcome> {
   const prompt = waiting;
   if (!prompt) return "unavailable";
-  waiting = null;
 
   try {
     await prompt.prompt();
+    // Spent only once it has actually been shown. Chrome rejects the call when
+    // it declines to display anything. Dropping the event before that took the
+    // offer away for the rest of the visit over a prompt nobody ever saw.
+    waiting = null;
     const { outcome } = await prompt.userChoice;
     return outcome === "accepted" ? "installed" : "dismissed";
   } catch {

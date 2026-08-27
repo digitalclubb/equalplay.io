@@ -66,6 +66,20 @@ describe("the install offer", () => {
     expect(await promptInstall()).toBe("unavailable");
   });
 
+  it("is still there when the browser refused to show it", async () => {
+    // Chrome rejects the call when it declines to display anything. The offer
+    // was being dropped before that, taking the button away for the rest of the
+    // visit over a prompt nobody ever saw.
+    const event = Object.assign(new Event("beforeinstallprompt"), {
+      prompt: () => Promise.reject(new Error("not now")),
+      userChoice: Promise.resolve({ outcome: "dismissed" as const }),
+    });
+    window.dispatchEvent(event);
+
+    expect(await promptInstall()).toBe("unavailable");
+    expect(canInstall()).toBe(true);
+  });
+
   it("is also spent when the coach says no", async () => {
     offerInstall("dismissed");
     expect(await promptInstall()).toBe("dismissed");

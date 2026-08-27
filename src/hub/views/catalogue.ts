@@ -607,11 +607,25 @@ function renderDetail(
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
     button.addEventListener("click", () => {
-      toggleStar(button.dataset.fav ?? "", () => renderDetail(container, drill, back, false));
+      toggleStar(button.dataset.fav ?? "", () => reopen(`[data-fav="${drill.id}"]`));
     });
   }
 
-  const reopen = (): void => renderDetail(container, drill, back, false);
+  /**
+   * Redraw the drill without moving the page, keeping focus somewhere useful.
+   *
+   * Every one of these replaces the element the coach was standing on, so
+   * without `land` focus falls to the body and the next Tab restarts from the
+   * top of the page. Only taken back when it was inside this view to begin
+   * with: a sync landing a second later must not haul a coach out of whatever
+   * they moved on to.
+   */
+  const reopen = (land?: string): void => {
+    const held = container.contains(document.activeElement);
+    renderDetail(container, drill, back, false);
+    if (!held || !land) return;
+    container.querySelector<HTMLElement>(land)?.focus({ preventScroll: true });
+  };
 
   container.querySelector("#drill-add")?.addEventListener("click", () => {
     // A session has to persist, so signed out this is the moment to ask. Same
@@ -637,19 +651,16 @@ function renderDetail(
         // Checked now rather than remembered. The coach may have closed the
         // picker or walked to another drill while this was in the air.
         if (addOpen && currentUserId === pulledFor && currentRoute().param === drill.id) {
-          reopen();
+          reopen("#drill-add-heading");
         }
       });
     }
-    reopen();
-    // The button that was just pressed no longer exists, so without this focus
-    // drops to the body and the next Tab starts again from the top of the page.
-    container.querySelector<HTMLElement>("#drill-add-heading")?.focus({ preventScroll: true });
+    reopen("#drill-add-heading");
   });
 
   container.querySelector("#drill-add-cancel")?.addEventListener("click", () => {
     addOpen = false;
-    reopen();
+    reopen("#drill-add");
   });
 
   const newPlan = container.querySelector<HTMLButtonElement>("#drill-add-new");
@@ -665,7 +676,7 @@ function renderDetail(
       const title = addDrillToPlan(currentUserId, button.dataset.addto ?? "", drill);
       if (!title) return;
       addOpen = false;
-      reopen();
+      reopen("#drill-add");
       showToast(`Added to ${title}.`);
     });
   }

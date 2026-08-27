@@ -199,9 +199,13 @@ ${parts.body}
 // ---- Guide content, as page markup ----
 
 function table(t: GuideTable): string {
+  // Blank only when the content leaves it blank. See the note in `guide.ts`:
+  // the arrivals table on the index names its first column Grade.
   const head = t.head
     .map((h, i) =>
-      i === 0 ? `<th scope="col"><span class="sr-only">Row</span></th>` : `<th scope="col">${esc(h)}</th>`,
+      i === 0 && !h
+        ? `<th scope="col"><span class="sr-only">Row</span></th>`
+        : `<th scope="col">${esc(h)}</th>`,
     )
     .join("");
   const rows = t.rows

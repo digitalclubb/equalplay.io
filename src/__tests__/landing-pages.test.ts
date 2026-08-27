@@ -421,6 +421,16 @@ describe("the generated rules pages", () => {
     }
   });
 
+  it("names the first column of a table that has a name for it", () => {
+    // The first column usually heads the rows and is left blank, which wants a
+    // label only a screen reader hears. The arrivals table calls it Grade, and
+    // substituting unconditionally left an empty cell on screen with "Row" read
+    // out in place of the word that belongs there.
+    const index = rulesIndexHtml();
+    expect(index).toContain("<th scope=\"col\">Grade</th>");
+    expect(index).toContain("<th scope=\"col\">What arrives</th>");
+  });
+
   it("is indexable, unlike the hub the same words live in", () => {
     for (const { path, html } of pages()) {
       expect(html, path).not.toContain("noindex");

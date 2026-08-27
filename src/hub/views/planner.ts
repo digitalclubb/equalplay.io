@@ -407,8 +407,6 @@ interface RunClock {
  * fresh ten minutes when eight of them had gone.
  */
 const runClocks = new Map<number, RunClock>();
-/** Past this far beyond its end, a running clock belongs to a session that ended. */
-const STALE_CLOCK_MS = 60 * 60_000;
 let runPlanId = "";
 let runClock: RunClock | null = null;
 let runTimer: ReturnType<typeof setInterval> | undefined;
@@ -499,6 +497,13 @@ export function stopRunClock(): void {
   clearInterval(runTimer);
   runTimer = undefined;
   runClock = null;
+  // The deadlines go with it. `main.ts` only calls this on leaving present mode,
+  // so moving between blocks keeps them, which is the whole point of the map.
+  // Tapping Done ends the run. Checking the running order in the car park at
+  // 6:15 otherwise opened training at 6:30 on "15:00 over" in red, on every
+  // block that had been looked at, with Reset the only way out of it.
+  runClocks.clear();
+  runPlanId = "";
   releaseScreen();
 }
 
@@ -534,11 +539,7 @@ function startRunClock(
     runPlanId = planId;
   }
   let clock = runClocks.get(index);
-  // A clock left running an hour past its end is Sunday's read-through, not a
-  // block in progress, so Tuesday should not open on "51:22 over" in red. A
-  // paused one is left alone: it holds its own remaining time and stays right.
-  const abandoned = clock !== undefined && clock.pausedAt === null && Date.now() > clock.endsAt + STALE_CLOCK_MS;
-  if (!clock || abandoned || clock.drillId !== drillId || clock.minutes !== minutes) {
+  if (!clock || clock.drillId !== drillId || clock.minutes !== minutes) {
     clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null, drillId, minutes };
     runClocks.set(index, clock);
   }
@@ -1575,8 +1576,6 @@ export function clearPrintable(): void {
 /** Called on sign-out so the next coach on a shared device starts clean. */
 export function resetPlanner(): void {
   stopRunClock();
-  runClocks.clear();
-  runPlanId = "";
   editing = null;
   addSearch = "";
   addTheme = undefined;

@@ -1424,6 +1424,31 @@ test("the clock can be paused, and holds where it was", async ({ page }) => {
   await expect(page.locator("#run-time")).not.toHaveText(held, { timeout: 4000 });
 });
 
+test("leaving the session and running it again starts the clock fresh", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  const minutes = Number(
+    (await page.locator(".run-stage-meta").innerText()).match(/(\d+) min/)?.[1],
+  );
+
+  // Checking the running order in the car park at 6:15 must not open training
+  // at 6:30 on a red overrun, on every block that was looked at
+  await page.locator(".run-stage-next").click();
+  await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
+  await page.locator(".hub-btn-done").click();
+  await expect(page.locator(".run-head")).toBeVisible();
+
+  await page.locator("text=Run it").click();
+  await expect(page.locator("#run-time")).toHaveAttribute("data-over", "false");
+  // Near the full block rather than exactly on it. Reading an exact value races
+  // the second hand for no benefit: what matters is that it did not carry the
+  // time the first look through spent.
+  const shown = (await page.locator("#run-time").innerText()).trim();
+  const [m, sec] = shown.split(":").map(Number);
+  expect(m * 60 + sec).toBeGreaterThan(minutes * 60 - 5);
+  expect(m * 60 + sec).toBeLessThanOrEqual(minutes * 60);
+});
+
 test("a block that overruns says so rather than stopping at zero", async ({ page }) => {
   const planId = await runnableSession(page);
 

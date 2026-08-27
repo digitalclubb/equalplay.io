@@ -33,9 +33,13 @@ import {
 
 /** Every string in here is escaped, so the content module holds plain text. */
 function table(t: GuideTable): string {
+  // The first column heads the rows, so it is usually blank and wants a label
+  // only a screen reader hears. Not always though: the arrivals table calls it
+  // Grade. Substituting unconditionally left that one with an empty cell on
+  // screen and the word "Row" read out where "Grade" belongs.
   const head = t.head
     .map((h, i) =>
-      i === 0
+      i === 0 && !h
         ? `<th scope="col"><span class="visually-hidden">Row</span></th>`
         : `<th scope="col">${esc(h)}</th>`,
     )

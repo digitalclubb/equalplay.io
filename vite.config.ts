@@ -126,7 +126,25 @@ function inlineCss(): Plugin {
 function rulesPagesPlugin(): Plugin {
   return {
     name: "rules-pages",
-    apply: "build",
+    /**
+     * Dev has no build to emit into, so the pages are rendered per request.
+     * Without this `/rugby-rules-u10` 404s on the dev server while working in
+     * preview and in production, and the drills pages link across to it in
+     * body copy, so following one locally is a dead end. Rendering each time
+     * also means an edit to `guides.ts` shows up on reload.
+     */
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? "").split("?")[0].replace(/\/+$/, "");
+        if (!path.startsWith("/rugby-rules-")) return next();
+        void import("./src/seo/rulesPage.js").then(({ rulesPages }) => {
+          const match = rulesPages().find((emitted) => emitted.path === path);
+          if (!match) return next();
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.end(match.html);
+        });
+      });
+    },
     async generateBundle() {
       // Imported here rather than at the top of the file. `oxlint` loads this
       // config with plain Node, which cannot resolve a `.ts` behind the `.js`
