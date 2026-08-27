@@ -2,9 +2,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { DRILLS, filterDrills } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
+import { rulesPageHtml, rulesIndexHtml, rulesPagePaths, rulesPath } from "../seo/rulesPage.js";
+import { GUIDES } from "../hub/content/guides.js";
+import { esc } from "../lib/esc.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
+  REGULATION_15_URL,
   RULES_OF_PLAY,
   THEMES,
   THEME_LABELS,
@@ -162,27 +166,33 @@ describe("the drills by age group page", () => {
 
 describe("the marketing pages reach the guides", () => {
   /**
-   * The guides are a hub route rather than static pages, so the only thing the
-   * marketing site owes them is a way in. Somebody who lands on the U9 drills
-   * page from a search is exactly who wants the U9 rules, and `/hub` is noindex
-   * so nothing else will send them there.
+   * The guide is hub content, in the bundle, so the Guide tab opens with no
+   * signal. `/hub` is `noindex` though, so the same words are also emitted as a
+   * static page per grade at build time from `hub/content/guides.ts`. That is
+   * what a search engine reads, and what the drills cluster links across to.
+   *
+   * Generated rather than committed. A copy in `public/` would be a second
+   * source of truth going stale in the repository, which is what the last
+   * assertion in here is still guarding against.
    */
-  it("links each grade's guide from that grade's drills page", () => {
+
+  it("links each grade's rules page from that grade's drills page", () => {
     for (const age of AGE_GROUPS) {
-      expect(agePage(age), age).toContain(`href="/hub#/guide/${age}"`);
+      expect(agePage(age), age).toContain(`href="/rugby-rules-${age}"`);
     }
   });
 
-  it("links every grade's guide from the cluster page", () => {
+  it("links every grade's rules page from the cluster page", () => {
     const html = page(CLUSTER);
     for (const age of AGE_GROUPS) {
-      expect(html, age).toContain(`href="/hub#/guide/${age}"`);
+      expect(html, age).toContain(`href="/rugby-rules-${age}"`);
     }
   });
 
-  it("has no static guide pages left behind", () => {
-    // They shipped as `public/rugby-rules-*` for one commit. A stray copy would
-    // be a second version of every age grade claim, indexed, drifting.
+  it("keeps no hand-written copy of a generated page", () => {
+    // They shipped as hand-written `public/rugby-rules-*` for one commit. A copy
+    // there now would be a second version of every age grade claim, indexed and
+    // free to drift away from the guide the build renders from.
     expect(existsSync("public/rugby-rules-by-age-group"), "guide index").toBe(false);
     for (const age of AGE_GROUPS) {
       expect(existsSync(`public/rugby-rules-${age}`), age).toBe(false);
@@ -229,6 +239,9 @@ describe("every static page reaches the product", () => {
       expect(html, `${path}: drills`).toContain(
         '<li><a href="/rugby-drills-by-age-group">Rugby drills by age group</a></li>',
       );
+      expect(html, `${path}: rules`).toContain(
+        '<li><a href="/rugby-rules-by-age-group">Rugby rules by age group</a></li>',
+      );
       expect(html, `${path}: privacy`).toContain('<li><a href="/privacy">Privacy</a></li>');
     }
   });
@@ -262,9 +275,11 @@ describe("every static page reaches the product", () => {
       expect(urls, age).toContain(`https://equalplay.io/rugby-drills-${age}`);
     }
     expect(urls).toContain("https://equalplay.io/rugby-drills-by-age-group");
-    // The guides live at #/guide inside the hub, which is noindex, so nothing
-    // about them belongs in here.
-    expect(urls.filter((u) => u.includes("rugby-rules")), "guides in the sitemap").toEqual([]);
+    // The rules pages are emitted at build rather than living in `public/`, so
+    // nothing here would catch a missing one except this.
+    for (const path of rulesPagePaths()) {
+      expect(urls, path).toContain(`https://equalplay.io${path}`);
+    }
     expect(urls).toContain("https://equalplay.io/");
   });
 });
@@ -348,6 +363,109 @@ describe("structured data on the static pages", () => {
       expect(canonical, path).not.toBeNull();
       expect(seen.has(canonical![1]), `${path}: duplicate canonical`).toBe(false);
       seen.add(canonical![1]);
+    }
+  });
+});
+
+/**
+ * The rules pages a search engine reads.
+ *
+ * Rendered here from the same function the build calls, so these check the
+ * pages that actually ship rather than a copy of them. The guide itself stays
+ * hub content: `guides.test.ts` holds what it says, and this holds that a
+ * static page carries it, points at the product and can be found.
+ */
+describe("the generated rules pages", () => {
+  const pages = (): Array<{ path: string; html: string }> => [
+    { path: "/rugby-rules-by-age-group", html: rulesIndexHtml() },
+    ...AGE_GROUPS.map((age) => ({ path: rulesPath(age), html: rulesPageHtml(age) })),
+  ];
+
+  it("renders one per grade plus an index, and says so in one place", () => {
+    expect(rulesPagePaths().sort()).toEqual(pages().map((p) => p.path).sort());
+  });
+
+  it("says what the guide says rather than a second version of it", () => {
+    for (const age of AGE_GROUPS) {
+      const html = rulesPageHtml(age);
+      const guide = GUIDES[age];
+      expect(html, age).toContain(guide.title);
+      // Every question the guide answers is on the page, so the FAQ markup below
+      // can never claim something a reader cannot see
+      for (const faq of guide.faqs) {
+        expect(html, `${age}: ${faq.question}`).toContain(faq.question);
+      }
+    }
+  });
+
+  it("carries the chrome that belongs to the product", () => {
+    for (const { path, html } of pages()) {
+      expect(html, `${path}: header`).toContain('<a class="header-cta" href="/hub">');
+      expect(html, `${path}: canonical`).toContain(`<link rel="canonical" href="https://equalplay.io${path}" />`);
+      expect(html, `${path}: logo`).toContain('<span class="brand-text">Equal <span>Play</span></span>');
+      expect(html, `${path}: footer`).toContain('<li><a href="/privacy">Privacy</a></li>');
+      expect(html, `${path}: one h1`).toMatch(/<h1>/);
+      expect((html.match(/<h1>/g) ?? []).length, `${path}: h1 count`).toBe(1);
+    }
+  });
+
+  it("escapes the description once rather than twice", () => {
+    // Every field goes into `page()` raw and is escaped there. Escaping one on
+    // the way in ships &amp;#39; to a reader the first time a blurb has an
+    // apostrophe in it, on three meta tags at once.
+    for (const { path, html } of pages()) {
+      const metas = [...html.matchAll(/content="([^"]*)"/g)].map((m) => m[1]);
+      for (const value of metas) {
+        expect(value, `${path}: double escaped`).not.toMatch(/&(amp|lt|gt|quot|#39);(amp|lt|gt|quot|#\d)/);
+      }
+    }
+  });
+
+  it("is indexable, unlike the hub the same words live in", () => {
+    for (const { path, html } of pages()) {
+      expect(html, path).not.toContain("noindex");
+    }
+  });
+
+  it("only claims an FAQ where the answers are on the page", () => {
+    for (const { path, html } of pages()) {
+      const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+      expect(block, `${path}: no structured data`).not.toBeNull();
+      const data = JSON.parse((block as RegExpMatchArray)[1].split("\\u003c").join("<"));
+      const faq = data["@graph"].find((node: { "@type": string }) => node["@type"] === "FAQPage");
+      if (!faq) continue;
+      for (const entry of faq.mainEntity) {
+        // The structured data holds the text raw, because it is JSON. The page
+        // holds it escaped, because it is markup. Same words either way, which
+        // is the thing worth checking: Google will not show an answer it cannot
+        // find on the page.
+        expect(html, `${path}: ${entry.name}`).toContain(esc(entry.name));
+        expect(html, `${path}: answer`).toContain(esc(entry.acceptedAnswer.text));
+      }
+    }
+  });
+
+  it("links out to the RFU rather than passing the rules off as ours", () => {
+    for (const age of AGE_GROUPS) {
+      const html = rulesPageHtml(age);
+      expect(html, age).toContain(RULES_OF_PLAY[age]);
+      expect(html, age).toContain("not affiliated with the RFU");
+    }
+    expect(rulesIndexHtml()).toContain(REGULATION_15_URL);
+  });
+
+  it("never claims a lineout at a grade that has none", () => {
+    // Same claim the drills cluster is held to. Seven pages said U12 once.
+    for (const { path, html } of pages()) {
+      expect(html.replace(/\s+/g, " "), path).not.toMatch(/lineout (at|from|arrives at) U1[0-3]\b/i);
+    }
+  });
+
+  it("sends a reader on into the app and across to the drills", () => {
+    for (const age of AGE_GROUPS) {
+      const html = rulesPageHtml(age);
+      expect(html, `${age}: app`).toContain(`href="/hub#/guide/${age}"`);
+      expect(html, `${age}: drills`).toContain(`href="/rugby-drills-${age}"`);
     }
   });
 });

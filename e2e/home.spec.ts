@@ -36,6 +36,13 @@ test("no static page scrolls sideways on the smallest phone", async ({ page }) =
     "/rugby-drills-u10",
     "/rugby-drills-u11",
     "/rugby-drills-u12",
+    "/rugby-rules-by-age-group",
+    "/rugby-rules-u7",
+    "/rugby-rules-u8",
+    "/rugby-rules-u9",
+    "/rugby-rules-u10",
+    "/rugby-rules-u11",
+    "/rugby-rules-u12",
     "/rugby-substitution-app",
     "/equal-playing-time-calculator",
     "/rfu-regulation-15-playing-time",
@@ -70,4 +77,34 @@ test("the planner is reachable from the app without an account", async ({ page }
   await page.locator('.hub-tab[data-route="planner"]').click();
   await expect(page).toHaveURL(/\/planner/);
   await expect(page.locator(".btn-generate")).toBeVisible();
+});
+
+test("a rules page is a real page, not a redirect into the app", async ({ page }) => {
+  // The guide is hub content and `/hub` is noindex, so these exist to be the
+  // version a search engine can read. If one ever became a redirect or an empty
+  // shell that waits on JavaScript, the whole point of it would be gone.
+  await page.goto("/rugby-rules-u10");
+  expect(page.url()).toContain("/rugby-rules-u10");
+
+  await expect(page.locator("h1")).toHaveCount(1);
+  await expect(page.locator("h1")).toContainText("U10");
+  await expect(page.locator("main")).toContainText("ruck");
+
+  // Straight into the app, and across to the drills for the same grade
+  await expect(page.locator('a[href="/hub#/guide/u10"]')).toHaveCount(1);
+  await expect(page.locator('a[href="/rugby-drills-u10"]')).not.toHaveCount(0);
+  await expect(page.locator('a.header-cta[href="/hub"]')).toBeVisible();
+});
+
+test("the rules cluster links itself together", async ({ page }) => {
+  await page.goto("/rugby-rules-by-age-group");
+  for (const age of ["u7", "u8", "u9", "u10", "u11", "u12"]) {
+    await expect(page.locator(`a[href="/rugby-rules-${age}"]`).first()).toBeVisible();
+  }
+
+  // In from the drills page for the grade, which is where a coach who searched
+  // for drills rather than rules comes in
+  await page.goto("/rugby-drills-u9");
+  await page.locator('a[href="/rugby-rules-u9"]').first().click();
+  await expect(page.locator("h1")).toContainText("U9");
 });
