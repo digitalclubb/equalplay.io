@@ -1901,73 +1901,166 @@ body {
 
 /* ---- Rules guides ----
 
-   Shaped like a document rather than like the rest of the hub, because it is
-   read once in August rather than tapped through on a Tuesday. Long measure,
-   generous headings, no cards around the prose. */
+   A document rather than an app screen. Read once in August at a kitchen table,
+   then checked on a touchline, so it is shaped like an article: one narrow
+   column of prose with the tables allowed to run wider than it.
+
+   The first go had the title at 17.6px. Both heading levels and the body came
+   out at 16px. The standfirst was 13.6px, smaller than the text it introduces.
+   Four levels of hierarchy inside 1.6px of each other, with weight doing all
+   the work. This is a real scale.
+
+   Outfit was already loaded for the wordmark and used nowhere else. It carries
+   the headings here, which buys contrast against the DM Sans body without
+   loading a third family. */
 
 .guide {
-  max-width: 62ch;
+  /* Roughly 68 characters of DM Sans at 16px. The measure goes on the prose
+     rather than on the article, so a twelve row comparison table is not forced
+     into the width of a paragraph. */
+  --measure: 34rem;
+  --rule: 1px solid var(--color-border);
+
+  max-width: 46rem;
+  font-kerning: normal;
 }
 
-.guide > h2 {
+.guide p,
+.guide li {
+  font-weight: var(--weight-normal);
+}
+
+/* ---- The header block ---- */
+
+.guide-eyebrow {
+  display: block;
   margin: 0 0 var(--sp-2xs);
-  font-size: var(--text-lg);
-  line-height: 1.15;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.guide-title {
+  margin: 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  /* 28px on a 320px phone, 40px once there is a laptop's worth of room. */
+  font-size: clamp(1.75rem, 1.35rem + 2vw, 2.5rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Larger than the body it introduces, which is the whole job of a standfirst. */
+.guide-lede {
+  max-width: var(--measure);
+  margin: var(--sp-sm) 0 0;
+  color: var(--color-secondary);
+  font-size: 1.1875rem;
+  font-weight: var(--weight-normal);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.guide-header {
+  padding-bottom: var(--sp-lg);
+  border-bottom: var(--rule);
 }
 
 .guide-back {
-  margin: 0 0 var(--sp-sm);
+  margin: 0 0 var(--sp-md);
   font-size: var(--text-sm);
+}
+
+/* Named rather than put on `.guide a`. The grade cards on the index are anchors
+   sitting inside a section, so anything broader beats their `color: inherit` and
+   turns every card orange. */
+.guide-back a,
+.guide-source a,
+.guide-section p a,
+.guide-section li a {
+  color: var(--color-primary);
 }
 
 .guide-yours {
   display: inline-block;
-  margin: 0 0 var(--sp-xs);
+  margin: var(--sp-sm) 0 0;
   padding: var(--sp-3xs) var(--sp-xs);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
   border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: var(--text-xs);
   font-weight: var(--weight-semi);
 }
 
-.guide-section {
-  margin-top: var(--sp-lg);
+/* ---- Sections ---- */
+
+/* Space sits above a heading rather than below it, so a heading belongs to what
+   follows it rather than floating between two things equally. */
+.guide-section h3 {
+  max-width: var(--measure);
+  margin: 2.75rem 0 var(--sp-sm);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
-.guide-section h3 {
-  margin: 0 0 var(--sp-xs);
-  font-size: var(--text-base);
-  line-height: 1.2;
+/* The header already ends on a rule, so the first section does not need the
+   full gap above it as well. */
+.guide-section:first-of-type h3 {
+  margin-top: 2rem;
 }
 
 .guide-section h4 {
-  margin: var(--sp-md) 0 var(--sp-2xs);
-  font-size: var(--text-base);
-  font-weight: var(--weight-heavy);
+  max-width: var(--measure);
+  margin: 1.75rem 0 var(--sp-2xs);
+  font-size: 1.125rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.3;
+  text-wrap: balance;
 }
 
 .guide-section p {
-  margin: 0 0 var(--sp-sm);
-  line-height: 1.6;
+  max-width: var(--measure);
+  margin: 0 0 1.25em;
+  line-height: 1.65;
+  text-wrap: pretty;
 }
 
 .guide-list {
-  margin: 0 0 var(--sp-sm);
-  padding-left: var(--sp-md);
-  line-height: 1.6;
+  max-width: var(--measure);
+  margin: 0 0 1.5rem;
+  padding-left: 1.1rem;
+  line-height: 1.65;
 }
 
 .guide-list li {
-  margin-bottom: var(--sp-2xs);
+  margin-bottom: var(--sp-xs);
+  padding-left: var(--sp-3xs);
 }
 
-/* A wide comparison table on a narrow phone scrolls inside its own box rather
-   than taking the page with it. Same rule the static pages use. */
+.guide-list li::marker {
+  color: var(--color-muted);
+}
+
+/* The lead-in is doing the work of a run-in heading, so it gets the weight
+   rather than a colour, which would compete with the links. */
+.guide-list strong {
+  font-weight: var(--weight-bold);
+}
+
+/* ---- Tables ----
+
+   Allowed to run wider than the prose, the way a figure does in print. */
+
 .guide-scroll {
   overflow-x: auto;
-  margin: 0 0 var(--sp-sm);
+  margin: 0 0 1.5rem;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1975,43 +2068,81 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
 }
 
 .guide-table caption {
-  margin-bottom: var(--sp-2xs);
+  margin-bottom: var(--sp-xs);
   color: var(--color-muted);
   font-size: var(--text-xs);
+  line-height: 1.5;
   text-align: left;
 }
 
 .guide-table th,
 .guide-table td {
-  padding: var(--sp-2xs) var(--sp-xs);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--sp-xs) var(--sp-sm) var(--sp-xs) 0;
+  border-bottom: var(--rule);
   text-align: left;
-  vertical-align: top;
+  vertical-align: baseline;
 }
 
 .guide-table thead th {
+  padding-bottom: var(--sp-2xs);
+  border-bottom-width: 2px;
   color: var(--color-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-2xs);
   font-weight: var(--weight-semi);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
 }
 
 .guide-table tbody th {
+  padding-right: var(--sp-lg);
   font-weight: var(--weight-semi);
   white-space: nowrap;
 }
 
-.guide-faq h4 {
-  margin-top: var(--sp-md);
+.guide-table tbody tr:last-child th,
+.guide-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
+/* ---- Questions ---- */
+
+.guide-faq {
+  max-width: var(--measure);
+  padding-top: var(--sp-md);
+  border-top: var(--rule);
+}
+
+.guide-faq:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.guide-faq h4 {
+  margin-top: 0;
+  color: var(--color-text);
+}
+
+.guide-faq p {
+  margin-bottom: 0;
+  color: var(--color-secondary);
+}
+
+/* ---- Where it came from, plus where to go next ---- */
+
 .guide-source {
-  margin-top: var(--sp-lg);
+  max-width: var(--measure);
+  margin-top: 2.75rem;
   font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.guide-source p {
+  margin-bottom: var(--sp-sm);
 }
 
 .guide-source p:last-child {
@@ -2021,28 +2152,32 @@ body {
 .guide-steps {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-xs);
+  gap: var(--sp-sm);
   margin-top: var(--sp-lg);
+  padding-top: var(--sp-lg);
+  border-top: var(--rule);
 }
 
-/* The index. Cards here rather than a list, because picking a grade is the whole
-   job of the page and a grade is a short thing to read. */
+/* ---- The index ---- */
+
 .guide-grid {
   display: grid;
   gap: var(--sp-sm);
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  margin-bottom: 1.5rem;
 }
 
 .guide-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3xs);
-  padding: var(--sp-sm);
-  border: 1px solid var(--color-border);
+  padding: var(--sp-md);
+  border: var(--rule);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: inherit;
   text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
 
 .guide-card:hover {
@@ -2051,14 +2186,18 @@ body {
 
 .guide-card.is-yours {
   border-color: var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
 }
 
 .guide-card-grade {
   display: flex;
   align-items: center;
   gap: var(--sp-xs);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-heavy);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 1.375rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .guide-card-yours {
@@ -2066,14 +2205,17 @@ body {
   border-radius: var(--radius-sm);
   background: var(--color-primary);
   color: var(--color-on-dark);
-  font-size: var(--text-xs);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: var(--text-2xs);
   font-weight: var(--weight-semi);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
 }
 
 .guide-card-title {
+  font-size: var(--text-base);
   font-weight: var(--weight-semi);
+  line-height: 1.3;
 }
 
 .guide-card-blurb {
@@ -2082,9 +2224,19 @@ body {
   line-height: 1.5;
 }
 
-/* The guide is a document, so it gets the room the drill page gets. */
-@media (min-width: 900px) {
-  .guide-grid {
-    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+/* A phone is the harder case, so the scale steps down rather than the layout
+   changing shape. */
+@media (max-width: 520px) {
+  .guide-section h3 {
+    margin-top: 2.25rem;
+  }
+
+  .guide-table th,
+  .guide-table td {
+    padding-right: var(--sp-sm);
+  }
+
+  .guide-table tbody th {
+    padding-right: var(--sp-md);
   }
 }

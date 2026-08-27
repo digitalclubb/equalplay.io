@@ -1179,6 +1179,53 @@ test("a guide reads with no account and no grade picked", async ({ page }) => {
   await expect(page.locator(".guide h2")).toHaveText("What changes at U11");
 });
 
+test("the guide reads as an article rather than as one flat size", async ({ page }) => {
+  /**
+   * The first version had the title at 17.6px, both heading levels and the body
+   * all at 16px, and the standfirst at 13.6px, which is smaller than the text it
+   * introduces. Four levels of hierarchy inside 1.6px of each other, with weight
+   * doing the whole job. Nothing caught it, because nothing was looking.
+   *
+   * The numbers below are floors rather than the design. What they hold is that
+   * each level stays clear of the one under it and that the measure stays
+   * readable.
+   */
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signedOut(page, "u10");
+  await page.goto("/hub/#/guide/u10");
+  await expect(page.locator(".guide-title")).toBeVisible();
+
+  const type = await page.evaluate(() => {
+    const size = (sel: string) => {
+      const el = document.querySelector(sel);
+      return el ? parseFloat(getComputedStyle(el).fontSize) : 0;
+    };
+    const body = document.querySelector(".guide-section p") as HTMLElement;
+    return {
+      title: size(".guide-title"),
+      lede: size(".guide-lede"),
+      h3: size(".guide-section h3"),
+      h4: size(".guide-section h4"),
+      body: size(".guide-section p"),
+      // Roughly how many characters fit on a line of body copy.
+      measure: body.getBoundingClientRect().width / (parseFloat(getComputedStyle(body).fontSize) * 0.5),
+      lineHeight: parseFloat(getComputedStyle(body).lineHeight),
+    };
+  });
+
+  expect(type.body, "body copy below 16px").toBeGreaterThanOrEqual(16);
+  // Each level clear of the one below it, rather than leaning on weight alone.
+  expect(type.title, "the title barely outranks a section heading").toBeGreaterThan(type.h3 * 1.4);
+  expect(type.h3, "section headings do not outrank subheadings").toBeGreaterThan(type.h4 * 1.15);
+  expect(type.h4, "subheadings are the same size as body copy").toBeGreaterThan(type.body * 1.05);
+  // A standfirst introduces the body, so it cannot be smaller than it.
+  expect(type.lede, "the standfirst is smaller than the body").toBeGreaterThan(type.body);
+
+  expect(type.measure, "lines are too long to read comfortably").toBeLessThan(78);
+  expect(type.measure, "lines are too short").toBeGreaterThan(45);
+  expect(type.lineHeight / type.body, "body copy is set too tight").toBeGreaterThan(1.45);
+});
+
 test("the guide shows a grade above the coach's own", async ({ page }) => {
   // The catalogue must never do this. The guide has to: the grade you are going
   // up to in September is the one you want to read in August.

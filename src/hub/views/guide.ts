@@ -104,10 +104,13 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
 
   return `
     <article class="guide">
-      <p class="guide-back"><a href="#/guide">All age grades</a></p>
-      <h2>${esc(guide.title)}</h2>
-      ${coachAge === guide.ageGroup ? `<p class="guide-yours">The grade you coach</p>` : ""}
-      <p class="hub-lede">${esc(guide.standfirst)}</p>
+      <header class="guide-header">
+        <p class="guide-back"><a href="#/guide">All age grades</a></p>
+        <span class="guide-eyebrow">${label} &middot; RFU Regulation 15</span>
+        <h2 class="guide-title">${esc(guide.title)}</h2>
+        <p class="guide-lede">${esc(guide.standfirst)}</p>
+        ${coachAge === guide.ageGroup ? `<p class="guide-yours">The grade you coach</p>` : ""}
+      </header>
       ${sections}
 
       <section class="guide-section">
@@ -147,12 +150,15 @@ function guideIndex(coachAge?: AgeGroup): string {
 
   return `
     <article class="guide">
-      <h2>What your grade is allowed to do</h2>
-      <p class="hub-lede">
-        RFU Regulation 15 decides what a minis grade may do rather than a coach's
-        judgement. One page per grade, saying what arrives, what goes and what to
-        get in before the season starts.
-      </p>
+      <header class="guide-header">
+        <span class="guide-eyebrow">RFU Regulation 15</span>
+        <h2 class="guide-title">What your grade is allowed to do</h2>
+        <p class="guide-lede">
+          Regulation 15 decides what a minis grade may do rather than a coach's
+          judgement. One page per grade, saying what arrives, what goes and what
+          to get in before the season starts.
+        </p>
+      </header>
 
       <section class="guide-section">
         <h3>When each part of the game arrives</h3>
