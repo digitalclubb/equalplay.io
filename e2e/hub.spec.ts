@@ -1687,3 +1687,16 @@ test("present mode prints the session rather than a blank page", async ({ page }
   await expect(page.locator(".run-stage-title")).toBeVisible();
   await expect(page.locator("#plan-print-sheet .print-block")).toHaveCount(BLOCKS);
 });
+
+test("the account page says whether the app is ready for a pitch", async ({ page }) => {
+  await signedIn(page, "u10", "#/account");
+  const panel = page.locator("section").filter({ hasText: "On this device" });
+  await expect(panel).toBeVisible();
+
+  // The service worker registers on an idle callback, so a first paint can
+  // honestly say not yet. A reload is served through it, and by then it has to
+  // stop hedging: this is the promise the whole product rests on.
+  await page.reload();
+  await expect(page.locator("body[data-signed-in]")).toBeVisible();
+  await expect(page.locator(".device-state-ready")).toContainText("Ready for the pitch");
+});

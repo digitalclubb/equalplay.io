@@ -11,6 +11,7 @@ import {
 } from "../auth.js";
 import { AGE_GROUPS, AGE_GROUP_LABELS, RULES_OF_PLAY, isAgeGroup } from "../content/types.js";
 import { ageRulesLink } from "../../lib/rulesLink.js";
+import { canInstall, isInstalled, promptInstall, savedForOffline } from "../install.js";
 
 /**
  * `profile` is null for an account that has no usable metadata. Created from the
@@ -87,6 +88,11 @@ export function renderAccount(
     </section>
 
     <section class="hub-panel">
+      <h2>On this device</h2>
+      ${deviceState()}
+    </section>
+
+    <section class="hub-panel">
       <h2>Signing off</h2>
       <button type="button" class="hub-btn" id="sign-out">Sign out</button>
       <p class="hub-fineprint">
@@ -99,6 +105,18 @@ export function renderAccount(
     </section>
     </div>
     </div>`;
+
+  const install = container.querySelector<HTMLButtonElement>("#install-app");
+  install?.addEventListener("click", () => {
+    install.disabled = true;
+    void promptInstall().then((outcome) => {
+      if (outcome === "installed") showToast("Added to your home screen.");
+      else if (outcome === "dismissed") showToast("No bother. It works in the browser too.");
+      else showToast("Your browser has it in its own menu instead.");
+      // The prompt is spent either way, so the button has nothing left to do
+      install.remove();
+    });
+  });
 
   const accountForm = container.querySelector<HTMLFormElement>("#account-form");
   accountForm?.addEventListener("submit", (event) => {
@@ -186,4 +204,42 @@ function showFieldErrors(
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "That didn't work. Give it another go.";
+}
+
+/**
+ * What this device has, said plainly.
+ *
+ * Read once at render rather than watched. The account form is on the same
+ * screen, so repainting this panel under a coach who is halfway through typing
+ * their club name would cost more than a button appearing a visit late.
+ */
+function deviceState(): string {
+  const offline = savedForOffline()
+    ? `<p class="device-state device-state-ready">
+         Ready for the pitch. The drills, your sessions and the rules guides are
+         all on this device, so they open with no signal.
+       </p>`
+    : `<p class="device-state">
+         Not saved for offline yet. It happens on its own a moment after the app
+         opens, so look again in a minute.
+       </p>`;
+
+  if (isInstalled()) {
+    return `${offline}
+      <p class="hub-fineprint">
+        Running from your home screen, which is the way to use it at a pitch.
+      </p>`;
+  }
+
+  return `${offline}
+    <p>
+      Adding it to your home screen gives you an icon and no browser bar. It is
+      the same app either way, so this is about how it opens rather than what it
+      can do.
+    </p>
+    ${canInstall() ? '<button type="button" class="hub-btn" id="install-app">Add to my home screen</button>' : ""}
+    <p class="hub-fineprint">
+      No button here? Your browser keeps it in its own menu. On an iPhone that is
+      Share, then Add to Home Screen.
+    </p>`;
 }

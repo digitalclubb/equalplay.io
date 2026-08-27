@@ -2464,3 +2464,18 @@ body {
   display: flex;
   gap: var(--sp-xs);
 }
+
+/* ---- On this device ---- */
+
+/* The offline promise, said out loud. It is the one claim the app makes that a
+   coach cannot check until the moment it is too late to do anything about. */
+.device-state {
+  padding: var(--sp-sm) var(--sp-md);
+  border-left: 4px solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.device-state-ready {
+  border-left-color: var(--color-primary);
+}
