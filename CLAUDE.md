@@ -413,6 +413,22 @@ which made Guide the only tab that left the app shell and the only one that
 would not open with no signal, since `sw.js` precaches `/hub` rather than each
 page. As hub content it is in the bundle the catalogue is already in.
 
+**The guide is set as an article, not as an app screen.** White to the edges via
+`#hub-view:has(.guide)`, one centred column, 18px body against the app's 16px,
+and Outfit on the headings. It is the only route in the hub that reads rather
+than being tapped through, so it gets the room a document gets. Two earlier goes
+are worth not repeating: the first had the title at 17.6px with both heading
+levels and the body all at 16px, so weight carried the whole hierarchy; the
+second kept the app's grey behind it and put the six grades in bordered cards
+with a coloured bar down the side of whichever was yours, which reads as a
+dashboard rather than as writing. The index is a contents list now, hairlines
+between the rows and the coach's own grade marked in words.
+
+`e2e/hub.spec.ts` holds the scale: each level clear of the one under it, a
+standfirst never smaller than its body copy, the measure between 45 and 78
+characters. That guard has already caught `.guide p` beating `.guide-lede` on
+specificity and silently dropping the standfirst back to body size.
+
 **The guide is the one thing in the hub the age gate does not touch.** Every
 other route hides what the coach's grade may not do, because handing an U8 a
 ruck drill is a safety problem. A guide is the opposite: a coach going up to U10

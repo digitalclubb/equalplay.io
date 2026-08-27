@@ -1152,7 +1152,7 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await page.goto("/hub/#/catalogue");
   await page.locator('.hub-tab[data-route="guide"]').click();
   await expect(page).toHaveURL(/#\/guide$/);
-  await expect(page.locator(".guide-card")).toHaveCount(6);
+  await expect(page.locator(".guide-entry")).toHaveCount(6);
   // Still inside the app, with the tab lit and the chrome unchanged.
   await expect(page.locator('.hub-tab[data-route="guide"]')).toHaveAttribute(
     "aria-current",
@@ -1164,7 +1164,7 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await page.goto("/planner");
   await page.locator('.hub-tab[data-route="guide"]').click();
   await expect(page).toHaveURL(/\/hub#\/guide$/);
-  await expect(page.locator(".guide-card")).toHaveCount(6);
+  await expect(page.locator(".guide-entry")).toHaveCount(6);
 });
 
 test("a guide reads with no account and no grade picked", async ({ page }) => {
@@ -1231,9 +1231,9 @@ test("the guide shows a grade above the coach's own", async ({ page }) => {
   // up to in September is the one you want to read in August.
   await signedOut(page, "u8");
   await page.goto("/hub/#/guide");
-  await expect(page.locator(".guide-card.is-yours")).toHaveCount(1);
+  await expect(page.locator(".guide-entry-yours")).toHaveCount(1);
 
-  await page.locator('.guide-card[href="#/guide/u12"]').click();
+  await page.locator('.guide-entry a[href="#/guide/u12"]').click();
   await expect(page.locator(".guide h2")).toHaveText("What changes at U12");
   await expect(page.locator(".guide")).toContainText("The scrum goes to five");
 });

@@ -168,7 +168,7 @@ describe("the guide view", () => {
 
   it("lists every grade on the index", () => {
     renderGuide(container, undefined);
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".guide-card")].map(
+    const links = [...container.querySelectorAll<HTMLAnchorElement>(".guide-entry a")].map(
       (a) => a.getAttribute("href"),
     );
     expect(links).toEqual(AGE_GROUPS.map((age) => `#/guide/${age}`));
@@ -187,14 +187,16 @@ describe("the guide view", () => {
 
   it("marks the coach's own grade, and only that one", () => {
     renderGuide(container, undefined, "u10");
-    const marked = [...container.querySelectorAll(".guide-card.is-yours")];
+    const marked = [...container.querySelectorAll(".guide-entry-yours")];
     expect(marked).toHaveLength(1);
-    expect(marked[0].getAttribute("href")).toBe("#/guide/u10");
+    expect(marked[0].closest(".guide-entry")?.querySelector("a")?.getAttribute("href")).toBe(
+      "#/guide/u10",
+    );
   });
 
   it("says nothing about a coach with no grade yet", () => {
     renderGuide(container, undefined);
-    expect(container.querySelectorAll(".guide-card.is-yours")).toHaveLength(0);
+    expect(container.querySelectorAll(".guide-entry-yours")).toHaveLength(0);
   });
 
   it("links the grade's own RFU appendix, never another grade's", () => {
@@ -220,7 +222,7 @@ describe("the guide view", () => {
 
   it("falls back to the index rather than breaking on a bad grade", () => {
     renderGuide(container, "u99");
-    expect(container.querySelectorAll(".guide-card")).toHaveLength(AGE_GROUPS.length);
+    expect(container.querySelectorAll(".guide-entry")).toHaveLength(AGE_GROUPS.length);
   });
 
   it("escapes what it renders", () => {

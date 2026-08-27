@@ -97,9 +97,12 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
     )
     .join("");
 
-  const step = (age: AgeGroup | undefined, which: string): string =>
+  const step = (age: AgeGroup | undefined, dir: string, which: string): string =>
     age
-      ? `<a class="hub-btn" href="#/guide/${age}">${which} ${AGE_GROUP_LABELS[age]}</a>`
+      ? `<a class="guide-step guide-step-${dir}" href="#/guide/${age}">
+           <span class="guide-step-dir">${which}</span>
+           <span class="guide-step-grade">${AGE_GROUP_LABELS[age]}</span>
+         </a>`
       : "";
 
   return `
@@ -118,7 +121,7 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
         ${faqs}
       </section>
 
-      <div class="hub-panel guide-source">
+      <footer class="guide-source">
         <p>
           Everything here is written from the RFU's own rules of play for the grade.
           They are reissued every summer, so read this season's there rather than
@@ -126,26 +129,31 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
           different to this page, they are right.
         </p>
         <p>${ageRulesLink(label, RULES_OF_PLAY[guide.ageGroup])}</p>
-      </div>
+      </footer>
 
       <nav class="guide-steps" aria-label="Other age grades">
-        ${step(previous, "Back to")}
-        ${step(next, "On to")}
+        ${step(previous, "prev", "Back to")}
+        ${step(next, "next", "On to")}
       </nav>
     </article>`;
 }
 
 function guideIndex(coachAge?: AgeGroup): string {
-  const cards = AGE_GROUPS.map((age) => {
+  const entries = AGE_GROUPS.map((age) => {
     const yours = age === coachAge;
     return `
-      <a class="guide-card${yours ? " is-yours" : ""}" href="#/guide/${age}">
-        <span class="guide-card-grade">${AGE_GROUP_LABELS[age]}${
-          yours ? `<span class="guide-card-yours">Yours</span>` : ""
-        }</span>
-        <span class="guide-card-title">${esc(GUIDES[age].title)}</span>
-        <span class="guide-card-blurb">${esc(GUIDE_BLURB[age])}</span>
-      </a>`;
+      <li class="guide-entry">
+        <a href="#/guide/${age}">
+          <span class="guide-entry-grade">
+            ${AGE_GROUP_LABELS[age]}
+            ${yours ? `<span class="guide-entry-yours">Your grade</span>` : ""}
+          </span>
+          <span class="guide-entry-body">
+            <span class="guide-entry-title">${esc(GUIDES[age].title)}</span>
+            <span class="guide-entry-blurb">${esc(GUIDE_BLURB[age])}</span>
+          </span>
+        </a>
+      </li>`;
   }).join("");
 
   return `
@@ -172,7 +180,7 @@ function guideIndex(coachAge?: AgeGroup): string {
 
       <section class="guide-section">
         <h3>Pick a grade</h3>
-        <div class="guide-grid">${cards}</div>
+        <ol class="guide-entries">${entries}</ol>
       </section>
 
       <section class="guide-section">
@@ -195,14 +203,14 @@ function guideIndex(coachAge?: AgeGroup): string {
         </ul>
       </section>
 
-      <div class="hub-panel guide-source">
+      <footer class="guide-source">
         <p>
           Equal Play is not affiliated with the RFU. Regulation 15 is theirs. These
           pages put it in our own words, so they are a summary rather than the thing
           itself. It is reissued every summer as well.
         </p>
         <p>${rulesLink("Regulation 15 in full", REGULATION_15_URL)}</p>
-      </div>
+      </footer>
     </article>`;
 }
 
@@ -218,5 +226,7 @@ export function renderGuide(
 ): void {
   const age = param && isAgeGroup(param) ? param : undefined;
   container.innerHTML = age ? guidePage(GUIDES[age], coachAge) : guideIndex(coachAge);
-  container.scrollTop = 0;
+  // The window is the scroller, not the container. Stepping from a long U10 page
+  // to U11 used to drop you halfway down it.
+  window.scrollTo(0, 0);
 }
