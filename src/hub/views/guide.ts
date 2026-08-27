@@ -139,21 +139,17 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
 }
 
 function guideIndex(coachAge?: AgeGroup): string {
-  const entries = AGE_GROUPS.map((age) => {
+  const cards = AGE_GROUPS.map((age) => {
     const yours = age === coachAge;
     return `
-      <li class="guide-entry">
-        <a href="#/guide/${age}">
-          <span class="guide-entry-grade">
-            ${AGE_GROUP_LABELS[age]}
-            ${yours ? `<span class="guide-entry-yours">Your grade</span>` : ""}
-          </span>
-          <span class="guide-entry-body">
-            <span class="guide-entry-title">${esc(GUIDES[age].title)}</span>
-            <span class="guide-entry-blurb">${esc(GUIDE_BLURB[age])}</span>
-          </span>
-        </a>
-      </li>`;
+      <a class="guide-card${yours ? " is-yours" : ""}" href="#/guide/${age}">
+        <span class="guide-card-grade">
+          ${AGE_GROUP_LABELS[age]}
+          ${yours ? `<span class="guide-card-yours">Your grade</span>` : ""}
+        </span>
+        <span class="guide-card-title">${esc(GUIDES[age].title)}</span>
+        <span class="guide-card-blurb">${esc(GUIDE_BLURB[age])}</span>
+      </a>`;
   }).join("");
 
   return `
@@ -180,7 +176,7 @@ function guideIndex(coachAge?: AgeGroup): string {
 
       <section class="guide-section">
         <h3>Pick a grade</h3>
-        <ol class="guide-entries">${entries}</ol>
+        <div class="guide-grid">${cards}</div>
       </section>
 
       <section class="guide-section">

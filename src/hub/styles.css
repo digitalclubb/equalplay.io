@@ -2131,35 +2131,60 @@ body {
   color: var(--color-secondary);
 }
 
-/* ---- The index, as a contents page rather than a grid of cards ----
+/* ---- The index ----
 
-   Each grade is a row: the grade itself, then the headline and the line under
-   it. Hairlines between, nothing boxed, with the grade a coach actually takes
-   marked in words rather than with a coloured edge. */
+   Cards, because six grades laid out as a grid is how somebody picks one. A
+   card also gives the whole row a hit area rather than a line of text. What the first
+   go had wrong was a bar of colour down the side of whichever grade was yours:
+   decoration reaching for a component library rather than saying anything a
+   coach needed. The grade a coach takes is marked in words.
 
-.guide-entries {
-  margin: 0 0 var(--sp-lg);
-  padding: 0;
-  list-style: none;
-  border-top: var(--rule);
-}
+   The title carries the link colour. Bordered rows with the headline in body
+   colour gave no sign they went anywhere. */
 
-.guide-entry {
-  border-bottom: var(--rule);
-}
-
-.guide-entry a {
+.guide-grid {
   display: grid;
-  gap: var(--sp-2xs) var(--sp-lg);
-  padding: var(--sp-md) 0;
-  color: inherit;
-  text-decoration: none;
+  gap: var(--sp-md);
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  margin-bottom: var(--sp-lg);
 }
 
-.guide-entry-grade {
+.guide-card {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3xs);
+  gap: var(--sp-2xs);
+  padding: var(--sp-md);
+  border: var(--rule);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.guide-card:hover,
+.guide-card:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-bg);
+}
+
+.guide-card:hover .guide-card-title,
+.guide-card:focus-visible .guide-card-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Marked by its edge and by the words in it. No bar down the side. */
+.guide-card.is-yours {
+  border-color: var(--color-primary);
+}
+
+.guide-card-grade {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 1.5rem;
   font-weight: var(--weight-bold);
@@ -2167,7 +2192,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-.guide-entry-yours {
+.guide-card-yours {
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: var(--text-2xs);
   font-weight: var(--weight-semi);
@@ -2177,30 +2202,18 @@ body {
   white-space: nowrap;
 }
 
-.guide-entry-body {
-  display: block;
-  max-width: var(--measure);
-}
-
-.guide-entry-title {
-  display: block;
-  font-size: 1.25rem;
+/* The link colour is the affordance. Everything else in a card is text. */
+.guide-card-title {
+  color: var(--color-primary);
+  font-size: 1.125rem;
   font-weight: var(--weight-bold);
-  line-height: 1.25;
-  text-underline-offset: 3px;
+  line-height: 1.3;
 }
 
-.guide-entry-blurb {
-  display: block;
-  margin-top: var(--sp-3xs);
+.guide-card-blurb {
   color: var(--color-secondary);
   font-size: 1rem;
   line-height: 1.55;
-}
-
-.guide-entry a:hover .guide-entry-title,
-.guide-entry a:focus-visible .guide-entry-title {
-  text-decoration: underline;
 }
 
 /* ---- Where it came from, plus where to go next ---- */
@@ -2269,12 +2282,4 @@ body {
 .guide-step:focus-visible .guide-step-grade {
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-/* The grade sits beside the headline once there is room for a contents column. */
-@media (min-width: 40rem) {
-  .guide-entry a {
-    grid-template-columns: 5.5rem 1fr;
-    align-items: baseline;
-  }
 }

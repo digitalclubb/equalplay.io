@@ -419,10 +419,15 @@ and Outfit on the headings. It is the only route in the hub that reads rather
 than being tapped through, so it gets the room a document gets. Two earlier goes
 are worth not repeating: the first had the title at 17.6px with both heading
 levels and the body all at 16px, so weight carried the whole hierarchy; the
-second kept the app's grey behind it and put the six grades in bordered cards
-with a coloured bar down the side of whichever was yours, which reads as a
-dashboard rather than as writing. The index is a contents list now, hairlines
-between the rows and the coach's own grade marked in words.
+second kept the app's grey behind it and ran a bar of colour down the side of
+whichever grade was yours.
+
+**The index is cards, and the card title carries the link colour.** Six grades
+laid out as a grid is how somebody picks one, and a card gives the whole row a
+hit area. Replacing them with bordered rows of body-coloured text was an
+over-correction: it took the affordance out with the decoration, and nothing
+about the list said it went anywhere. The grade a coach takes is marked by its
+edge plus the words in it, never a bar down the side.
 
 `e2e/hub.spec.ts` holds the scale: each level clear of the one under it, a
 standfirst never smaller than its body copy, the measure between 45 and 78
