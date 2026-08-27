@@ -3,7 +3,7 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 21 August 2026, after session sharing. See `docs/one-product.md` for the
+Last updated 27 August 2026, after present mode and the rules pages. See `docs/one-product.md` for the
 one-product change that preceded it and which of its phases are built.
 
 ## Blocking: run `0003` before the next deploy
@@ -96,6 +96,27 @@ permission and clearing it takes every copy of that link out of service. Read th
 usually anonymous and RLS has nothing to match them against. Needs `0003` run against
 the live project before a link resolves.
 
+**Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
+coaching points big, minutes counting down, the screen held awake. The block is
+in the URL so a phone that locks comes back to the drill being run. Overrunning
+counts up rather than stopping at zero.
+
+**A drill goes into a session from the drill page.** The planner's own search
+was the only way in. Sessions the drill's grade may not do are left out, with the
+gate enforced in `addDrillToPlan` rather than only in the render.
+
+**Small space.** One chip in the catalogue and in the editor, derived from each
+drill's diagram, for the January hall and the half pitch. See `CLAUDE.md` for why
+the box is 25 by 15 rather than the sports hall it started at.
+
+**The offline promise, said out loud.** The Account page says whether the app is
+saved on the device and offers the home screen install where a browser gives one.
+
+**The rules guides are indexed.** Same words, two publications: the hub route a
+coach reads with no signal, plus a static page per grade emitted at build for
+search. `/rugby-rules-u7` through `u12` plus an index, in the sitemap, linked
+from the drills cluster.
+
 **Coaching hub.**
 
 - Account: register with name, club and age group, sign in, reset, change password, edit
@@ -120,15 +141,17 @@ a few weeks.
 1. **"Eight turned up."** You planned for twenty, eight came, so you have to decide in
    the car park. Nobody does this, free or paid. It is the most real problem a
    volunteer has. Every drill already carries `players: { min, max? }`, so this is a
-   number input and a filter over the blocks, flagging what will not work.
-2. **Present mode.** One drill fullscreen, big type, coaching points only. Sportplan's
-   marquee feature. About twenty lines here.
-3. **What you have already run.** Framed as coverage rather than as a diary: handling
+   number input and a filter over the blocks, flagging what will not work. Present
+   mode gives it somewhere obvious to live now, on the block being run.
+2. **What you have already run.** Framed as coverage rather than as a diary: handling
    four weeks running and nothing on evasion since June is the failure a volunteer
    actually has. Needs migration `0004`. Stores nothing about a child.
-4. **Your own drills.** Every club has three of its own. Without this the catalogue is
+3. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.
+4. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
+   on 27 August 2026. The drills cluster took months to get crawled because nobody
+   told Google it existed, which is a mistake worth not repeating.
 
 Instrumentation is live but has no data yet. `planner_to_app` and `register` are the
 two custom events, from `src/lib/track.ts`. A season of those answers whether the free
@@ -188,13 +211,16 @@ never things that would justify a price.
   the token getting its own row, which is not worth it yet.
 - The skip link leaves `#hub-view` in the URL, so a reload lands on Drills rather than the
   view you were on. Cosmetic.
-- No way to add a drill to a session from the drill page. The planner's own search is the
-  single path, which was a deliberate choice rather than an oversight.
 - The signed-out catalogue is readable by anyone, but the app is still `noindex`. Making
   it indexable is most of the work of the public drill catalogue below, so it is its own
   decision rather than a side effect.
 - `e2e/contrast.spec.ts` covers the homepage, the planner and the signed-out hub. The
-  signed-in views need an auth stub before it can reach them.
+  signed-in views need an auth stub before it can reach them. Present mode and the
+  Account page's device panel are both signed in, so both are unmeasured. The one
+  fixed colour either of them uses for text is `--color-danger` on `--color-bg` at
+  roughly 4.6:1, checked by hand rather than by machine.
+- No way to add a drill to a session from present mode, which is where "eight turned
+  up" will want one.
 - `e2e/hub.spec.ts:146` opens a drill by clicking `.drill-card` rather than the link
   inside it. That aims at the element's centre, which moves when the web font swaps, so
   it can miss under load. One test was fixed this way already.

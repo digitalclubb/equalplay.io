@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-551 unit and integration tests across 18 files, 98 Playwright tests. Most are ordinary.
-These nine are load bearing and a failure means the code is wrong, not the test:
+603 unit and integration tests across 20 files, 124 Playwright tests. Most are ordinary.
+These ten are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -94,7 +94,8 @@ These nine are load bearing and a failure means the code is wrong, not the test:
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
 | `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle. Guide and Match day resolve to paths rather than fragments |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
-| `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules guide, linked from its drills page and from the index |
+| `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules page, linked from its drills page and from the index, in the sitemap, with no hand-written copy left in `public/` |
+| `install.test.ts` | The offline promise is only made once the service worker is serving the page. The install offer is spent once shown, never on a prompt the browser refused to display. iPhone never fires the event, so the way in stays written down |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -102,7 +103,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 98 tests across four files: `matchday` (9), `home` (4), `hub` (78)
+`pnpm test:e2e` is 124 tests across four files: `matchday` (9), `home` (6), `hub` (102)
 and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -121,14 +122,30 @@ rather than a stale process.
 Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `hub/index.html` → `/hub`. Keeping them separate is deliberate:
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
-homepage ships no JavaScript at all. Static SEO pages live in `public/` and are
-copied verbatim, sharing `public/pages.css` with the homepage. They fall into three
-clusters: match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
+homepage ships no JavaScript at all. Static SEO pages fall into three clusters:
+match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
 `rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group` plus one
 page per grade, `rugby-drills-u7` through `rugby-drills-u12`) and the rules guides
-(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`). All
-of them point their chrome at `/hub`, because the chrome belongs to the product
-rather than to whichever half a coach landed on.
+(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`). The
+first two are hand-written in `public/` and copied verbatim. The third is
+generated at build from `hub/content/guides.ts` by `src/seo/rulesPage.ts`, so it
+never appears in `public/` at all. All of them share `public/pages.css` with the
+homepage and point their chrome at `/hub`, because the chrome belongs to the
+product rather than to whichever half a coach landed on.
+
+**The rules guides are published twice, from one source.** The guide a coach
+reads is a hub route, in the bundle, so the Guide tab opens with no signal. The
+hub is `noindex`, so the same words are also emitted as static pages a search
+engine can read. Nothing is written twice: both come out of `guides.ts`. A copy
+in `public/` would be a second source of truth going stale, which is why
+`landing-pages.test.ts` fails if one appears. Two traps are worth knowing about.
+`oxlint` loads `vite.config.ts` with plain Node, which cannot resolve a `.ts`
+behind the `.js` specifier used everywhere else, so the generator is imported
+inside the plugin hook rather than at the top of the file. And `vite preview`
+resolves its config with the command set to `serve` while serving `dist`, so
+`directoryIndex` sets its root in `configurePreviewServer`. Before that it only
+found pages that also exist under `public/`, so a generated page 404'd locally
+while working in production.
 
 **A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
 true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
@@ -167,10 +184,13 @@ src/
     storage.ts            # localStorage persistence (multi-team)
     teamState.ts          # Multi-team store
     sessionPlan.ts        # Hub: plan totals, warnings, kit list, breaks, reorder
+  seo/
+    rulesPage.ts          # The rules guides as static pages, emitted at build
   hub/
     main.ts               # Bootstrap, route dispatch, signed-out routing, online retry
     ageChoice.ts          # The age grade picked before registering, in localStorage
     supabase.ts           # Client (PKCE). Anon key is public, RLS is the boundary
+    install.ts            # Offline readiness plus the home screen install offer
     auth.ts               # Sign up/in/out, profile, deletion, validation
     router.ts             # Hash router, plus stillOn() for async guards
     plans.ts              # session_plans CRUD, offline mirror, delete tombstones,
@@ -189,7 +209,7 @@ src/
       authView.ts         # Sign in, register, reset, gate reasons, password reveal
       account.ts          # Details, password, sign out, delete. Also the setup form
       catalogue.ts        # Drill list, filters, favourites, drill page
-      planner.ts          # Sessions list, reading view, editor, print sheet
+      planner.ts          # Sessions list, reading view, editor, present mode, print sheet
   components/             # Rotation planner only
     form.ts, playerList.ts, results.ts, teamTabs.ts, toast.ts, logo.ts, icons.ts
   app.ts                  # Rotation planner orchestration
@@ -441,6 +461,62 @@ in September wants to read the U10 page in August, so hiding the grade above
 yours hides the thing they came for. It also needs no account and no grade at
 all, so `render()` takes it before both checks, the same way a shared session
 comes before the age picker.
+
+**A session opens to be read, is edited on purpose and is run on the pitch.**
+`#/plan/<id>/run/<n>` is present mode: one block, coaching points at a size you
+can read at arm's length, the minutes counting down. The block number is in the
+URL, so a phone that locks comes back to the drill actually being run rather
+than the top of the plan. The clock keeps a deadline rather than a count,
+because a backgrounded tab is throttled and would otherwise come back with
+however many ticks the browser felt like delivering. Overrunning counts up and
+says so instead of stopping at zero: a block quietly taking twenty minutes when
+it was given ten is the thing the feature exists to catch. Each block keeps its
+own clock, keyed on the drill and the minutes it had, so stretching a block or
+reordering the session does not hand back a stale deadline. Leaving present mode
+retires the lot, because checking the running order in the car park at 6:15 must
+not open training at 6:30 on a red overrun. Moving between blocks is not leaving,
+which is what the map is for.
+
+**A wake lock is held while a block runs, then given back on the way out.** A
+screen going dark mid-drill is the one place that is not a small annoyance. A
+browser drops the lock whenever the tab is backgrounded, so it is taken again on
+return. Two failure modes are already written into the code: a request still in
+flight when present mode is left releases what it is handed rather than keeping
+it. Only that abandoned case asks again, because Chrome refuses outright
+under battery saver, so retrying on every settle spun rejected requests for the
+length of the session.
+
+**A drill can go into a session from the drill page.** The planner's own search
+used to be the only way in, which meant reading a drill, remembering the title,
+going to Sessions and finding it again. Sessions the drill is not legal in are
+left out of the picker rather than shown and refused. `addDrillToPlan` checks
+the age gate itself as well: a gate that only exists in a render is one new
+caller away from not existing. A drill page is never age gated, so the grade
+being browsed can be one the drill is not legal at, in both directions. A new
+session started from there walks down to the nearest grade that is allowed it
+and says on the button which grade that is, because the editor shows a plan's
+grade as text with no way to change it.
+
+**Small space is derived, not authored.** `fitsSmallSpace` reads the pitch a
+drill's own diagram describes, so it cannot drift from the drill. The box is 25
+metres by 15, either orientation. A tighter 20 by 10 was tried first and left a
+U7 coach two drills out of eighteen, because tag games need running room while
+tackle and ruck work happens in a tight square: emptiest at the grades most
+likely to be indoors, offering mostly contact. The catalogue's sizes cluster, so
+anything from here up to a full 33 by 18 hall picks the same drills. It is
+called small space rather than indoors because it knows nothing about the
+surface. A filter should not look like it is blessing a tackle drill on a
+wooden floor.
+
+**The offline promise is said out loud.** Everything else in the hub can be
+checked by a coach on the spot. Whether it still works at a pitch with no signal
+cannot, until the moment it matters. The Account page keys off the service
+worker actually controlling the page rather than merely being registered, so a
+genuine first visit says not yet instead of promising something untrue.
+`beforeinstallprompt` is caught at load because it fires early and is otherwise
+gone for the visit. iPhone never fires it at all and is most of this audience,
+so rather than sniff a user agent the panel always writes down where a browser
+keeps it.
 
 **The chrome is identity plus navigation. Nothing else.** No tagline, no "Coaching
 U10" pill. Anything only one entry can say makes the rail change shape depending on
