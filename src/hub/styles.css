@@ -38,10 +38,21 @@ body {
   font-size: var(--text-lg);
 }
 
-/* `.hub-btn + .hub-btn` stacks buttons with a top margin. In a grid the gap
-   already does that, so the rule just pushes every item after the first out of
-   line with the one beside it. */
-.age-picker-grid .hub-btn + .hub-btn {
+/* `.hub-btn + .hub-btn` stacks buttons with a top margin. Any container that
+   lays its buttons out with a gap has already done that, so there the rule only
+   pushes everything after the first out of line with what is beside it: 8px
+   lower and 8px shorter, which lands on the primary target every time.
+
+   Swept once here rather than patched per panel. It was found on the age picker
+   first, then again on present mode's Next button. The next row of buttons
+   anybody writes would have hit it too. Adding a container to this list is the
+   whole fix. */
+.age-picker-grid .hub-btn + .hub-btn,
+.share-actions .hub-btn + .hub-btn,
+.add-plan-actions .hub-btn + .hub-btn,
+.run-head-actions .hub-btn + .hub-btn,
+.run-clock-actions .hub-btn + .hub-btn,
+.run-stage-steps .hub-btn + .hub-btn {
   margin-top: 0;
 }
 
@@ -1876,7 +1887,14 @@ body {
     min-width: 0;
   }
 
-  .age-picker-grid .hub-btn + .hub-btn {
+  /* Same list as the sweep at the top of the file. A gap already spaces these,
+     so the side-by-side margin is one more thing pushing them out of line. */
+  .age-picker-grid .hub-btn + .hub-btn,
+  .share-actions .hub-btn + .hub-btn,
+  .add-plan-actions .hub-btn + .hub-btn,
+  .run-head-actions .hub-btn + .hub-btn,
+  .run-clock-actions .hub-btn + .hub-btn,
+  .run-stage-steps .hub-btn + .hub-btn {
     margin-left: 0;
   }
 

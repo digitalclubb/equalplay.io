@@ -383,6 +383,16 @@ interface RunClock {
   endsAt: number;
   /** Epoch ms it was paused at, or null while it is running. */
   pausedAt: number | null;
+  /**
+   * What the block was when this clock started.
+   *
+   * An index alone is not the same block from one visit to the next. Stretch a
+   * block from ten minutes to fifteen or reorder the session, then index 0 is a
+   * different thing. Reusing the old deadline would start the coach off already
+   * overrun on a block they have not run yet.
+   */
+  drillId: string;
+  minutes: number;
 }
 
 /**
@@ -403,6 +413,8 @@ interface ScreenLock {
 }
 
 let screenLock: ScreenLock | null = null;
+/** A request already on its way. Two in flight orphans the first sentinel. */
+let lockPending = false;
 /**
  * Bumped every time present mode is left. A wake lock request that was still in
  * flight then resolves into a session nobody is running, so it checks this
@@ -431,8 +443,9 @@ function holdScreenAwake(): void {
   const api = (navigator as Navigator & {
     wakeLock?: { request: (type: "screen") => Promise<ScreenLock> };
   }).wakeLock;
-  if (!api || screenLock) return;
+  if (!api || screenLock || lockPending) return;
 
+  lockPending = true;
   const generation = lockGeneration;
   void api
     .request("screen")
@@ -452,6 +465,9 @@ function holdScreenAwake(): void {
     })
     .catch(() => {
       // A low battery or a browser that will not do it. The clock still runs
+    })
+    .finally(() => {
+      lockPending = false;
     });
 }
 
@@ -492,6 +508,7 @@ function startRunClock(
   container: HTMLElement,
   planId: string,
   index: number,
+  drillId: string,
   minutes: number,
 ): void {
   // A different session gets its own clocks. Otherwise block 3 of last night's
@@ -501,8 +518,8 @@ function startRunClock(
     runPlanId = planId;
   }
   let clock = runClocks.get(index);
-  if (!clock) {
-    clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null };
+  if (!clock || clock.drillId !== drillId || clock.minutes !== minutes) {
+    clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null, drillId, minutes };
     runClocks.set(index, clock);
   }
   runClock = clock;
@@ -543,7 +560,12 @@ export function renderPlanRun(
     return;
   }
 
-  const index = Math.min(Math.max(0, Number.isFinite(step) ? step : 0), blocks.length - 1);
+  // Truncated as well as clamped. `run/1.5` otherwise indexes nothing and the
+  // destructure below throws, leaving a blank view with no way out of it.
+  const index = Math.min(
+    Math.max(0, Number.isFinite(step) ? Math.trunc(step) : 0),
+    blocks.length - 1,
+  );
   // Replaced rather than pushed. A typed or stale block number should correct
   // itself without leaving a step in history that bounces the coach forwards.
   if (index !== step) history.replaceState(null, "", `#/plan/${planId}/run/${index}`);
@@ -614,7 +636,7 @@ export function renderPlanRun(
       </nav>
     </section>`;
 
-  startRunClock(container, planId, index, block.minutes);
+  startRunClock(container, planId, index, drill.id, block.minutes);
 
   const pause = container.querySelector<HTMLButtonElement>("#run-pause");
 
@@ -645,9 +667,14 @@ export function renderPlanRun(
 
   container.querySelector("#run-reset")?.addEventListener("click", () => {
     runClocks.delete(index);
-    startRunClock(container, planId, index, block.minutes);
+    startRunClock(container, planId, index, drill.id, block.minutes);
     paintPause();
   });
+
+  // The plan route keeps whatever sheet the last view built. Print hides
+  // `#hub-view`, so without this a Ctrl+P from present mode after a reload
+  // prints a blank page rather than the session in front of you.
+  renderPrintable(plan, blocks, totals);
 }
 
 /**

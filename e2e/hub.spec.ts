@@ -1634,3 +1634,56 @@ test("present mode says when a block is one the grade may not do", async ({ page
   await page.goto(`/hub/#/plan/${planId}/run/0`);
   await expect(page.locator(".run-stage .plan-warning-error").first()).toBeVisible();
 });
+
+test("buttons sitting in a row line up with each other", async ({ page }) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator(".run-stage-steps .hub-btn").first()).toBeVisible();
+
+  // `.hub-btn + .hub-btn` stacks buttons with a top margin, which in a row with
+  // a gap drops everything after the first 8px lower and 8px shorter. It landed
+  // on the age picker once and on present mode's Next button months later, so
+  // this measures every row rather than the one that was noticed.
+  for (const row of [".run-stage-steps", ".run-clock-actions"]) {
+    const boxes = await page.locator(`${row} .hub-btn`).evaluateAll((els) =>
+      els.map((el) => {
+        const box = el.getBoundingClientRect();
+        return { top: Math.round(box.top), height: Math.round(box.height) };
+      }),
+    );
+    expect(boxes.length, row).toBeGreaterThan(1);
+    for (const box of boxes) {
+      expect(box.top, `${row} tops`).toBe(boxes[0].top);
+      expect(box.height, `${row} heights`).toBe(boxes[0].height);
+    }
+  }
+});
+
+test("stretching a block gives it the minutes it was stretched to", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator("#run-time")).toBeVisible();
+
+  // Run it, go back and change it, run it again. A clock kept against the index
+  // alone would hand back the remains of the old block, often already over.
+  await page.goto(`/hub/#/plan/${planId}/edit`);
+  await page.locator('[data-minutes="0"]').fill("29");
+  await page.locator('[data-minutes="0"]').dispatchEvent("change");
+
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  const shown = (await page.locator("#run-time").innerText()).trim();
+  expect(shown).toMatch(/^(28:\d\d|29:00)$/);
+});
+
+test("a block number that is not a whole number does not blank the view", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/run/1.5`);
+  await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
+});
+
+test("present mode prints the session rather than a blank page", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  await expect(page.locator(".run-stage-title")).toBeVisible();
+  await expect(page.locator("#plan-print-sheet .print-block")).toHaveCount(BLOCKS);
+});
