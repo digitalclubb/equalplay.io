@@ -1,7 +1,7 @@
 import { esc } from "../../lib/esc.js";
 import { ageRulesLink } from "../../lib/rulesLink.js";
 import { showToast } from "../../components/toast.js";
-import { go, stillOn } from "../router.js";
+import { currentRoute, go, stillOn } from "../router.js";
 import { DRILLS, filterDrills, findDrill } from "../content/drills.js";
 import { renderDiagram } from "../content/diagram.js";
 import { PRESETS, presetsForAge } from "../content/presets.js";
@@ -306,7 +306,14 @@ export function renderPlanView(
     <section class="hub-panel run-head">
       <div class="run-head-top">
         <h2>${esc(plan.title)}</h2>
-        <a class="hub-btn hub-btn-edit" href="#/plan/${esc(plan.id)}/edit">Edit</a>
+        <div class="run-head-actions">
+          ${
+            blocks.length > 0
+              ? `<a class="hub-btn hub-btn-primary" href="#/plan/${esc(plan.id)}/run/0">Run it</a>`
+              : ""
+          }
+          <a class="hub-btn hub-btn-edit" href="#/plan/${esc(plan.id)}/edit">Edit</a>
+        </div>
       </div>
       <p class="run-meta">
         ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min${
@@ -352,6 +359,304 @@ export function renderPlanView(
 
   renderPrintable(plan, blocks, totals);
 }
+
+// ---- Present mode ----
+
+/**
+ * One block at a time, at arm's length, with the clock running.
+ *
+ * The reading view is the whole session on one page, which is what a coach
+ * checks in the car park. This is what they hold while it is happening: the
+ * coaching points at a size you can read from six feet away with a whistle in
+ * your mouth. The minutes count down as well, so a block that was meant to take
+ * ten does not quietly take twenty.
+ *
+ * The block is in the URL rather than in memory, so a phone that locks and
+ * comes back lands on the drill you were actually running.
+ */
+interface RunClock {
+  /** Epoch ms the block is due to end. Kept as a deadline rather than a count,
+   * so a throttled background tab comes back with the right number instead of
+   * however many ticks the browser felt like delivering. */
+  endsAt: number;
+  /** Epoch ms it was paused at, or null while it is running. */
+  pausedAt: number | null;
+}
+
+/**
+ * One clock per block, kept for as long as present mode is on this session.
+ *
+ * Keyed rather than replaced because Next is a big primary button on a wet
+ * screen. Tapping it by mistake and coming back used to hand the block a full
+ * fresh ten minutes when eight of them had gone.
+ */
+const runClocks = new Map<number, RunClock>();
+let runPlanId = "";
+let runClock: RunClock | null = null;
+let runTimer: ReturnType<typeof setInterval> | undefined;
+
+interface ScreenLock {
+  release: () => Promise<void>;
+  addEventListener: (type: "release", listener: () => void) => void;
+}
+
+let screenLock: ScreenLock | null = null;
+/**
+ * Bumped every time present mode is left. A wake lock request that was still in
+ * flight then resolves into a session nobody is running, so it checks this
+ * before keeping what it was given.
+ */
+let lockGeneration = 0;
+
+/** Milliseconds left. Negative once the block has overrun, which is the point. */
+function runRemaining(clock: RunClock): number {
+  return clock.endsAt - (clock.pausedAt ?? Date.now());
+}
+
+function runClockLabel(clock: RunClock): string {
+  const left = runRemaining(clock);
+  const total = Math.floor(Math.abs(left) / 1000);
+  const stamp = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+  return left < 0 ? `${stamp} over` : stamp;
+}
+
+/**
+ * A pitch is the one place a screen going dark mid-drill is not a small
+ * annoyance. Refused, unsupported and released on backgrounding are all normal,
+ * so every path here is allowed to fail quietly.
+ */
+function holdScreenAwake(): void {
+  const api = (navigator as Navigator & {
+    wakeLock?: { request: (type: "screen") => Promise<ScreenLock> };
+  }).wakeLock;
+  if (!api || screenLock) return;
+
+  const generation = lockGeneration;
+  void api
+    .request("screen")
+    .then((lock) => {
+      // Present mode was left while this was in flight, so nobody wants it now
+      if (generation !== lockGeneration) {
+        void lock.release().catch(() => {});
+        return;
+      }
+      screenLock = lock;
+      // A browser drops the lock whenever the tab goes to the background. Say so
+      // here, or the sentinel looks live forever and the re-acquire below never
+      // fires again: the screen would then sleep for the rest of the session.
+      lock.addEventListener("release", () => {
+        if (screenLock === lock) screenLock = null;
+      });
+    })
+    .catch(() => {
+      // A low battery or a browser that will not do it. The clock still runs
+    });
+}
+
+function releaseScreen(): void {
+  lockGeneration += 1;
+  const held = screenLock;
+  screenLock = null;
+  void held?.release().catch(() => {});
+}
+
+/** Called on leaving present mode as well as on sign-out. Never leaves a phone awake. */
+export function stopRunClock(): void {
+  clearInterval(runTimer);
+  runTimer = undefined;
+  runClock = null;
+  releaseScreen();
+}
+
+/** True while the coach is still on this session's present mode, not just its plan. */
+function stillRunning(planId: string): boolean {
+  const route = currentRoute();
+  return route.name === "plan" && route.param === planId && route.rest[0] === "run";
+}
+
+/** Repaints the one thing that changes every second, rather than the whole view. */
+function paintClock(container: HTMLElement): void {
+  const slot = container.querySelector<HTMLElement>("#run-time");
+  if (!slot || !runClock) {
+    // The coach has navigated away between ticks
+    stopRunClock();
+    return;
+  }
+  slot.textContent = runClockLabel(runClock);
+  slot.dataset.over = String(runRemaining(runClock) < 0);
+}
+
+function startRunClock(
+  container: HTMLElement,
+  planId: string,
+  index: number,
+  minutes: number,
+): void {
+  // A different session gets its own clocks. Otherwise block 3 of last night's
+  // plan would be handed to block 3 of this one.
+  if (runPlanId !== planId) {
+    runClocks.clear();
+    runPlanId = planId;
+  }
+  let clock = runClocks.get(index);
+  if (!clock) {
+    clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null };
+    runClocks.set(index, clock);
+  }
+  runClock = clock;
+
+  clearInterval(runTimer);
+  runTimer = setInterval(() => paintClock(container), 1000);
+  holdScreenAwake();
+}
+
+export function renderPlanRun(
+  container: HTMLElement,
+  ctx: PlannerContext,
+  planId: string,
+  step: number,
+): void {
+  const found = localPlans(ctx.userId).find((p) => p.id === planId);
+  if (!found) {
+    container.innerHTML = `<section class="hub-panel"><p class="hub-fineprint">Loading…</p></section>`;
+    void syncPlans(ctx.userId).then(({ plans }) => {
+      // The sub-route matters here and nowhere else. `stillOn` cannot tell
+      // present mode from the reading view, so a slow pull resolving after the
+      // coach hit Back would paint the stage over it and restart both the timer
+      // and the wake lock that leaving had just switched off.
+      if (!stillRunning(planId)) return;
+      if (plans.some((p) => p.id === planId)) renderPlanRun(container, ctx, planId, step);
+      else {
+        showToast("Can't find that session.");
+        go("plans");
+      }
+    });
+    return;
+  }
+
+  const plan = stripMeta(found);
+  const blocks = planDrills(plan, DRILLS);
+  if (blocks.length === 0) {
+    go(`plan/${planId}`);
+    return;
+  }
+
+  const index = Math.min(Math.max(0, Number.isFinite(step) ? step : 0), blocks.length - 1);
+  // Replaced rather than pushed. A typed or stale block number should correct
+  // itself without leaving a step in history that bounces the coach forwards.
+  if (index !== step) history.replaceState(null, "", `#/plan/${planId}/run/${index}`);
+
+  const { block, drill } = blocks[index];
+  const next = blocks[index + 1];
+
+  // Errors only. This is the view a coach is holding while it happens, so a
+  // block their grade is not allowed to run has to say so here as well. It is
+  // the last screen that could stop it. "26 minutes still to fill" is advice
+  // for the kitchen table and would only be noise on a pitch.
+  const totals = planTotals(plan, DRILLS);
+  const problems: PlanTotals = {
+    ...totals,
+    warnings: totals.warnings.filter((w) => w.level === "error"),
+  };
+
+  container.innerHTML = `
+    <section class="run-stage">
+      <div class="run-stage-top">
+        <span class="run-stage-count">${index + 1} of ${blocks.length}</span>
+        <a class="hub-btn hub-btn-done" href="#/plan/${esc(plan.id)}">Done</a>
+      </div>
+
+      ${warningList(problems)}
+
+      <h2 class="run-stage-title">${esc(drill.title)}</h2>
+      <p class="run-stage-meta">${block.minutes} min &middot; ${esc(drill.space)} &middot; ${playersLabel(drill)}</p>
+
+      <div class="run-clock">
+        <p class="run-clock-time" id="run-time" role="timer" aria-live="off" data-over="false"></p>
+        <div class="run-clock-actions">
+          <button type="button" class="hub-btn" id="run-pause">Pause</button>
+          <button type="button" class="hub-btn" id="run-reset">Reset</button>
+        </div>
+      </div>
+
+      ${
+        drill.safety
+          ? `<p class="run-stage-safety"><strong>Safety.</strong> ${esc(drill.safety)}</p>`
+          : ""
+      }
+
+      <ul class="run-stage-points">${drill.coachingPoints
+        .map((point) => `<li>${esc(point)}</li>`)
+        .join("")}</ul>
+
+      ${
+        block.breakAfter
+          ? `<p class="run-stage-then">Water break after this one, ${block.breakAfter} min.</p>`
+          : ""
+      }
+
+      <nav class="run-stage-steps" aria-label="Through the session">
+        ${
+          index > 0
+            ? `<a class="hub-btn" href="#/plan/${esc(plan.id)}/run/${index - 1}">Back</a>`
+            : `<a class="hub-btn" href="#/plan/${esc(plan.id)}">Back</a>`
+        }
+        ${
+          next
+            ? `<a class="hub-btn hub-btn-primary run-stage-next" href="#/plan/${esc(plan.id)}/run/${index + 1}">
+                 <span class="run-stage-next-label">Next</span>
+                 <span class="run-stage-next-drill">${esc(next.drill.title)}</span>
+               </a>`
+            : `<a class="hub-btn hub-btn-primary" href="#/plan/${esc(plan.id)}">That's the session</a>`
+        }
+      </nav>
+    </section>`;
+
+  startRunClock(container, planId, index, block.minutes);
+
+  const pause = container.querySelector<HTMLButtonElement>("#run-pause");
+
+  /**
+   * Painted rather than re-rendered. Replacing the view would destroy the button
+   * that was just pressed, dropping focus to the body and sending the next Tab
+   * back to the top of the page.
+   */
+  const paintPause = (): void => {
+    if (pause) pause.textContent = runClock?.pausedAt === null ? "Pause" : "Start";
+    paintClock(container);
+  };
+
+  paintPause();
+
+  pause?.addEventListener("click", () => {
+    if (!runClock) return;
+    if (runClock.pausedAt === null) {
+      runClock.pausedAt = Date.now();
+    } else {
+      // Put the deadline back by however long it sat paused, so the block still
+      // gets the minutes it was given
+      runClock.endsAt += Date.now() - runClock.pausedAt;
+      runClock.pausedAt = null;
+    }
+    paintPause();
+  });
+
+  container.querySelector("#run-reset")?.addEventListener("click", () => {
+    runClocks.delete(index);
+    startRunClock(container, planId, index, block.minutes);
+    paintPause();
+  });
+}
+
+/**
+ * A screen lock is dropped whenever the tab goes to the background, so coming
+ * back needs a fresh one. Without this the phone stays awake for exactly as
+ * long as it takes a coach to put it in their pocket once.
+ */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (runTimer !== undefined) holdScreenAwake();
+});
 
 // ---- Sharing ----
 
@@ -1210,6 +1515,9 @@ export function clearPrintable(): void {
 
 /** Called on sign-out so the next coach on a shared device starts clean. */
 export function resetPlanner(): void {
+  stopRunClock();
+  runClocks.clear();
+  runPlanId = "";
   editing = null;
   addSearch = "";
   addTheme = undefined;

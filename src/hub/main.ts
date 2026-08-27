@@ -6,9 +6,11 @@ import {
   flushPlanPush,
   renderPlanEditor,
   renderPlanList,
+  renderPlanRun,
   renderPlanView,
   renderSharedPlan,
   resetPlanner,
+  stopRunClock,
   type PlannerContext,
 } from "./views/planner.js";
 import { clearLocalPlans, retryPending } from "./plans.js";
@@ -98,6 +100,10 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     const route = currentRoute();
     highlight(route);
 
+    // Present mode holds the screen awake. Leaving it by any route, including
+    // the guide and the signed-out paths below, has to give that back.
+    if (!(route.name === "plan" && route.rest[0] === "run")) stopRunClock();
+
     // The guide is what every grade is allowed to do, so it needs neither an
     // account nor a grade of your own. Being asked which one you coach is no
     // answer to "can we ruck yet". The grade you are moving up to in September
@@ -157,7 +163,9 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         // Viewing is the default. Editing is the deliberate detour.
         if (!route.param) go("plans");
         else if (route.rest[0] === "edit") renderPlanEditor(view, ctx, route.param);
-        else renderPlanView(view, ctx, route.param);
+        else if (route.rest[0] === "run") {
+          renderPlanRun(view, ctx, route.param, Number(route.rest[1] ?? 0));
+        } else renderPlanView(view, ctx, route.param);
         break;
       // Handled above the profile check, because a link is not a reason to ask
       // somebody which grade they coach. A bare #/shared has no session in it.

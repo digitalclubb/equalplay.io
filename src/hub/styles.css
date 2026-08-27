@@ -2310,3 +2310,139 @@ body {
   flex-wrap: wrap;
   gap: var(--sp-xs);
 }
+
+/* ---- Present mode ---- */
+
+/* Full bleed for the same reason the guide is, to the opposite purpose. The
+   guide is a document to read sitting down. This is one drill at a distance,
+   held in one hand, so nothing else on the screen is competing with it. */
+#hub-view:has(.run-stage) {
+  background: var(--color-surface);
+  padding-inline: 0;
+}
+
+.run-stage {
+  max-width: 40rem;
+  margin-inline: auto;
+  padding: var(--sp-md) var(--gutter) calc(var(--sp-lg) * 2);
+}
+
+.run-stage-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  margin-bottom: var(--sp-md);
+}
+
+.run-stage-count {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.run-stage-title {
+  font-family: 'Outfit', system-ui, sans-serif;
+  /* Sized to be read from about six feet, which is where a coach's phone is
+     when it is in their hand and the drill is in front of them. */
+  font-size: clamp(1.75rem, 7vw, 2.5rem);
+  line-height: 1.1;
+  margin: 0 0 var(--sp-2xs);
+}
+
+.run-stage-meta {
+  margin: 0 0 var(--sp-md);
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+}
+
+.run-clock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: var(--sp-md);
+  background: var(--color-bg);
+  border-radius: var(--radius);
+}
+
+.run-clock-time {
+  margin: 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: clamp(2.5rem, 12vw, 3.75rem);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  /* Digits stop jittering as the seconds tick down */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Overrun is the number a coach needs most, so it is said in the colour the
+   plan already uses for something being wrong rather than in a quieter grey. */
+.run-clock-time[data-over="true"] {
+  color: var(--color-danger);
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+}
+
+.run-clock-actions {
+  display: flex;
+  gap: var(--sp-xs);
+}
+
+.run-stage-safety {
+  padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: var(--sp-md);
+  border-left: 4px solid var(--color-primary);
+  background: var(--color-bg);
+  font-size: var(--text-lg);
+}
+
+.run-stage-points {
+  margin: 0 0 var(--sp-lg);
+  padding-left: 1.2em;
+  /* The reason present mode exists. One glance has to land. */
+  font-size: clamp(1.125rem, 4.5vw, 1.5rem);
+  line-height: 1.45;
+}
+
+.run-stage-points li {
+  margin-bottom: var(--sp-sm);
+}
+
+.run-stage-then {
+  margin: 0 0 var(--sp-lg);
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+}
+
+.run-stage-steps {
+  display: flex;
+  gap: var(--sp-sm);
+}
+
+.run-stage-steps .hub-btn {
+  flex: 1;
+}
+
+.run-stage-next {
+  /* The label and the drill it leads to, stacked, so a coach knows what to set
+     up next without leaving the block they are running. */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.run-stage-next-drill {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.run-head-actions {
+  display: flex;
+  gap: var(--sp-xs);
+}

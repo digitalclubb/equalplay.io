@@ -1296,6 +1296,102 @@ test("the guide shows a grade above the coach's own", async ({ page }) => {
  * interface says about it has to be true.
  */
 
+// ---- Present mode ----
+
+/** Build the rucking preset and land on its running order. */
+async function runnableSession(page: Page) {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+  const planId = (page.url().match(/#\/plan\/([^/]+)/) ?? [])[1];
+  await page.locator(".hub-btn-done").click();
+  return planId;
+}
+
+test("running a session opens one block at a time with the clock going", async ({ page }) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator(".run-stage-count")).toHaveText(`1 of ${BLOCKS}`);
+
+  // The clock starts from the minutes the block was given, not the drill's
+  // suggested length, because a coach may have stretched it. Read as a range
+  // rather than an exact `8:00`: it leaves that value one second after render
+  // and never comes back to it, so an exact match races the thing it measures.
+  const minutes = Number(
+    (await page.locator(".run-stage-meta").innerText()).match(/(\d+) min/)?.[1],
+  );
+  const seconds = async () => {
+    const shown = (await page.locator("#run-time").innerText()).trim();
+    expect(shown).toMatch(/^\d+:\d\d$/);
+    const [m, s] = shown.split(":").map(Number);
+    return m * 60 + s;
+  };
+
+  const first = await seconds();
+  expect(first).toBeLessThanOrEqual(minutes * 60);
+  expect(first).toBeGreaterThan((minutes - 1) * 60);
+
+  // It is counting, rather than showing a number and sitting there
+  await page.waitForTimeout(2500);
+  expect(await seconds()).toBeLessThan(first);
+});
+
+test("the block being run is in the URL, so a reload lands back on it", async ({ page }) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+
+  const second = await page.locator(".run-stage-next-drill").innerText();
+  await page.locator(".run-stage-next").click();
+  await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
+  await expect(page.locator(".run-stage-title")).toHaveText(second);
+
+  await page.reload();
+  await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
+  await expect(page.locator(".run-stage-title")).toHaveText(second);
+});
+
+test("a block number past the end of the session corrects itself", async ({ page }) => {
+  const planId = await runnableSession(page);
+
+  await page.goto(`/hub/#/plan/${planId}/run/99`);
+  await expect(page.locator(".run-stage-count")).toHaveText(`${BLOCKS} of ${BLOCKS}`);
+  // The last block has nowhere further to go, so it offers the way out instead
+  await expect(page.locator(".run-stage-next")).toHaveCount(0);
+  await expect(page.locator(".run-stage-steps")).toContainText("That's the session");
+  expect(page.url()).toContain(`/run/${BLOCKS - 1}`);
+});
+
+test("the clock can be paused, and holds where it was", async ({ page }) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator("#run-time")).toBeVisible();
+
+  await page.locator("#run-pause").click();
+  await expect(page.locator("#run-pause")).toHaveText("Start");
+  const held = await page.locator("#run-time").innerText();
+
+  await page.waitForTimeout(2500);
+  expect((await page.locator("#run-time").innerText()).trim()).toBe(held.trim());
+
+  await page.locator("#run-pause").click();
+  await expect(page.locator("#run-pause")).toHaveText("Pause");
+  await expect(page.locator("#run-time")).not.toHaveText(held, { timeout: 4000 });
+});
+
+test("a block that overruns says so rather than stopping at zero", async ({ page }) => {
+  const planId = await runnableSession(page);
+
+  // A block with no minutes left in it is over the moment it starts, which is
+  // the same state a block that ran long ends up in
+  await page.goto(`/hub/#/plan/${planId}/edit`);
+  await page.locator('[data-minutes="0"]').fill("0");
+  await page.locator('[data-minutes="0"]').dispatchEvent("change");
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+
+  await expect(page.locator("#run-time")).toContainText("over");
+  await expect(page.locator("#run-time")).toHaveAttribute("data-over", "true");
+});
+
 test("a session can be turned into a link", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
@@ -1451,4 +1547,44 @@ test("the welcome panel's button is not stuck to the text above it", async ({ pa
     (el) => el.getBoundingClientRect().top - el.previousElementSibling!.getBoundingClientRect().bottom,
   );
   expect(gap).toBeGreaterThanOrEqual(8);
+});
+
+test("coming back to a block keeps the time it had already used", async ({ page }) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator("#run-time")).toBeVisible();
+
+  await page.locator("#run-pause").click();
+  const held = (await page.locator("#run-time").innerText()).trim();
+
+  // Next is a big primary button on a wet screen. One mistaken tap used to hand
+  // the block back a full set of minutes it had already spent.
+  await page.locator(".run-stage-next").click();
+  await expect(page.locator(".run-stage-count")).toHaveText(`2 of ${BLOCKS}`);
+  await page.goBack();
+  await expect(page.locator(".run-stage-count")).toHaveText(`1 of ${BLOCKS}`);
+  expect((await page.locator("#run-time").innerText()).trim()).toBe(held);
+
+  // Reset is the deliberate way to start the block again
+  await page.locator("#run-reset").click();
+  expect((await page.locator("#run-time").innerText()).trim()).not.toBe(held);
+});
+
+test("present mode says when a block is one the grade may not do", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+  const planId = (page.url().match(/#\/plan\/([^/]+)/) ?? [])[1];
+
+  // Drop the plan's grade under its own blocks, the way a shared session or a
+  // corrected profile can. The pitch is the last screen that could catch it.
+  await page.evaluate((id) => {
+    const key = "equalplay_hub_plans";
+    const store = JSON.parse(localStorage.getItem(key) ?? "{}");
+    for (const plan of store.plans ?? []) if (plan.id === id) plan.ageGroup = "u7";
+    localStorage.setItem(key, JSON.stringify(store));
+  }, planId);
+
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  await expect(page.locator(".run-stage .plan-warning-error").first()).toBeVisible();
 });
