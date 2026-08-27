@@ -116,7 +116,8 @@ and a match week. `sessionPlan.test.ts` builds all thirty into real plans and fa
 any of them raises a single warning.
 
 Ages move at the pace of the regulation, not our own: the tag grades get games and
-hands, tackling appears at U9, ruck and scrum at U10, the lineout at U12.
+hands, tackling appears at U9, ruck and scrum at U10. There is no lineout at any
+grade covered here, because Reg 15 does not bring one in until U14.
 
 ## Where things live
 
@@ -132,5 +133,5 @@ src/hub/content/
     gamesense.ts        conditioned games, decision making
     tackle.ts           U9 and up
     breakdown.ts        ruck and maul, U10 and up
-    setpiece.ts         scrum U10 and up, lineout U12 and up
+    setpiece.ts         scrum U10 and up, plus the restarts around it
 ```

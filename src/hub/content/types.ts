@@ -86,17 +86,18 @@ export const THEME_LABELS: Record<Theme, string> = {
   evasion: "Evasion and footwork",
   tackle: "Tackle",
   breakdown: "Ruck and maul",
-  setpiece: "Scrum and lineout",
+  setpiece: "Scrum and restarts",
   gamesense: "Game sense",
 };
 
 /**
  * The earliest RFU age grade at which each theme is legal to coach.
  *
- * Source: RFU Regulation 15 rules of play, 2025-26 season. Tackling arrives at
- * U9. Rucks, mauls and the uncontested three-player scrum arrive at U10, the
- * uncontested lineout at U12. Reg 15 is reissued every year. Re-check these
- * against the live appendices each season.
+ * Source: RFU Regulation 15 rules of play, checked August 2026. Tackling arrives
+ * at U9. Rucks, mauls and the uncontested three-player scrum arrive at U10. There
+ * is no lineout at any grade the hub covers: touch restarts with a free pass
+ * through U13 and the uncontested lineout arrives at U14. Reg 15 is reissued
+ * every year. Re-check these against the live appendices each season.
  *
  * `content-age-gate.test.ts` enforces this table against every drill. It is the
  * check that stops the catalogue offering rucking practice to seven-year-olds.

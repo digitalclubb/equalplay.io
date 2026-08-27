@@ -36,7 +36,7 @@ export function renderAgePicker(container: HTMLElement, onPicked: (age: AgeGroup
         ).join("")}
       </div>
       <p class="hub-fineprint">
-        Tackling starts at U9, rucks and scrums at U10, lineouts at U12. Those are the
+        Tackling starts at U9, rucks and scrums at U10. Those are the
         RFU's rules rather than ours. You can read
         ${rulesLink("their rules of play", REGULATION_15_URL)} yourself.
       </p>

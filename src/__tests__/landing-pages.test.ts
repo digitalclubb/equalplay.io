@@ -9,7 +9,6 @@ import {
   THEMES,
   THEME_LABELS,
   type AgeGroup,
-  type Theme,
 } from "../hub/content/types.js";
 
 /**
@@ -34,17 +33,6 @@ function drillsFor(age: AgeGroup) {
 
 function presetsFor(age: AgeGroup) {
   return PRESETS.filter((preset) => preset.ageGroup === age);
-}
-
-/**
- * The catalogue calls this theme "Scrum and lineout", but every lineout drill is
- * `minAge: "u12"`. Printing the full label on a U10 table reads as five lineout
- * drills at a grade the same page says has no lineout, so the page says what the
- * grade can do rather than what the theme is called.
- */
-function themeLabelFor(theme: Theme, age: AgeGroup): string {
-  if (theme !== "setpiece") return THEME_LABELS[theme];
-  return age === "u12" ? THEME_LABELS[theme] : "Scrum";
 }
 
 describe("age group landing pages", () => {
@@ -90,11 +78,11 @@ describe("age group landing pages", () => {
       const html = agePage(age);
       for (const theme of THEMES) {
         const count = drills.filter((drill) => drill.themes.includes(theme)).length;
-        const row = `<tr><td>${themeLabelFor(theme, age)}</td><td>${count}</td></tr>`;
+        const row = `<tr><td>${THEME_LABELS[theme]}</td><td>${count}</td></tr>`;
         if (count === 0) {
           // A theme the grade cannot do has no row at all, rather than a zero.
           expect(html, `${age}: ${theme} should not be listed`).not.toContain(
-            `<td>${themeLabelFor(theme, age)}</td>`,
+            `<td>${THEME_LABELS[theme]}</td>`,
           );
         } else {
           expect(html, `${age}: ${theme}`).toContain(row);
@@ -103,12 +91,24 @@ describe("age group landing pages", () => {
     }
   });
 
-  it("promises no lineout below U12", () => {
-    for (const age of AGE_GROUPS) {
-      if (age === "u12") continue;
-      expect(agePage(age).toLowerCase(), `${age} mentions a lineout it cannot have`).not.toContain(
-        "<td>scrum and lineout</td>",
-      );
+  it("hands no minis grade a lineout", () => {
+    // There is no lineout at any grade the hub covers. Reg 15 has touch restarting
+    // with a free pass through U13, the uncontested lineout arriving at U14 and
+    // lifting held back to U15. Seven pages said U12 until August 2026, and the
+    // catalogue shipped four lineout drills to match. Saying "no lineout" is fine,
+    // so this bans the claim rather than the word.
+    // The lookbehind keeps "no lineout at U10" out of it. Denying one is the point.
+    const CLAIMS =
+      /(?<!no )(?<!not )lineouts? (?:from |at |arrives? at |starts? at |is introduced at )u(?:7|8|9|1[0-3])\b/i;
+    for (const path of [
+      "index.html",
+      CLUSTER,
+      ...AGE_GROUPS.map((age) => `public/rugby-drills-${age}/index.html`),
+      "public/rugby-rules-u10/index.html",
+    ]) {
+      const html = page(path).replace(/\s+/g, " ");
+      expect(CLAIMS.test(html), `${path}: ${html.match(CLAIMS)?.[0]}`).toBe(false);
+      expect(html, `${path} lists a lineout theme row`).not.toContain("<td>Scrum and lineout</td>");
     }
   });
 
@@ -127,7 +127,7 @@ describe("age group landing pages", () => {
       for (const theme of THEMES) {
         if (drills.some((drill) => drill.themes.includes(theme))) continue;
         expect(html, `${age} lists ${theme} in its table`).not.toContain(
-          `<td>${themeLabelFor(theme, age)}</td>`,
+          `<td>${THEME_LABELS[theme]}</td>`,
         );
       }
     }
@@ -206,7 +206,7 @@ describe("every static page reaches the product", () => {
   });
 
   it("states the catalogue total the catalogue actually has", () => {
-    // "104 drills" is repeated across the homepage and the match-day pages with
+    // "100 drills" is repeated across the homepage and the match-day pages with
     // nothing tying it to DRILLS. It is the number most likely to move. These
     // are the pages that talk about the catalogue as a whole rather than
     // about one grade, so every count on them is the total or it is wrong.

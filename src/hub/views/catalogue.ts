@@ -48,7 +48,7 @@ function listRoute(): string {
  *
  * `seededFor` is what keeps the age gate honest across a profile change. Without
  * it, a coach who signs up as U12 by mistake and corrects it to U8 on the Account
- * page would come back to a catalogue still listing rucks and lineouts. The very
+ * page would come back to a catalogue still listing rucks and scrums. The very
  * thing content-age-gate.test.ts exists to prevent, defeated one layer above the
  * function it tests. Same story for a second coach signing in on a shared device.
  */
@@ -85,8 +85,7 @@ function welcome(age: string): string {
       <h2>Welcome along</h2>
       <p class="hub-lede">
         Everything here is set to ${esc(age)}, so you'll only ever see drills your
-        players are allowed to do. Tackling shows up at U9, rucks and scrums at U10,
-        lineouts at U12.
+        players are allowed to do. Tackling shows up at U9, rucks and scrums at U10.
       </p>
       <p class="hub-lede">
         Head to <a href="#/plans">Sessions</a> when you want to put a training night

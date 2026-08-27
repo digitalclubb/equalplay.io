@@ -1,12 +1,16 @@
 import type { Drill } from "../types.js";
 
 /**
- * Scrum and lineout. Scrum from U10, lineout from U12, per Regulation 15.
+ * The scrum and the restarts around it. Scrum from U10, per Regulation 15.
  *
  * The progression these follow: at U10 the scrum is three players, uncontested,
  * no push and only the putting-in hooker may strike. At U11 the strike becomes
  * contested but there is still no push. At U12 it goes to five players with two in
- * the second row, still no push and the uncontested lineout comes in.
+ * the second row, still no push.
+ *
+ * There is no lineout in here because there is no lineout at any grade the hub
+ * covers. Reg 15 has touch restarting with a free pass all the way through U13
+ * and the uncontested lineout arriving at U14, with lifting held back to U15.
  *
  * Nothing in here involves pushing. Not once, at any grade covered by the hub.
  */
@@ -238,115 +242,6 @@ export const SETPIECE: Drill[] = [
     regressions: ["Three player scrum", "Static shape with no ball"],
     safety:
       "No pushing at U12 either. Second row heads go to the side of a hip, never into a backside or between two players. Match by size across both rows. Collapse means everybody up and reset. Nobody is made to be in a front row.",
-  },
-  {
-    id: "drill-lineout-throw-accuracy",
-    title: "Throwing straight",
-    kind: "exercise",
-    themes: ["setpiece", "handling"],
-    minAge: "u12",
-    minutes: 9,
-    players: { min: 4, max: 16 },
-    space: "15 x 10 m",
-    diagram: {
-      space: [10, 15],
-      cones: [[2, 13], [8, 13], [2, 8], [8, 8]],
-      defence: [[5, 8]],
-      attack: [[5, 13]],
-      passes: [[[5, 12], [5, 9.1]]],
-      ball: [[7, 14.3], [8.6, 14.3]],
-    },
-    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
-    setup: "A throwing line marked with cones. A target player standing five metres in.",
-    howItRuns:
-      "Throw flat and straight to a standing target, no jumping and no lifting. Fifteen throws each. Then move the target to seven metres. Three or four of them should learn to throw, not one, because your thrower will be off with a cold in November.",
-    coachingPoints: [
-      "Ball over your head, both hands, elbows in",
-      "Step into it and follow through at the target",
-      "Same action every time. Consistency beats power",
-    ],
-    progressions: ["Target moves to a different spot each throw", "Add the caller"],
-    regressions: ["Three metres", "Throw from one knee to groove the arm action"],
-    safety: "No lifting and nobody jumping in this one. It is a throwing drill only.",
-  },
-  {
-    id: "drill-lineout-uncontested",
-    title: "Uncontested lineout",
-    kind: "exercise",
-    themes: ["setpiece"],
-    minAge: "u12",
-    minutes: 11,
-    players: { min: 8, max: 18 },
-    space: "20 x 15 m",
-    diagram: {
-      label:
-        "Set up diagram. A line of four with a thrower, the throw going to the jumper and the ball away to the scrum half.",
-      space: [15, 20],
-      defence: [[4.6, 14], [8.4, 14], [11, 14], [9.6, 17.2]],
-      attack: [[1.2, 14.2], [6.5, 14]],
-      passes: [[[2.1, 13.9], [5.6, 13.9], -2.4], [[7.1, 14.7], [8.9, 16.4]]],
-      ball: [[1.5, 12.6]],
-    },
-    equipment: [{ item: "ball", qty: 1 }],
-    setup: "A line of three or four with a thrower. Grass checked first.",
-    howItRuns:
-      "Call, throw, jumper goes up with a lifter either side, ball comes down and gets away. Eight goes. At U12 the lineout is uncontested so nobody is competing for the ball, which means every single one of these should be caught. If they are not, the problem is the throw or the call.",
-    coachingPoints: [
-      "Caller calls before the thrower is ready, not after",
-      "Lifters get their hands on before the jumper leaves the floor",
-      "Lower them under control. Down is slower than up",
-    ],
-    progressions: ["Add the back line and play off the catch", "Vary the call"],
-    regressions: ["No lift, just a standing catch", "Coach calls it"],
-    safety:
-      "Uncontested means nobody opposite is competing and that is the rule at this grade rather than a coaching choice. Both lifters stay on until the jumper's feet are down. Match by size and a lifter who cannot hold that jumper comfortably does not lift them. Check the ground first.",
-  },
-  {
-    id: "drill-lineout-to-attack",
-    title: "Lineout to attack",
-    kind: "exercise",
-    themes: ["setpiece", "gamesense"],
-    minAge: "u12",
-    minutes: 11,
-    players: { min: 12, max: 22 },
-    space: "35 x 30 m",
-    diagram: {
-      space: [35, 30],
-      cones: [[0, 0], [35, 0], [0, 30], [35, 30], [4, 10], [13, 10], [22, 10], [31, 10]],
-      defence: [[9, 16], [18, 16], [27, 16]],
-      attack: [
-        [1, 22],
-        [5, 22],
-        [9, 22],
-        [13, 22],
-        [17, 22],
-        [12, 26],
-        [18, 26.8],
-        [23, 27.6],
-        [28, 28.2],
-        [32.5, 28.6],
-      ],
-      runs: [[[23.2, 26], [22.7, 19.8]]],
-      passes: [
-        [[2.6, 21.8], [7.3, 21.9], -3.5],
-        [[10.2, 23.2], [11.2, 24.3]],
-        [[14, 26.4], [16.2, 26.5]],
-      ],
-      ball: [[1.6, 19.6]],
-    },
-    equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
-    setup: "A lineout with a full back line behind it. Three defenders.",
-    howItRuns:
-      "Win the lineout then play. Six goes off the top and six with a maul first. The lineout is a way of starting an attack and most teams treat it as a thing that finishes when somebody catches the ball.",
-    coachingPoints: [
-      "Backs are set and calling before the throw goes in",
-      "Off the top means the ball moves immediately",
-      "Know which one you are doing before the call, not after the catch",
-    ],
-    progressions: ["Five defenders", "Lineout near your own line so there is no room"],
-    regressions: ["No defenders", "Standing catch with no lift"],
-    safety:
-      "Lifting rules as per the uncontested lineout drill. Age grade rules for the maul, so three players maximum and nobody dragged to ground.",
   },
   {
     id: "drill-restart-defence",

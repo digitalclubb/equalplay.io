@@ -95,7 +95,7 @@ the live project before a link resolves.
 - Account: register with name, club and age group, sign in, reset, change password, edit
   details, delete the account for real
 - Privacy notice at `/privacy`. The "no account" copy elsewhere is scoped so it stays true
-- Catalogue: 104 drills, U7 to U12, filtered by age grade, focus, type and free text
+- Catalogue: 100 drills, U7 to U12, filtered by age grade, focus, type and free text
 - Favourites, starred per coach, synced and filterable
 - Session planner: ready-made sessions, build from scratch, reorder, water breaks, live
   time budget, kit list, warnings, print sheet
@@ -166,7 +166,7 @@ never things that would justify a price.
   itself stays `noindex`. Publishing the drill copy is a different decision with its own
   copyright question and it has not been taken.
 - **Payments and tiers.** Free for good, decided 21 August 2026. See above.
-- **Competing on drill count.** 104 a coach can trust beats 3,000 they have to check.
+- **Competing on drill count.** 100 a coach can trust beats 3,000 they have to check.
 - **A magazine or any editorial cadence.** That is Rugby Coach Weekly's business and it
   is a treadmill a volunteer project cannot keep up with.
 

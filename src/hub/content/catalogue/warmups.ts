@@ -575,37 +575,6 @@ export const WARMUPS: Drill[] = [
       "No opposition and no pushing in this one. It exists so the front row learns the shape without a load on it.",
   },
   {
-    id: "warmup-lineout-lift-shape",
-    title: "Lineout lift shape",
-    kind: "warmup",
-    themes: ["setpiece"],
-    minAge: "u12",
-    minutes: 6,
-    players: { min: 3 },
-    space: "10 x 10 m",
-    diagram: {
-      label:
-        "Set up diagram. A jumper standing still with a lifter in front and a lifter behind. The ball waits at the side until the lift is solid.",
-      space: [10, 10],
-      defence: [[5, 3.8], [5, 6.2]],
-      attack: [[5, 5]],
-      ball: [[1.8, 5]],
-    },
-    equipment: [{ item: "ball", qty: 1 }],
-    setup: "Threes. A jumper with a lifter either side. Grass only, checked first.",
-    howItRuns:
-      "Jumper stands still, lifters get their hands on and take the weight for two seconds, then lower. Six of those before anybody jumps. Then a small jump with the lifters supporting. Nobody goes high until the lowering is as controlled as the lifting, because coming down badly is how people get hurt.",
-    coachingPoints: [
-      "Lifters grip above the knee and below the shorts, never the waistband",
-      "Jumper stays straight and tight. Do not bend in the middle",
-      "Down is slower than up. Always",
-    ],
-    progressions: ["Add the throw once the lift and the lower are both solid"],
-    regressions: ["Take the weight without leaving the ground at all"],
-    safety:
-      "At U12 the lineout is uncontested, so there is never anybody competing for this. Both lifters stay on until the jumper's feet are back on the grass. Match by size. If a lifter cannot hold the weight comfortably, they are not lifting that jumper.",
-  },
-  {
     id: "warmup-numbers-scramble",
     title: "Numbers scramble",
     kind: "warmup",

@@ -3,10 +3,10 @@
 // A drill diagram is data, not a picture. Each drill describes where things
 // stand in metres and this file turns that into SVG at render time.
 //
-// Shipping 104 SVG files would mean 104 precache entries and about 210 kB for
+// Shipping 100 SVG files would mean 100 precache entries and about 210 kB for
 // something the bundle can build in two kilobytes. It would also put the part
 // that has to stay consistent, meaning stroke weights, colours and marker
-// sizes, into 104 places where it can drift. Here it lives once.
+// sizes, into 100 places where it can drift. Here it lives once.
 //
 // Everything structural is `currentColor` so one diagram serves both colour
 // schemes. The only fixed colour is the primary. It never carries text.
@@ -112,7 +112,7 @@ function count(n: number, noun: string): string {
 
 /**
  * Says what the diagram shows for anyone who cannot see it. Generated rather
- * than written 104 times, because a description that drifts from the picture is
+ * than written 100 times, because a description that drifts from the picture is
  * worse than a plain one that cannot.
  */
 export function describe(d: Diagram): string {

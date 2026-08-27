@@ -17,7 +17,8 @@ import {
  * The load-bearing test in the coaching hub.
  *
  * RFU Regulation 15 introduces contact in stages: tackling at U9, rucks, mauls
- * and the uncontested scrum at U10, the lineout at U12. A catalogue that offered
+ * and the uncontested scrum at U10. There is no lineout below U14, so none of them
+ * has one. A catalogue that offered
  * a ruck drill to a U8 coach would not be a cosmetic bug, so the age floors are
  * enforced here rather than left to whoever writes the next drill.
  */

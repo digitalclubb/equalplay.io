@@ -529,7 +529,7 @@ export const GAMESENSE: Drill[] = [
     equipment: [{ item: "cone", qty: 12 }, { item: "ball", qty: 2 }],
     setup: "Full age grade pitch, full age grade rules, proper teams. A referee who blows for everything.",
     howItRuns:
-      "Just play. Fifteen minutes with the actual rules of play for your age grade, including the scrum and lineout, refereed properly. Nothing conditioned. Stop it twice, no more and only for something that will happen again on Sunday. The last thing they should do most weeks is play rugby.",
+      "Just play. Fifteen minutes with the actual rules of play for your age grade, including the scrum, refereed properly. Nothing conditioned. Stop it twice, no more and only for something that will happen again on Sunday. The last thing they should do most weeks is play rugby.",
     coachingPoints: [
       "Play what is in front of you",
       "Keep talking through the stoppages, not just in open play",

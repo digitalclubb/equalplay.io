@@ -380,7 +380,7 @@ export const PRESETS: Preset[] = [
     ],
   },
 
-  // ---- U12. The lineout, the five player scrum, a full week's shape ----
+  // ---- U12. The five player scrum, the restarts, a full week's shape ----
   {
     id: "preset-u12-set-piece-day",
     title: "Set piece day",
@@ -390,11 +390,11 @@ export const PRESETS: Preset[] = [
     drillIds: [
       "warmup-two-lap-and-in",
       "warmup-scrum-shape-hold",
-      "warmup-lineout-lift-shape",
       "drill-five-player-scrum",
-      "drill-lineout-throw-accuracy",
-      "drill-lineout-uncontested",
-      "drill-lineout-to-attack",
+      "drill-scrum-half-feed",
+      "drill-scrum-under-pressure",
+      "drill-restart-receipt",
+      "drill-free-kick-options",
       "drill-restart-defence",
     ],
   },

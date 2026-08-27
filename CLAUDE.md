@@ -132,14 +132,17 @@ half a coach landed on.
 **A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
 true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
 row, card and session title to what `filterDrills` would return for that grade, plus
-the site-wide 104 to `DRILLS.length`, so a new drill fails the build rather than
+the site-wide 100 to `DRILLS.length`, so a new drill fails the build rather than
 quietly making seven pages lie. Note `maxAge`: one tag drill stops at U8, which is
-why no grade above U8 sees all 104.
+why no grade above U8 sees all 100.
 
-**A theme row is labelled by what the grade may do.** `THEME_LABELS.setpiece` is
-"Scrum and lineout", but every lineout drill is `minAge: "u12"`. Printing the full
-label on a U10 table reads as five lineout drills at a grade the same page says has
-no lineout, so below U12 the row says "Scrum". The test holds that rule.
+**There is no lineout at any grade the hub covers.** Reg 15 has touch restarting
+with a free pass all the way through U13, the uncontested lineout arriving at U14
+and lifting held back to U15. The site said U12 on seven pages and shipped four
+lineout drills to match, one of them coaching a lift, until August 2026. The claim
+is banned by `landing-pages.test.ts` now, by the claim rather than by the word, so
+a page may still say a grade has no lineout. `THEME_LABELS.setpiece` reads "Scrum
+and restarts" for the same reason.
 
 One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
 so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches
@@ -178,7 +181,7 @@ src/
                           # THEME_SHORT, RULES_OF_PLAY
       drills.ts           # Pulls the catalogue together, plus filterDrills
       presets.ts          # 30 ready-made sessions, one per theme per age grade
-      catalogue/          # 104 drills by theme: warmups, handling, evasion,
+      catalogue/          # 100 drills by theme: warmups, handling, evasion,
                           # gamesense, tackle, breakdown, setpiece
     views/
       agePicker.ts        # First run, before any account. Seeds the age grade
@@ -236,8 +239,9 @@ the only place it gets used. Content changes ship as a deploy and get reviewed a
 
 **Age gating is a safety feature, not a filter.** `THEME_MIN_AGE` in
 `src/hub/content/types.ts` records the earliest RFU age grade at which each theme is
-legal. Tackle at U9, ruck/maul/scrum at U10, lineout at U12, per Regulation 15. A drill
-must never surface for an age group that is not allowed to do it. Re-check the table
+legal. Tackle at U9, ruck/maul/scrum at U10 per Regulation 15, no lineout at any
+grade here. A drill must never surface for an age group that is not allowed to
+do it. Re-check the table
 against the live Reg 15 appendices each season; the RFU reissues it annually.
 
 **Age grade claims link out to the RFU.** `RULES_OF_PLAY` in
@@ -253,9 +257,9 @@ and arrangement. Read widely, never mirror one source's list, write every word o
 
 **A drill diagram is data, not a picture.** A drill says where things stand in
 metres and `hub/content/diagram.ts` renders it at load. Shipping one SVG file per
-drill would cost around 210 kB across 104 precache entries. It would also put
-the stroke weights, colours and marker sizes into 104 places where they drift.
-The renderer owns them once. 103 of the 104 drills carry one, for 10.6 kB gzipped
+drill would cost around 210 kB across 100 precache entries. It would also put
+the stroke weights, colours and marker sizes into 100 places where they drift.
+The renderer owns them once. 99 of the 100 drills carry one, for 10.6 kB gzipped
 across the whole hub. The one without is a mobility warm-up whose setup is
 "everyone with a bit of space around them", where a box with six dots in it says
 less than no picture. `diagram` is optional for exactly that reason.
