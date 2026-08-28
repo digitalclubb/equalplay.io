@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-603 unit and integration tests across 20 files, 124 Playwright tests. Most are ordinary.
+606 unit and integration tests across 20 files, 140 Playwright tests. Most are ordinary.
 These ten are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -103,8 +103,8 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 124 tests across four files: `matchday` (9), `home` (6), `hub` (102)
-and `contrast` (7). `contrast.spec.ts` is the load-bearing one of those. It measures
+`pnpm test:e2e` is 140 tests across four files: `matchday` (9), `home` (6), `hub` (103)
+and `contrast` (22). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
 has shipped three times: 1.5:1 on a button border, 1.12:1 on the homepage, then 1:1
@@ -579,6 +579,46 @@ on the homepage. Text on a themed surface uses `--color-text` or `--text`.
 It measures hover as well, at both nav widths. A hover rule lifting a tab's colour
 to white was written for the tabs you are not on. Over the one you are it painted
 white on white, which measured 1:1.
+
+A navy fill on a surface that flips is the same mistake wearing a different hat. It
+was in eleven places the moment the app started answering `prefers-color-scheme`:
+the active nav tab, the live game stripe, five buttons, two badges, the budget bar
+plus the running order's numbers. What replaces it is a pair, `--color-text` on
+`--color-bg` or the reverse, which inverts with the scheme rather than staying put.
+Navy is only ever chrome. Nothing inside the chrome may flip either: the active tab
+is a fixed white pill with fixed navy text, because the bar under it is fixed.
+
+**The app follows the reader's colour scheme.** Tokens flip in `src/base.css`, using
+the values `public/pages.css` already chose, so the site and the app are one palette
+rather than two takes on it. The static pages had flipped for months while the app
+had not, so a coach reading the homepage at night and tapping through got a white
+screen in the face. `@media print` puts the light values back, or a team sheet
+printed from a dark screen comes out near white on the paper.
+
+**A control needs an edge you can see. It has a token of its own.** WCAG 1.4.11
+wants 3:1 on a control's boundary. `--color-border` is 1.25:1 against a panel, which
+is a hairline you can see and an edge you cannot, so `--color-control-edge` is what
+every input, select, chip, stepper plus add row wears. Cards keep the hairline: a
+card is identified by the title inside it rather than by its outline, which is the
+exception the success criterion makes. `contrast.spec.ts` checks the drill list and
+the session editor, because the editor is where the steppers and the add rows exist
+and listing their selectors while standing on the catalogue matched nothing at all.
+
+**Searching waits 140ms before it rebuilds.** Typing rebuilt 73 cards, each carrying
+a diagram, on every letter: 127ms a keystroke on a phone throttled to a mid-range
+Android. A debounced callback has to read `filters` when it fires rather than closing
+over them, or a chip tapped inside the window deselects itself. It has to check the
+route as well, like every other async path here. The cards carry `content-visibility` too,
+which took a full relayout from 53ms to 9ms at that same throttle, measured on one
+warm page. Measuring it across two page loads compares a cold cache with a warm one
+and proves nothing.
+
+**Every view has a heading and navigation moves focus to it.** The drill list had
+neither, on the tab every coach lands on. Its heading is not shown, because the nav
+tab says Drills and carries `aria-current` while the count states it in words, but it
+exists so heading navigation finds something. `#hub-view` carries `tabindex="-1"` for
+the skip link, so `onRoute` focuses it: a tab tap used to swap the whole view with
+nothing said about it and the next Tab restarted from the top of the page.
 
 **`.hub-btn` is worn by anchors as often as by buttons.** So it cannot lean on
 anything a `<button>` does for free. An inline box ignores `min-height` and `width`,
