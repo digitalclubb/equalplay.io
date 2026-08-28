@@ -98,6 +98,17 @@ function starIcon(filled: boolean): string {
     : `<svg class="star" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.7-5.2-2.7-5.2 2.7 1-5.7L3.6 9.7l5.8-.8z"/></svg>`;
 }
 let pushTimer: ReturnType<typeof setTimeout> | undefined;
+/** Same reason as the catalogue's. The add panel redraws the editor around it. */
+let addSearchTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * How long a search box waits before rebuilding its list.
+ *
+ * Shared so the two searches in the hub feel like one control. Lives here
+ * rather than in the catalogue because the catalogue already imports this
+ * module. The other way round would be a cycle.
+ */
+export const SEARCH_DEBOUNCE_MS = 140;
 
 // ---- List ----
 
@@ -1453,12 +1464,18 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
 
   const search = container.querySelector<HTMLInputElement>("#add-search");
   search?.addEventListener("input", () => {
-    addSearch = search.value;
-    previewing = null;
-    draw(container, ctx);
-    const next = container.querySelector<HTMLInputElement>("#add-search");
-    next?.focus();
-    next?.setSelectionRange(next.value.length, next.value.length);
+    clearTimeout(addSearchTimer);
+    addSearchTimer = setTimeout(() => {
+      // The editor may be gone. Painting into a view that moved on is what
+      // `stillOn` exists to stop everywhere else here.
+      if (!stillOn("plan", editing?.id)) return;
+      addSearch = container.querySelector<HTMLInputElement>("#add-search")?.value ?? "";
+      previewing = null;
+      draw(container, ctx);
+      const next = container.querySelector<HTMLInputElement>("#add-search");
+      next?.focus();
+      next?.setSelectionRange(next.value.length, next.value.length);
+    }, SEARCH_DEBOUNCE_MS);
   });
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
@@ -1582,6 +1599,8 @@ export function resetPlanner(): void {
   addKind = undefined;
   addFavouritesOnly = false;
   addSmallSpace = false;
+  clearTimeout(addSearchTimer);
+  addSearchTimer = undefined;
   previewing = null;
   openSafety = new Set();
   saveState = "saved";

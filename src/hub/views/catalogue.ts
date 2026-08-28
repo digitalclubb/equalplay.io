@@ -9,7 +9,7 @@ import {
 } from "../favourites.js";
 import { DRILLS, filterDrills, findDrill, isAvailableAt, type DrillFilter } from "../content/drills.js";
 import { localPlans, syncPlans } from "../plans.js";
-import { addDrillToPlan, newPlanWithDrill } from "./planner.js";
+import { addDrillToPlan, newPlanWithDrill, SEARCH_DEBOUNCE_MS } from "./planner.js";
 import { showToast } from "../../components/toast.js";
 import { renderDiagram } from "../content/diagram.js";
 import {
@@ -37,6 +37,12 @@ import {
  */
 function onFavourites(): boolean {
   return currentRoute().name === "favourites";
+}
+
+/** Still on a list rather than a drill page, a tab away or signed out. */
+function onCatalogueList(): boolean {
+  const route = currentRoute();
+  return (route.name === "catalogue" || route.name === "favourites") && !route.param;
 }
 
 /** The route the list is under, so a card and a back link agree with where they are. */
@@ -75,6 +81,13 @@ let addOpen = false;
  */
 let plansPulledFor: string | null = null;
 let plansPulling = false;
+/**
+ * Typing rebuilds the whole list. That list is 73 cards each carrying a
+ * diagram. Measured at 127ms a keystroke on a phone throttled to a mid-range
+ * Android, so a coach typing "passing" waited through seven of them. The input
+ * keeps its own value the whole time, so nothing on screen lags behind.
+ */
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 const WELCOME_KEY = "equalplay_hub_welcomed";
 
@@ -88,6 +101,8 @@ const WELCOME_KEY = "equalplay_hub_welcomed";
  * life. Clubs share tablets, so this is a same-coach-again path as well.
  */
 export function resetCatalogue(): void {
+  clearTimeout(searchTimer);
+  searchTimer = undefined;
   filters = null;
   seededFor = null;
   favourites = new Set();
@@ -211,6 +226,14 @@ function renderList(container: HTMLElement): void {
 
   container.innerHTML = `
     ${welcome(AGE_GROUP_LABELS[active.ageGroup])}
+    <!-- Every other route opens with a heading. This one is a search box and a
+         row of chips, so it read as the only view with nothing above it when
+         moving by heading, on the tab every coach lands on. Not shown, because
+         the nav tab already says Drills and carries aria-current. The count
+         below states it in words. The screen is for glancing at in the rain. -->
+    <h2 class="visually-hidden">${
+      onFavourites() ? "Your starred drills" : `Drills for ${AGE_GROUP_LABELS[active.ageGroup]}`
+    }</h2>
     <section class="hub-panel hub-filters">
       <div class="hub-field">
         <label for="f-search" class="visually-hidden">Search drills</label>
@@ -271,12 +294,22 @@ function renderList(container: HTMLElement): void {
 
   const search = container.querySelector<HTMLInputElement>("#f-search");
   search?.addEventListener("input", () => {
-    update({ search: search.value }, () => {
-      const next = container.querySelector<HTMLInputElement>("#f-search");
-      next?.focus();
-      // Redrawing the input resets the caret to the start, which eats typing
-      next?.setSelectionRange(next.value.length, next.value.length);
-    });
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      // The coach may have tapped a tab in the meantime. Every other async path
+      // in the hub checks before it paints. A timer is no different: this would
+      // otherwise draw the drill list into whatever view is there now.
+      if (!onCatalogueList()) return;
+      // Read at the last moment rather than captured on the keystroke that
+      // scheduled this, so the list matches what is in the box now
+      const typed = container.querySelector<HTMLInputElement>("#f-search")?.value ?? "";
+      update({ search: typed }, () => {
+        const next = container.querySelector<HTMLInputElement>("#f-search");
+        next?.focus();
+        // Redrawing the input resets the caret to the start, which eats typing
+        next?.setSelectionRange(next.value.length, next.value.length);
+      });
+    }, SEARCH_DEBOUNCE_MS);
   });
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-kind]")) {
@@ -321,7 +354,10 @@ function renderList(container: HTMLElement): void {
   });
 
   function update(patch: Partial<DrillFilter>, after?: () => void): void {
-    filters = { ...active, ...patch };
+    // Off `filters` rather than the `active` captured when this closure was
+    // made. A debounced search firing after a chip was tapped would otherwise
+    // write the pre-chip filters back and the chip would deselect itself.
+    filters = { ...(filters ?? active), ...patch };
     renderList(container);
     after?.();
   }

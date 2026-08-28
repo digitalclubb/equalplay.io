@@ -61,6 +61,19 @@ async function seedSession(page: Page, ageGroup: string, skipWelcome: boolean) {
   );
 }
 
+/**
+ * Type into a search box and let the list catch up.
+ *
+ * Both searches in the hub rebuild their list behind a debounce now, because
+ * doing it on every keystroke cost 127ms a letter on a throttled phone. A
+ * locator resolved straight after a `fill` reads the list from before the
+ * search, which is how three of these tests started clicking the wrong drill.
+ */
+async function searchFor(page: Page, box: string, term: string) {
+  await page.locator(box).fill(term);
+  await page.waitForTimeout(240);
+}
+
 /** Tap a theme filter chip. Pass "" for Anything. */
 async function pickTheme(page: Page, theme: string) {
   await page.locator(`[data-theme="${theme}"]`).click();
@@ -116,7 +129,7 @@ test("a tag age grade is never offered a contact drill", async ({ page }) => {
 
   // And searching for it by name does not get round the gate
   await pickTheme(page, "");
-  await page.locator("#f-search").fill("two second ruck");
+  await searchFor(page, "#f-search", "two second ruck");
   await expect(page.locator(".drill-card")).toHaveCount(0);
 });
 
@@ -195,7 +208,7 @@ test("reorders, removes and adds blocks", async ({ page }) => {
   await page.locator('[data-remove="0"]').click();
   expect(await page.locator(".block-row").count()).toBe(BLOCKS - 1);
 
-  await page.locator("#add-search").fill("scrum shape");
+  await searchFor(page, "#add-search", "scrum shape");
   await page.locator("[data-peek]").first().click();
   await page.locator("[data-add]").first().click();
   expect(await page.locator(".block-row").count()).toBe(BLOCKS);
@@ -209,12 +222,12 @@ test("the add-a-drill box is gated to the plan's age grade", async ({ page }) =>
   // drill may still mention the word while explaining why it matters later, so
   // this checks by name rather than by keyword.
   for (const forbidden of ["Two second ruck", "Three player scrum shape", "Cheek to cheek"]) {
-    await page.locator("#add-search").fill(forbidden);
+    await searchFor(page, "#add-search", forbidden);
     await expect(page.locator("[data-peek]")).toHaveCount(0);
   }
 
   // And something a U8 squad can do is still offered
-  await page.locator("#add-search").fill("corner ball");
+  await searchFor(page, "#add-search", "corner ball");
   await expect(page.locator("[data-peek] .add-title").filter({ hasText: "Corner ball" })).toHaveCount(1);
 
   // The theme chips in the add panel only offer what the grade is allowed to do
@@ -560,7 +573,7 @@ test("a drill can be looked at before it is added", async ({ page }) => {
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
-  await page.locator("#add-search").fill("cheek to cheek");
+  await searchFor(page, "#add-search", "cheek to cheek");
   const row = page.locator("[data-peek]").first();
 
   // Nothing is added just by looking
@@ -684,7 +697,7 @@ test("the add button sits above the drill description", async ({ page }) => {
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
-  await page.locator("#add-search").fill("cheek to cheek");
+  await searchFor(page, "#add-search", "cheek to cheek");
   await page.locator("[data-peek]").first().click();
 
   const button = await page.locator("[data-add]").boundingBox();
@@ -697,7 +710,7 @@ test("the add button is readable, not white on grey", async ({ page }) => {
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
-  await page.locator("#add-search").fill("cheek to cheek");
+  await searchFor(page, "#add-search", "cheek to cheek");
   await page.locator("[data-peek]").first().click();
 
   const seen = await page.locator("[data-add]").evaluate((el) => {
@@ -944,7 +957,7 @@ test("warm-ups and exercises are told apart by colour, both readable", async ({ 
 
   const warmup = await read(".drill-kind-warmup");
   await page.locator('[data-addkind="exercise"]').count(); // no-op on the catalogue
-  await page.locator("#f-search").fill("corner ball");
+  await searchFor(page, "#f-search", "corner ball");
   const exercise = await read(".drill-kind:not(.drill-kind-warmup)");
 
   expect(warmup).not.toBe(exercise);
@@ -1061,7 +1074,7 @@ test("each age group links to its own appendix", async ({ page }) => {
   await signedIn(page, "u10");
   // A search nothing matches gives the same empty state at every grade, so the
   // only thing changing between rounds is the age group
-  await page.locator("#f-search").fill("unicycle");
+  await searchFor(page, "#f-search", "unicycle");
 
   for (const [age, appendix] of [["u7", 1], ["u8", 2], ["u9", 3], ["u10", 4], ["u11", 5], ["u12", 6]] as const) {
     await page.selectOption("#f-age", age);
