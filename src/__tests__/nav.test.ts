@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { schemeHtml, SCHEMES } from "../lib/theme.js";
 import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, navHref, navHtml } from "../lib/nav.js";
 
@@ -145,6 +146,59 @@ describe("app navigation", () => {
   it("keeps prose out of the chrome", () => {
     for (const [name, html] of [["planner", plannerHtml], ["hub", hubHtml]] as const) {
       expect(chromeShape(html).filter((el) => el.startsWith("p")), `${name} chrome`).toEqual([]);
+    }
+  });
+});
+/**
+ * The colour scheme switch, written into both entries the same way the nav is.
+ *
+ * It sits in the footer rather than the chrome, which this file holds to
+ * identity plus navigation, and rather than the account page, which is behind a
+ * sign-in that a coach reading drills at a pitch has not got. Two copies in
+ * HTML plus one in a module is exactly the drift `staticNav` exists to catch,
+ * so it gets the same treatment.
+ */
+describe("the colour scheme switch", () => {
+  const written = (html: string, where: string): string => {
+    const found = html.match(/<div class="scheme-switch"[\s\S]*?<\/div>/);
+    if (!found) throw new Error(`${where} has no .scheme-switch`);
+    return found[0].replace(/\s*\n\s*/g, "");
+  };
+
+  it("matches the module on both entries", () => {
+    const expected = schemeHtml().replace(/\s*\n\s*/g, "");
+    expect(written(hubHtml, "hub/index.html")).toBe(expected);
+    expect(written(plannerHtml, "planner/index.html")).toBe(expected);
+  });
+
+  it("ships following the phone, because the HTML cannot know", () => {
+    // The stored choice is read after paint. Anything else marked here would be
+    // a lie on the first frame for everybody who picked something else.
+    const markup = written(hubHtml, "hub/index.html");
+    expect(markup.match(/aria-pressed="true"/g)).toHaveLength(1);
+    expect(markup).toContain('data-scheme="system" aria-pressed="true"');
+  });
+
+  it("offers every scheme the module knows about", () => {
+    for (const scheme of SCHEMES) {
+      expect(written(hubHtml, "hub/index.html"), scheme).toContain(`data-scheme="${scheme}"`);
+    }
+  });
+
+  it("applies the choice before the stylesheet, in both entries", () => {
+    // After the stylesheet the page has already painted in the other scheme,
+    // which is the flash this exists to stop.
+    for (const [name, html] of [["hub", hubHtml], ["planner", plannerHtml]] as const) {
+      const script = html.indexOf("equalplay_scheme");
+      const sheet = html.indexOf('rel="stylesheet"');
+      expect(script, `${name} never reads the stored scheme`).toBeGreaterThan(-1);
+      expect(script, `${name} reads it too late`).toBeLessThan(sheet);
+    }
+  });
+
+  it("keeps the switch out of the chrome", () => {
+    for (const [name, html] of [["hub", hubHtml], ["planner", plannerHtml]] as const) {
+      expect(chromeShape(html).join(" "), name).not.toContain("scheme");
     }
   });
 });

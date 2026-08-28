@@ -232,6 +232,18 @@ describe("every static page reaches the product", () => {
     expect(page("public/pages.css")).toContain(".brand-text span");
   });
 
+  it("honours a scheme the app forced, before the stylesheet", () => {
+    // A coach who picked Light on a dark phone taps a footer link out of the
+    // hub. Without this the page they land on is dark and the one they came
+    // from was not. Before the stylesheet, or it flashes the other one first.
+    for (const path of [...PAGES, "public/privacy/index.html"]) {
+      const html = page(path);
+      const script = html.indexOf("equalplay_scheme");
+      expect(script, `${path} ignores the chosen scheme`).toBeGreaterThan(-1);
+      expect(script, `${path} reads it too late`).toBeLessThan(html.indexOf('rel="stylesheet"'));
+    }
+  });
+
   it("carries the same footer", () => {
     for (const path of PAGES) {
       const html = page(path);
@@ -429,6 +441,14 @@ describe("the generated rules pages", () => {
     const index = rulesIndexHtml();
     expect(index).toContain("<th scope=\"col\">Grade</th>");
     expect(index).toContain("<th scope=\"col\">What arrives</th>");
+  });
+
+  it("honours a forced scheme like the rest of the site", () => {
+    for (const { path, html } of pages()) {
+      const script = html.indexOf("equalplay_scheme");
+      expect(script, `${path} ignores the chosen scheme`).toBeGreaterThan(-1);
+      expect(script, `${path} reads it too late`).toBeLessThan(html.indexOf('rel="stylesheet"'));
+    }
   });
 
   it("is indexable, unlike the hub the same words live in", () => {

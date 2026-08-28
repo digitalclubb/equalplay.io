@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 /**
  * The homepage is static marketing HTML. What can actually break is the route it
@@ -107,4 +107,103 @@ test("the rules cluster links itself together", async ({ page }) => {
   await page.goto("/rugby-drills-u9");
   await page.locator('a[href="/rugby-rules-u9"]').first().click();
   await expect(page.locator("h1")).toContainText("U9");
+});
+
+// ---- The colour scheme switch ----
+
+const bg = (page: Page) =>
+  page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+test("a coach can pick a scheme and the phone stops deciding", async ({ page }) => {
+  // The phone says light. The switch has to be able to say otherwise, because a
+  // screen pinned one way is what this exists for.
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/hub/#/catalogue");
+  const light = await bg(page);
+
+  await page.locator('[data-scheme="dark"]').click();
+  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+  const dark = await bg(page);
+  expect(dark).not.toBe(light);
+
+  // Back to the phone, and the attribute goes rather than being set to system
+  await page.locator('[data-scheme="system"]').click();
+  expect(await bg(page)).toBe(light);
+  expect(await page.evaluate(() => document.documentElement.hasAttribute("data-theme"))).toBe(false);
+});
+
+test("the choice survives a reload, and lands before the first paint", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/hub/#/catalogue");
+  await page.locator('[data-scheme="dark"]').click();
+  const dark = await bg(page);
+
+  // Read from inside the page as soon as the DOM exists rather than after
+  // `reload()` resolves. By then a scheme applied late by the bundle looks
+  // exactly like one applied early, so the assertion could not fail for the
+  // reason it names. `nav.test.ts` holds the script ahead of the stylesheet.
+  await page.addInitScript(() => {
+    addEventListener("DOMContentLoaded", () => {
+      (window as unknown as { seenEarly?: string }).seenEarly =
+        document.documentElement.dataset.theme ?? "none";
+    });
+  });
+  await page.reload();
+
+  const early = await page.evaluate(
+    () => (window as unknown as { seenEarly?: string }).seenEarly,
+  );
+  expect(early, "the scheme was applied late, so the page flashed").toBe("dark");
+  expect(await bg(page)).toBe(dark);
+  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+});
+
+test("the scheme belongs to the phone, so it crosses between the two halves", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/planner");
+  await page.locator('[data-scheme="dark"]').click();
+  const dark = await bg(page);
+
+  await page.goto("/hub/#/catalogue");
+  expect(await bg(page)).toBe(dark);
+  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+});
+
+test("the choice holds when a footer link leaves the app", async ({ page }) => {
+  // The static pages are the third part of the product. A coach who forced one
+  // scheme and tapped About Equal Play used to land in the other.
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/hub/#/catalogue");
+  await page.locator('[data-scheme="light"]').click();
+
+  // Not the same colour as the app. The marketing pages are white where the app
+  // is grey, and always were. What has to match is the scheme rather than the
+  // palette, so this asks whether the page is light rather than dark.
+  const lightness = () =>
+    page.evaluate(() => {
+      const [r, g, b] = (getComputedStyle(document.body).backgroundColor.match(/\d+/g) ?? []).map(
+        Number,
+      );
+      return (r + g + b) / 3;
+    });
+
+  for (const path of ["/", "/privacy", "/rugby-drills-u10", "/rugby-rules-u10"]) {
+    await page.goto(path);
+    expect(await page.evaluate(() => document.documentElement.dataset.theme), path).toBe("light");
+    expect(await lightness(), `${path} came back dark`).toBeGreaterThan(200);
+  }
+});
+
+test("signing out leaves the phone's colours alone", async ({ page }) => {
+  // Everything belonging to a coach goes when they sign out, because clubs
+  // share tablets. The scheme is the device's rather than theirs.
+  await page.goto("/hub/#/catalogue");
+  await page.locator('[data-scheme="dark"]').click();
+  await page.evaluate(() => {
+    for (const key of ["equalplay_hub_plans", "equalplay_hub_favourites", "equalplay_hub_welcomed"]) {
+      localStorage.removeItem(key);
+    }
+  });
+  await page.reload();
+  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
 });

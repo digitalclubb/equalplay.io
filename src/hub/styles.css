@@ -198,13 +198,9 @@ body {
 }
 
 /* The primary red lightens in the dark scheme, so a white label on it drops to
-   2.3:1. It takes the dark end instead. Here rather than in `base.css` beside
-   the rest of the scheme, because that file does not own this class and would
-   lose to it on ordering anyway. */
-@media (prefers-color-scheme: dark) {
-  .hub-btn-primary {
-    color: var(--color-navy);
-  }
+   2.3:1. It takes the dark end instead. */
+.hub-btn-primary {
+  color: light-dark(var(--color-on-dark), var(--color-navy));
 }
 
 .hub-btn-danger {

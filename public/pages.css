@@ -13,6 +13,42 @@
   --line: #dfe2ea;
   --panel: #f5f6f9;
   --page: #fff;
+
+  /* Navy is the mark rather than a text colour, so a heading takes its own
+     token: it has to go light when the page does. The skip link keeps navy,
+     because it sits on a white pill that does not flip. */
+  --heading: var(--navy);
+  --link: #b8391c;
+  --field-bg: #ffffff;
+  --field-edge: #b9bfcd;
+
+  /* The scheme, and the switch in the app that can force it. Same mechanism as
+     `src/base.css`: the app writes `data-theme` onto `<html>` and every page in
+     the product reads it, so a coach who picked one does not tap a footer link
+     and land in the other. */
+  color-scheme: light dark;
+}
+
+@supports (color: light-dark(#000, #fff)) {
+  :root {
+    --text: light-dark(#1b1f33, #e8eaf2);
+    --muted: light-dark(#5a6070, #a3aabd);
+    --line: light-dark(#dfe2ea, #2b3050);
+    --panel: light-dark(#f5f6f9, #131834);
+    --page: light-dark(#ffffff, #0a0e24);
+    --heading: light-dark(#000537, #ffffff);
+    --link: light-dark(#b8391c, #ff8a6a);
+    --field-bg: light-dark(#ffffff, #0a0e24);
+    --field-edge: light-dark(#b9bfcd, #3a4064);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 * {
@@ -112,7 +148,7 @@ h1 {
   font-size: clamp(1.85rem, 6vw, 2.6rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
-  color: var(--navy);
+  color: var(--heading);
   margin: 0 0 0.75rem;
 }
 
@@ -120,13 +156,13 @@ h2 {
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: clamp(1.3rem, 4vw, 1.6rem);
   line-height: 1.25;
-  color: var(--navy);
+  color: var(--heading);
   margin: 2.5rem 0 0.75rem;
 }
 
 h3 {
   font-size: 1.1rem;
-  color: var(--navy);
+  color: var(--heading);
   margin: 1.75rem 0 0.5rem;
 }
 
@@ -147,7 +183,7 @@ ol {
 }
 
 a {
-  color: #b8391c;
+  color: var(--link);
 }
 
 a:hover,
@@ -206,7 +242,7 @@ td {
 }
 
 th {
-  color: var(--navy);
+  color: var(--heading);
   font-weight: 700;
 }
 
@@ -234,7 +270,7 @@ th {
   display: block;
   font-weight: 700;
   font-size: 0.95rem;
-  color: var(--navy);
+  color: var(--heading);
   margin-bottom: 0.3rem;
 }
 
@@ -242,9 +278,9 @@ th {
   width: 100%;
   font: inherit;
   padding: 0.6rem 0.7rem;
-  border: 1px solid #b9bfcd;
+  border: 1px solid var(--field-edge);
   border-radius: 8px;
-  background: #fff;
+  background: var(--field-bg);
   color: inherit;
 }
 
@@ -263,7 +299,7 @@ th {
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: clamp(1.6rem, 5vw, 2.1rem);
   line-height: 1.2;
-  color: var(--navy);
+  color: var(--heading);
   margin: 0 0 0.5rem;
 }
 
@@ -278,7 +314,7 @@ th {
 }
 
 .calc-error {
-  color: #b8391c;
+  color: var(--link);
   font-weight: 700;
   margin: 0;
 }
@@ -333,35 +369,6 @@ th {
   font-weight: 700;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #e8eaf2;
-    --muted: #a3aabd;
-    --line: #2b3050;
-    --panel: #131834;
-    --page: #0a0e24;
-  }
-
-  a,
-  .calc-error {
-    color: #ff8a6a;
-  }
-
-  .calc input {
-    background: #0a0e24;
-    border-color: #3a4064;
-    color: inherit;
-  }
-
-  h1,
-  h2,
-  h3,
-  th,
-  .calc label,
-  .calc-headline {
-    color: #fff;
-  }
-}
 
 /* Homepage. Wider than an article page because it is laid out in two columns
    above 48rem rather than being read as one line of prose. */

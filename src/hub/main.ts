@@ -28,6 +28,7 @@ import {
 import { isConfigured } from "./supabase.js";
 import { currentRoute, go, onRoute, type Route } from "./router.js";
 import { navHtml } from "../lib/nav.js";
+import { wireScheme } from "../lib/theme.js";
 import { chosenAge } from "./ageChoice.js";
 import { renderAgePicker } from "./views/agePicker.js";
 import { renderGuide } from "./views/guide.js";
@@ -313,6 +314,10 @@ function reportLinkFailure(hasSession: boolean): void {
   // Don't leave a spent code sitting in the URL or the back stack
   window.history.replaceState(null, "", window.location.pathname + window.location.hash);
 }
+
+// The footer sits outside the view every route renders into, so this runs once
+// and the control keeps working for the life of the page.
+wireScheme();
 
 // Focus the content directly rather than jumping to a fragment. An href of
 // #hub-view would set the hash. The router watches the hash.

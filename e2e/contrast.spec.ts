@@ -92,14 +92,16 @@ async function samples(page: Page): Promise<Sample[]> {
  * scheme the first time it could see them, one of them the active nav tab at
  * 1.12:1, which is the third time that exact shape of mistake has shipped.
  */
-async function signIn(page: Page, hash: string) {
+async function signIn(page: Page, hash: string, scheme?: "light" | "dark") {
   await page.addInitScript(
-    ([key, value]) => {
+    ([key, value, forced]) => {
       if (localStorage.getItem("__seeded")) return;
       localStorage.clear();
       localStorage.setItem("__seeded", "1");
       localStorage.setItem(key, value);
       localStorage.setItem("equalplay_hub_welcomed", "1");
+      // Set inside the same script as the clear above, or the clear wipes it
+      if (forced) localStorage.setItem("equalplay_scheme", forced);
     },
     [
       "sb-example-auth-token",
@@ -119,6 +121,7 @@ async function signIn(page: Page, hash: string) {
           user_metadata: { name: "A Coach", club: "A club", age_group: "u10" },
         },
       }),
+      scheme ?? "",
     ],
   );
   await page.goto(`/hub/${hash}`);
@@ -322,5 +325,32 @@ for (const [where, width] of [
     }
 
     expect(failures, `hovered tab contrast on ${where}`).toEqual([]);
+  });
+}
+
+/**
+ * The scheme a coach forced, rather than the one their phone asked for.
+ *
+ * `light-dark()` reads `color-scheme`, and the switch sets that through a
+ * `data-theme` attribute rather than through the media query. That is a second
+ * road to the same colours, so it gets measured too: a rule written inside a
+ * `prefers-color-scheme` block would work for the phone and do nothing at all
+ * for the switch, and nothing else here would notice.
+ */
+for (const forced of ["light", "dark"] as const) {
+  test(`a forced ${forced} scheme meets AA contrast against the opposite phone`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: forced === "dark" ? "light" : "dark" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, "#/catalogue", forced);
+    await page.waitForTimeout(300);
+
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(forced);
+
+    const failures = (await samples(page))
+      .map((s) => ({ ...s, contrast: ratio(s.fg, s.bg) }))
+      .filter((s) => s.contrast < (s.large ? 3 : 4.5))
+      .map((s) => `${s.where} "${s.text}" at ${s.contrast.toFixed(2)}:1`);
+
+    expect(failures, `forced ${forced} contrast failures`).toEqual([]);
   });
 }

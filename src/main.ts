@@ -1,5 +1,6 @@
 import { mountApp } from "./app.js";
 import { track } from "./lib/track.js";
+import { wireScheme } from "./lib/theme.js";
 
 const root = document.getElementById("app");
 if (!root) {
@@ -18,6 +19,9 @@ document.addEventListener("click", (event) => {
     track("planner_to_app", { to: link.dataset.route ?? "" });
   }
 });
+
+// The footer is outside anything the app re-renders, so once is enough
+wireScheme();
 
 // Deferred: service worker + analytics. Loaded only when browser is idle
 function onIdle(fn: () => void): void {

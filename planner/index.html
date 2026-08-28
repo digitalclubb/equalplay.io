@@ -73,6 +73,15 @@
     }
     </script>
 
+    <!-- Before the stylesheet, so a coach who picked a scheme never sees the
+         other one flash first. Inline and tiny on purpose: a module would land
+         after paint and defeat the point. `src/lib/theme.ts` owns the rest. -->
+    <script>
+      try {
+        var t = localStorage.getItem("equalplay_scheme");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -126,6 +135,13 @@
         <a href="/rfu-regulation-15-playing-time">Regulation 15 playing time</a>
         <a href="/privacy">Privacy</a>
       </nav>
+      <!-- Written out the way the nav is, so the footer paints with the
+           document. `scheme markup matches src/lib/theme.ts` in nav.test.ts
+           fails if this and the module ever drift. -->
+      <div class="scheme-switch" role="group" aria-label="Colour scheme">
+        <span class="scheme-label" aria-hidden="true">Colours</span>
+        <button type="button" class="scheme-option is-active" data-scheme="system" aria-pressed="true">Auto</button><button type="button" class="scheme-option" data-scheme="light" aria-pressed="false">Light</button><button type="button" class="scheme-option" data-scheme="dark" aria-pressed="false">Dark</button>
+      </div>
       </footer>
     </div>
     <script type="module" src="/src/main.ts"></script>

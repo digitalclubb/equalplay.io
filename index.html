@@ -126,6 +126,15 @@
 }
     </script>
 
+    <!-- The scheme a coach picked in the app, applied before the stylesheet so a
+         footer link out of the hub does not land them in the other one. Same
+         key and same shape as the entries. `src/lib/theme.ts` owns the rest. -->
+    <script>
+      try {
+        var t = localStorage.getItem("equalplay_scheme");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.json" />

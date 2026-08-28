@@ -1849,20 +1849,14 @@ body {
   }
 }
 
-/* ---- Dark ----
- *
- * Same story as `.hub-btn-primary` in the hub. `--color-primary` lightens in
- * the dark scheme so the brand red still reads on a dark panel, which leaves a
- * white label on it at 2.3:1. Anything filled with the primary takes the dark
- * end of the ramp instead. `e2e/contrast.spec.ts` sweeps this file in both
- * schemes and found all three the moment the tokens started flipping.
- */
+/* Anything filled with the primary carries a dark label in the dark scheme.
+   `--color-primary` is the light end of the brand ramp there so it still reads
+   on a dark panel, which leaves a white label on it at 2.3:1.
+   `e2e/contrast.spec.ts` sweeps this file in both schemes and found all four. */
 
-@media (prefers-color-scheme: dark) {
-  .next-step-link,
-  .btn-generate,
-  .btn-next-sub,
-  .btn-remove-player:active {
-    color: var(--color-navy);
-  }
+.next-step-link,
+.btn-generate,
+.btn-next-sub,
+.btn-remove-player:active {
+  color: light-dark(var(--color-on-dark), var(--color-navy));
 }
