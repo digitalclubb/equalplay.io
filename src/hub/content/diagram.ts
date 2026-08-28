@@ -50,7 +50,11 @@ const PAD = 16;
 const STROKE = 2.4;
 const CONE_R = 5.5;
 const PLAYER_R = 9;
-const PRIMARY = "#cf3918";
+/* The token rather than the hex behind it. A diagram is drawn on a card that
+   flips with the colour scheme, so the one literal colour left in here was the
+   very thing the rest of the file avoids: the brand red is the dark end of the
+   ramp and all but disappeared behind a 0.22 opacity zone on a dark panel. */
+const PRIMARY = "var(--color-primary)";
 
 // Arrowheads are markers. A marker is addressed by id, so two diagrams on one
 // page sharing an id is invalid markup. Each render takes its own. Not

@@ -35,6 +35,11 @@ interface Sample {
 
 /** Every element holding its own visible text, with the background behind it. */
 async function samples(page: Page): Promise<Sample[]> {
+  // `content-visibility: auto` on the drill cards means the browser lays out
+  // only what is near the viewport, and everything else reports a zero box and
+  // gets skipped below. That would quietly narrow this sweep to the five cards
+  // on screen, so it is switched off for the measurement only.
+  await page.addStyleTag({ content: "* { content-visibility: visible !important; }" });
   return page.evaluate(() => {
     const rgb = (value: string): number[] =>
       (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
@@ -78,6 +83,116 @@ async function samples(page: Page): Promise<Sample[]> {
   });
 }
 
+/**
+ * A signed-in session, written in before the page scripts run.
+ *
+ * Everything past the sign-in screen used to be invisible to this file, which
+ * is most of the app: the running order a coach holds at a pitch, the session
+ * editor, the account page. The sweep below found four failures in the dark
+ * scheme the first time it could see them, one of them the active nav tab at
+ * 1.12:1, which is the third time that exact shape of mistake has shipped.
+ */
+async function signIn(page: Page, hash: string) {
+  await page.addInitScript(
+    ([key, value]) => {
+      if (localStorage.getItem("__seeded")) return;
+      localStorage.clear();
+      localStorage.setItem("__seeded", "1");
+      localStorage.setItem(key, value);
+      localStorage.setItem("equalplay_hub_welcomed", "1");
+    },
+    [
+      "sb-example-auth-token",
+      JSON.stringify({
+        access_token: "stub",
+        token_type: "bearer",
+        expires_in: 360_000,
+        expires_at: Math.floor(Date.now() / 1000) + 360_000,
+        refresh_token: "stub",
+        user: {
+          id: "00000000-0000-4000-8000-000000000001",
+          aud: "authenticated",
+          role: "authenticated",
+          email: "coach@example.com",
+          created_at: "2026-08-17T00:00:00Z",
+          app_metadata: {},
+          user_metadata: { name: "A Coach", club: "A club", age_group: "u10" },
+        },
+      }),
+    ],
+  );
+  await page.goto(`/hub/${hash}`);
+  await page.waitForSelector('body[data-signed-in="true"]');
+}
+
+for (const scheme of ["light", "dark"] as const) {
+  for (const [name, hash] of [
+    ["the drill list", "#/catalogue"],
+    ["a drill", "#/catalogue/drill-two-second-ruck"],
+    ["the sessions list", "#/plans"],
+    ["a rules guide", "#/guide/u10"],
+    ["the account page", "#/account"],
+  ] as const) {
+    test(`${name} meets AA contrast in ${scheme} mode, signed in`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await signIn(page, hash);
+      await page.waitForTimeout(300);
+
+      const failures = (await samples(page))
+        .map((s) => ({ ...s, contrast: ratio(s.fg, s.bg) }))
+        .filter((s) => s.contrast < (s.large ? 3 : 4.5))
+        .map((s) => `${s.where} "${s.text}" at ${s.contrast.toFixed(2)}:1`);
+
+      expect(failures, `${scheme} mode contrast failures`).toEqual([]);
+    });
+  }
+}
+
+/**
+ * The match screen, not the setup form.
+ *
+ * `/planner` cold is a squad list and a button. Everything a coach looks at on
+ * a Sunday is behind that button, so loading the URL alone left the game cards,
+ * the section headings and the fairness table unmeasured. Three fixed navy
+ * colours were sitting on surfaces that flip, one of them the only marking on
+ * the current game.
+ */
+async function runningMatch(page: Page) {
+  await page.goto("/planner");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.waitForSelector(".btn-generate");
+
+  const inputs = page.locator(".player-input");
+  for (let i = 0; i < 9; i += 1) {
+    if ((await inputs.count()) <= i) await page.getByText("+ Add player").click();
+    await inputs.nth(i).fill(`Player ${i + 1}`);
+  }
+  await page.locator("#players-per-team").fill("7");
+  await page.locator("#num-games").fill("3");
+  await page.getByRole("button", { name: "Sort my team" }).click();
+  await page.waitForSelector("[data-testid^='game-']");
+  await page.locator(".btn-start-match").click();
+  await page.waitForSelector(".game-card-current");
+}
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`the match screen meets AA contrast in ${scheme} mode`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await runningMatch(page);
+    await page.waitForTimeout(300);
+
+    const failures = (await samples(page))
+      .map((s) => ({ ...s, contrast: ratio(s.fg, s.bg) }))
+      .filter((s) => s.contrast < (s.large ? 3 : 4.5))
+      .map((s) => `${s.where} "${s.text}" at ${s.contrast.toFixed(2)}:1`);
+
+    expect(failures, `${scheme} mode contrast failures`).toEqual([]);
+  });
+}
+
 for (const scheme of ["light", "dark"] as const) {
   for (const [name, url] of [
     ["homepage", "/"],
@@ -105,11 +220,26 @@ for (const scheme of ["light", "dark"] as const) {
  * the hub was --color-surface on a --color-surface panel with a --color-border
  * edge, which measured 1.19:1: a button you could only find by guessing.
  */
-test("controls have a visible edge against what they sit on", async ({ page }) => {
+for (const scheme of ["light", "dark"] as const) {
+for (const [name, reach] of [
+  ["the drill list", async (page: Page) => {
+    await page.addInitScript(() => localStorage.setItem("equalplay_age_group", "u10"));
+    await page.goto("/hub/#/catalogue");
+    await expect(page.locator(".chip-filter").first()).toBeVisible();
+  }],
+  // The steppers, the add rows and the minutes boxes only exist here. Listing
+  // their selectors while standing on the catalogue matched nothing at all, so
+  // the coverage this test claimed was not coverage.
+  ["the session editor", async (page: Page) => {
+    await signIn(page, "#/plans");
+    await page.locator(".preset-card").first().click();
+    await expect(page.locator(".block-controls button").first()).toBeVisible();
+  }],
+] as const) {
+test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page }) => {
+  await page.emulateMedia({ colorScheme: scheme });
   await page.setViewportSize({ width: 900, height: 820 });
-  await page.addInitScript(() => localStorage.setItem("equalplay_age_group", "u10"));
-  await page.goto("/hub/#/catalogue");
-  await expect(page.locator(".hub-btn").first()).toBeVisible();
+  await reach(page);
 
   const controls = await page.evaluate(() => {
     const rgb = (value: string): number[] =>
@@ -123,7 +253,12 @@ test("controls have a visible edge against what they sit on", async ({ page }) =
       }
       return [255, 255, 255];
     };
-    return [...document.querySelectorAll(".hub-btn")]
+    // Not just `.hub-btn`. That was the one control this ever checked, so the
+    // chips, the inputs, the selects and the steppers all sat at 1.25:1 with
+    // nothing to say so. A card is left out on purpose: it is identified by the
+    // title inside it rather than by its outline, which is the exception the
+    // success criterion makes.
+    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal")]
       .filter((el) => el.getBoundingClientRect().width > 0)
       .map((el) => ({
         label: (el.textContent ?? "").trim().slice(0, 24),
@@ -138,8 +273,11 @@ test("controls have a visible edge against what they sit on", async ({ page }) =
     // Identifiable by its edge or by its fill. Either will do.
     .filter((c) => Math.max(ratio(c.edge, c.behind), ratio(c.fill, c.behind)) < 3)
     .map((c) => `"${c.label}" at ${ratio(c.edge, c.behind).toFixed(2)}:1`);
+  expect(controls.length, "nothing matched, so nothing was checked").toBeGreaterThan(3);
   expect(invisible, "controls with no visible boundary").toEqual([]);
 });
+}
+}
 
 /**
  * Hover states, which the resting sweep above cannot see.

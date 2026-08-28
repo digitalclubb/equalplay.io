@@ -165,13 +165,19 @@ group("the diagram renderer", () => {
    * baked into an SVG. Reaching for a fixed colour on a surface that does flip
    * is the mistake that has already shipped twice, once at 1.5:1 and once at
    * 1.12:1. One diagram has to serve both schemes, so everything structural is
-   * `currentColor` and the only literal colour allowed is the primary.
+   * `currentColor` and the primary comes through its token.
+   *
+   * The primary used to be exempt as a literal hex, which was the same mistake
+   * one layer down: it is the dark end of the brand ramp, so on a dark card it
+   * all but vanished behind a shaded zone. Nothing literal is allowed now.
    */
-  it("uses no fixed colour but the primary", () => {
+  it("bakes in no colour at all", () => {
     for (const drill of withDiagram) {
-      const colours = new Set(renderDiagram(drill.diagram).match(/#[0-9a-fA-F]{3,8}\b/g) ?? []);
-      colours.delete("#cf3918");
+      const svg = renderDiagram(drill.diagram);
+      const colours = new Set(svg.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []);
       expect([...colours], `"${drill.title}" bakes in a colour that cannot flip`).toEqual([]);
+      // Everything is either the scheme's own text colour or the brand token
+      expect(svg, `"${drill.title}" lost the primary`).toContain("var(--color-primary)");
     }
   });
 

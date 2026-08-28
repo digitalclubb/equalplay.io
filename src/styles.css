@@ -401,7 +401,9 @@ body {
 
 .game-card-current {
   padding-left: var(--sp-sm);
-  border-left: 3px solid var(--color-navy);
+  /* The only thing marking which game is live, so it cannot be a fixed navy on
+     a surface that flips. That measured 1.12:1 in the dark scheme. */
+  border-left: 3px solid var(--color-primary);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -507,8 +509,8 @@ body {
 .match-detail-done {
   min-height: 44px;
   padding: var(--sp-2xs) var(--sp-sm);
-  background: var(--color-navy);
-  color: var(--color-on-dark);
+  background: var(--color-text);
+  color: var(--color-bg);
   border: none;
   border-radius: var(--radius);
   font-family: inherit;
@@ -599,8 +601,8 @@ body {
   font-weight: var(--weight-heavy);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-on-dark);
-  background: var(--color-navy);
+  color: var(--color-bg);
+  background: var(--color-text);
   padding: var(--sp-3xs) var(--sp-xs);
   border-radius: var(--radius-sm);
 }
@@ -651,7 +653,7 @@ body {
 
 /* Role-specific label tones */
 .game-section-label-field {
-  color: var(--color-navy);
+  color: var(--color-text);
 }
 
 .game-section-label-bench {
@@ -1141,9 +1143,9 @@ body {
 }
 
 .team-sheet-rename-save {
-  background: var(--color-navy);
-  color: var(--color-on-dark);
-  border-color: var(--color-navy);
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-color: var(--color-text);
 }
 
 .team-sheet-rename-save:active {
@@ -1584,8 +1586,8 @@ body {
 
 .btn-start-match,
 .btn-next-game {
-  background: var(--color-navy);
-  color: var(--color-on-dark);
+  background: var(--color-text);
+  color: var(--color-bg);
   border: none;
 }
 
@@ -1676,7 +1678,7 @@ body {
   }
 
   .team-sheet-rename-save:hover {
-    background: var(--color-navy);
+    background: var(--color-text);
     opacity: 0.9;
   }
 
@@ -1844,5 +1846,23 @@ body {
   .fairness-name {
     width: auto;
     flex: 0 0 8rem;
+  }
+}
+
+/* ---- Dark ----
+ *
+ * Same story as `.hub-btn-primary` in the hub. `--color-primary` lightens in
+ * the dark scheme so the brand red still reads on a dark panel, which leaves a
+ * white label on it at 2.3:1. Anything filled with the primary takes the dark
+ * end of the ramp instead. `e2e/contrast.spec.ts` sweeps this file in both
+ * schemes and found all three the moment the tokens started flipping.
+ */
+
+@media (prefers-color-scheme: dark) {
+  .next-step-link,
+  .btn-generate,
+  .btn-next-sub,
+  .btn-remove-player:active {
+    color: var(--color-navy);
   }
 }
