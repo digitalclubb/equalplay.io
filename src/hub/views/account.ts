@@ -44,17 +44,17 @@ export function renderAccount(
       <form id="account-form" novalidate>
         <div class="hub-field">
           <label for="acc-name">Your name</label>
-          <input id="acc-name" name="name" type="text" maxlength="80" value="${esc(profile?.name ?? "")}" />
+          <input id="acc-name" name="name" type="text" autocomplete="name" maxlength="80" aria-describedby="acc-name-error" value="${esc(profile?.name ?? "")}" />
           <p class="hub-error" id="acc-name-error" role="alert" hidden></p>
         </div>
         <div class="hub-field">
           <label for="acc-club">Rugby club</label>
-          <input id="acc-club" name="club" type="text" maxlength="120" value="${esc(profile?.club ?? "")}" />
+          <input id="acc-club" name="club" type="text" autocomplete="organization" maxlength="120" aria-describedby="acc-club-error" value="${esc(profile?.club ?? "")}" />
           <p class="hub-error" id="acc-club-error" role="alert" hidden></p>
         </div>
         <div class="hub-field">
           <label for="acc-age">Age group you coach</label>
-          <select id="acc-age" name="ageGroup">
+          <select id="acc-age" name="ageGroup" aria-describedby="acc-age-error">
             ${profile ? "" : '<option value="">Choose…</option>'}${options}
           </select>
           <p class="hub-error" id="acc-age-error" role="alert" hidden></p>
@@ -80,7 +80,7 @@ export function renderAccount(
       <form id="password-form" novalidate>
         <div class="hub-field">
           <label for="acc-password">New password</label>
-          <input id="acc-password" name="password" type="password" autocomplete="new-password" minlength="8" />
+          <input id="acc-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="acc-password-error" />
           <p class="hub-error" id="acc-password-error" role="alert" hidden></p>
         </div>
         <button type="submit" class="hub-btn">Change password</button>

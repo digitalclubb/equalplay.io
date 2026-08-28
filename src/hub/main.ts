@@ -221,6 +221,12 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // Never leave an edit sitting in a debounce timer across a navigation
     if (userId) flushPlanPush(userId);
     render();
+    // Every view renders into the same element, so a tap on a tab swapped the
+    // whole page with nothing said about it and the next Tab started again from
+    // the top. Moving focus to the view announces it and puts the tab order
+    // where the coach is. Only on an actual navigation: the async syncs redraw
+    // through their own views and must not pull focus out from under anybody.
+    view.focus({ preventScroll: true });
   });
 
   // Backgrounding the tab is the last reliable moment to get an edit to the server
