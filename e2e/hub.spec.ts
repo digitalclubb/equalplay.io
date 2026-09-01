@@ -1114,6 +1114,22 @@ test("a drill page links the rules for the grade being coached", async ({ page }
   await expect(facts.locator("dt", { hasText: "Your grade" })).toBeVisible();
 });
 
+test("a contact drill points at the RFU's concussion education", async ({ page }) => {
+  // Every contact drill carries a safety note about what to watch for during
+  // the drill. What to do after a knock is a national programme, and the
+  // product linked it from nowhere at all.
+  await signedIn(page, "u10", "#/catalogue/drill-two-second-ruck");
+  const safety = page.locator(".drill-safety");
+  await expect(safety.locator("a")).toContainText("Headcase");
+  await expect(safety.locator("a")).toHaveAttribute("href", /player-welfare\/headcase$/);
+
+  // Not on a warm-up nobody can get hit in. Keyed off contact rather than off
+  // the safety note, which movement prep also carries.
+  await page.goto("/hub/#/catalogue/warmup-tail-snatch");
+  await expect(page.locator(".drill-facts")).toBeVisible();
+  await expect(page.locator(".drill-safety a")).toHaveCount(0);
+});
+
 test("the running order carries the rules link for the pitch", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();

@@ -57,6 +57,20 @@ export const REGULATION_15_URL = RFU_BASE;
  * pages, so one broken link stays one edit. `landing-pages.test.ts` holds the
  * hand-written pages to this value.
  */
+/**
+ * The RFU's concussion education, from the drills where a head can get hit.
+ *
+ * Every contact drill here carries a safety note, which says what to watch for
+ * during the drill. It says nothing about what to do afterwards. That is the
+ * part with a national programme behind it. Linked rather than summarised,
+ * for the same reason Reg 15 is.
+ */
+export const HEADCASE_URL = "https://www.englandrugby.com/run/player-welfare/headcase";
+
+/** Everything the RFU publishes for age grade coaches, from the guide index. */
+export const AGE_GRADE_RESOURCES_URL =
+  "https://www.englandrugby.com/run/coaching/age-grade-rugby/resources";
+
 export const HALF_GAME_RULE_URL =
   "https://help.rfu.com/support/solutions/articles/103000094875-what-is-the-half-game-rule-";
 

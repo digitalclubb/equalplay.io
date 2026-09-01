@@ -17,6 +17,7 @@ import {
   AGE_GROUP_LABELS,
   THEMES,
   THEME_LABELS,
+  HEADCASE_URL,
   REGULATION_15_URL,
   RULES_OF_PLAY,
   THEME_MIN_AGE,
@@ -577,6 +578,28 @@ function addPanel(drill: Drill): string {
     </section>`;
 }
 
+/**
+ * The safety note, plus concussion education where a head can get hit.
+ *
+ * Keyed off contact rather than off `drill.safety`, which is the other way
+ * round from the "Safety note" badge and deliberately so: movement prep carries
+ * a safety note and involves nobody's head, while Headcase is about what
+ * happens after a knock rather than during the drill.
+ */
+function safetyBlock(drill: Drill): string {
+  const contact = drill.themes.some((theme) => CONTACT_THEMES.has(theme));
+  if (!drill.safety && !contact) return "";
+
+  return `<div class="drill-safety">
+      <h3>Safety</h3>
+      ${drill.safety ? `<p>${esc(drill.safety)}</p>` : ""}
+      ${contact ? `<p class="drill-headcase">${rulesLink("The RFU's Headcase, on concussion", HEADCASE_URL, "rules-link rules-link-sm")}</p>` : ""}
+    </div>`;
+}
+
+/** The themes Reg 15 holds back to U9 and U10, which is where a head can get hit. */
+const CONTACT_THEMES = new Set<Theme>(["tackle", "breakdown", "setpiece"]);
+
 function renderDetail(
   container: HTMLElement,
   drill: Drill,
@@ -616,7 +639,7 @@ function renderDetail(
         </div>
         <p class="drill-themes">${drill.themes.map((t) => esc(THEME_LABELS[t])).join(" · ")}</p>
 
-        ${drill.safety ? `<div class="drill-safety"><h3>Safety</h3><p>${esc(drill.safety)}</p></div>` : ""}
+        ${safetyBlock(drill)}
 
         <h3>Set up</h3>
         <p>${esc(drill.setup)}</p>

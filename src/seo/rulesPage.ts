@@ -23,6 +23,7 @@ import { esc } from "../lib/esc.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
+  AGE_GRADE_RESOURCES_URL,
   HALF_GAME_RULE_URL,
   REGULATION_15_URL,
   RULES_OF_PLAY,
@@ -386,6 +387,11 @@ ${cards}
         </ul>
 
 ${sourceNote("Regulation 15 in full", REGULATION_15_URL)}
+
+        <p class="home-microcopy">
+          <a href="${AGE_GRADE_RESOURCES_URL}" rel="noopener">Everything the RFU publishes for
+          age grade coaches</a>, including their concussion education.
+        </p>
 
         <h2>What each grade trains</h2>
         <p>

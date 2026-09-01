@@ -752,6 +752,15 @@ body {
   color: var(--color-warning-text);
 }
 
+/* The safety block sits on a warning tint, where the primary the rules links
+   wear elsewhere measured 4.44:1 against it. The warning text colour is the one
+   chosen to be read on this background, so the link takes it and keeps its
+   underline to stay findable without the colour doing the work. */
+.drill-safety .rules-link {
+  color: var(--color-warning-text);
+  text-decoration: underline;
+}
+
 .drill-safety p {
   color: var(--color-warning-text);
   font-size: var(--text-sm);

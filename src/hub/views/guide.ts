@@ -3,6 +3,7 @@ import { ageRulesLink, rulesLink } from "../../lib/rulesLink.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
+  AGE_GRADE_RESOURCES_URL,
   HALF_GAME_RULE_URL,
   REGULATION_15_URL,
   rulesCheckedPhrase,
@@ -216,7 +217,11 @@ function guideIndex(coachAge?: AgeGroup): string {
           itself. It is reissued every summer as well.
         </p>
         <p>${rulesCheckedPhrase()}.</p>
-        <p>${rulesLink("Regulation 15 in full", REGULATION_15_URL)}</p>
+        <p>
+          ${rulesLink("Regulation 15 in full", REGULATION_15_URL)}
+          &middot;
+          ${rulesLink("Everything the RFU publishes for age grade coaches", AGE_GRADE_RESOURCES_URL)}
+        </p>
       </footer>
     </article>`;
 }
