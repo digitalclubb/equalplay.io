@@ -119,6 +119,13 @@
           <a href="/hub#/guide" class="hub-tab" data-route="guide"><svg class="hub-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.2C10.4 5.6 8 5 4.5 5v12.5c3.5 0 5.9.6 7.5 2.2 1.6-1.6 4-2.2 7.5-2.2V5c-3.5 0-5.9.6-7.5 2.2z"/><path d="M12 7.2v12.5"/></svg><span class="hub-tab-label">Guide</span></a>
           <a href="/hub#/account" class="hub-tab" data-route="account"><svg class="hub-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.5c.6-3.8 3.7-5.8 7.2-5.8s6.6 2 7.2 5.8"/></svg><span class="hub-tab-label">Account</span></a>
         </nav>
+        <!-- The colour scheme, written out the way the nav is so the chrome paints
+             with the document. Top right of the bar on a phone, foot of the rail
+             at 900px, which is one node placed twice rather than two copies:
+             the rail is 15rem and the logo has already taken most of it.
+             `scheme markup matches src/lib/theme.ts` in nav.test.ts fails if this
+             and the module ever drift. -->
+        <button type="button" class="scheme-toggle" data-scheme="system" title="Colours: Auto" aria-label="Colours: Auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M12 16.5v4"/><path d="M8.5 20.5h7"/></svg><span class="scheme-name">Auto</span></button>
       </div>
       <main id="app" class="app-view">
         <!-- Teams are the planner's own control, not navigation, so they sit at
@@ -135,13 +142,6 @@
         <a href="/rfu-regulation-15-playing-time">Regulation 15 playing time</a>
         <a href="/privacy">Privacy</a>
       </nav>
-      <!-- Written out the way the nav is, so the footer paints with the
-           document. `scheme markup matches src/lib/theme.ts` in nav.test.ts
-           fails if this and the module ever drift. -->
-      <div class="scheme-switch" role="group" aria-label="Colour scheme">
-        <span class="scheme-label" aria-hidden="true">Colours</span>
-        <button type="button" class="scheme-option is-active" data-scheme="system" aria-pressed="true">Auto</button><button type="button" class="scheme-option" data-scheme="light" aria-pressed="false">Light</button><button type="button" class="scheme-option" data-scheme="dark" aria-pressed="false">Dark</button>
-      </div>
       </footer>
     </div>
     <script type="module" src="/src/main.ts"></script>

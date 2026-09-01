@@ -551,6 +551,10 @@ html {
 }
 
 .app-chrome {
+  /* Not for the chrome's own sake. `.scheme-toggle` sits in its top right
+     corner and needs something to be a corner of. At 900px `position: sticky`
+     takes this over, which is a containing block just the same. */
+  position: relative;
   padding: var(--sp-sm) var(--gutter);
   margin: 0 0 var(--stack);
 }
@@ -696,59 +700,99 @@ html {
     color-scheme: light;
   }
 
-  /* The switch is furniture. It sits in the same footer as the links. */
+  /* The switch is furniture. It goes with the links. */
   .site-links,
-  .scheme-switch {
+  .scheme-toggle {
     display: none;
   }
 }
 
 /* ---- The colour scheme switch ----
 
-   In the footer rather than the chrome, which `nav.test.ts` holds to identity
-   plus navigation. Not the account page either, which is behind a sign-in that
-   a coach reading drills at a pitch has not got. Both entries carry it: the
-   scheme belongs to the phone rather than to half the product. */
+   In the chrome rather than the footer, where it sat under a hundred drill
+   cards. It is the one setting a coach reaches for at the pitch, when the phone
+   has the scheme wrong and the screen is unreadable in the sun, so it has to be
+   somewhere they can see without scrolling.
 
-.scheme-switch {
-  display: flex;
+   One node, placed twice. Top right of the bar on a phone, absolute so the
+   centred logo stays centred rather than being shoved off by 48px. Foot of the
+   rail at 900px, under Account: the rail is 15rem wide and the logo has already
+   taken most of that, so there is no top right up there to put it in.
+
+   Fixed colours, like everything else on the bar. The navy under it does not
+   flip with the scheme, so nothing sitting on it may either. `--color-on-dark`
+   and the tabs' own resting grey, no token that answers `light-dark()`. */
+
+.scheme-toggle {
+  position: absolute;
+  top: var(--sp-sm);
+  /* The chrome's own padding, so this lines up with the bar's edge rather than
+     with a number that has to be kept in step with it. */
+  right: var(--gutter);
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  /* Centred, because the links above it are. A row starting at the left edge
-     under a centred list reads as something that got left behind. */
   justify-content: center;
-  gap: var(--sp-2xs);
-  margin-top: var(--sp-xs);
-}
-
-.scheme-label {
-  color: var(--color-muted);
-  font-size: var(--text-sm);
-  margin-right: var(--sp-2xs);
-}
-
-.scheme-option {
-  min-height: 44px;
-  padding: 0 var(--sp-sm);
+  width: var(--touch-min);
+  height: var(--touch-min);
+  padding: 0;
   background: none;
+  /* Transparent rather than absent, so the hover edge costs no layout. */
   border: 1px solid transparent;
   border-radius: var(--radius-full);
-  color: var(--color-muted);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semi);
+  /* The colour a tab wears when you are not on it. Same bar, same weight. */
+  color: #b9bacb;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
-/* Only the chosen one carries an edge. Three bordered pills in a footer is a
-   toolbar. This is a preference somebody sets once. */
-.scheme-option.is-active {
-  border-color: var(--color-control-edge);
-  color: var(--color-text);
+.scheme-toggle svg {
+  width: 22px;
+  height: 22px;
 }
 
-.scheme-option:active {
-  transform: scale(0.97);
+.scheme-toggle:hover,
+.scheme-toggle:focus-visible {
+  color: var(--color-on-dark);
+  border-color: rgba(255, 255, 255, 0.4);
 }
+
+.scheme-toggle:active {
+  transform: scale(0.94);
+}
+
+/* The rail's job. In the corner of the phone bar there is room for the glyph
+   and nothing else. `aria-label` says it for anybody who cannot see it. */
+.scheme-name {
+  display: none;
+}
+
+@media (min-width: 56.25rem) {
+  /* The rail is a column and `.hub-nav` takes the slack, so out of the corner
+     and into the flow puts this at the foot, under the account tab. Shaped like
+     the tab above it, because a row of a rail is what it now is. */
+  .scheme-toggle {
+    position: static;
+    align-self: stretch;
+    justify-content: flex-start;
+    gap: var(--sp-xs);
+    width: auto;
+    height: 44px;
+    padding: 0 var(--sp-sm);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: var(--text-base);
+    font-weight: var(--weight-semi);
+  }
+
+  /* The size the tabs draw their icons at, so the column of glyphs lines up. */
+  .scheme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .scheme-name {
+    display: inline;
+  }
+}
+

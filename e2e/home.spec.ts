@@ -114,6 +114,20 @@ test("the rules cluster links itself together", async ({ page }) => {
 const bg = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
+/**
+ * One button in the chrome that cycles Auto, Light, Dark, so a scheme is
+ * reached by tapping until it says so rather than by clicking one of three.
+ * Three taps is the whole cycle, so anything more means it is stuck.
+ */
+async function setScheme(page: Page, want: string): Promise<void> {
+  const toggle = page.locator(".scheme-toggle");
+  for (let tap = 0; tap < 3; tap++) {
+    if ((await toggle.getAttribute("data-scheme")) === want) return;
+    await toggle.click();
+  }
+  await expect(toggle).toHaveAttribute("data-scheme", want);
+}
+
 test("a coach can pick a scheme and the phone stops deciding", async ({ page }) => {
   // The phone says light. The switch has to be able to say otherwise, because a
   // screen pinned one way is what this exists for.
@@ -121,13 +135,13 @@ test("a coach can pick a scheme and the phone stops deciding", async ({ page }) 
   await page.goto("/hub/#/catalogue");
   const light = await bg(page);
 
-  await page.locator('[data-scheme="dark"]').click();
-  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+  await setScheme(page, "dark");
+  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "dark");
   const dark = await bg(page);
   expect(dark).not.toBe(light);
 
   // Back to the phone, and the attribute goes rather than being set to system
-  await page.locator('[data-scheme="system"]').click();
+  await setScheme(page, "system");
   expect(await bg(page)).toBe(light);
   expect(await page.evaluate(() => document.documentElement.hasAttribute("data-theme"))).toBe(false);
 });
@@ -135,7 +149,7 @@ test("a coach can pick a scheme and the phone stops deciding", async ({ page }) 
 test("the choice survives a reload, and lands before the first paint", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/hub/#/catalogue");
-  await page.locator('[data-scheme="dark"]').click();
+  await setScheme(page, "dark");
   const dark = await bg(page);
 
   // Read from inside the page as soon as the DOM exists rather than after
@@ -155,18 +169,18 @@ test("the choice survives a reload, and lands before the first paint", async ({ 
   );
   expect(early, "the scheme was applied late, so the page flashed").toBe("dark");
   expect(await bg(page)).toBe(dark);
-  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "dark");
 });
 
 test("the scheme belongs to the phone, so it crosses between the two halves", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/planner");
-  await page.locator('[data-scheme="dark"]').click();
+  await setScheme(page, "dark");
   const dark = await bg(page);
 
   await page.goto("/hub/#/catalogue");
   expect(await bg(page)).toBe(dark);
-  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "dark");
 });
 
 test("the choice holds when a footer link leaves the app", async ({ page }) => {
@@ -174,7 +188,7 @@ test("the choice holds when a footer link leaves the app", async ({ page }) => {
   // scheme and tapped About Equal Play used to land in the other.
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/hub/#/catalogue");
-  await page.locator('[data-scheme="light"]').click();
+  await setScheme(page, "light");
 
   // Not the same colour as the app. The marketing pages are white where the app
   // is grey, and always were. What has to match is the scheme rather than the
@@ -198,12 +212,12 @@ test("signing out leaves the phone's colours alone", async ({ page }) => {
   // Everything belonging to a coach goes when they sign out, because clubs
   // share tablets. The scheme is the device's rather than theirs.
   await page.goto("/hub/#/catalogue");
-  await page.locator('[data-scheme="dark"]').click();
+  await setScheme(page, "dark");
   await page.evaluate(() => {
     for (const key of ["equalplay_hub_plans", "equalplay_hub_favourites", "equalplay_hub_welcomed"]) {
       localStorage.removeItem(key);
     }
   });
   await page.reload();
-  await expect(page.locator('[data-scheme="dark"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "dark");
 });

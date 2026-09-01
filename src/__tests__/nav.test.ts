@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { schemeHtml, SCHEMES } from "../lib/theme.js";
+import { nextScheme, schemeHtml, SCHEMES } from "../lib/theme.js";
 import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, navHref, navHtml } from "../lib/nav.js";
 
@@ -152,16 +152,17 @@ describe("app navigation", () => {
 /**
  * The colour scheme switch, written into both entries the same way the nav is.
  *
- * It sits in the footer rather than the chrome, which this file holds to
- * identity plus navigation, and rather than the account page, which is behind a
- * sign-in that a coach reading drills at a pitch has not got. Two copies in
- * HTML plus one in a module is exactly the drift `staticNav` exists to catch,
- * so it gets the same treatment.
+ * It sits in the chrome now. In the footer it was under a hundred drill cards,
+ * which is a long scroll for the one setting a coach needs at the pitch. That
+ * makes it the single exception to "identity plus navigation": a control both
+ * entries carry identically, rather than something only one half can say.
+ * Two copies in HTML plus one in a module is exactly the drift `staticNav`
+ * exists to catch, so it gets the same treatment.
  */
 describe("the colour scheme switch", () => {
   const written = (html: string, where: string): string => {
-    const found = html.match(/<div class="scheme-switch"[\s\S]*?<\/div>/);
-    if (!found) throw new Error(`${where} has no .scheme-switch`);
+    const found = html.match(/<button[^>]*class="scheme-toggle"[\s\S]*?<\/button>/);
+    if (!found) throw new Error(`${where} has no .scheme-toggle`);
     return found[0].replace(/\s*\n\s*/g, "");
   };
 
@@ -172,17 +173,33 @@ describe("the colour scheme switch", () => {
   });
 
   it("ships following the phone, because the HTML cannot know", () => {
-    // The stored choice is read after paint. Anything else marked here would be
-    // a lie on the first frame for everybody who picked something else.
-    const markup = written(hubHtml, "hub/index.html");
-    expect(markup.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(markup).toContain('data-scheme="system" aria-pressed="true"');
+    // The stored choice is read after paint. Anything else written here would
+    // be a lie on the first frame for everybody who picked something else.
+    expect(written(hubHtml, "hub/index.html")).toContain('data-scheme="system"');
   });
 
-  it("offers every scheme the module knows about", () => {
+  it("names the scheme it is on rather than the one a tap would give", () => {
+    // A cycling button whose name promises the next state is wrong the moment
+    // somebody tabs onto it and does not press.
     for (const scheme of SCHEMES) {
-      expect(written(hubHtml, "hub/index.html"), scheme).toContain(`data-scheme="${scheme}"`);
+      expect(schemeHtml(scheme), scheme).toContain(`data-scheme="${scheme}"`);
+      expect(schemeHtml(scheme), scheme).toMatch(/aria-label="Colours: (Auto|Light|Dark)"/);
     }
+  });
+
+  it("gives every scheme its own glyph, hidden from a screen reader", () => {
+    // Auto and Light look identical on a phone already set to light, so the
+    // icon is the only thing that says which one you are on.
+    const glyphs = SCHEMES.map((scheme) => schemeHtml(scheme).replace(/^<button[^>]*>/, ""));
+    expect(new Set(glyphs).size).toBe(SCHEMES.length);
+    for (const glyph of glyphs) {
+      expect(glyph).toContain('aria-hidden="true"');
+      expect(glyph, "a fixed colour in the chrome").not.toMatch(/#[0-9a-f]{3,8}/i);
+    }
+  });
+
+  it("cycles back round to the phone", () => {
+    expect(SCHEMES.map(nextScheme)).toEqual(["light", "dark", "system"]);
   });
 
   it("applies the choice before the stylesheet, in both entries", () => {
@@ -196,9 +213,11 @@ describe("the colour scheme switch", () => {
     }
   });
 
-  it("keeps the switch out of the chrome", () => {
+  it("is in the chrome on both entries, and the same one", () => {
     for (const [name, html] of [["hub", hubHtml], ["planner", plannerHtml]] as const) {
-      expect(chromeShape(html).join(" "), name).not.toContain("scheme");
+      const chrome = html.match(/<div class="header-bar app-chrome"[\s\S]*?\n( {4,6})<\/div>/);
+      if (!chrome) throw new Error(`${name} has no .app-chrome block`);
+      expect(chrome[0], `${name} chrome`).toContain('class="scheme-toggle"');
     }
   });
 });

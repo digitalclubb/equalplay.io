@@ -75,51 +75,81 @@ describe("the colour scheme a coach picked", () => {
 });
 
 describe("the switch itself", () => {
-  let footer: HTMLElement;
+  let chrome: HTMLElement;
 
-  const pressed = (): string[] =>
-    [...footer.querySelectorAll<HTMLButtonElement>('[data-scheme][aria-pressed="true"]')].map(
-      (b) => b.dataset.scheme ?? "",
-    );
+  const button = (): HTMLButtonElement =>
+    chrome.querySelector<HTMLButtonElement>(".scheme-toggle") as HTMLButtonElement;
 
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
-    footer = document.createElement("footer");
-    footer.innerHTML = schemeHtml();
-    document.body.replaceChildren(footer);
+    chrome = document.createElement("div");
+    chrome.innerHTML = schemeHtml();
+    document.body.replaceChildren(chrome);
   });
 
-  it("marks exactly one option", () => {
-    wireScheme(footer);
-    expect(pressed()).toEqual(["system"]);
+  it("starts on the phone's own answer", () => {
+    wireScheme(chrome);
+    expect(button().dataset.scheme).toBe("system");
+    expect(button().getAttribute("aria-label")).toBe("Colours: Auto");
   });
 
   it("switches the document and remembers it", () => {
-    wireScheme(footer);
-    footer.querySelector<HTMLButtonElement>('[data-scheme="dark"]')?.click();
+    wireScheme(chrome);
+    button().click();
+    button().click();
 
     expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(pressed()).toEqual(["dark"]);
+    expect(button().dataset.scheme).toBe("dark");
     expect(localStorage.getItem(SCHEME_KEY)).toBe("dark");
   });
 
   it("corrects the markup to what was stored", () => {
-    // The HTML ships with Auto lit, because it is written before anyone knows
-    // what is on the device. Wiring up is the first moment that can be right.
+    // The HTML ships on Auto, because it is written before anyone knows what is
+    // on the device. Wiring up is the first moment that can be right.
     chooseScheme("light");
-    footer.innerHTML = schemeHtml();
-    wireScheme(footer);
-    expect(pressed()).toEqual(["light"]);
+    chrome.innerHTML = schemeHtml();
+    wireScheme(chrome);
+    expect(button().dataset.scheme).toBe("light");
+    expect(button().getAttribute("aria-label")).toBe("Colours: Light");
   });
 
-  it("goes back to the phone", () => {
-    wireScheme(footer);
-    footer.querySelector<HTMLButtonElement>('[data-scheme="dark"]')?.click();
-    footer.querySelector<HTMLButtonElement>('[data-scheme="system"]')?.click();
+  it("cycles back round to the phone", () => {
+    wireScheme(chrome);
+    for (let tap = 0; tap < 3; tap++) button().click();
 
     expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
-    expect(pressed()).toEqual(["system"]);
+    expect(button().dataset.scheme).toBe("system");
+    expect(localStorage.getItem(SCHEME_KEY)).toBeNull();
+  });
+
+  it("reaches dark even when nothing can be stored", () => {
+    // Private browsing throws on write, so a cycle that read the next scheme
+    // back out of storage would bounce between Auto and Light for ever.
+    const stored = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new Error("QuotaExceededError");
+    };
+    try {
+      wireScheme(chrome);
+      button().click();
+      button().click();
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    } finally {
+      Storage.prototype.setItem = stored;
+    }
+  });
+
+  it("shows a different glyph for each scheme", () => {
+    // Auto and Light are the same page on a phone already set to light. The
+    // icon is the only thing that says which of the two you are on.
+    wireScheme(chrome);
+    const seen = new Set<string>();
+    for (let tap = 0; tap < 3; tap++) {
+      seen.add(button().innerHTML);
+      button().click();
+    }
+    expect(seen.size).toBe(3);
   });
 
   it("says nothing when there is no switch to wire", () => {

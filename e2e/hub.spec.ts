@@ -1254,7 +1254,7 @@ test("the chrome runs edge to edge on a small phone", async ({ page }) => {
   expect(await chrome(), "/planner").toEqual({ left: 0, width: WIDTH });
 });
 
-test("all five tabs fit the phone bar, uncut, at every phone width", async ({ page }) => {
+test("the bar fits the phone at every phone width, tabs and switch", async ({ page }) => {
   // The tabs used to size to their own labels. Four fitted; the fifth put them
   // at 340px against a 320px phone and both entries scrolled sideways. The bar
   // shares its width evenly now, and "Match day" wraps where it will not fit
@@ -1291,6 +1291,23 @@ test("all five tabs fit the phone bar, uncut, at every phone width", async ({ pa
         // Still a target a thumb can hit.
         expect(tab.height, `${where}: "${tab.text}" is too short to tap`).toBeGreaterThanOrEqual(44);
       }
+
+      // The colour switch sits in the bar's top right corner, positioned
+      // absolutely so the centred logo stays centred rather than being shoved
+      // 48px to the left by it. Absolute means nothing pushes back when the
+      // logo grows into it, so the clearance is measured rather than assumed.
+      const corner = await page.locator(".app-chrome").evaluate((el) => {
+        const toggle = (el.querySelector(".scheme-toggle") as HTMLElement).getBoundingClientRect();
+        const logo = (el.querySelector(".logo-link") as HTMLElement).getBoundingClientRect();
+        return {
+          right: toggle.right,
+          size: Math.min(toggle.width, toggle.height),
+          clear: toggle.left - logo.right,
+        };
+      });
+      expect(corner.right, `${where}: the switch runs off the screen`).toBeLessThanOrEqual(width);
+      expect(corner.size, `${where}: the switch is too small to tap`).toBeGreaterThanOrEqual(44);
+      expect(corner.clear, `${where}: the switch is sitting on the logo`).toBeGreaterThan(0);
     }
   }
 });

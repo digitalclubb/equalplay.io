@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-667 unit and integration tests across 22 files, 156 Playwright tests. Most are ordinary.
+671 unit and integration tests across 22 files, 156 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -92,7 +92,7 @@ These eleven are load bearing and a failure means the code is wrong, not the tes
 | `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
 | `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
-| `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle. Guide and Match day resolve to paths rather than fragments |
+| `nav.test.ts` | Both entries' written-out navs match `src/lib/nav.ts`, both link their own stylesheet rather than importing it, both share one chrome, nothing from `hub/` reaches the planner's bundle. Guide and Match day resolve to paths rather than fragments. The colour switch matches `src/lib/theme.ts` in both, sits in both chromes and names the scheme it is on |
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
 | `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules page, linked from its drills page and from the index, in the sitemap, with no hand-written copy left in `public/` |
 | `install.test.ts` | The offline promise is only made once the service worker is serving the page. The install offer is spent once shown, never on a prompt the browser refused to display. iPhone never fires the event, so the way in stays written down |
@@ -519,10 +519,23 @@ gone for the visit. iPhone never fires it at all and is most of this audience,
 so rather than sniff a user agent the panel always writes down where a browser
 keeps it.
 
-**The chrome is identity plus navigation. Nothing else.** No tagline, no "Coaching
-U10" pill. Anything only one entry can say makes the rail change shape depending on
-which route you are on, which is what a coach notices. `nav.test.ts` compares the two
-chromes structurally so the next tagline fails the build.
+**The chrome is identity plus navigation, plus the colour switch.** No tagline, no
+"Coaching U10" pill. Anything only one entry can say makes the rail change shape
+depending on which route you are on, which is what a coach notices. `nav.test.ts`
+compares the two chromes structurally so the next tagline fails the build. The
+switch is the one exception, because both entries carry it identically and the
+footer put it under a hundred drill cards, which is a long scroll for the one
+setting a coach reaches for at the pitch.
+
+**The colour switch is one button that cycles, placed twice.** `src/lib/theme.ts`
+renders it and both entries write it out the way they write the nav. Top right of
+the phone bar, positioned absolutely so the centred logo stays centred. At 900px it
+drops into the rail's flow, under Account, shaped like a tab with its label showing:
+the rail is 15rem and the logo has taken most of that, so there is no top right up
+there. Three pills do not fit either place, which is why it cycles Auto, Light, Dark
+rather than choosing. The icon carries the state, because Auto and Light are the
+same page on a phone already set to light. `hub.spec.ts` sweeps 320 to 480 measuring
+that it clears the logo, since absolute means nothing pushes back.
 
 **A shared session is a document, not a route into the app.** `#/shared/<token>`
 comes before the age picker signed out, because asking which grade somebody coaches
