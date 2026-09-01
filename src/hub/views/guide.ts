@@ -188,9 +188,10 @@ function guideIndex(coachAge?: AgeGroup): string {
       <section class="guide-section">
         <h3>The same at every grade</h3>
         <ul class="guide-list">
-          <li><strong>The Half Game rule.</strong> Every player gets at least half of
-            every match. It is the one clubs get wrong most often. Match day works it
-            out for you on the touchline.</li>
+          <li><strong>The Half Game Rule.</strong> Every player in the squad gets at
+            least half of the playing time. Across a festival that is half of the
+            morning rather than half of each game. It is the one clubs get wrong most
+            often.</li>
           <li><strong>Rolling substitutions, unlimited.</strong> Only when the ball is
             dead, always with the referee's permission. A player who comes off can go
             back on.</li>

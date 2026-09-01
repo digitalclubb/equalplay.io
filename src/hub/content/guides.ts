@@ -799,8 +799,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 text:
-                  "The Half Game rule applies, so every player gets at least half of every " +
-                  "match",
+                  "The Half Game Rule applies, so every player gets at least half of the " +
+                  "playing time. Across a festival that means half of the morning rather " +
+                  "than half of each game",
               },
             ],
           },
@@ -1150,8 +1151,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 text:
-                  "The Half Game rule still applies, so every player gets at least half of " +
-                  "every match",
+                  "The Half Game Rule applies, so every player gets at least half of the " +
+                  "playing time. Across a festival that means half of the morning rather " +
+                  "than half of each game",
               },
             ],
           },
@@ -1469,8 +1471,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { text: "Rolling subs, unlimited, whenever the ball is dead" },
               {
                 text:
-                  "The Half Game rule applies, so every player gets at least half of every " +
-                  "match",
+                  "The Half Game Rule applies, so every player gets at least half of the " +
+                  "playing time. Across a festival that means half of the morning rather " +
+                  "than half of each game",
               },
             ],
           },
@@ -1756,8 +1759,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { text: "Rolling subs, unlimited, whenever the ball is dead" },
               {
                 text:
-                  "The Half Game rule applies, so every player gets at least half of every " +
-                  "match",
+                  "The Half Game Rule applies, so every player gets at least half of the " +
+                  "playing time. Across a festival that means half of the morning rather " +
+                  "than half of each game",
               },
             ],
           },

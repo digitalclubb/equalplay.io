@@ -8,6 +8,7 @@ import { esc } from "../lib/esc.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
+  HALF_GAME_RULE_URL,
   REGULATION_15_URL,
   RULES_OF_PLAY,
   rulesCheckedPhrase,
@@ -277,6 +278,28 @@ describe("every static page reaches the product", () => {
       for (const claim of claims) {
         expect(Number(claim.split(" ")[0]), `${path}: "${claim}"`).toBe(DRILLS.length);
       }
+    }
+  });
+
+  it("quotes one Half Game Rule link rather than two hand-typed ones", () => {
+    // Same discipline as RULES_OF_PLAY. The rule is the floor on playing time
+    // and the RFU's explainer is the source, so the URL lives in one constant
+    // and these pages are held to it.
+    for (const path of [
+      "public/rfu-regulation-15-playing-time/index.html",
+      "public/equal-playing-time-calculator/index.html",
+    ]) {
+      expect(page(path), path).toContain(HALF_GAME_RULE_URL);
+    }
+  });
+
+  it("dates the rules claims it makes by hand", () => {
+    // The guide and its static twin carry the date already, because they are
+    // generated from one source. These are typed out, which is exactly why they
+    // are the ones that go stale unnoticed.
+    for (const path of PAGES) {
+      if (!page(path).includes("not affiliated with the RFU")) continue;
+      expect(page(path), path).toContain(rulesCheckedPhrase());
     }
   });
 

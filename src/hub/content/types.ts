@@ -49,6 +49,17 @@ export const RULES_OF_PLAY: Record<AgeGroup, string> = {
 export const REGULATION_15_URL = RFU_BASE;
 
 /**
+ * The RFU's own explainer for the Half Game Rule.
+ *
+ * The floor on playing time, which unlike the daily maximum is the same at
+ * every age grade. Written out here for the same reason the appendices are: it
+ * is quoted on two static pages plus the planner, so one broken link is one
+ * edit. `landing-pages.test.ts` holds the pages to this value.
+ */
+export const HALF_GAME_RULE_URL =
+  "https://help.rfu.com/support/solutions/articles/103000094875-what-is-the-half-game-rule-";
+
+/**
  * When the age grade claims in here were last read against the RFU's own
  * appendices, plus the season they were read for.
  *
