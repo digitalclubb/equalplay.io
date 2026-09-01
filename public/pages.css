@@ -422,6 +422,14 @@ th {
   color: var(--muted);
 }
 
+/* Where the rugby in here came from, next to the call to action rather than
+   four screens down. It is the first thing somebody who knows Reg 15 looks
+   for, and the date is what says it has been read this season. */
+.home-provenance {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+}
+
 /* The hero card. A stand-in for a screenshot, so it carries no meaning of its
    own and is hidden from assistive tech at the markup. */
 
