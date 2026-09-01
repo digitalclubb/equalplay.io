@@ -297,8 +297,14 @@ describe("every static page reaches the product", () => {
     // The guide and its static twin carry the date already, because they are
     // generated from one source. These are typed out, which is exactly why they
     // are the ones that go stale unnoticed.
-    for (const path of PAGES) {
-      if (!page(path).includes("not affiliated with the RFU")) continue;
+    //
+    // Name the regulation, date the reading. Selecting these by the "not
+    // affiliated" disclaimer instead let two pages through: the calculator
+    // states the Half Game Rule in full and the substitution page states how
+    // the two limits are structured, and neither carries that line.
+    const named = PAGES.filter((path) => page(path).includes("Regulation 15"));
+    expect(named.length, "no page names the regulation").toBeGreaterThan(5);
+    for (const path of named) {
       expect(page(path), path).toContain(rulesCheckedPhrase());
     }
   });

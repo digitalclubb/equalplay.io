@@ -53,8 +53,9 @@ export const REGULATION_15_URL = RFU_BASE;
  *
  * The floor on playing time, which unlike the daily maximum is the same at
  * every age grade. Written out here for the same reason the appendices are: it
- * is quoted on two static pages plus the planner, so one broken link is one
- * edit. `landing-pages.test.ts` holds the pages to this value.
+ * is linked from the guide, from the static rules pages plus the match-day
+ * pages, so one broken link stays one edit. `landing-pages.test.ts` holds the
+ * hand-written pages to this value.
  */
 export const HALF_GAME_RULE_URL =
   "https://help.rfu.com/support/solutions/articles/103000094875-what-is-the-half-game-rule-";

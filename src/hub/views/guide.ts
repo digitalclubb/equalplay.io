@@ -3,6 +3,7 @@ import { ageRulesLink, rulesLink } from "../../lib/rulesLink.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
+  HALF_GAME_RULE_URL,
   REGULATION_15_URL,
   rulesCheckedPhrase,
   RULES_OF_PLAY,
@@ -188,8 +189,8 @@ function guideIndex(coachAge?: AgeGroup): string {
       <section class="guide-section">
         <h3>The same at every grade</h3>
         <ul class="guide-list">
-          <li><strong>The Half Game Rule.</strong> Every player in the squad gets at
-            least half of the playing time. Across a festival that is half of the
+          <li><strong>${rulesLink("The Half Game Rule", HALF_GAME_RULE_URL)}.</strong>
+            Every player in the squad gets at least half of the playing time. Across a festival that is half of the
             morning rather than half of each game. It is the one clubs get wrong most
             often.</li>
           <li><strong>Rolling substitutions, unlimited.</strong> Only when the ball is
