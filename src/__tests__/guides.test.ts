@@ -305,3 +305,29 @@ describe("the guide says when it was last read against the RFU", () => {
     }
   });
 });
+
+/**
+ * Two claims the site makes about every grade, held to every grade.
+ *
+ * The Half Game Rule was written into U9 through U12 and nowhere else, so a U7
+ * coach reading their own page never met the rule the index says covers them.
+ * Mixed rugby was in the product nowhere at all, which is most of the minis
+ * game missing from a guide about who plays what.
+ */
+describe("what holds at every grade is said at every grade", () => {
+  const wordsIn = (age: AgeGroup): string =>
+    JSON.stringify(GUIDES[age]).toLowerCase();
+
+  it("names the Half Game Rule on every grade's page", () => {
+    for (const age of AGE_GROUPS) {
+      expect(wordsIn(age), age).toContain("half game rule");
+    }
+  });
+
+  it("says where mixed rugby stops, on the grades it changes for", () => {
+    // U11 because it is the last mixed grade, U12 because that is the change.
+    // The index carries it for the rest, which is where a coach picks a grade.
+    expect(wordsIn("u11")).toContain("boys and girls");
+    expect(wordsIn("u12")).toContain("girls");
+  });
+});

@@ -360,6 +360,12 @@ ${table(ARRIVALS)}
           back until U15, so nothing between here and then needs a throw practised at
           training.
         </p>
+        <p>
+          Boys and girls play together all the way through U11. At U12 the game splits
+          into separate bands and the girls in your squad move into girls' rugby.
+          Training is a different matter: a non-contact session with nothing competitive
+          in it can be mixed at any age, once you have judged it safe.
+        </p>
 
         <h2>Pick a grade</h2>
         <ul>

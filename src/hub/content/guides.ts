@@ -276,6 +276,28 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
+        heading: "The same at every grade",
+        blocks: [
+          {
+            items: [
+              {
+                lead: "The Half Game Rule.",
+                text:
+                  "Every player in the squad gets at least half of the playing time. " +
+                  "Across a festival that means half of the morning rather than half of " +
+                  "each game. It is the one clubs get wrong most often",
+              },
+              {
+                lead: "Boys and girls play together.",
+                text:
+                  "Mixed rugby runs all the way through U11. The game splits into " +
+                  "separate bands at U12",
+              },
+            ],
+          },
+        ],
+      },
+      {
         heading: "What to get in before the season starts",
         blocks: [
           {
@@ -544,6 +566,28 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "Offside still only happens at the tag, on a line through the middle of the ball, " +
               "or a metre further back if you are the tagger.",
+          },
+        ],
+      },
+      {
+        heading: "The same at every grade",
+        blocks: [
+          {
+            items: [
+              {
+                lead: "The Half Game Rule.",
+                text:
+                  "Every player in the squad gets at least half of the playing time. " +
+                  "Across a festival that means half of the morning rather than half of " +
+                  "each game. It is the one clubs get wrong most often",
+              },
+              {
+                lead: "Boys and girls play together.",
+                text:
+                  "Mixed rugby runs all the way through U11. The game splits into " +
+                  "separate bands at U12",
+              },
+            ],
           },
         ],
       },
@@ -1471,6 +1515,11 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { text: "Rolling subs, unlimited, whenever the ball is dead" },
               {
                 text:
+                  "Boys and girls still play together. U11 is the last grade where they " +
+                  "do",
+              },
+              {
+                text:
                   "The Half Game Rule applies, so every player gets at least half of the " +
                   "playing time. Across a festival that means half of the morning rather " +
                   "than half of each game",
@@ -1770,6 +1819,25 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               "That last one is the one clubs get wrong most often. Match day works the " +
               "rotations out for you on the touchline, so nobody has to count it on the back of " +
               "a team sheet.",
+          },
+        ],
+      },
+      {
+        heading: "Where the girls in your squad go",
+        blocks: [
+          {
+            text:
+              "U11 was the last grade where boys and girls play together. From U12 they " +
+              "move into separate bands, so girls who were in your squad last season are " +
+              "in girls' rugby this one. It is the only change at this grade that is " +
+              "about who is in front of you rather than about what they may do, which is " +
+              "why it catches clubs out in September rather than in June.",
+          },
+          {
+            text:
+              "Training is a different matter. Non-contact, non-competitive sessions can " +
+              "still be mixed at any age, as long as you have judged the session safe. " +
+              "The Age Grade Codes of Practice set out what that judgement should cover.",
           },
         ],
       },
