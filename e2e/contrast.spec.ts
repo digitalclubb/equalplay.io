@@ -253,7 +253,14 @@ for (const [name, reach] of [
     await page.locator("#players-per-team").fill("2");
     await page.getByRole("button", { name: "Sort my team" }).click();
     await page.getByRole("button", { name: "Start game" }).first().click();
-    await expect(page.locator(".team-size-btn").first()).toBeVisible();
+    // The pitch and kick-off boxes are behind "Add details" and render hidden
+    // until it is tapped. Listed but never opened, they measure zero wide and
+    // are dropped, which is coverage this file has claimed falsely before.
+    await page.locator(".match-details-text").first().click();
+    await expect(page.locator(".match-detail-input").first()).toBeVisible();
+    // Still unmeasured: end game, which only renders on the last game of the
+    // day, and the action sheet's buttons, which need a different journey.
+    // Both carry the control edge token. Neither is checked by anything.
   }],
 ] as const) {
 test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page }) => {
@@ -264,6 +271,14 @@ test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page 
   const controls = await page.evaluate(() => {
     const rgb = (value: string): number[] =>
       (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
+    // A transparent fill is not a fill. `rgba(0, 0, 0, 0)` parses to black,
+    // which then "passes" against any light panel, so every control with no
+    // background of its own was being waved through on a colour it does not
+    // paint.
+    const opaque = (value: string): boolean => {
+      const parts = (value.match(/[\d.]+/g) ?? []).map(Number);
+      return parts.length < 4 || parts[3] > 0.9;
+    };
     const behind = (el: Element): number[] => {
       let node: Element | null = el.parentElement;
       while (node) {
@@ -278,21 +293,40 @@ test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page 
     // nothing to say so. A card is left out on purpose: it is identified by the
     // title inside it rather than by its outline, which is the exception the
     // success criterion makes.
-    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal, .setup-field input, .player-input, .btn-add-player, .action-btn, .team-tab, .team-size-btn, .match-detail-input, .btn-end-game, .btn-next-game, .btn-start-match")]
+    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal, .setup-field input, .player-input, .btn-add-player, .action-btn, .team-tab, .team-size-btn, .match-detail-input, .btn-next-game, .btn-start-match")]
       .filter((el) => el.getBoundingClientRect().width > 0)
       .map((el) => ({
         label: (el.textContent ?? "").trim().slice(0, 24),
-        edge: rgb(getComputedStyle(el).borderColor),
+        // Every side that is actually drawn, not the shorthand. `borderColor`
+        // resolves to the top edge, so a control whose only border is one side
+        // was measured on a side it does not have: .match-detail-input has
+        // `border: none` plus a bottom rule, and its top resolved to
+        // currentColor, which always passes. The check could not fail.
+        fillCounts: opaque(getComputedStyle(el).backgroundColor),
+        edges: (["Top", "Right", "Bottom", "Left"] as const)
+          .filter((side) => parseFloat(getComputedStyle(el)[`border${side}Width`]) > 0)
+          .map((side) => rgb(getComputedStyle(el)[`border${side}Color`])),
         fill: rgb(getComputedStyle(el).backgroundColor),
         behind: behind(el),
       }));
   });
 
   expect(controls.length).toBeGreaterThan(0);
+  // Identifiable by any drawn edge or by its fill. Any one will do.
+  const best = (c: {
+    edges: number[][];
+    fill: number[];
+    fillCounts: boolean;
+    behind: number[];
+  }): number =>
+    Math.max(
+      c.fillCounts ? ratio(c.fill, c.behind) : 0,
+      ...c.edges.map((edge) => ratio(edge, c.behind)),
+      0,
+    );
   const invisible = controls
-    // Identifiable by its edge or by its fill. Either will do.
-    .filter((c) => Math.max(ratio(c.edge, c.behind), ratio(c.fill, c.behind)) < 3)
-    .map((c) => `"${c.label}" at ${ratio(c.edge, c.behind).toFixed(2)}:1`);
+    .filter((c) => best(c) < 3)
+    .map((c) => `"${c.label}" at ${best(c).toFixed(2)}:1`);
   expect(controls.length, "nothing matched, so nothing was checked").toBeGreaterThan(3);
   expect(invisible, "controls with no visible boundary").toEqual([]);
 });
