@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ARRIVALS, GUIDES, GUIDE_BLURB, type GuideBlock } from "../hub/content/guides.js";
+import { readFileSync } from "node:fs";
+import {
+  ARRIVALS,
+  GUIDES,
+  GUIDE_BLURB,
+  MIXED_RUGBY_NOTE,
+  type GuideBlock,
+} from "../hub/content/guides.js";
 import { renderGuide } from "../hub/views/guide.js";
 import {
   AGE_GROUPS,
@@ -324,10 +331,26 @@ describe("what holds at every grade is said at every grade", () => {
     }
   });
 
-  it("says where mixed rugby stops, on the grades it changes for", () => {
-    // U11 because it is the last mixed grade, U12 because that is the change.
-    // The index carries it for the rest, which is where a coach picks a grade.
-    expect(wordsIn("u11")).toContain("boys and girls");
-    expect(wordsIn("u12")).toContain("girls");
+  it("says where mixed rugby stops, on every grade's page", () => {
+    // Half the minis squads in the country are mixed, so a coach of one looks
+    // for this on their own grade's page rather than on the index. U9 and U10
+    // were the two that had nothing.
+    for (const age of AGE_GROUPS) {
+      expect(wordsIn(age), age).toContain("boys and girls");
+    }
+    // And U12 is where it actually changes, so that page has to say so rather
+    // than merely using the word girls somewhere.
+    expect(wordsIn("u12")).toContain("separate bands");
+  });
+
+  it("says it once, for both publications", () => {
+    // The hub guide and the static rules pages are meant to come from one
+    // source. A paragraph typed into both templates is how that stops being
+    // true, silently, the first time one of them is reworded.
+    const guide = readFileSync("src/hub/views/guide.ts", "utf8");
+    const seo = readFileSync("src/seo/rulesPage.ts", "utf8");
+    expect(guide).toContain("MIXED_RUGBY_NOTE");
+    expect(seo).toContain("MIXED_RUGBY_NOTE");
+    expect(MIXED_RUGBY_NOTE).toContain("U11");
   });
 });

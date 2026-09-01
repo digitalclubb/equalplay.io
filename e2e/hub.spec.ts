@@ -1095,6 +1095,25 @@ test("a drill page backs up the age grade it states", async ({ page }) => {
   );
 });
 
+test("a drill page links the rules for the grade being coached", async ({ page }) => {
+  // A warm-up legal from U7, opened by a U10 coach. This linked the drill's own
+  // floor, so it sent them to the U7 appendix: the right document for the "U7
+  // and up" line above it and the wrong one for the person reading. A drill
+  // page is never age gated, so the grade being browsed is the useful one.
+  await signedIn(page, "u10", "#/catalogue/warmup-tail-snatch");
+  const facts = page.locator(".drill-facts");
+  await expect(facts).toContainText("U7 and up");
+  await expect(facts.locator(".rules-link")).toContainText("RFU rules of play for U10");
+  await expect(facts.locator(".rules-link")).toHaveAttribute(
+    "href",
+    /appendix-4-u10-rules-of-play$/,
+  );
+  // Two separate claims, so two rows. The drill's grade under "Age grade" and
+  // the reader's under "Your grade". Printed as one, "U7 and up" sitting over a
+  // U10 appendix reads as though the drill's range were the reader's.
+  await expect(facts.locator("dt", { hasText: "Your grade" })).toBeVisible();
+});
+
 test("the running order carries the rules link for the pitch", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();

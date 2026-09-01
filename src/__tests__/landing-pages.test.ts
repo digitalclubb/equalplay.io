@@ -309,6 +309,21 @@ describe("every static page reaches the product", () => {
     }
   });
 
+  it("has no second copy of the date left behind at the old one", () => {
+    // The homepage says it twice, once above the fold and once in the
+    // attribution. `toContain` above is satisfied by either, so bumping
+    // RULES_CHECKED and half the copy would leave the first thing a reader sees
+    // still saying last season, with every test green. Every occurrence has to
+    // be the current one.
+    const stated = /Read against the RFU's [^.]*\./g;
+    for (const path of PAGES) {
+      const found = page(path).replace(/\s+/g, " ").match(stated) ?? [];
+      for (const claim of found) {
+        expect(claim, `${path} states an out of date check`).toBe(`${rulesCheckedPhrase()}.`);
+      }
+    }
+  });
+
   it("is in the sitemap, exactly once", () => {
     const sitemap = page("public/sitemap.xml");
     const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);

@@ -86,6 +86,40 @@ export const GUIDE_BLURB: Record<AgeGroup, string> = {
   u12: "Twelve a side, a five player scrum, no cap left on the ruck.",
 };
 
+/**
+ * The Half Game Rule, written once.
+ *
+ * It holds at every grade, so every grade's page says it. U7 and U8 said
+ * nothing, which left a coach reading their own page never meeting the rule the
+ * index says covers them. `guides.test.ts` holds all six to it.
+ */
+const HALF_GAME_ITEM = {
+  lead: "The Half Game Rule.",
+  text:
+    "Every player in the squad gets at least half of the playing time. Across a " +
+    "festival that means half of the morning rather than half of each game. It is " +
+    "the one clubs get wrong most often",
+};
+
+/** Mixed rugby, which changes at U12 rather than holding everywhere. */
+const MIXED_ITEM = {
+  lead: "Boys and girls play together.",
+  text: "Mixed rugby runs all the way through U11. The game splits into separate bands at U12",
+};
+
+/**
+ * Where mixed rugby stops, for the index of both publications.
+ *
+ * Written here rather than twice in the two templates that render it, because
+ * the hub guide and the static rules pages are meant to come from one source
+ * and a paragraph typed into both is the way that stops being true.
+ */
+export const MIXED_RUGBY_NOTE =
+  "Boys and girls play together all the way through U11. At U12 the game splits into " +
+  "separate bands and the girls in your squad move into girls' rugby. Training is a " +
+  "different matter: a non-contact session with nothing competitive in it can be mixed " +
+  "at any age, once you have judged it safe.";
+
 export const GUIDES: Record<AgeGroup, Guide> = {
   u7: {
     ageGroup: "u7",
@@ -276,26 +310,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
-        heading: "The same at every grade",
-        blocks: [
-          {
-            items: [
-              {
-                lead: "The Half Game Rule.",
-                text:
-                  "Every player in the squad gets at least half of the playing time. " +
-                  "Across a festival that means half of the morning rather than half of " +
-                  "each game. It is the one clubs get wrong most often",
-              },
-              {
-                lead: "Boys and girls play together.",
-                text:
-                  "Mixed rugby runs all the way through U11. The game splits into " +
-                  "separate bands at U12",
-              },
-            ],
-          },
-        ],
+        heading: "Two things that reach past this grade",
+        blocks: [{ items: [HALF_GAME_ITEM, MIXED_ITEM] }],
       },
       {
         heading: "What to get in before the season starts",
@@ -570,26 +586,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
-        heading: "The same at every grade",
-        blocks: [
-          {
-            items: [
-              {
-                lead: "The Half Game Rule.",
-                text:
-                  "Every player in the squad gets at least half of the playing time. " +
-                  "Across a festival that means half of the morning rather than half of " +
-                  "each game. It is the one clubs get wrong most often",
-              },
-              {
-                lead: "Boys and girls play together.",
-                text:
-                  "Mixed rugby runs all the way through U11. The game splits into " +
-                  "separate bands at U12",
-              },
-            ],
-          },
-        ],
+        heading: "Two things that reach past this grade",
+        blocks: [{ items: [HALF_GAME_ITEM, MIXED_ITEM] }],
       },
       {
         heading: "What to get in before the season starts",
@@ -840,6 +838,11 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 text: "Rolling subs, unlimited, whenever the ball is dead and the referee says so",
+              },
+              {
+                text:
+                  "Boys and girls play together. That holds until U12, when the game " +
+                  "splits into separate bands",
               },
               {
                 text:
@@ -1192,6 +1195,11 @@ export const GUIDES: Record<AgeGroup, Guide> = {
                 text:
                   "Rolling subs, as many as you like, whenever the ball is dead and the referee " +
                   "says so",
+              },
+              {
+                text:
+                  "Boys and girls play together. That holds until U12, when the game " +
+                  "splits into separate bands",
               },
               {
                 text:

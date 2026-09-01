@@ -594,6 +594,17 @@ function renderDetail(
     ? `${AGE_GROUP_LABELS[drill.minAge]} to ${AGE_GROUP_LABELS[drill.maxAge]}`
     : `${AGE_GROUP_LABELS[drill.minAge]} and up`;
 
+  // The grade the coach is reading as, not the drill's floor. This linked
+  // `drill.minAge`, so a U10 coach opening a warm-up was sent to the U7 rules of
+  // play: the right document for the sentence above it and the wrong one for the
+  // person reading.
+  //
+  // It gets a row of its own rather than sitting under the drill's own grade. A
+  // drill page is never age gated, so the two can disagree in both directions,
+  // and "U7 to U8" printed directly above "RFU rules of play for U12" reads as
+  // though the drill were legal at U12.
+  const rulesFor = filters?.ageGroup ?? drill.minAge;
+
   container.innerHTML = `
     <p class="hub-back"><a href="${back.href}">${esc(back.label)}</a></p>
     <article class="drill-detail">
@@ -624,12 +635,10 @@ function renderDetail(
       <aside class="drill-detail-aside hub-panel">
         <h3>At a glance</h3>
         <dl class="drill-facts">
+          <div><dt>Age grade</dt><dd>${esc(ages)}</dd></div>
           <div>
-            <dt>Age grade</dt>
-            <dd>
-              ${esc(ages)}<br />
-              ${ageRulesLink(AGE_GROUP_LABELS[drill.minAge], RULES_OF_PLAY[drill.minAge], "rules-link rules-link-sm")}
-            </dd>
+            <dt>Your grade</dt>
+            <dd>${ageRulesLink(AGE_GROUP_LABELS[rulesFor], RULES_OF_PLAY[rulesFor], "rules-link rules-link-sm")}</dd>
           </div>
           <div><dt>Time</dt><dd>${drill.minutes} min</dd></div>
           <div><dt>Players</dt><dd>${playersLabel(drill)}</dd></div>
