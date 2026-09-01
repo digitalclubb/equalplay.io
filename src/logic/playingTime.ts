@@ -97,13 +97,21 @@ export function checkHalfGame(
   const supply = plan.games.reduce((total, game) => total + game.onField.length, 0);
   const demand = present.reduce((total, stat) => total + stat.gamesAvailable / 2, 0);
 
+  // The headline figure comes off what the squad was actually available for
+  // rather than off the length of the plan. A squad who all left after game two
+  // of three needs half of two games rather than half of three. The named
+  // shortfalls under it are already measured that way.
+  const sameForEveryone =
+    present.length > 0 && present.every((stat) => stat.gamesAvailable === present[0].gamesAvailable);
+  const sharedGames = sameForEveryone ? present[0].gamesAvailable : plan.games.length;
+
   return {
     short,
     checked: present.length,
     everyoneUnreachable: supply < demand,
-    sameForEveryone: present.every((stat) => stat.gamesAvailable === present[0].gamesAvailable),
-    availableMinutes: minutes === null ? null : plan.games.length * minutes,
-    floorMinutes: minutes === null ? null : (plan.games.length * minutes) / 2,
+    sameForEveryone,
+    availableMinutes: minutes === null ? null : sharedGames * minutes,
+    floorMinutes: minutes === null ? null : (sharedGames * minutes) / 2,
   };
 }
 

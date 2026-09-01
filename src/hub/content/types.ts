@@ -49,15 +49,6 @@ export const RULES_OF_PLAY: Record<AgeGroup, string> = {
 export const REGULATION_15_URL = RFU_BASE;
 
 /**
- * The RFU's own explainer for the Half Game Rule.
- *
- * The floor on playing time, which unlike the daily maximum is the same at
- * every age grade. Written out here for the same reason the appendices are: it
- * is linked from the guide, from the static rules pages plus the match-day
- * pages, so one broken link stays one edit. `landing-pages.test.ts` holds the
- * hand-written pages to this value.
- */
-/**
  * The RFU's concussion education, from the drills where a head can get hit.
  *
  * Every contact drill here carries a safety note, which says what to watch for
@@ -71,6 +62,15 @@ export const HEADCASE_URL = "https://www.englandrugby.com/run/player-welfare/hea
 export const AGE_GRADE_RESOURCES_URL =
   "https://www.englandrugby.com/run/coaching/age-grade-rugby/resources";
 
+/**
+ * The RFU's own explainer for the Half Game Rule.
+ *
+ * The floor on playing time, which unlike the daily maximum is the same at
+ * every age grade. Written out here for the same reason the appendices are: it
+ * is linked from the guide, from the static rules pages plus the match-day
+ * pages, so one broken link stays one edit. `landing-pages.test.ts` holds the
+ * hand-written pages to this value.
+ */
 export const HALF_GAME_RULE_URL =
   "https://help.rfu.com/support/solutions/articles/103000094875-what-is-the-half-game-rule-";
 

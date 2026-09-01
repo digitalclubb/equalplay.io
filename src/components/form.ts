@@ -89,7 +89,9 @@ export function createForm(
       <span class="grade-sizes-label" id="grade-sizes-label">Sizes under Reg 15</span>
       ${MINIS_GRADES.map(
         (grade) =>
-          `<button type="button" class="grade-size" data-grade="${grade}" data-size="${PLAYERS_A_SIDE[grade]}"
+          `<button type="button" class="grade-size${PLAYERS_A_SIDE[grade] === startsOn.playersPerTeam ? " is-picked" : ""}"
+             data-grade="${grade}" data-size="${PLAYERS_A_SIDE[grade]}"
+             aria-pressed="${PLAYERS_A_SIDE[grade] === startsOn.playersPerTeam}"
              aria-label="${gradeLabel(grade)}: ${PLAYERS_A_SIDE[grade]} players per team">${gradeLabel(grade)}<span aria-hidden="true">${PLAYERS_A_SIDE[grade]}</span></button>`,
       ).join("")}
     </div>
@@ -107,6 +109,7 @@ export function createForm(
       if (perTeamInput) perTeamInput.value = button.dataset.size ?? perTeamInput.value;
       for (const other of gradeButtons) {
         other.classList.toggle("is-picked", other === button);
+        other.setAttribute("aria-pressed", String(other === button));
       }
       // The size is now right, so a standing "cannot exceed active players"
       // stays on screen contradicting the box it is under.
@@ -117,7 +120,11 @@ export function createForm(
   // Typing over the number un-picks the grade. Left alone, U12 stayed filled in
   // while the field held 5, claiming a size it no longer had.
   perTeamInput?.addEventListener("input", () => {
-    for (const button of gradeButtons) button.classList.remove("is-picked");
+    for (const button of gradeButtons) {
+      const picked = button.dataset.size === perTeamInput.value;
+      button.classList.toggle("is-picked", picked);
+      button.setAttribute("aria-pressed", String(picked));
+    }
   });
 
   const submitBtn = document.createElement("button");

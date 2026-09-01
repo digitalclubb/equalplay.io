@@ -59,6 +59,39 @@ function selectOnField(
   return sorted.slice(0, Math.min(count, sorted.length));
 }
 
+/**
+ * The lineup a finished game kicked off with, recovered by undoing its subs.
+ *
+ * `applyEvents` credits play time from the lineup before this game's subs and
+ * the one after. Anything rebuilding those figures from a finished plan has to
+ * start from the same pair, or it is counting something else: sets of who was
+ * subbed in and out give a player who came on and went off again half a game
+ * where the plan gives none. The mirror case goes the other way round.
+ *
+ * A sub the plan never made is left alone. `applyEvents` skips one whose player
+ * was not on the field or whose replacement was not on the bench, which happens
+ * whenever a coach records a sub and then marks somebody late. Undoing a skipped
+ * sub puts a player in the lineup twice and takes a game off somebody who
+ * played it.
+ */
+function kickOffLineup(
+  game: Game,
+  gameSubs: ReadonlyArray<{ playerOut: string; playerIn: string }>,
+): string[] {
+  const preSub = [...game.onField];
+  const inGame = new Set([...game.onField, ...game.bench]);
+
+  for (let i = gameSubs.length - 1; i >= 0; i--) {
+    const { playerIn, playerOut } = gameSubs[i];
+    const idx = preSub.indexOf(playerIn);
+    if (idx === -1) continue;
+    if (!inGame.has(playerOut) || preSub.includes(playerOut)) continue;
+    preSub[idx] = playerOut;
+  }
+
+  return preSub;
+}
+
 function computePlayCredits(
   preSubOnField: string[],
   postSubOnField: string[],
@@ -431,25 +464,17 @@ function buildTrackers(
       trackers.set(id, t);
     }
 
-    // Credit play time using resolved subs
-    const gameSubs = resolved.subs.get(game.gameNumber);
-    const subbedIn = new Set<string>();
-    const subbedOut = new Set<string>();
-    if (gameSubs) {
-      for (const sub of gameSubs) {
-        subbedIn.add(sub.playerIn);
-        subbedOut.add(sub.playerOut);
-      }
-    }
-
-    for (const id of game.onField) {
-      const t = trackers.get(id)!;
-      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
-      t.lastPlayedGame = game.gameNumber;
-    }
-    for (const id of subbedOut) {
-      const t = trackers.get(id)!;
-      t.playTimeUnits += SUB_APPEARANCE;
+    // The same credit the plan and the summary use. This counted sub events
+    // instead, so the live suggestions were balancing against numbers the coach
+    // was never shown.
+    const credits = computePlayCredits(
+      kickOffLineup(game, resolved.subs.get(game.gameNumber) ?? []),
+      game.onField,
+    );
+    for (const [id, credit] of credits) {
+      const t = trackers.get(id);
+      if (!t || credit <= 0) continue;
+      t.playTimeUnits += credit;
       t.lastPlayedGame = game.gameNumber;
     }
   }
@@ -792,12 +817,7 @@ export function getPlayerStats(
     // So undo this game's subs in reverse to recover the lineup it kicked off
     // with, then credit from the same pair of lineups `applyEvents` used.
     // Agreement is structural now rather than two rules kept in step by hand.
-    const gameSubs = subsByGame.get(game.gameNumber) ?? [];
-    const preSub = [...game.onField];
-    for (let i = gameSubs.length - 1; i >= 0; i--) {
-      const idx = preSub.indexOf(gameSubs[i].playerIn);
-      if (idx !== -1) preSub[idx] = gameSubs[i].playerOut;
-    }
+    const preSub = kickOffLineup(game, subsByGame.get(game.gameNumber) ?? []);
 
     for (const [id, credit] of computePlayCredits(preSub, game.onField)) {
       const tracker = trackers.get(id);

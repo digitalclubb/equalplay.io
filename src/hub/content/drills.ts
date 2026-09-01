@@ -88,11 +88,10 @@ export interface DrillFilter {
 }
 
 /**
+ * Age gated, filtered, then ordered with the session's work first.
+ *
  * Age is a hard filter rather than a preference. A drill the age grade is not
  * allowed to do never appears, whatever else the coach has typed.
- */
-/**
- * Age gated, filtered, then ordered with the session's work first.
  *
  * The catalogue is assembled warm-ups first, which put 21 warm-up cards ahead
  * of the first exercise at U10. A coach opening the list is looking for what

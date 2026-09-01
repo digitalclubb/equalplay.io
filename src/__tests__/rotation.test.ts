@@ -747,6 +747,32 @@ describe("play time credit is the same on both sides", () => {
     }
   });
 
+  it("ignores a sub the plan never made", () => {
+    // A coach records a sub, then marks somebody late. The rebuild no longer
+    // has the lineup that sub needed, so `applyEvents` skips it. Undoing it
+    // anyway put a player into the kick-off lineup twice and took a game off
+    // somebody who played the whole of it, which the Half Game Rule check then
+    // reported as a child being short.
+    const eight = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const squad: Player[] = eight.map((id) => ({ id, name: id }));
+    const plan = generateInitialPlan({ players: squad, playersPerTeam: 3, numberOfGames: 3 });
+    const events: RotationEvent[] = [
+      { type: "sub", gameNumber: 1, playerOut: "a", playerIn: "d" },
+      { type: "late", playerId: "b" },
+    ];
+    const applied = applyEvents(plan, events, eight, 3, 1);
+    const stats = getPlayerStats(applied, eight, events);
+
+    const credited = stats.reduce((total, stat) => total + stat.playTimeUnits, 0);
+    const seats = applied.games.reduce((total, game) => total + game.onField.length, 0);
+    expect(credited).toBe(seats);
+
+    for (const id of applied.games[0].onField) {
+      const stat = stats.find((s) => s.playerId === id)!;
+      expect(stat.playTimeUnits, `${id} played the whole of game one`).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   it("says how many games each player was around for", () => {
     // The denominator for anything per-player. A late arrival is measured
     // against the rugby that was available to them rather than the whole day.

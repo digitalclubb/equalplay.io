@@ -235,3 +235,24 @@ describe("who is furthest short", () => {
     expect(result.sameForEveryone).toBe(false);
   });
 });
+
+describe("the headline figure and the shortfalls agree", () => {
+  it("states the floor for what the squad was there for, not for the plan", () => {
+    // Everybody left after game two of three. The per-player floor was already
+    // one game, while the headline said half of three, so the notice and the
+    // names under it disagreed on screen.
+    const stats: PlayerStats[] = [
+      { playerId: "a", playTimeUnits: 1, gamesAvailable: 2, gamesBenched: 1, fairnessScore: 0 },
+      { playerId: "b", playTimeUnits: 1, gamesAvailable: 2, gamesBenched: 1, fairnessScore: 0 },
+    ];
+    const plan: RotationPlan = {
+      games: [1, 2, 3].map((gameNumber) => ({ gameNumber, onField: ["a", "b"], bench: [] })),
+    };
+    const result = checkHalfGame(stats, plan, 20);
+
+    expect(result.sameForEveryone).toBe(true);
+    expect(result.availableMinutes).toBe(40);
+    expect(result.floorMinutes).toBe(20);
+    expect(result.short).toEqual([]);
+  });
+});
