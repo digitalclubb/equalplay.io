@@ -1,4 +1,5 @@
 import type { ValidationErrors } from "../types/index.js";
+import { isMatchLength, MIN_MATCH_MINUTES, MAX_MATCH_MINUTES } from "./playingTime.js";
 
 const MIN_PLAYERS = 2;
 
@@ -7,6 +8,8 @@ export function validateInputs(
   activePlayerCount: number,
   playersPerTeam: number,
   numberOfGames: number,
+  /** Optional. Null means the coach has not said, which is allowed. */
+  minutesPerMatch: number | null = null,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -22,6 +25,12 @@ export function validateInputs(
 
   if (!Number.isFinite(numberOfGames) || numberOfGames < 1) {
     errors.numberOfGames = "Must be at least 1.";
+  }
+
+  // Blank is fine and stays fine. A number outside this is a typo rather than a
+  // match. It would go straight into a Half Game Rule verdict as well.
+  if (minutesPerMatch !== null && !isMatchLength(minutesPerMatch)) {
+    errors.minutesPerMatch = `Between ${MIN_MATCH_MINUTES} and ${MAX_MATCH_MINUTES}, or leave it blank.`;
   }
 
   return errors;

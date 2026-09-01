@@ -80,3 +80,29 @@ describe("hasErrors", () => {
     expect(hasErrors({ players: "error" })).toBe(true);
   });
 });
+
+describe("match length", () => {
+  /**
+   * Optional, and it has to stay optional. Somebody sorting a squad in a car
+   * park should not have to answer a question they do not know the answer to.
+   * What it must not accept is a typo, because the number goes straight into a
+   * Half Game Rule verdict.
+   */
+  const squad = 10;
+
+  it("is happy with nothing at all", () => {
+    expect(validateInputs(squad, 5, 4)).toEqual({});
+    expect(validateInputs(squad, 5, 4, null)).toEqual({});
+  });
+
+  it("takes a real match length", () => {
+    expect(validateInputs(squad, 5, 4, 20).minutesPerMatch).toBeUndefined();
+  });
+
+  it("refuses a typo", () => {
+    expect(validateInputs(squad, 5, 4, 0).minutesPerMatch).toBeTruthy();
+    expect(validateInputs(squad, 5, 4, -20).minutesPerMatch).toBeTruthy();
+    expect(validateInputs(squad, 5, 4, 900).minutesPerMatch).toBeTruthy();
+    expect(validateInputs(squad, 5, 4, NaN).minutesPerMatch).toBeTruthy();
+  });
+});

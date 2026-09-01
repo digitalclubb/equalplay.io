@@ -72,7 +72,7 @@ hub, the planner or anything either of them renders.
 
 **Always run `pnpm test` after touching:**
 
-- `src/logic/` (rotation.ts, validate.ts, storage.ts, sessionPlan.ts)
+- `src/logic/` (rotation.ts, validate.ts, storage.ts, sessionPlan.ts, playingTime.ts)
 - `src/types/index.ts`
 - `src/hub/content/` (types.ts, drills.ts, presets.ts, diagram.ts, catalogue/),
   **especially when adding a drill**
@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-606 unit and integration tests across 20 files, 140 Playwright tests. Most are ordinary.
-These ten are load bearing and a failure means the code is wrong, not the test:
+657 unit and integration tests across 22 files, 152 Playwright tests. Most are ordinary.
+These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -96,6 +96,7 @@ These ten are load bearing and a failure means the code is wrong, not the test:
 | `homepage-faq.test.ts` | The homepage's FAQ structured data says what the homepage says |
 | `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules page, linked from its drills page and from the index, in the sitemap, with no hand-written copy left in `public/` |
 | `install.test.ts` | The offline promise is only made once the service worker is serving the page. The install offer is spent once shown, never on a prompt the browser refused to display. iPhone never fires the event, so the way in stays written down |
+| `playingTime.test.ts` | The Half Game Rule check, which is the only verdict the product gives against an RFU regulation. A late arrival measured against the rugby they were there for rather than the whole day, an absent player left out of it, a squad too big for any rotation to clear the floor |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -103,8 +104,8 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 140 tests across four files: `matchday` (9), `home` (6), `hub` (103)
-and `contrast` (22). `contrast.spec.ts` is the load-bearing one of those. It measures
+`pnpm test:e2e` is 152 tests across four files: `matchday` (12), `home` (11), `hub` (103)
+and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
 has shipped three times: 1.5:1 on a button border, 1.12:1 on the homepage, then 1:1

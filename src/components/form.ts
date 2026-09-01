@@ -2,11 +2,20 @@ import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
 import { iconSquad, iconSettings, iconGenerate } from "./icons.js";
 
+/** What the settings panel starts on, so a reload comes back as it was left. */
+export interface FormSettings {
+  playersPerTeam: number;
+  numberOfGames: number;
+  minutesPerMatch: number | null;
+}
+
 export interface FormHandle {
   element: HTMLElement;
   getPlayers: () => Player[];
   getPlayersPerTeam: () => number;
   getNumberOfGames: () => number;
+  /** Null when the coach has not said, which is allowed. */
+  getMinutesPerMatch: () => number | null;
   /** Read all raw input values (including empty ones) */
   getRawNames: () => string[];
   showErrors: (errors: ValidationErrors) => void;
@@ -14,7 +23,11 @@ export interface FormHandle {
   setLoading: (loading: boolean) => void;
 }
 
-export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?: string[]): FormHandle {
+export function createForm(
+  onSubmit: (handle: FormHandle) => void,
+  initialNames?: string[],
+  settings?: FormSettings,
+): FormHandle {
   const section = document.createElement("section");
   section.className = "squad-panel";
 
@@ -38,19 +51,39 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
 
   const settingsPanel = document.createElement("div");
   settingsPanel.className = "settings-panel";
+  // The saved values, not the defaults. These were hard-coded, so a reload put
+  // 7 and 3 back in the boxes while the results below them were built from
+  // whatever the coach had actually typed.
+  const startsOn: FormSettings = settings ?? {
+    playersPerTeam: 7,
+    numberOfGames: 3,
+    minutesPerMatch: null,
+  };
+
   settingsPanel.innerHTML = `
     <div class="setup-config setup-config-2col">
       <div class="setup-field">
         <label for="players-per-team">Players per team</label>
-        <input id="players-per-team" type="number" min="1" value="7" />
+        <input id="players-per-team" type="number" min="1" value="${startsOn.playersPerTeam}" />
         <div class="field-error" id="error-playersPerTeam"></div>
       </div>
       <div class="setup-field">
         <label for="num-games">Number of matches</label>
-        <input id="num-games" type="number" min="1" value="3" />
+        <input id="num-games" type="number" min="1" value="${startsOn.numberOfGames}" />
         <div class="field-error" id="error-numberOfGames"></div>
       </div>
+      <div class="setup-field">
+        <label for="minutes-per-match">Minutes a match</label>
+        <input id="minutes-per-match" type="number" min="1" inputmode="numeric"
+               placeholder="Optional" aria-describedby="minutes-hint"
+               value="${startsOn.minutesPerMatch ?? ""}" />
+        <div class="field-error" id="error-minutesPerMatch"></div>
+      </div>
     </div>
+    <p class="setup-hint" id="minutes-hint">
+      Say how long a match runs and match day checks the Half Game Rule in
+      minutes rather than in games.
+    </p>
   `;
   section.appendChild(settingsPanel);
 
@@ -80,6 +113,13 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
       );
     },
 
+    getMinutesPerMatch() {
+      // Blank is the default and has to stay blank. `parseInt("")` is NaN,
+      // which would then fail validation on a field nobody filled in.
+      const raw = (settingsPanel.querySelector("#minutes-per-match") as HTMLInputElement).value;
+      return raw.trim() === "" ? null : Number(raw);
+    },
+
     showErrors(errors: ValidationErrors) {
       handle.clearErrors();
       for (const [field, message] of Object.entries(errors)) {
@@ -91,6 +131,9 @@ export function createForm(onSubmit: (handle: FormHandle) => void, initialNames?
       }
       if (errors.numberOfGames) {
         settingsPanel.querySelector("#num-games")?.classList.add("input-error");
+      }
+      if (errors.minutesPerMatch) {
+        settingsPanel.querySelector("#minutes-per-match")?.classList.add("input-error");
       }
     },
 

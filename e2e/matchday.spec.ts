@@ -516,3 +516,64 @@ test("teams belong to the planner, not to the navigation", async ({ page }) => {
   expect(fits.aboveInputs).toBe(true);
   expect(fits.pageScrollsSideways).toBe(false);
 });
+
+/**
+ * The Half Game Rule, which is the one RFU regulation the planner gives a
+ * verdict against. Regulation 15 is written in minutes, so the planner asks
+ * for them, but the check has to work without them too because the field is
+ * optional and blank is the common case.
+ */
+test("match day checks the Half Game Rule in minutes when it is told the match length", async ({
+  page,
+}) => {
+  await freshStart(page);
+  await addPlayers(page, ["Alice", "Bob", "Cara", "Dan", "Eve", "Finn"]);
+  await setPlayersPerTeam(page, 3);
+  await setNumberOfGames(page, 4);
+  await page.locator("#minutes-per-match").fill("20");
+  await page.getByRole("button", { name: "Sort my team" }).click();
+  await page.waitForSelector("[data-testid^='game-']");
+
+  const rule = page.locator(".fairness-rule");
+  await expect(rule).toContainText("Half Game Rule");
+  await expect(rule).toContainText("40 of the 80 minutes");
+  await expect(rule).toContainText("Nobody is short");
+  // Play time is stated in minutes now rather than in games.
+  await expect(page.locator(".fairness-count").first()).toContainText("min");
+});
+
+test("match day says when no rotation can clear the floor", async ({ page }) => {
+  // More than twice as many turned up as go on the pitch, so the even split is
+  // under half whatever the rotation does. That is a fixture problem and the
+  // planner should say so rather than quietly producing a plan that breaks it.
+  await freshStart(page);
+  await addPlayers(page, ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
+  await setPlayersPerTeam(page, 4);
+  await setNumberOfGames(page, 3);
+  await page.getByRole("button", { name: "Sort my team" }).click();
+  await page.waitForSelector("[data-testid^='game-']");
+
+  const rule = page.locator(".fairness-rule");
+  await expect(rule).toContainText("not everybody can reach it");
+  await expect(rule).toContainText("second team");
+  // Still names who actually came up short. Most of a squad usually clears the
+  // floor even when the sums say the whole squad cannot, so dropping the names
+  // would lose the only part a coach can act on.
+  await expect(rule).toContainText("short by");
+});
+
+test("the match length survives a reload", async ({ page }) => {
+  await freshStart(page);
+  await addPlayers(page, ["Alice", "Bob", "Cara", "Dan"]);
+  await setPlayersPerTeam(page, 2);
+  await page.locator("#minutes-per-match").fill("25");
+  await page.getByRole("button", { name: "Sort my team" }).click();
+  await page.waitForSelector("[data-testid^='game-']");
+
+  await page.reload();
+  await page.waitForSelector(".btn-generate");
+  // The settings boxes used to come back on their hard-coded defaults while the
+  // results below them were built from what the coach actually typed.
+  await expect(page.locator("#minutes-per-match")).toHaveValue("25");
+  await expect(page.locator("#players-per-team")).toHaveValue("2");
+});

@@ -14,6 +14,8 @@ export interface SavedTeam {
   gameLabels: Record<string, string>;
   matchMode?: "setup" | "live";
   teamSizeOverrides?: Record<string, number>;
+  /** How long a match runs. Null until a coach says, which is a real state. */
+  minutesPerMatch?: number | null;
 }
 
 export interface SavedData {

@@ -153,6 +153,7 @@ export function mountApp(root: HTMLElement): void {
       false,
       team.matchMode,
       team.teamSizeOverrides,
+      team.minutesPerMatch,
     );
   }
 
@@ -335,8 +336,14 @@ export function mountApp(root: HTMLElement): void {
     const players = handle.getPlayers();
     const playersPerTeam = handle.getPlayersPerTeam();
     const numberOfGames = handle.getNumberOfGames();
+    const minutesPerMatch = handle.getMinutesPerMatch();
 
-    const errors = validateInputs(players.length, playersPerTeam, numberOfGames);
+    const errors = validateInputs(
+      players.length,
+      playersPerTeam,
+      numberOfGames,
+      minutesPerMatch,
+    );
     if (hasErrors(errors)) {
       handle.showErrors(errors);
       return;
@@ -355,6 +362,7 @@ export function mountApp(root: HTMLElement): void {
       team.originalPlayerIds = players.map((p) => p.id);
       team.playersPerTeam = playersPerTeam;
       team.numberOfGames = numberOfGames;
+      team.minutesPerMatch = minutesPerMatch;
       team.playerMap = playerMap;
       team.events = [];
       team.currentGame = 1;
@@ -385,7 +393,11 @@ export function mountApp(root: HTMLElement): void {
   function rebuildForm(): void {
     formContainer.innerHTML = "";
     const team = store.getActive();
-    const form = createForm(generate, team.draftPlayerNames);
+    const form = createForm(generate, team.draftPlayerNames, {
+      playersPerTeam: team.playersPerTeam,
+      numberOfGames: team.numberOfGames,
+      minutesPerMatch: team.minutesPerMatch,
+    });
     currentFormHandle = form;
     formContainer.appendChild(form.element);
   }

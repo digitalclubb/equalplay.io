@@ -13,6 +13,12 @@ import {
   getPlayerStats,
 } from "../logic/rotation.js";
 import {
+  checkHalfGame,
+  isMatchLength,
+  minutesLabel,
+  type HalfGameCheck,
+} from "../logic/playingTime.js";
+import {
   iconSub,
   iconLate,
   iconInjured,
@@ -54,6 +60,7 @@ export function renderResults(
   readOnly = false,
   matchMode: "setup" | "live" = "live",
   teamSizeOverrides: Record<string, number> = {},
+  minutesPerMatch: number | null = null,
 ): void {
   container.innerHTML = "";
 
@@ -348,7 +355,7 @@ export function renderResults(
 
   // Fairness breakdown
   const stats = getPlayerStats(plan, allPlayerIds, events);
-  container.appendChild(renderFairnessSummary(stats, playerMap));
+  container.appendChild(renderFairnessSummary(stats, playerMap, plan, minutesPerMatch));
 
   if (!readOnly) {
     // Below the totals, which is the point at which match day is dealt with and
@@ -1149,9 +1156,73 @@ function renderNextStep(): HTMLElement {
 
 // ---- Fairness summary ----
 
+/**
+ * The Half Game Rule, said where a coach is already looking at play time.
+ *
+ * Reports who is short and never the other way round. The minutes behind it are
+ * worked out from the order of substitutions rather than from a clock, so
+ * "nobody is short" is what these numbers say rather than a certificate that a
+ * squad complied. Getting that wrong would be worse than not showing it.
+ */
+function halfGameNotice(check: HalfGameCheck, playerMap: PlayerMap): string {
+  if (check.checked === 0) return "";
+
+  // One figure only when everybody was there for the same rugby. Otherwise
+  // "half of the morning" is not what the child who arrived at ten needs. The
+  // named shortfalls underneath would contradict it as well.
+  const floor = check.sameForEveryone && check.floorMinutes !== null
+    ? `Everybody needs ${Math.round(check.floorMinutes)} of the ${Math.round(check.availableMinutes ?? 0)} minutes.`
+    : "Everybody needs half of the time they were here for.";
+
+  const named = check.short
+    .map((player) => {
+      const name = playerMap.get(player.playerId)?.name ?? player.playerId;
+      const gap = player.minutesNeeded !== null && player.minutesPlayed !== null
+        // Round up. A genuine shortfall must never print as short by nothing.
+        ? `${Math.max(1, Math.ceil(player.minutesNeeded - player.minutesPlayed))} min`
+        : formatUnits(player.needed - player.played);
+      return `${esc(name)}, short by ${gap}`;
+    })
+    .join(". ");
+
+  if (check.everyoneUnreachable) {
+    // More turned up than the pitch can give half a game each to. Most of the
+    // squad usually still clears it, so this says not everybody rather than
+    // nobody. It still names who actually came up short.
+    const who = named ? ` ${named}.` : "";
+    return `
+      <p class="fairness-rule fairness-rule-short">
+        <strong>Half Game Rule.</strong> ${floor} More have turned up than the pitch can
+        give that to, so not everybody can reach it whatever the rotation does. Play
+        more matches, put out a second team or name a smaller match day squad.${who}
+      </p>`;
+  }
+
+  if (check.short.length === 0) {
+    return `
+      <p class="fairness-rule">
+        <strong>Half Game Rule.</strong> ${floor} Nobody is short on these numbers.
+      </p>`;
+  }
+
+  return `
+    <p class="fairness-rule fairness-rule-short">
+      <strong>Half Game Rule.</strong> ${floor} ${named}.
+    </p>`;
+}
+
+/** Halves and singulars read better than "1 games". */
+function formatUnits(units: number): string {
+  if (units === 0.5) return "half a game";
+  if (units === 1) return "1 game";
+  return Number.isInteger(units) ? `${units} games` : `${units.toFixed(1)} games`;
+}
+
 function renderFairnessSummary(
   stats: PlayerStats[],
   playerMap: PlayerMap,
+  plan: RotationPlan,
+  minutesPerMatch: number | null,
 ): HTMLElement {
   const section = document.createElement("div");
   section.className = "fairness-summary";
@@ -1162,10 +1233,19 @@ function renderFairnessSummary(
   let headerText = "Playing time";
   if (isBalanced) headerText += " \u2014 balanced";
 
+  const check = checkHalfGame(stats, plan, minutesPerMatch);
+  // The same test `checkHalfGame` uses, so the column and the notice can never
+  // disagree about whether minutes are known.
+  const minutes = isMatchLength(minutesPerMatch) ? minutesPerMatch : null;
+  const legend = minutes === null
+    ? "Games played \u00b7 a sub on or off counts as &frac12;"
+    : "Minutes played \u00b7 a sub on or off counts as half a match \u00b7 estimated from the rotation";
+
   const titleClass = isBalanced ? "fairness-title fairness-title-balanced" : "fairness-title";
   section.innerHTML = `
     <h4 class="${titleClass}">${headerText}</h4>
-    <p class="fairness-legend">Games played \u00b7 a sub on or off counts as &frac12;</p>
+    <p class="fairness-legend">${legend}</p>
+    ${halfGameNotice(check, playerMap)}
   `;
 
   const list = document.createElement("div");
@@ -1183,9 +1263,11 @@ function renderFairnessSummary(
       ? Math.round((stat.playTimeUnits / stat.gamesAvailable) * 100)
       : 0;
 
-    const timeLabel = Number.isInteger(stat.playTimeUnits)
-      ? String(stat.playTimeUnits)
-      : stat.playTimeUnits.toFixed(1);
+    const timeLabel = minutes !== null
+      ? minutesLabel(stat.playTimeUnits, minutes)
+      : Number.isInteger(stat.playTimeUnits)
+        ? String(stat.playTimeUnits)
+        : stat.playTimeUnits.toFixed(1);
 
     const scoreLabel = stat.fairnessScore > 0
       ? `+${stat.fairnessScore}`
@@ -1198,7 +1280,7 @@ function renderFairnessSummary(
       <span class="fairness-bar-track">
         <span class="fairness-bar-fill" style="width: ${pct}%"></span>
       </span>
-      <span class="fairness-count">${timeLabel}</span>
+      <span class="fairness-count${minutes !== null ? " fairness-count-minutes" : ""}">${timeLabel}</span>
       <span class="fairness-score ${stat.fairnessScore < -0.5 ? "fairness-under" : stat.fairnessScore > 0.5 ? "fairness-over" : ""}">${scoreLabel}</span>
     `;
     list.appendChild(row);

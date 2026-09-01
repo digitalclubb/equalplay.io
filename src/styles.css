@@ -1226,6 +1226,31 @@ body {
   margin-bottom: var(--sp-sm);
 }
 
+/* The Half Game Rule, stated where play time is already being read. Text on a
+   panel rather than a colour block: this is the one thing on screen that can
+   say a regulation has been missed, so it should read rather than shout. */
+.fairness-rule {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-control-edge);
+  border-radius: var(--radius);
+  padding: var(--sp-sm);
+  margin-bottom: var(--sp-sm);
+}
+
+.fairness-rule-short {
+  border-color: var(--color-danger);
+}
+
+.setup-hint {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--sp-xs);
+  line-height: 1.4;
+}
+
 .fairness-list {
   display: flex;
   flex-direction: column;
@@ -1273,6 +1298,12 @@ body {
   text-align: right;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
+}
+
+/* Only when it is holding "112 min" rather than "3". Widening it always would
+   take 36px off the bar in the common case, where no match length was given. */
+.fairness-count-minutes {
+  width: 3.75rem;
 }
 
 .fairness-score {

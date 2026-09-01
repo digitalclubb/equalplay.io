@@ -55,4 +55,5 @@ export interface ValidationErrors {
   players?: string;
   playersPerTeam?: string;
   numberOfGames?: string;
+  minutesPerMatch?: string;
 }

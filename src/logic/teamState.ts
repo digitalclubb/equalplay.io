@@ -6,6 +6,7 @@ import type {
 } from "../types/index.js";
 import type { SavedData } from "./storage.js";
 import { generateInitialPlan } from "./rotation.js";
+import { isMatchLength } from "./playingTime.js";
 
 // ---- Per-team state ----
 
@@ -16,6 +17,16 @@ export interface TeamState {
   originalPlayerIds: string[];
   playersPerTeam: number;
   numberOfGames: number;
+  /**
+   * Minutes in one match, or null when the coach has not said.
+   *
+   * Null is a first-class state rather than a missing value. The planner has
+   * always worked without it and has to keep working without it, because
+   * somebody sorting a squad in a car park should not have to answer a question
+   * they do not know the answer to yet. Given, it turns the Half Game Rule
+   * check into the minutes Regulation 15 is actually written in.
+   */
+  minutesPerMatch: number | null;
   playerMap: Map<string, Player>;
   events: RotationEvent[];
   currentGame: number;
@@ -26,6 +37,12 @@ export interface TeamState {
   draftPlayerNames: string[];
 }
 
+/** A whole number at least one, or the default. Nothing else gets in. */
+function whole(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback;
+}
+
 function createEmptyTeam(id: string, name: string): TeamState {
   return {
     id,
@@ -34,6 +51,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     originalPlayerIds: [],
     playersPerTeam: 7,
     numberOfGames: 3,
+    minutesPerMatch: null,
     playerMap: new Map(),
     events: [],
     currentGame: 1,
@@ -103,6 +121,7 @@ export class TeamStore {
         players: [...t.playerMap.values()],
         playersPerTeam: t.playersPerTeam,
         numberOfGames: t.numberOfGames,
+        minutesPerMatch: t.minutesPerMatch,
         events: t.events,
         currentGame: t.currentGame,
         gameLabels: t.gameLabels,
@@ -125,12 +144,11 @@ export class TeamStore {
         this.nextTeamId = numPart + 1;
       }
 
+      const playersPerTeam = whole(st.playersPerTeam, 7);
+      const numberOfGames = whole(st.numberOfGames, 3);
+
       const plan = st.players.length > 0
-        ? generateInitialPlan({
-            players: st.players,
-            playersPerTeam: st.playersPerTeam,
-            numberOfGames: st.numberOfGames,
-          })
+        ? generateInitialPlan({ players: st.players, playersPerTeam, numberOfGames })
         : null;
 
       return {
@@ -138,8 +156,14 @@ export class TeamStore {
         name: st.name,
         initialPlan: plan,
         originalPlayerIds: st.players.map((p) => p.id),
-        playersPerTeam: st.playersPerTeam,
-        numberOfGames: st.numberOfGames,
+        // Numbers, whatever the store actually held. These go into the form's
+        // `value="..."` now, so a hand-edited or corrupted `equalplay_teams`
+        // would otherwise write attributes into the markup. Clubs share
+        // tablets. The hub validates everything crossing back in for the same
+        // reason.
+        playersPerTeam,
+        numberOfGames,
+        minutesPerMatch: isMatchLength(st.minutesPerMatch) ? st.minutesPerMatch : null,
         playerMap,
         events: st.events ?? [],
         currentGame: st.currentGame ?? 1,

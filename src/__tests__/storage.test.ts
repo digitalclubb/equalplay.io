@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { saveTeams, loadTeams, clearAllTeams } from "../logic/storage.js";
 import type { SavedData, SavedTeam } from "../logic/storage.js";
+import { TeamStore } from "../logic/teamState.js";
 
 function makeTeam(id: string, name: string): SavedTeam {
   return {
@@ -142,5 +143,47 @@ describe("clearAllTeams", () => {
     clearAllTeams();
     expect(localStorage.getItem("equalplay_teams")).toBeNull();
     expect(localStorage.getItem("equalplay_state")).toBeNull();
+  });
+});
+
+describe("match length across a reload", () => {
+  /**
+   * Every existing browser has a saved squad with no match length in it, so
+   * this reads as optional and comes back as null rather than as undefined.
+   * Anything crossing back in gets validated, which is the rule the hub keeps
+   * and the planner did not.
+   */
+  it("comes back as it was saved", () => {
+    const store = new TeamStore();
+    store.getActive().minutesPerMatch = 20;
+    saveTeams(store.buildSavedData());
+
+    const restored = new TeamStore();
+    restored.restoreFrom(loadTeams()!);
+    expect(restored.getActive().minutesPerMatch).toBe(20);
+  });
+
+  it("restores a squad saved before the field existed", () => {
+    const store = new TeamStore();
+    const saved = store.buildSavedData();
+    for (const team of saved.teams) delete (team as { minutesPerMatch?: unknown }).minutesPerMatch;
+    saveTeams(saved);
+
+    const restored = new TeamStore();
+    restored.restoreFrom(loadTeams()!);
+    expect(restored.getActive().minutesPerMatch).toBeNull();
+  });
+
+  it("throws away a hand-edited value rather than showing NaN minutes", () => {
+    const store = new TeamStore();
+    const saved = store.buildSavedData();
+    for (const team of saved.teams) {
+      (team as { minutesPerMatch?: unknown }).minutesPerMatch = "45";
+    }
+    saveTeams(saved);
+
+    const restored = new TeamStore();
+    restored.restoreFrom(loadTeams()!);
+    expect(restored.getActive().minutesPerMatch).toBeNull();
   });
 });

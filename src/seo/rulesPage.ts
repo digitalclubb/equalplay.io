@@ -370,7 +370,8 @@ ${cards}
         <ul>
           <li><strong>${rulesLink("The Half Game Rule", HALF_GAME_RULE_URL)}.</strong> Every
             player in the squad gets at least half of the playing time. Across a festival that is half of the morning rather
-            than half of each game. It is the one clubs get wrong most often.</li>
+            than half of each game. It is the one clubs get wrong most often, so
+            <a href="/planner">Match day</a> checks it for you.</li>
           <li><strong>Rolling substitutions, unlimited.</strong> Only when the ball is dead,
             always with the referee's permission. A player who comes off can go back on.</li>
           <li><strong>No sin bin anywhere in minis.</strong> The referee sorts it out with the
