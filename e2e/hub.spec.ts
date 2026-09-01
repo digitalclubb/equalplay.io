@@ -1150,8 +1150,13 @@ test("the account page links the grade you picked", async ({ page }) => {
 test("the first-run panel says the rules are the RFU's, not ours", async ({ page }) => {
   await seedSession(page, "u10", false);
   await page.goto("/hub/#/catalogue");
-  await expect(page.locator(".hub-welcome")).toContainText("None of this is official RFU guidance");
+  await expect(page.locator(".hub-welcome")).toContainText("Not official RFU guidance");
   await expect(page.locator(".hub-welcome .rules-link")).toContainText("their rules of play");
+
+  // Short enough that the drills are not below a screen of explanation. This
+  // ran to three paragraphs, which on a phone is the whole first screen.
+  const panel = await page.locator(".hub-welcome").boundingBox();
+  expect(panel!.height).toBeLessThan(300);
 });
 
 // ---- Signed out is a real state ----

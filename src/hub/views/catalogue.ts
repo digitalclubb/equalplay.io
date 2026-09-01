@@ -130,21 +130,19 @@ function welcome(age: string): string {
   } catch {
     return "";
   }
+  // Short on purpose. This used to run to three paragraphs, which on a phone is
+  // a whole screen of explanation and not one drill: the catalogue is the
+  // argument for the product, so it should not be what you scroll to get past.
   return `
     <section class="hub-panel hub-welcome">
       <h2>Welcome along</h2>
       <p class="hub-lede">
-        Everything here is set to ${esc(age)}, so every drill you see is one your
-        players are ready for. Tackling shows up at U9, rucks and scrums at U10.
-      </p>
-      <p class="hub-lede">
-        Head to <a href="#/plans">Sessions</a> when you want to put a training night
-        together. There are ready-made ones you can run as they come. It all keeps
-        working once you've opened it, so the car park at the club is fine.
+        Everything here is set to ${esc(age)}. <a href="#/plans">Sessions</a> has
+        ready-made training nights. It all keeps working at a pitch with no signal.
       </p>
       <p class="hub-fineprint">
-        None of this is official RFU guidance. Every age group links straight to
-        ${rulesLink("their rules of play", REGULATION_15_URL)} so you can see for yourself.
+        Not official RFU guidance. Every grade links out to
+        ${rulesLink("their rules of play", REGULATION_15_URL)}.
       </p>
       <button type="button" class="hub-btn" id="dismiss-welcome">Got it</button>
     </section>`;
