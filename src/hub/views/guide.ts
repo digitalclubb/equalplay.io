@@ -160,7 +160,7 @@ function guideIndex(coachAge?: AgeGroup): string {
     <article class="guide">
       <header class="guide-header">
         <span class="guide-eyebrow">RFU Regulation 15</span>
-        <h2 class="guide-title">What your grade is allowed to do</h2>
+        <h2 class="guide-title">What your grade plays</h2>
         <p class="guide-lede">
           Regulation 15 decides what a minis grade may do rather than a coach's
           judgement. One page per grade, saying what arrives, what goes and what

@@ -477,7 +477,7 @@ test("the planner points at the drills once match day is worked out", async ({ p
 
   // Under the playing time totals, which is where match day is dealt with
   const card = page.locator(".next-step");
-  await expect(card).toContainText("age group is allowed to do");
+  await expect(card).toContainText("for the age group you coach");
   await card.locator(".next-step-link").click();
   await expect(page).toHaveURL(/\/hub/);
 });

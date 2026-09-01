@@ -152,7 +152,7 @@ describe("the drills by age group page", () => {
     // have quietly gone stale.
     const html = page(CLUSTER).replace(/\s+/g, " ");
     for (const age of AGE_GROUPS) {
-      expect(html, `${age} card`).toContain(`${drillsFor(age).length} drills the grade is allowed`);
+      expect(html, `${age} card`).toContain(`${drillsFor(age).length} drills ready for the grade`);
     }
   });
 

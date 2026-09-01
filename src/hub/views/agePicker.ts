@@ -24,8 +24,8 @@ export function renderAgePicker(container: HTMLElement, onPicked: (age: AgeGroup
     <section class="hub-panel age-picker">
       <h2>Which age group do you coach?</h2>
       <p class="hub-lede">
-        You will only ever be shown drills your grade is allowed to do, so this is
-        the one thing we need before showing you anything. You can change it later.
+        Tell us and every drill you see is one your players are ready for. It is the
+        one thing we need before showing you anything. You can change it later.
       </p>
       <div class="age-picker-grid">
         ${AGE_GROUPS.map(

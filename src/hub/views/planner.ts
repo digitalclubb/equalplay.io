@@ -871,8 +871,8 @@ export function renderSharedPlan(
           tooOld
             ? `<p class="share-grade" role="alert">
                  Written for ${AGE_GROUP_LABELS[plan.ageGroup]}. You coach
-                 ${AGE_GROUP_LABELS[readerAge]}, so some of this is above what
-                 your players are allowed to do yet.
+                 ${AGE_GROUP_LABELS[readerAge]}, so some of this is beyond what
+                 your grade plays yet.
                </p>`
             : ""
         }
@@ -898,9 +898,8 @@ export function renderSharedPlan(
       <section class="hub-panel">
         <h3>Build your own</h3>
         <p>
-          Equal Play is free for volunteer coaches. Every drill is gated by what
-          your age grade is allowed to do, so you'll only ever see the ones your
-          players can practise.
+          Equal Play is free for volunteer coaches. Every drill is matched to the age
+          group you coach, so you'll only ever see the ones your players are ready for.
         </p>
         <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
       </section>`;

@@ -133,8 +133,8 @@ function welcome(age: string): string {
     <section class="hub-panel hub-welcome">
       <h2>Welcome along</h2>
       <p class="hub-lede">
-        Everything here is set to ${esc(age)}, so you'll only ever see drills your
-        players are allowed to do. Tackling shows up at U9, rucks and scrums at U10.
+        Everything here is set to ${esc(age)}, so every drill you see is one your
+        players are ready for. Tackling shows up at U9, rucks and scrums at U10.
       </p>
       <p class="hub-lede">
         Head to <a href="#/plans">Sessions</a> when you want to put a training night

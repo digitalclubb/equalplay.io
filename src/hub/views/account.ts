@@ -38,7 +38,7 @@ export function renderAccount(
           ? ""
           : `<p class="hub-lede">
                A few details first, so the drills you see are ones your players are
-               allowed to do.
+               ready for.
              </p>`
       }
       <form id="account-form" novalidate>

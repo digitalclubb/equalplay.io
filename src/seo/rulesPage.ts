@@ -273,14 +273,14 @@ function neighbours(age: AgeGroup): string {
 ${others
   .map(
     (other) =>
-      `          <li><a href="${rulesPath(other)}">What ${AGE_GROUP_LABELS[other]} rugby allows</a></li>`,
+      `          <li><a href="${rulesPath(other)}">What ${AGE_GROUP_LABELS[other]} rugby looks like</a></li>`,
   )
   .join("\n")}
         </ul>
         <p>
           <a href="${RULES_INDEX_PATH}">Every grade side by side</a> is the whole progression
           on one page. <a href="/rugby-drills-${age}">${AGE_GROUP_LABELS[age]} rugby drills</a>
-          are the ones an ${AGE_GROUP_LABELS[age]} grade is allowed to practise.
+          are the ones written for an ${AGE_GROUP_LABELS[age]} grade.
         </p>`;
 }
 
@@ -381,18 +381,18 @@ ${cards}
 
 ${sourceNote("Regulation 15 in full", REGULATION_15_URL)}
 
-        <h2>What an age grade may practise</h2>
+        <h2>What each grade trains</h2>
         <p>
           <a href="/rugby-drills-by-age-group">Rugby drills by age group</a> is the same
-          split applied to training. Every drill is gated by what the grade is allowed to
-          do, so a ruck drill cannot reach an U8 session.
+          split applied to training. Every drill is matched to the grade, so a ruck drill
+          cannot reach an U8 session.
         </p>`;
 
   return page({
     path: RULES_INDEX_PATH,
     title: "Rugby Rules by Age Group, U7 to U12",
     description:
-      "What each RFU minis age grade is allowed to do, U7 to U12. Tackling at U9, rucks and scrums at U10, no lineout at any of them. Written from Regulation 15.",
+      "What each RFU minis age grade plays, U7 to U12. Tackling at U9, rucks and scrums at U10, no lineout at any of them. Written from Regulation 15.",
     breadcrumb: [{ name: "Rugby rules by age group", path: RULES_INDEX_PATH }],
     faqs: [],
     body,

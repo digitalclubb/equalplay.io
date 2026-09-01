@@ -75,8 +75,8 @@ function signUpForm(): string {
   return `
     <h2>Create your account</h2>
     <p class="hub-lede">
-      It costs nothing. We ask for your club and age grade so you only ever see the
-      rugby drills your players are actually allowed to do.
+      It costs nothing. We ask for your club and age grade so the drills you see are
+      the ones your players are ready for.
     </p>
     <form id="auth-form" novalidate>
       ${field("name", "Your name", `<input id="name" name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="name-error" />`)}
@@ -153,8 +153,8 @@ function aside(): string {
       <h3>What you are signing up to</h3>
       <p><strong>Nothing about a child is stored.</strong> Not names, not notes, not
       photographs. Player names never leave the phone in your pocket.</p>
-      <p><strong>Your age grade decides what you see.</strong> A ruck drill cannot turn
-      up in a U8 session. There is no setting that lets one through.</p>
+      <p><strong>Everything is pitched at your age grade.</strong> A ruck drill cannot
+      turn up in a U8 session. There is no setting that lets one through.</p>
       <p><strong>It keeps working with no signal.</strong> What you type is saved on your
       phone straight away. It reaches your account later, whenever there is a signal.</p>
       <p class="hub-auth-aside-foot">Match day stays free without any of
