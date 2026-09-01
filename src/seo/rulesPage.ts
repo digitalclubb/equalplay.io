@@ -26,6 +26,7 @@ import {
   REGULATION_15_URL,
   RULES_OF_PLAY,
   type AgeGroup,
+  rulesCheckedPhrase,
 } from "../hub/content/types.js";
 import {
   ARRIVALS,
@@ -262,6 +263,7 @@ function sourceNote(label: string, href: string): string {
             trusting a copy on somebody else's website. Ours included. If a referee on
             Sunday says something different to this page, they are right.
           </p>
+          <p>${rulesCheckedPhrase()}.</p>
           <p>${rulesLink(label, href)}</p>
         </div>`;
 }

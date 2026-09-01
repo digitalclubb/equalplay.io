@@ -48,6 +48,23 @@ export const RULES_OF_PLAY: Record<AgeGroup, string> = {
 /** The index of every age group's rules, for when a coach wants the lot. */
 export const REGULATION_15_URL = RFU_BASE;
 
+/**
+ * When the age grade claims in here were last read against the RFU's own
+ * appendices, plus the season they were read for.
+ *
+ * Reg 15 is reissued every summer, so a claim with no date on it is one nobody
+ * can tell has gone stale, us included. Said out loud wherever the rules are
+ * stated at length, which today means the guide plus the static pages it is
+ * published as. Move both fields together, after actually re-reading the six
+ * appendices, or the date is worse than not having one. `guides.test.ts` fails
+ * once this is over a season old, so it cannot rot quietly.
+ */
+export const RULES_CHECKED = { season: "2026/27", on: "August 2026" } as const;
+
+/** One sentence, minus its full stop, for a page footer to end with. */
+export const rulesCheckedPhrase = (): string =>
+  `Read against the RFU's ${RULES_CHECKED.season} appendices in ${RULES_CHECKED.on}`;
+
 /** True when `age` is the same grade as `floor` or older. */
 export function ageAtLeast(age: AgeGroup, floor: AgeGroup): boolean {
   return AGE_GROUPS.indexOf(age) >= AGE_GROUPS.indexOf(floor);

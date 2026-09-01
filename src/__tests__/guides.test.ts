@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ARRIVALS, GUIDES, GUIDE_BLURB, type GuideBlock } from "../hub/content/guides.js";
 import { renderGuide } from "../hub/views/guide.js";
-import { AGE_GROUPS, AGE_GROUP_LABELS, RULES_OF_PLAY, type AgeGroup } from "../hub/content/types.js";
+import {
+  AGE_GROUPS,
+  AGE_GROUP_LABELS,
+  RULES_CHECKED,
+  RULES_OF_PLAY,
+  rulesCheckedPhrase,
+  type AgeGroup,
+} from "../hub/content/types.js";
 
 /**
  * The rules guides say what Regulation 15 allows. That is the same class of
@@ -246,5 +253,55 @@ describe("the guide index table names its own columns", () => {
       (cell) => cell.textContent?.trim() ?? "",
     );
     expect(headers).toEqual(ARRIVALS.head);
+  });
+});
+
+/**
+ * A rules claim with no date on it is one nobody can tell has gone stale.
+ *
+ * Reg 15 is reissued every summer, so the guide says which season it was read
+ * for. The date lives in one constant and is written into the guide, its static
+ * twin and the about page from there, so moving it is one edit rather than a
+ * search. These hold it to a shape that is actually a season and actually a
+ * date, because "2026" on its own would pass a `toContain` and tell a coach
+ * nothing.
+ */
+describe("the guide says when it was last read against the RFU", () => {
+  it("names a season that is two consecutive years", () => {
+    const season = RULES_CHECKED.season.match(/^(20\d\d)\/(\d\d)$/);
+    expect(season, `"${RULES_CHECKED.season}" is not a season`).not.toBeNull();
+    const [, start, end] = season as RegExpMatchArray;
+    expect(Number(end), "a season runs into the next year").toBe((Number(start) + 1) % 100);
+  });
+
+  it("has been checked inside the last season", () => {
+    // The one test here that can fail without anybody touching the code, which
+    // is the point of it. Reg 15 is reissued every summer, so a date sitting
+    // more than a season back means the six appendices want re-reading and the
+    // guide is making claims nobody has verified this year. Re-read them, then
+    // move RULES_CHECKED. Do not move the date on its own.
+    const checked = new Date(`1 ${RULES_CHECKED.on} UTC`);
+    expect(Number.isNaN(checked.getTime()), `"${RULES_CHECKED.on}" is not a month`).toBe(false);
+    const months = (Date.now() - checked.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+    expect(
+      months,
+      `The guide was last read against the RFU in ${RULES_CHECKED.on}. Re-read the six appendices, then move RULES_CHECKED.`,
+    ).toBeLessThan(13);
+  });
+
+  it("says so on the index", () => {
+    const container = document.createElement("div");
+    document.body.replaceChildren(container);
+    renderGuide(container, undefined);
+    expect(container.textContent).toContain(rulesCheckedPhrase());
+  });
+
+  it("says so on every grade", () => {
+    const container = document.createElement("div");
+    document.body.replaceChildren(container);
+    for (const age of AGE_GROUPS) {
+      renderGuide(container, age);
+      expect(container.textContent, age).toContain(rulesCheckedPhrase());
+    }
   });
 });

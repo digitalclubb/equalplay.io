@@ -4,6 +4,7 @@ import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
   REGULATION_15_URL,
+  rulesCheckedPhrase,
   RULES_OF_PLAY,
   isAgeGroup,
   type AgeGroup,
@@ -132,6 +133,7 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
           trusting a summary. Ours included. If a referee on Sunday says something
           different to this page, they are right.
         </p>
+        <p>${rulesCheckedPhrase()}.</p>
         <p>${ageRulesLink(label, RULES_OF_PLAY[guide.ageGroup])}</p>
       </footer>
 
@@ -209,6 +211,7 @@ function guideIndex(coachAge?: AgeGroup): string {
           pages put it in our own words, so they are a summary rather than the thing
           itself. It is reissued every summer as well.
         </p>
+        <p>${rulesCheckedPhrase()}.</p>
         <p>${rulesLink("Regulation 15 in full", REGULATION_15_URL)}</p>
       </footer>
     </article>`;

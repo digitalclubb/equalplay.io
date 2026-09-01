@@ -10,6 +10,7 @@ import {
   AGE_GROUP_LABELS,
   REGULATION_15_URL,
   RULES_OF_PLAY,
+  rulesCheckedPhrase,
   THEMES,
   THEME_LABELS,
   type AgeGroup,
@@ -472,6 +473,14 @@ describe("the generated rules pages", () => {
         expect(html, `${path}: ${entry.name}`).toContain(esc(entry.name));
         expect(html, `${path}: answer`).toContain(esc(entry.acceptedAnswer.text));
       }
+    }
+  });
+
+  it("dates itself against the season it was written from", () => {
+    // The same line the hub guide carries. A static page is the copy a search
+    // engine keeps, so an undated one outlives the season it was true for.
+    for (const { path, html } of pages()) {
+      expect(html, path).toContain(rulesCheckedPhrase());
     }
   });
 
