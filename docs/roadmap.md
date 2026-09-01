@@ -132,6 +132,30 @@ from the drills cluster.
 - Offline first throughout. Local writes are synchronous, pushes are debounced, deletes
   leave tombstones. The interface says when something has not reached the server
 
+**The Half Game Rule, checked.** Match settings takes an optional match length,
+so the planner can state playing time in the minutes Regulation 15 is written in
+and say who is under half of what was available to them. Measured per player,
+not per day, because a late arrival cannot reach half of a morning they missed.
+It reports who is short and never certifies compliance, since the minutes are
+worked out from the order of substitutions rather than from a clock. It also
+says when no rotation can get everybody there, which is a fixture problem: once
+more than twice as many turn up as go on the pitch, somebody finishes under the
+floor whatever you do.
+
+**Reg 15 in the places it was missing.** The rule is named on the pages a search
+engine reads rather than only inside the guide. Squad sizes per grade sit on the
+match settings panel, one tap each. Girls' and mixed rugby is in the guides,
+which had no mention of either. Contact drills link the RFU's Headcase. The
+guide footer links their Age Grade Resources. Every age grade claim carries the
+season it was read for. `guides.test.ts` fails the build once that date is over
+a season old.
+
+**A page that says who writes this.** `/about`, linked from the hub footer,
+where "About Equal Play" used to go to the marketing homepage. Plus "Tell us if
+this is wrong" on every guide page and every static rules page, because the
+people most able to correct one are referees and age grade coaches and there was
+nowhere for them to say so.
+
 ## Next, in order
 
 Shipping is done, so this is no longer guesswork about whether the thing works. It is
@@ -201,6 +225,15 @@ never things that would justify a price.
 
 ## Known issues
 
+- **The hub is one chunk and Supabase is in it.** 473 kB raw. Roughly half of
+  that is `@supabase/supabase-js`, imported statically, so a
+  signed-out first visit downloads the sign-in machinery before a drill renders.
+  Measured on a 4x throttled phone: the chrome paints at 116ms because both
+  entries write their nav and stylesheet into the document, but the drill list
+  arrives at 514ms on 4G and 4.5s on slow 3G. The service worker means only the
+  first visit pays. Making the client lazy means a fast path that decides signed
+  in or out without it, which is a change to the one part that must not break,
+  so it wants verifying against a real account rather than a stub.
 - **A shared link needs signal the first time.** It was never the reader's plan to hold
   on their device, so there is nothing to cache. The view says so rather than looking
   broken.
