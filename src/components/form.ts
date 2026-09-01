@@ -1,6 +1,7 @@
 import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
 import { iconSquad, iconSettings, iconGenerate } from "./icons.js";
+import { MINIS_GRADES, PLAYERS_A_SIDE, gradeLabel } from "../lib/ageGrades.js";
 
 /** What the settings panel starts on, so a reload comes back as it was left. */
 export interface FormSettings {
@@ -84,8 +85,28 @@ export function createForm(
       Say how long a match runs and match day checks the Half Game Rule in
       minutes rather than in games.
     </p>
+    <div class="grade-sizes">
+      <span class="grade-sizes-label">Sizes under Reg 15</span>
+      ${MINIS_GRADES.map(
+        (grade) =>
+          `<button type="button" class="grade-size" data-grade="${grade}" data-size="${PLAYERS_A_SIDE[grade]}">${gradeLabel(grade)}<span>${PLAYERS_A_SIDE[grade]}</span></button>`,
+      ).join("")}
+    </div>
   `;
   section.appendChild(settingsPanel);
+
+  // One tap rather than remembering that U11 is nine a side. It fills the box
+  // and leaves it editable, because a festival can agree something smaller and
+  // the planner is not the referee.
+  for (const button of settingsPanel.querySelectorAll<HTMLButtonElement>(".grade-size")) {
+    button.addEventListener("click", () => {
+      const input = settingsPanel.querySelector<HTMLInputElement>("#players-per-team");
+      if (input) input.value = button.dataset.size ?? input.value;
+      for (const other of settingsPanel.querySelectorAll(".grade-size")) {
+        other.classList.toggle("is-picked", other === button);
+      }
+    });
+  }
 
   const submitBtn = document.createElement("button");
   submitBtn.type = "button";
