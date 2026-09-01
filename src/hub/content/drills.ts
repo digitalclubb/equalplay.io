@@ -91,9 +91,24 @@ export interface DrillFilter {
  * Age is a hard filter rather than a preference. A drill the age grade is not
  * allowed to do never appears, whatever else the coach has typed.
  */
+/**
+ * Age gated, filtered, then ordered with the session's work first.
+ *
+ * The catalogue is assembled warm-ups first, which put 21 warm-up cards ahead
+ * of the first exercise at U10. A coach opening the list is looking for what
+ * the session is about. The warm-up is one tap away on its own tab, so the
+ * exercises lead. Within each kind the catalogue's own order is kept, because
+ * it groups by theme and that is worth more than anything alphabetical.
+ */
 export function filterDrills(drills: Drill[], filter: DrillFilter): Drill[] {
   const search = filter.search?.trim().toLowerCase();
 
+  return matching(drills, filter, search).sort((a, b) => rank(a) - rank(b));
+}
+
+const rank = (drill: Drill): number => (drill.kind === "exercise" ? 0 : 1);
+
+function matching(drills: Drill[], filter: DrillFilter, search: string | undefined): Drill[] {
   return drills.filter((drill) => {
     // Age first, always. A starred drill the age grade cannot do stays hidden.
     if (!isAvailableAt(drill, filter.ageGroup)) return false;

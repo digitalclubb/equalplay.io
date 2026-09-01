@@ -492,3 +492,29 @@ describe("drills that fit a small space", () => {
     }
   });
 });
+
+describe("the list leads with the session's work", () => {
+  /**
+   * The catalogue is assembled warm-ups first, so an unsorted list put 21
+   * warm-up cards ahead of the first exercise at U10. Ordering is a rendering
+   * concern everywhere else, but this one is worth pinning: it is the shape of
+   * the first screen of the tab every coach lands on.
+   */
+  it("puts exercises before warm-ups", () => {
+    const drills = filterDrills(DRILLS, { ageGroup: "u10" });
+    const firstWarmup = drills.findIndex((drill) => drill.kind === "warmup");
+    const lastExercise = drills.map((drill) => drill.kind).lastIndexOf("exercise");
+    expect(firstWarmup).toBeGreaterThan(-1);
+    expect(lastExercise).toBeLessThan(firstWarmup);
+  });
+
+  it("keeps the catalogue's own order within a kind", () => {
+    // It groups by theme, which is worth more than anything alphabetical.
+    const all = filterDrills(DRILLS, { ageGroup: "u12" });
+    const exercises = all.filter((drill) => drill.kind === "exercise").map((d) => d.id);
+    const asAuthored = DRILLS.filter(
+      (drill) => drill.kind === "exercise" && exercises.includes(drill.id),
+    ).map((d) => d.id);
+    expect(exercises).toEqual(asAuthored);
+  });
+});
