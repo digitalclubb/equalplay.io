@@ -238,6 +238,23 @@ for (const [name, reach] of [
     await page.locator(".preset-card").first().click();
     await expect(page.locator(".block-controls button").first()).toBeVisible();
   }],
+  // The planner is the other half of the product and its controls were never in
+  // here at all. Setup only reaches the three number inputs, so this plays a
+  // match: the stepper, the pitch and kick-off boxes and the end game button
+  // only exist once the whistle has gone, which is where a coach is standing
+  // when they need to find them.
+  ["match day", async (page: Page) => {
+    await page.goto("/planner/");
+    const names = page.locator(".player-input");
+    for (const [i, name] of ["Alice", "Bob", "Cara", "Dan"].entries()) {
+      if ((await names.count()) <= i) await page.getByText("+ Add player").click();
+      await names.nth(i).fill(name);
+    }
+    await page.locator("#players-per-team").fill("2");
+    await page.getByRole("button", { name: "Sort my team" }).click();
+    await page.getByRole("button", { name: "Start game" }).first().click();
+    await expect(page.locator(".team-size-btn").first()).toBeVisible();
+  }],
 ] as const) {
 test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page }) => {
   await page.emulateMedia({ colorScheme: scheme });
@@ -261,7 +278,7 @@ test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page 
     // nothing to say so. A card is left out on purpose: it is identified by the
     // title inside it rather than by its outline, which is the exception the
     // success criterion makes.
-    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal")]
+    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal, .setup-field input, .player-input, .btn-add-player, .action-btn, .team-tab, .team-size-btn, .match-detail-input, .btn-end-game, .btn-next-game, .btn-start-match")]
       .filter((el) => el.getBoundingClientRect().width > 0)
       .map((el) => ({
         label: (el.textContent ?? "").trim().slice(0, 24),

@@ -93,7 +93,7 @@ body {
   min-height: 36px;
   padding: var(--sp-2xs) var(--sp-md);
   background: var(--color-surface);
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-control-edge);
   border-radius: var(--radius);
   font-family: inherit;
   font-size: var(--text-sm);
@@ -121,7 +121,7 @@ body {
   font-weight: var(--weight-heavy);
   color: var(--color-muted);
   border-style: dashed;
-  border-color: var(--color-border);
+  border-color: var(--color-control-edge);
 }
 
 .team-tab-add:active {
@@ -189,7 +189,7 @@ body {
   min-width: 0;
   min-height: var(--touch-min);
   padding: var(--sp-xs) var(--sp-sm);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-control-edge);
   border-radius: var(--radius);
   font-size: var(--text-base);
   font-family: inherit;
@@ -222,7 +222,7 @@ body {
   justify-content: center;
   background: transparent;
   color: var(--color-muted);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-control-edge);
   border-radius: var(--radius);
   font-size: var(--text-lg);
   cursor: pointer;
@@ -241,7 +241,7 @@ body {
   width: 100%;
   background: transparent;
   color: var(--color-primary);
-  border: 2px dashed var(--color-border);
+  border: 2px dashed var(--color-control-edge);
   padding: var(--sp-xs) var(--sp-md);
   border-radius: var(--radius);
   font-size: var(--text-sm);
@@ -301,7 +301,11 @@ body {
   width: 100%;
   min-height: 44px;
   padding: var(--sp-xs);
-  border: 2px solid var(--color-border);
+  /* Not --color-border. That is a hairline you can see and an edge you cannot,
+     at 1.25:1 against the panel, which WCAG 1.4.11 wants at 3:1. The hub's
+     inputs were fixed for this and the planner's three were missed, because
+     contrast.spec.ts was only ever pointed at hub selectors. */
+  border: 2px solid var(--color-control-edge);
   border-radius: var(--radius);
   font-size: var(--text-base);
   font-family: inherit;
@@ -472,7 +476,7 @@ body {
   min-height: 44px;
   padding: var(--sp-2xs) var(--sp-2xs);
   border: none;
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: 2px solid var(--color-control-edge);
   border-radius: 0;
   font-size: var(--text-sm);
   font-weight: var(--weight-normal);
@@ -552,7 +556,7 @@ body {
   width: 44px;
   height: 44px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-control-edge);
   color: var(--color-text);
   font-size: var(--text-base);
   font-family: inherit;
@@ -1063,7 +1067,7 @@ body {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-fast) var(--ease-out);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-control-edge);
   background: var(--color-surface);
   color: var(--color-text);
 }
@@ -1110,7 +1114,7 @@ body {
   width: 100%;
   min-height: var(--touch-min);
   padding: var(--sp-xs) var(--sp-sm);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-control-edge);
   border-radius: var(--radius);
   font-family: inherit;
   font-size: var(--text-base);
@@ -1600,7 +1604,7 @@ body {
 .btn-end-game {
   background: var(--color-surface);
   color: var(--color-secondary);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-control-edge);
 }
 
 .btn-end-game:active {
