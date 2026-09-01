@@ -468,6 +468,13 @@ body {
   font-weight: var(--weight-normal);
 }
 
+/* A link that is not a source. Same weight as the rules links beside it, no
+   outbound arrow, because it goes to an inbox rather than to England Rugby. */
+.rules-link-plain {
+  color: var(--color-primary);
+  font-weight: var(--weight-semi);
+}
+
 .rules-link-sm {
   font-size: var(--text-xs);
 }

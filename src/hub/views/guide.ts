@@ -137,7 +137,11 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
           different to this page, they are right.
         </p>
         <p>${rulesCheckedPhrase()}.</p>
-        <p>${ageRulesLink(label, RULES_OF_PLAY[guide.ageGroup])}</p>
+        <p>
+          ${ageRulesLink(label, RULES_OF_PLAY[guide.ageGroup])}
+          &middot;
+          <a class="rules-link-plain" href="mailto:hello@equalplay.io?subject=Equal%20Play%3A%20something%20is%20wrong">Tell us if this is wrong</a>
+        </p>
       </footer>
 
       <nav class="guide-steps" aria-label="Other age grades">
@@ -221,6 +225,8 @@ function guideIndex(coachAge?: AgeGroup): string {
           ${rulesLink("Regulation 15 in full", REGULATION_15_URL)}
           &middot;
           ${rulesLink("Everything the RFU publishes for age grade coaches", AGE_GRADE_RESOURCES_URL)}
+          &middot;
+          <a class="rules-link-plain" href="mailto:hello@equalplay.io?subject=Equal%20Play%3A%20something%20is%20wrong">Tell us if this is wrong</a>
         </p>
       </footer>
     </article>`;

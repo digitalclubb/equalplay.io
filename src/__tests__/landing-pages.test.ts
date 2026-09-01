@@ -210,6 +210,7 @@ describe("every static page reaches the product", () => {
     "public/rugby-substitution-app/index.html",
     "public/equal-playing-time-calculator/index.html",
     "public/rfu-regulation-15-playing-time/index.html",
+    "public/about/index.html",
   ];
 
   it("points its header at the app rather than at one half of it", () => {
@@ -324,6 +325,19 @@ describe("every static page reaches the product", () => {
     }
   });
 
+  it("says who writes this and when the rules were read", () => {
+    // The page to send somebody who wants to know whether to trust the rugby.
+    // "About Equal Play" in the hub footer used to go to the marketing
+    // homepage, which answers none of it.
+    const about = page("public/about/index.html");
+    expect(about).toContain(rulesCheckedPhrase());
+    expect(about, "no way to report an error").toContain("mailto:hello@equalplay.io");
+    expect(about).toContain("not affiliated with the RFU");
+    expect(page("hub/index.html"), "the hub footer still points at the homepage").toContain(
+      'href="/about"',
+    );
+  });
+
   it("is in the sitemap, exactly once", () => {
     const sitemap = page("public/sitemap.xml");
     const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
@@ -338,6 +352,7 @@ describe("every static page reaches the product", () => {
       expect(urls, path).toContain(`https://equalplay.io${path}`);
     }
     expect(urls).toContain("https://equalplay.io/");
+    expect(urls).toContain("https://equalplay.io/about");
   });
 });
 

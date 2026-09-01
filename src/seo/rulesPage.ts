@@ -267,7 +267,11 @@ function sourceNote(label: string, href: string): string {
             Sunday says something different to this page, they are right.
           </p>
           <p>${rulesCheckedPhrase()}.</p>
-          <p>${rulesLink(label, href)}</p>
+          <p>
+            ${rulesLink(label, href)}
+            &middot;
+            <a href="mailto:hello@equalplay.io?subject=Equal%20Play%3A%20something%20is%20wrong">Tell us if this is wrong</a>
+          </p>
         </div>`;
 }
 
