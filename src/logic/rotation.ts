@@ -777,28 +777,31 @@ export function getPlayerStats(
       trackers.set(id, t);
     }
 
-    // Determine who was subbed in/out for this game
-    const gameSubs = subsByGame.get(game.gameNumber);
-    const subbedIn = new Set<string>();
-    const subbedOut = new Set<string>();
-    if (gameSubs) {
-      for (const sub of gameSubs) {
-        subbedIn.add(sub.playerIn);
-        subbedOut.add(sub.playerOut);
-      }
+    // Credit play time the way `applyEvents` does, using the same function.
+    //
+    // Rebuilding it here from "who is on the field now" plus "who was subbed"
+    // looks equivalent and is not. A player subbed on and then off again inside
+    // one game is in neither the lineup before the subs nor the one after, so
+    // `computePlayCredits` gives them nothing, while counting sub events gave
+    // them half a game. The mirror case, off and then back on again, went the
+    // other way. Either way the number a coach is shown and the number the
+    // rotation balances against were different for exactly the events a live
+    // festival produces. The game's credited total stopped matching the number
+    // of players actually on the pitch as well.
+    //
+    // So undo this game's subs in reverse to recover the lineup it kicked off
+    // with, then credit from the same pair of lineups `applyEvents` used.
+    // Agreement is structural now rather than two rules kept in step by hand.
+    const gameSubs = subsByGame.get(game.gameNumber) ?? [];
+    const preSub = [...game.onField];
+    for (let i = gameSubs.length - 1; i >= 0; i--) {
+      const idx = preSub.indexOf(gameSubs[i].playerIn);
+      if (idx !== -1) preSub[idx] = gameSubs[i].playerOut;
     }
 
-    // Credit on-field players
-    for (const id of game.onField) {
-      const t = trackers.get(id)!;
-      // Subbed on mid-game = 0.5, full game = 1.0
-      t.playTimeUnits += subbedIn.has(id) ? SUB_APPEARANCE : FULL_GAME;
-    }
-
-    // Credit subbed-off players (they're in bench now but played half)
-    for (const id of subbedOut) {
-      const t = trackers.get(id)!;
-      t.playTimeUnits += SUB_APPEARANCE;
+    for (const [id, credit] of computePlayCredits(preSub, game.onField)) {
+      const tracker = trackers.get(id);
+      if (tracker) tracker.playTimeUnits += credit;
     }
   }
 
@@ -812,6 +815,7 @@ export function getPlayerStats(
     return {
       playerId: id,
       playTimeUnits: Math.round(t.playTimeUnits * 10) / 10,
+      gamesAvailable: t.gamesAvailable,
       gamesBenched: Math.max(0, t.gamesAvailable - Math.ceil(t.playTimeUnits)),
       fairnessScore: Math.round(-debt * 100) / 100,
     };

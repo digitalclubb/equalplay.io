@@ -38,6 +38,8 @@ export interface PlayerStats {
   playerId: string;
   /** Fractional play time: full game = 1.0, sub appearance = 0.5 */
   playTimeUnits: number;
+  /** Games this player was around for. The denominator for anything per-player. */
+  gamesAvailable: number;
   gamesBenched: number;
   /** playTimeUnits - expectedPlayTime. Negative = underplayed, positive = overplayed */
   fairnessScore: number;

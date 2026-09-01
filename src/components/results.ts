@@ -1175,8 +1175,13 @@ function renderFairnessSummary(
 
   for (const stat of sorted) {
     const name = playerMap.get(stat.playerId)?.name ?? stat.playerId;
-    const totalGames = stat.playTimeUnits + stat.gamesBenched;
-    const pct = totalGames > 0 ? Math.round((stat.playTimeUnits / totalGames) * 100) : 0;
+    // Against the games this player was around for, not against played plus
+    // benched. `gamesBenched` rounds the played figure up before subtracting,
+    // so a player on one and a half of three games measured 60% while actually
+    // having had half. The bar and the fairness score now share a denominator.
+    const pct = stat.gamesAvailable > 0
+      ? Math.round((stat.playTimeUnits / stat.gamesAvailable) * 100)
+      : 0;
 
     const timeLabel = Number.isInteger(stat.playTimeUnits)
       ? String(stat.playTimeUnits)

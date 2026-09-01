@@ -667,3 +667,97 @@ describe("late arrival + injury: late player should be subbed on", () => {
     expect(aSubbedOn).toBe(true);
   });
 });
+
+/**
+ * The number a coach is shown and the number the rotation balances against have
+ * to be the same number.
+ *
+ * `applyEvents` credits play time from two lineups: the one the game kicked off
+ * with and the one it finished with. `getPlayerStats` rebuilds the same figures
+ * from the finished plan, and used to do it by counting sub events instead,
+ * which is not the same sum. A player subbed on and then off again inside one
+ * game appears in neither lineup, so the plan credited nothing while the
+ * summary credited half a game. Off and then back on went the other way. Both
+ * orderings are reachable: the app's own guide says a player who comes off can
+ * go back on.
+ *
+ * It matters more now the Half Game Rule check reads these stats. A verdict on
+ * a safeguarding regulation cannot come from a number the rest of the app
+ * disagrees with. Both orderings are tested, because fixing one and breaking
+ * the other is exactly what happened on the way here.
+ */
+describe("play time credit is the same on both sides", () => {
+  const ids = ["A", "B", "C", "D", "E"];
+  const players: Player[] = ids.map((id) => ({ id, name: id }));
+
+  /** One game, two on the pitch, whatever subs you hand it. */
+  function oneGame(subs: (starter: string) => RotationEvent[]) {
+    const plan = generateInitialPlan({ players, playersPerTeam: 2, numberOfGames: 1 });
+    const events = subs(plan.games[0].onField[0]);
+    return { events, applied: applyEvents(plan, events, ids, 2, 1) };
+  }
+
+  const credited = (applied: ReturnType<typeof applyEvents>, events: RotationEvent[]) =>
+    getPlayerStats(applied, ids, events);
+
+  it("credits nothing for a stint between two subs", () => {
+    // On for the starter, then straight back off for D. C was on the pitch, but
+    // the model has no way to size a stint that starts and ends mid-game.
+    const { applied, events } = oneGame((starter) => [
+      { type: "sub", gameNumber: 1, playerOut: starter, playerIn: "C" },
+      { type: "sub", gameNumber: 1, playerOut: "C", playerIn: "D" },
+    ]);
+    const c = credited(applied, events).find((s) => s.playerId === "C")!;
+    expect(applied.games[0].onField).not.toContain("C");
+    expect(c.playTimeUnits).toBe(0);
+  });
+
+  it("credits a whole game to a player who came off and went back on", () => {
+    const { applied, events } = oneGame((starter) => [
+      { type: "sub", gameNumber: 1, playerOut: starter, playerIn: "C" },
+      { type: "sub", gameNumber: 1, playerOut: "C", playerIn: starter },
+    ]);
+    const starter = applied.games[0].onField.find((id) => id !== "C")!;
+    const stats = credited(applied, events);
+    const back = stats.find((s) => s.playerId === applied.games[0].onField[0])!;
+    expect(applied.games[0].onField).toContain(back.playerId);
+    expect(back.playTimeUnits, `${back.playerId} started and finished the game`).toBe(1);
+    expect(starter).toBeTruthy();
+  });
+
+  it("keeps a game's credit equal to the number on the pitch, whichever way round", () => {
+    // Two on the pitch for one game is two games' worth of play time. Counting
+    // sub events made it 2.5 one way round and 1.5 the other.
+    for (const subs of [
+      (starter: string): RotationEvent[] => [
+        { type: "sub", gameNumber: 1, playerOut: starter, playerIn: "C" },
+        { type: "sub", gameNumber: 1, playerOut: "C", playerIn: "D" },
+      ],
+      (starter: string): RotationEvent[] => [
+        { type: "sub", gameNumber: 1, playerOut: starter, playerIn: "C" },
+        { type: "sub", gameNumber: 1, playerOut: "C", playerIn: starter },
+      ],
+      (starter: string): RotationEvent[] => [
+        { type: "sub", gameNumber: 1, playerOut: starter, playerIn: "C" },
+      ],
+    ]) {
+      const { applied, events } = oneGame(subs);
+      const total = credited(applied, events).reduce((sum, s) => sum + s.playTimeUnits, 0);
+      expect(total).toBe(2);
+    }
+  });
+
+  it("says how many games each player was around for", () => {
+    // The denominator for anything per-player. A late arrival is measured
+    // against the rugby that was available to them rather than the whole day.
+    const plan = generateInitialPlan({ players, playersPerTeam: 2, numberOfGames: 3 });
+    for (const stat of getPlayerStats(plan, ids)) {
+      expect(stat.gamesAvailable, stat.playerId).toBe(3);
+    }
+
+    const late: RotationEvent[] = [{ type: "late", playerId: "E" }];
+    const withLate = applyEvents(plan, late, ids, 2, 1);
+    const e = getPlayerStats(withLate, ids, late).find((s) => s.playerId === "E")!;
+    expect(e.gamesAvailable).toBeLessThan(3);
+  });
+});
