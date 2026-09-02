@@ -72,11 +72,28 @@ async function seedSession(page: Page, ageGroup: string, skipWelcome: boolean) {
 async function searchFor(page: Page, box: string, term: string) {
   await page.locator(box).fill(term);
   await page.waitForTimeout(240);
+  await settled(page);
+}
+
+/**
+ * Wait for a view transition to have finished, if one is running.
+ *
+ * A filter tap, a route change and the session picker all hand the DOM change
+ * to `startViewTransition`, which runs the callback a frame later. So the list
+ * a test reads straight after a tap is the list from before it. `lib/motion.ts`
+ * puts `data-vt` on `<html>` for the length of the transition, so waiting for
+ * that to go is waiting for the redraw plus its animation. When there is no
+ * transition to run the attribute is never set and this returns at once, which
+ * is the same answer.
+ */
+async function settled(page: Page) {
+  await expect(page.locator("html")).not.toHaveAttribute("data-vt", /./);
 }
 
 /** Tap a theme filter chip. Pass "" for Anything. */
 async function pickTheme(page: Page, theme: string) {
   await page.locator(`[data-theme="${theme}"]`).click();
+  await settled(page);
 }
 
 /** Sign in as a coach of the given age grade and land on `hash`. */
@@ -357,6 +374,7 @@ test("the small space filter narrows the list and survives a drill", async ({ pa
 
   const all = await count();
   await page.locator("#f-space").click();
+  await settled(page);
   await expect(page.locator("#f-space")).toHaveAttribute("aria-pressed", "true");
 
   const small = await count();
@@ -375,6 +393,7 @@ test("the small space filter narrows the list and survives a drill", async ({ pa
 test("the small space filter cannot get round the age gate", async ({ page }) => {
   await signedIn(page, "u8", "#/catalogue");
   await page.locator("#f-space").click();
+  await settled(page);
   await expect(page.locator("#f-space")).toHaveAttribute("aria-pressed", "true");
 
   // A tight square does not make a ruck legal for an U8 grade
@@ -456,6 +475,7 @@ test("the star filter never gets round the age gate", async ({ page }) => {
 
   // Drop the age group to U8 and it must not come back, starred or not
   await page.selectOption("#f-age", "u8");
+  await settled(page);
   await page.locator("#f-fav").click();
   await expect(page).toHaveURL(/#\/favourites$/);
   await expect(page.locator(".drill-card").filter({ hasText: "Two second ruck" })).toHaveCount(0);
@@ -543,6 +563,7 @@ test("start again gets out of an empty favourites list", async ({ page }) => {
 
   // A U8 squad cannot do the one drill they starred, so the list is empty
   await page.selectOption("#f-age", "u8");
+  await settled(page);
   await page.locator("#f-fav").click();
   await expect(page.locator(".hub-empty")).toBeVisible();
 
@@ -801,6 +822,11 @@ test("expanding a drill does not throw the page around", async ({ page }) => {
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
+  // The editor arrives on a view transition, so the page is still moving for a
+  // beat after the count lands. Measuring geometry before it has stopped reads
+  // a page that is on its way somewhere.
+  await settled(page);
+
   // Get down to the add panel, and scroll inside its list as well
   await page.locator("#add-search").scrollIntoViewIfNeeded();
   const list = page.locator(".add-list");
@@ -825,6 +851,8 @@ test("editing minutes does not throw the page around either", async ({ page }) =
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+
+  await settled(page);
 
   // Edit the last block, which needs scrolling to reach. Reading the position
   // after the input is in view, because Playwright scrolls to an element before
@@ -1078,6 +1106,7 @@ test("each age group links to its own appendix", async ({ page }) => {
 
   for (const [age, appendix] of [["u7", 1], ["u8", 2], ["u9", 3], ["u10", 4], ["u11", 5], ["u12", 6]] as const) {
     await page.selectOption("#f-age", age);
+    await settled(page);
     await expect(page.locator(".hub-empty .rules-link")).toHaveAttribute(
       "href",
       new RegExp(`appendix-${appendix}-${age}-rules-of-play$`),
@@ -1790,6 +1819,91 @@ test("what to do with a session answers a pointer and does not overlap", async (
     // Off the button, so the next one is measured from rest rather than hover.
     await page.mouse.move(0, 0);
   }
+});
+
+/**
+ * Count the transitions the page actually starts.
+ *
+ * Wrapped before any script runs, so it sees the calls `lib/motion.ts` makes
+ * rather than being told about them.
+ */
+async function countTransitions(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __vt: number };
+    w.__vt = 0;
+    const real = document.startViewTransition?.bind(document);
+    if (!real) return;
+    document.startViewTransition = ((update: () => void) => {
+      w.__vt += 1;
+      return real(update);
+    }) as typeof document.startViewTransition;
+  });
+}
+
+const started = (page: Page) => page.evaluate(() => (window as unknown as { __vt: number }).__vt);
+
+test("nothing shares a view transition name", async ({ page }) => {
+  // A duplicate is not a warning anybody sees. The browser drops the whole
+  // transition rather than choosing between them, so every slide in the app
+  // stops at once and nothing on screen says why. `.hub-seg.is-active` is the
+  // one to watch: it is in the catalogue's filters and in the session editor's
+  // add panel, which is why this walks both.
+  const planId = await runnableSession(page);
+  for (const hash of ["#/catalogue", "#/plans", `#/plan/${planId}`, `#/plan/${planId}/edit`, "#/account"]) {
+    await page.goto(`/hub/${hash}`);
+    await settled(page);
+    // With nothing switched on, one chip is lit and a class-wide name would
+    // look fine here. Small space and Favourites are their own switches and sit
+    // on top of a theme, so this turns on the ones each screen has first.
+    // Favourites in the catalogue is left out: it is a route rather than a
+    // switch and would walk off the page being counted.
+    for (const id of ["#f-space", "#add-space", "#add-fav"]) {
+      const chip = page.locator(id);
+      if (await chip.count()) {
+        await chip.click();
+        await settled(page);
+      }
+    }
+    const names = await page.evaluate(() =>
+      [...document.querySelectorAll("*")]
+        .map((el) => getComputedStyle(el).viewTransitionName)
+        .filter((name) => name && name !== "none"),
+    );
+    expect(names.length, `${hash} names nothing`).toBeGreaterThan(1);
+    expect([...new Set(names)].length, `${hash}: ${names.join(", ")}`).toBe(names.length);
+  }
+});
+
+test("a tap on a filter and a tap on a tab are both animated", async ({ page }) => {
+  await countTransitions(page);
+  await signedIn(page, "u10");
+  expect(await started(page), "the catalogue arrived on one").toBe(0);
+
+  await page.locator('[data-kind="exercise"]').click();
+  await settled(page);
+  expect(await started(page), "the segmented control did not slide").toBe(1);
+
+  await page.locator('.hub-tab[data-route="plans"]').click();
+  await settled(page);
+  expect(await started(page), "the nav pill did not slide").toBe(2);
+});
+
+test("a coach who has asked for less motion gets none of it", async ({ page }) => {
+  // The promise the reduced-motion sweep in `base.css` cannot keep on its own.
+  // That sweep matches elements and the ::view-transition tree is not any
+  // element's descendant, so `lib/motion.ts` is the only thing that can honour
+  // this. Which is why this checks the transition is never started rather than
+  // that it is quick. Emulated on the page rather than through `test.use`,
+  // because a context option set in a describe never reached matchMedia here.
+  await countTransitions(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await signedIn(page, "u10");
+
+  await page.locator('[data-kind="exercise"]').click();
+  await expect(page.locator('[data-kind="exercise"]')).toHaveAttribute("aria-pressed", "true");
+  await page.locator('.hub-tab[data-route="plans"]').click();
+  await expect(page.locator(".preset-card").first()).toBeVisible();
+  expect(await started(page)).toBe(0);
 });
 
 test("stretching a block gives it the minutes it was stretched to", async ({ page }) => {

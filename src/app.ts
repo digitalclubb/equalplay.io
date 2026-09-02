@@ -1,4 +1,5 @@
 import { navHtml } from "./lib/nav.js";
+import { transition } from "./lib/motion.js";
 import { createForm } from "./components/form.js";
 import type { FormHandle } from "./components/form.js";
 import { createLogo } from "./components/logo.js";
@@ -81,10 +82,17 @@ export function mountApp(root: HTMLElement): void {
       {
         onSelect(teamId) {
           saveDraft();
-          store.activeTeamId = teamId;
-          previousEvents = null;
-          rerenderAll();
-          persist();
+          // The one place on match day that is navigation rather than a change
+          // to what is being run. The pill slides to the team you picked and the
+          // squad under it crosses over. Nothing else here is animated. A
+          // substitution has to land the instant it is tapped, so a rotation
+          // table that slides is a rotation table a coach waits for.
+          transition("tabs", () => {
+            store.activeTeamId = teamId;
+            previousEvents = null;
+            rerenderAll();
+            persist();
+          });
         },
         onAdd() {
           saveDraft();

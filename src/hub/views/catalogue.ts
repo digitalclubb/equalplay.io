@@ -1,4 +1,5 @@
 import { esc } from "../../lib/esc.js";
+import { transition } from "../../lib/motion.js";
 import { ageRulesLink, rulesLink } from "../../lib/rulesLink.js";
 import { currentRoute, go } from "../router.js";
 import {
@@ -290,13 +291,13 @@ function renderList(container: HTMLElement): void {
 
   container.querySelector<HTMLSelectElement>("#f-age")?.addEventListener("change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (isAgeGroup(value)) update({ ageGroup: value });
+    if (isAgeGroup(value)) update({ ageGroup: value }, undefined, true);
   });
 
   for (const chip of container.querySelectorAll<HTMLButtonElement>("[data-theme]")) {
     chip.addEventListener("click", () => {
       const value = chip.dataset.theme ?? "";
-      update({ theme: value ? (value as Theme) : undefined });
+      update({ theme: value ? (value as Theme) : undefined }, undefined, true);
     });
   }
 
@@ -323,7 +324,7 @@ function renderList(container: HTMLElement): void {
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-kind]")) {
     button.addEventListener("click", () => {
       const value = button.dataset.kind ?? "";
-      update({ kind: value ? (value as DrillKind) : undefined });
+      update({ kind: value ? (value as DrillKind) : undefined }, undefined, true);
     });
   }
 
@@ -332,7 +333,7 @@ function renderList(container: HTMLElement): void {
   });
 
   container.querySelector("#f-space")?.addEventListener("click", () => {
-    update({ smallSpace: !active.smallSpace });
+    update({ smallSpace: !active.smallSpace }, undefined, true);
   });
 
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
@@ -361,13 +362,27 @@ function renderList(container: HTMLElement): void {
     else renderList(container);
   });
 
-  function update(patch: Partial<DrillFilter>, after?: () => void): void {
+  /**
+   * `animate` is for a tap and not for a keystroke.
+   *
+   * A chip, the segmented control and the age select each change the list once,
+   * deliberately. The pill sliding to where the tap landed is the answer to it.
+   * Typing changes the list every 140ms, so a cross-fade on each one reads as
+   * the app struggling rather than as anything moving.
+   */
+  function update(patch: Partial<DrillFilter>, after?: () => void, animate = false): void {
     // Off `filters` rather than the `active` captured when this closure was
     // made. A debounced search firing after a chip was tapped would otherwise
     // write the pre-chip filters back and the chip would deselect itself.
     filters = { ...(filters ?? active), ...patch };
-    renderList(container);
-    after?.();
+    // Both inside, because `startViewTransition` runs its callback a frame later
+    // and `after` puts the caret back in the search box.
+    const redraw = (): void => {
+      renderList(container);
+      after?.();
+    };
+    if (animate) transition("filter", redraw);
+    else redraw();
   }
 }
 
@@ -701,9 +716,11 @@ function renderDetail(
    */
   const reopen = (land?: string): void => {
     const held = container.contains(document.activeElement);
-    renderDetail(container, drill, back, false);
-    if (!held || !land) return;
-    container.querySelector<HTMLElement>(land)?.focus({ preventScroll: true });
+    transition("panel", () => {
+      renderDetail(container, drill, back, false);
+      if (!held || !land) return;
+      container.querySelector<HTMLElement>(land)?.focus({ preventScroll: true });
+    });
   };
 
   container.querySelector("#drill-add")?.addEventListener("click", () => {

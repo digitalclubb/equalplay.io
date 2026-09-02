@@ -27,6 +27,7 @@ import {
 } from "./auth.js";
 import { isConfigured } from "./supabase.js";
 import { currentRoute, go, onRoute, type Route } from "./router.js";
+import { transition } from "../lib/motion.js";
 import { navHtml } from "../lib/nav.js";
 import { wireScheme } from "../lib/theme.js";
 import { chosenAge } from "./ageChoice.js";
@@ -221,13 +222,22 @@ function start(view: HTMLElement, nav: HTMLElement): void {
   onRoute(() => {
     // Never leave an edit sitting in a debounce timer across a navigation
     if (userId) flushPlanPush(userId);
-    render();
-    // Every view renders into the same element, so a tap on a tab swapped the
-    // whole page with nothing said about it and the next Tab started again from
-    // the top. Moving focus to the view announces it and puts the tab order
-    // where the coach is. Only on an actual navigation: the async syncs redraw
-    // through their own views and must not pull focus out from under anybody.
-    view.focus({ preventScroll: true });
+    // Inside the transition, both of them. `startViewTransition` runs its
+    // callback a frame later, so anything left outside would happen before the
+    // page had changed. Only this path is animated: the auth and online-retry
+    // redraws further down are the app catching up with itself rather than a
+    // coach going somewhere. A screen that slides on its own is a screen that
+    // looks like it was tapped.
+    transition("route", () => {
+      render();
+      // Every view renders into the same element, so a tap on a tab swapped the
+      // whole page with nothing said about it and the next Tab started again
+      // from the top. Moving focus to the view announces it and puts the tab
+      // order where the coach is. Only on an actual navigation: the async syncs
+      // redraw through their own views and must not pull focus out from under
+      // anybody.
+      view.focus({ preventScroll: true });
+    });
   });
 
   // Backgrounding the tab is the last reliable moment to get an edit to the server

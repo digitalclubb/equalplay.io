@@ -405,6 +405,14 @@ body {
   color: var(--color-bg);
 }
 
+/* Only the theme row's chip is named. Small space and Favourites are their own
+   switches and can be on at the same time as a theme, so naming the class would
+   put three of one name in a snapshot and the browser would drop the whole
+   transition rather than pick one. */
+.chip-filter[data-theme].is-active {
+  view-transition-name: theme-pill;
+}
+
 .filter-row {
   display: flex;
   gap: var(--sp-xs);
@@ -450,10 +458,14 @@ body {
   cursor: pointer;
 }
 
+/* The pill slides between the three rather than blinking off one and on
+   another. It is named, so `lib/motion.ts` hands the browser the same pill in
+   two places and it moves it. Nothing here measures a segment. */
 .hub-seg.is-active {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: 0 1px 3px var(--color-shadow);
+  view-transition-name: seg-pill;
 }
 
 .hub-count {
@@ -1635,18 +1647,38 @@ body {
    The only confirmation a coach gets that a tap landed. This gets used
    one-handed in the rain. Transform and opacity only, so it stays composited. */
 
+/* 0.985 was a scale you had to be told about. Deep enough to feel and released
+   on a spring, a tap lands the way a tap on a phone does: down at once, back
+   with a little more than it was given. The chips and the segments go further
+   because they are small. The same scale reads as less the smaller the thing
+   wearing it. */
 .hub-btn:active:not(:disabled),
 .preset-card:active,
 .add-row:active,
-.drill-card:active,
+.drill-card:active {
+  transform: scale(0.97);
+}
+
 .hub-seg:active,
 .chip-filter:active {
-  transform: scale(0.985);
+  transform: scale(0.94);
 }
 
 .block-controls button:active:not(:disabled) {
   transform: scale(0.92);
   background: var(--color-border);
+}
+
+/* Down at once. The spring is for coming back up. */
+.hub-btn:active,
+.preset-card:active,
+.add-row:active,
+.drill-card:active,
+.hub-seg:active,
+.chip-filter:active,
+.block-controls button:active {
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
 }
 
 .preset-card:active,
@@ -1678,7 +1710,13 @@ body {
   opacity: 0.6;
 }
 
-/* A tap on a card should not leave a grey flash on iOS */
+/* A tap on a card should not leave a grey flash on iOS.
+
+   Transform is the odd one out in the list below. It springs on the way back,
+   because that is the half a coach watches. On the way down it is overridden to
+   a fast ease, so the button is already small by the time the finger has
+   landed. A spring on the press too would put a wobble under a thumb that is
+   still holding it down. */
 .drill-card,
 .preset-card,
 .add-row,
@@ -1689,7 +1727,7 @@ body {
 .block-controls button {
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform var(--duration-fast) var(--ease-out),
+    transform var(--duration-slow) var(--ease-spring),
     filter var(--duration-fast) var(--ease-out),
     opacity var(--duration-fast) var(--ease-out),
     background var(--duration-fast) var(--ease-out),

@@ -78,8 +78,19 @@
 
   /* Motion */
   --ease-out: cubic-bezier(0.25, 0, 0.3, 1);
+  /* A real spring, sampled. A damped oscillator at 0.72 damping overshoots by
+     3.8% about a third of the way through, then settles. That overshoot is what
+     a phone does and an ease-out does not: the thing arrives, leans a little
+     past where it was going, then comes back. Worn by the sliding pills and by
+     the release of a press, which are the two places a coach is watching
+     something move rather than reading it. */
+  --ease-spring: linear(
+    0, 0.106, 0.324, 0.553, 0.745, 0.884, 0.971, 1.017,
+    1.036, 1.038, 1.032, 1.023, 1.014, 1.008, 1.003, 1
+  );
   --duration-fast: 80ms;
   --duration-normal: 150ms;
+  --duration-slow: 280ms;
 
   /* Touch */
   --touch-min: 48px;
@@ -338,6 +349,110 @@ select:hover {
 
 html {
   -webkit-text-size-adjust: 100%;
+}
+
+/* No 300ms sit on every tap while the browser waits to find out whether a
+   second one is coming. Panning and pinch zoom are untouched; the only thing
+   given up is double tap to zoom, which nothing here needs. */
+body {
+  touch-action: manipulation;
+}
+
+/* ---- View transitions ----
+
+   `lib/motion.ts` hands the browser a DOM change and it animates between the
+   two states, which is the whole of the sliding pills and of a route arriving
+   rather than appearing. The kind of change is on `<html>` as `data-vt` while
+   it runs, so one mechanism gives a route, a filter and a panel three different
+   animations from here.
+
+   The chrome is named, which takes it out of the root snapshot and leaves it
+   sitting still while the view under it changes. The active tab is named as
+   well, so it is lifted out of the chrome and matched to whichever tab is
+   active afterwards: one white pill in two places, which the browser then
+   slides. Nothing measures a tab, which is what every other way of doing this
+   spends its time on.
+
+   A name has to be unique in a snapshot or the browser drops the whole
+   transition, so every one of these is on a state only one element can be in at
+   a time. `.hub-seg.is-active` appears in the catalogue's filters and in the
+   session editor's add panel, never both at once.
+
+   None of it runs under reduced motion. `motion.ts` skips the transition
+   outright, because the sweep below matches elements and these pseudo-elements
+   are not any element's descendants. */
+
+.app-chrome {
+  view-transition-name: chrome;
+}
+
+.hub-tab.is-active {
+  view-transition-name: nav-pill;
+}
+
+/* The chrome does not animate. It is named so it stops moving, not so it
+   moves. */
+::view-transition-group(chrome),
+::view-transition-old(chrome),
+::view-transition-new(chrome) {
+  animation: none;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-spring);
+}
+
+/* A pill carries its own icon and label, so the two states of those cross-fade
+   inside it while it travels. Over the length of the slide that reads as two
+   labels printed on top of each other for a third of it. Settling the contents
+   in 80ms leaves the pill carrying the label it is going to, which is what a
+   tab bar does. */
+::view-transition-old(nav-pill),
+::view-transition-new(nav-pill),
+::view-transition-old(seg-pill),
+::view-transition-new(seg-pill),
+::view-transition-old(theme-pill),
+::view-transition-new(theme-pill),
+::view-transition-old(team-pill),
+::view-transition-new(team-pill) {
+  animation-duration: var(--duration-fast);
+}
+
+/* A route change is a new screen, so it comes up from under the last one. The
+   old one is gone before the new one has finished arriving, which is what stops
+   two screens being legible at once. */
+html[data-vt="route"]::view-transition-old(root) {
+  animation: vt-out var(--duration-fast) var(--ease-out) both;
+}
+
+html[data-vt="route"]::view-transition-new(root) {
+  animation: vt-rise var(--duration-normal) var(--ease-out) both;
+}
+
+/* A filter or a panel is the same screen holding something else, so it stays
+   where it is and crosses over. Quickly: a coach tapping through five themes
+   wants the list. Anything with a travel time reads as the app thinking. */
+html[data-vt="filter"]::view-transition-old(root),
+html[data-vt="filter"]::view-transition-new(root),
+html[data-vt="panel"]::view-transition-old(root),
+html[data-vt="panel"]::view-transition-new(root),
+html[data-vt="tabs"]::view-transition-old(root),
+html[data-vt="tabs"]::view-transition-new(root) {
+  animation-duration: 120ms;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 /* ---- Toast ---- */
@@ -700,6 +815,13 @@ html {
   .hub-tab.is-active {
     background: rgba(255, 255, 255, 0.12);
     color: var(--color-on-dark);
+    /* No slide up here. On the phone bar the tabs are shoulder to shoulder and
+       an opaque white pill crossing two of them reads as one thing moving. On
+       the rail the same pill is translucent and has half a column to cross, so
+       it drags the label it is leaving over every label it passes. The tab it
+       is going to is missing from the rail for the length of the trip as well.
+       Off is better than badly. */
+    view-transition-name: none;
   }
 }
 

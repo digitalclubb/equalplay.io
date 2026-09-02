@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-671 unit and integration tests across 22 files, 157 Playwright tests. Most are ordinary.
+671 unit and integration tests across 22 files, 160 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 157 tests across four files: `matchday` (14), `home` (11), `hub` (106)
+`pnpm test:e2e` is 160 tests across four files: `matchday` (14), `home` (11), `hub` (109)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -599,6 +599,59 @@ schemes. The press is the same wash as an inset shadow, because a background
 there loses to hover on a mouse and brightness does nothing to a button with no
 fill. `e2e/hub.spec.ts` holds both halves of that: every tier changes on hover,
 then the buttons in a row that wraps do not overlap.
+
+**Movement is the browser's job, not ours.** `src/lib/motion.ts` hands a DOM
+change to `startViewTransition`, which photographs the page either side of it and
+animates between the two. Anything carrying a `view-transition-name` is matched
+across the pair by that name and moved from where it was to where it ended up.
+That is the whole of the sliding pills in the nav, the segmented control, the
+theme chips and match day's team tabs: the name sits on whichever one is active,
+so the browser is handed the same pill in two places. Nothing measures a tab,
+which is what every other way of doing this spends its time on. No number goes
+stale when a label changes either. The kind of change goes on `<html>` as
+`data-vt` while it runs, so a route, a filter and a panel get three animations
+out of one mechanism. See the view transitions section of `base.css`.
+
+Three things about it are load bearing. A name has to be unique in a snapshot or
+the browser drops the whole transition rather than choosing, so every slide in
+the app stops at once with nothing on screen to say why: `.hub-seg.is-active`
+appears in the catalogue's filters and in the editor's add panel and is only ever
+one of them at a time. Only the theme row's chip is named, because Small space or
+Favourites can be lit alongside it. The rail at 900px opts out, because a
+translucent pill with half a column to cross drags the label it is leaving over
+every label it passes. And reduced motion is honoured in `motion.ts` rather than
+in CSS, because the sweep in `base.css` matches elements and the
+`::view-transition` tree is not any element's descendant. `hub.spec.ts` holds all
+three.
+
+**The update lands a frame late, which is the price.** `startViewTransition` runs
+its callback at the next rendering opportunity, so anything that has to happen
+after the DOM changes goes inside the callback rather than after the call. That
+is why `render()` and the focus move are both inside it in `main.ts`. Same reason
+the search box's caret restore is inside it in `catalogue.ts`. A test that reads the
+page straight after a tap reads the page from before it, so `hub.spec.ts` has
+`settled()` and the filter helpers call it.
+
+**Typing is not tapping.** A chip, the segmented control and the age select each
+change the list once, deliberately, so the pill sliding to where the tap landed
+is the answer to it. The search box changes it every 140ms, so a cross-fade on
+each one reads as the app struggling rather than as anything moving. `update`
+takes an `animate` flag and the search path does not set it.
+
+**Down at once, back on a spring.** `--ease-spring` in `base.css` is a damped
+oscillator sampled into `linear()`, overshooting 3.8% about a third of the way
+through. Presses release on it and the pills travel on it. The press itself is
+overridden back to a fast ease, because a spring under a thumb that is still
+holding the button is a wobble. The press was 0.985 before, which is a scale you
+have to be told about; it is 0.97 on the big things and 0.94 on the chips and
+segments, since the same scale reads as less the smaller the thing wearing it.
+
+**Match day is not animated, apart from the team tabs.** Picking a team is
+navigation, so the pill slides and the squad crosses over. Everything else there
+is a substitution, which has to land the instant it is tapped: a rotation table
+that slides is a rotation table a coach waits for. What match day did get is the
+pointer states it never had, since every control was written for a thumb and said
+so in `:active` and nowhere else.
 
 **A panel is not a wrapper for one button.** The drill page's Add to a session
 sat in a card of its own, which drew a box the width of the page with the button

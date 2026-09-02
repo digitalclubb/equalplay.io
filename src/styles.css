@@ -101,17 +101,21 @@ body {
   color: var(--color-secondary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
 .team-tab:active {
   transform: scale(0.97);
 }
 
+/* The tab that is yours slides between teams rather than blinking across. Named
+   for `lib/motion.ts` the same way the hub's nav pill and segmented control
+   are. Only ever on one tab at a time. */
 .team-tab-active {
   background: var(--color-brand-dark);
   border-color: var(--color-brand-dark);
   color: var(--color-on-dark);
+  view-transition-name: team-pill;
 }
 
 .team-tab-add {
@@ -360,7 +364,7 @@ body {
   font-weight: var(--weight-bold);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
 .btn-generate:active:not(:disabled) {
@@ -689,7 +693,7 @@ body {
   border: none;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
 .chip:active {
@@ -978,7 +982,7 @@ body {
   font-weight: var(--weight-heavy);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
 .btn-next-sub:active {
@@ -1063,7 +1067,7 @@ body {
   font-weight: var(--weight-bold);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
   border: 2px solid var(--color-control-edge);
   background: var(--color-surface);
   color: var(--color-text);
@@ -1664,7 +1668,7 @@ body {
   font-weight: var(--weight-bold);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
 .btn-start-match,
@@ -1942,4 +1946,53 @@ body {
 .btn-next-sub,
 .btn-remove-player:active {
   color: light-dark(var(--color-on-dark), var(--color-navy));
+}
+
+/* ---- Under a pointer ----
+
+   Match day was built for a thumb on a touchline and every control here says so
+   in `:active` and nowhere else, so on a laptop the whole screen was inert. One
+   wash of the text colour over whatever a control is painted covers the lot,
+   flips with the scheme on its own and needs no token. The tab you are already
+   on is left out: it is a filled brand pill and a wash over it only muddies it.
+   So are Undo and History, which are text with no box to wash and already lift
+   their colour.
+
+   Down at once and back on a spring, same as the hub. */
+
+@media (hover: hover) {
+  .team-tab:not(.team-tab-active):hover,
+  .team-size-btn:hover:not(:disabled),
+  .grade-size:hover,
+  .action-btn:hover,
+  .chip:hover,
+  .btn-add-player:hover:not(:disabled),
+  .btn-remove-player:hover,
+  .btn-generate:hover:not(:disabled),
+  .btn-next-game:hover,
+  .btn-start-match:hover,
+  .btn-end-game:hover,
+  .btn-next-sub:hover,
+  .recent-actions-toggle:hover,
+  .game-title-edit:hover {
+    background-image: linear-gradient(
+      color-mix(in srgb, var(--color-text) 8%, transparent),
+      color-mix(in srgb, var(--color-text) 8%, transparent)
+    );
+  }
+}
+
+/* Down at once. The spring is for coming back up. */
+.team-tab:active,
+.team-size-btn:active,
+.grade-size:active,
+.action-btn:active,
+.chip:active,
+.btn-add-player:active,
+.btn-generate:active,
+.btn-next-game:active,
+.btn-start-match:active,
+.btn-next-sub:active {
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
 }
