@@ -1,7 +1,6 @@
 import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
 import { iconSquad, iconSettings, iconGenerate } from "./icons.js";
-import { MINIS_GRADES, PLAYERS_A_SIDE, gradeLabel } from "../lib/ageGrades.js";
 
 /** What the settings panel starts on, so a reload comes back as it was left. */
 export interface FormSettings {
@@ -85,47 +84,8 @@ export function createForm(
       Say how long a match runs and match day checks the Half Game Rule in
       minutes rather than in games.
     </p>
-    <div class="grade-sizes" role="group" aria-labelledby="grade-sizes-label">
-      <span class="grade-sizes-label" id="grade-sizes-label">Sizes under Reg 15</span>
-      ${MINIS_GRADES.map(
-        (grade) =>
-          `<button type="button" class="grade-size${PLAYERS_A_SIDE[grade] === startsOn.playersPerTeam ? " is-picked" : ""}"
-             data-grade="${grade}" data-size="${PLAYERS_A_SIDE[grade]}"
-             aria-pressed="${PLAYERS_A_SIDE[grade] === startsOn.playersPerTeam}"
-             aria-label="${gradeLabel(grade)}: ${PLAYERS_A_SIDE[grade]} players per team">${gradeLabel(grade)}<span aria-hidden="true">${PLAYERS_A_SIDE[grade]}</span></button>`,
-      ).join("")}
-    </div>
   `;
   section.appendChild(settingsPanel);
-
-  // One tap rather than remembering that U11 is nine a side. It fills the box
-  // and leaves it editable, because a festival can agree something smaller and
-  // the planner is not the referee.
-  const perTeamInput = settingsPanel.querySelector<HTMLInputElement>("#players-per-team");
-  const gradeButtons = [...settingsPanel.querySelectorAll<HTMLButtonElement>(".grade-size")];
-
-  for (const button of gradeButtons) {
-    button.addEventListener("click", () => {
-      if (perTeamInput) perTeamInput.value = button.dataset.size ?? perTeamInput.value;
-      for (const other of gradeButtons) {
-        other.classList.toggle("is-picked", other === button);
-        other.setAttribute("aria-pressed", String(other === button));
-      }
-      // The size is now right, so a standing "cannot exceed active players"
-      // stays on screen contradicting the box it is under.
-      handle.clearErrors();
-    });
-  }
-
-  // Typing over the number un-picks the grade. Left alone, U12 stayed filled in
-  // while the field held 5, claiming a size it no longer had.
-  perTeamInput?.addEventListener("input", () => {
-    for (const button of gradeButtons) {
-      const picked = button.dataset.size === perTeamInput.value;
-      button.classList.toggle("is-picked", picked);
-      button.setAttribute("aria-pressed", String(picked));
-    }
-  });
 
   const submitBtn = document.createElement("button");
   submitBtn.type = "button";

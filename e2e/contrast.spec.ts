@@ -293,7 +293,7 @@ test(`controls on ${name} have a visible edge in ${scheme} mode`, async ({ page 
     // nothing to say so. A card is left out on purpose: it is identified by the
     // title inside it rather than by its outline, which is the exception the
     // success criterion makes.
-    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal, .setup-field input, .player-input, .btn-add-player, .action-btn, .team-tab, .grade-size, .team-size-btn, .match-detail-input, .btn-next-game, .btn-start-match")]
+    return [...document.querySelectorAll(".hub-btn, .chip-filter, .hub-field input, .hub-field select, .age-select, .add-row, .block-controls button, .block-minutes input, .preset-card, .hub-reveal, .setup-field input, .player-input, .btn-add-player, .action-btn, .team-tab, .team-size-btn, .match-detail-input, .btn-next-game, .btn-start-match")]
       .filter((el) => el.getBoundingClientRect().width > 0)
       .map((el) => ({
         label: (el.textContent ?? "").trim().slice(0, 24),

@@ -577,34 +577,3 @@ test("the match length survives a reload", async ({ page }) => {
   await expect(page.locator("#minutes-per-match")).toHaveValue("25");
   await expect(page.locator("#players-per-team")).toHaveValue("2");
 });
-
-test("the Reg 15 sizes fill the box in one tap", async ({ page }) => {
-  // Players per team defaulted to 7 at every grade. Reg 15 sets 4, 6, 7, 8, 9
-  // and 12 from U7 to U12, which is six things to remember or one tap.
-  await freshStart(page);
-  await page.getByRole("button", { name: /^U12/ }).click();
-  await expect(page.locator("#players-per-team")).toHaveValue("12");
-  await page.getByRole("button", { name: /^U7/ }).click();
-  await expect(page.locator("#players-per-team")).toHaveValue("4");
-
-  // Still editable, because a festival can agree something smaller and the
-  // planner is not the referee. Typing over it un-picks the grade rather than
-  // leaving U7 filled in beside a box that says 5.
-  await page.locator("#players-per-team").fill("5");
-  await expect(page.locator("#players-per-team")).toHaveValue("5");
-  await expect(page.locator(".grade-size.is-picked")).toHaveCount(0);
-});
-
-test("picking a size clears the error it fixes", async ({ page }) => {
-  await freshStart(page);
-  await addPlayers(page, ["Alice", "Bob", "Cara", "Dan", "Eve", "Finn", "Gus", "Hal"]);
-  await page.locator("#players-per-team").fill("40");
-  await page.getByRole("button", { name: "Sort my team" }).click();
-  await expect(page.locator("#error-playersPerTeam")).not.toBeEmpty();
-
-  await page.getByRole("button", { name: /^U7/ }).click();
-  await expect(page.locator("#players-per-team")).toHaveValue("4");
-  // The box is right now, so the red message under it is a lie until the next
-  // submit unless the tap clears it.
-  await expect(page.locator("#error-playersPerTeam")).toBeEmpty();
-});

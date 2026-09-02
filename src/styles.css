@@ -1245,57 +1245,6 @@ body {
   border-color: var(--color-danger);
 }
 
-/* The Reg 15 sizes, as six taps rather than six things to remember. Reads as a
-   hint when it is ignored, which is most of the time. */
-.grade-sizes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2xs);
-  margin-top: var(--sp-xs);
-}
-
-.grade-sizes-label {
-  /* Its own line. Sitting inline it pushed the last grade onto a second row and
-     left the label stranded in the middle of the first. */
-  flex-basis: 100%;
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-muted);
-}
-
-.grade-size {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.25em;
-  min-height: var(--touch-min);
-  padding: var(--sp-2xs) var(--sp-xs);
-  border: 1px solid var(--color-control-edge);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: inherit;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  cursor: pointer;
-}
-
-.grade-size span {
-  color: var(--color-secondary);
-  font-weight: var(--weight-normal);
-}
-
-.grade-size.is-picked {
-  background: var(--color-text);
-  color: var(--color-bg);
-}
-
-.grade-size.is-picked span {
-  color: var(--color-bg);
-}
-
 .setup-hint {
   font-size: var(--text-xs);
   color: var(--color-muted);
@@ -1963,7 +1912,6 @@ body {
 @media (hover: hover) {
   .team-tab:not(.team-tab-active):hover,
   .team-size-btn:hover:not(:disabled),
-  .grade-size:hover,
   .action-btn:hover,
   .chip:hover,
   .btn-add-player:hover:not(:disabled),
@@ -1985,7 +1933,6 @@ body {
 /* Down at once. The spring is for coming back up. */
 .team-tab:active,
 .team-size-btn:active,
-.grade-size:active,
 .action-btn:active,
 .chip:active,
 .btn-add-player:active,

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
-import { PLAYERS_A_SIDE, MINIS_GRADES, type MinisGrade } from "../lib/ageGrades.js";
 import {
   ARRIVALS,
   GUIDES,
@@ -353,17 +352,5 @@ describe("what holds at every grade is said at every grade", () => {
     expect(guide).toContain("MIXED_RUGBY_NOTE");
     expect(seo).toContain("MIXED_RUGBY_NOTE");
     expect(MIXED_RUGBY_NOTE).toContain("U11");
-  });
-});
-
-describe("the guide's player counts are the planner's", () => {
-  it("says the same number a side in both places", () => {
-    // The arrivals table and the match-day size buttons are the same claim
-    // about Reg 15, written in two modules that cannot import each other.
-    for (const row of ARRIVALS.rows) {
-      const grade = row[0].toLowerCase() as MinisGrade;
-      expect(row[1], grade).toBe(String(PLAYERS_A_SIDE[grade]));
-    }
-    expect(ARRIVALS.rows.length).toBe(MINIS_GRADES.length);
   });
 });
