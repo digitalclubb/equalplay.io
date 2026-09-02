@@ -1,6 +1,7 @@
 import { mountApp } from "./app.js";
 import { track } from "./lib/track.js";
 import { wireScheme } from "./lib/theme.js";
+import { manageServiceWorker } from "./lib/sw.js";
 
 const root = document.getElementById("app");
 if (!root) {
@@ -33,10 +34,7 @@ function onIdle(fn: () => void): void {
 }
 
 onIdle(() => {
-  // Service worker for offline support
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js");
-  }
+  manageServiceWorker();
 
   // Vercel Analytics. Lazy import so it doesn't block initial load
   import("@vercel/analytics").then(({ inject }) => {

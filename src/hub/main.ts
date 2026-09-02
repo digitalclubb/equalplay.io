@@ -30,6 +30,7 @@ import { currentRoute, go, onRoute, type Route } from "./router.js";
 import { transition } from "../lib/motion.js";
 import { navHtml } from "../lib/nav.js";
 import { wireScheme } from "../lib/theme.js";
+import { manageServiceWorker } from "../lib/sw.js";
 import { chosenAge } from "./ageChoice.js";
 import { renderAgePicker } from "./views/agePicker.js";
 import { renderGuide } from "./views/guide.js";
@@ -342,6 +343,6 @@ function onIdle(fn: () => void): void {
 }
 
 onIdle(() => {
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+  manageServiceWorker();
   import("@vercel/analytics").then(({ inject }) => inject());
 });
