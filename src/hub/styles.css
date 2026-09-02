@@ -121,8 +121,10 @@ body {
   margin-bottom: var(--sp-2xs);
 }
 
-.hub-field input,
-.hub-field select {
+/* A select is shaped by the element rule in base.css, so only the text input
+   is described here. Anything both wear belongs there rather than in two
+   places drifting apart. */
+.hub-field input {
   width: 100%;
   min-height: var(--touch-min);
   padding: 0 var(--sp-sm);
@@ -381,19 +383,15 @@ body {
   margin-bottom: 0;
 }
 
+/* Wide enough for "U12" plus the chevron. It used to centre its text inside a
+   narrower box, which put the label off centre the moment the box grew an
+   arrow, so it reads left to right like every other select now. 44 rather than
+   48 to match the chip row it sits beside. */
 .age-select {
   flex: 0 0 auto;
-  width: 5.2rem;
+  width: 5.75rem;
   min-height: 44px;
-  padding: 0 var(--sp-2xs);
-  font-family: inherit;
-  font-size: 1rem;
   font-weight: var(--weight-bold);
-  text-align: center;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-control-edge);
-  border-radius: var(--radius);
 }
 
 .hub-segmented {
@@ -1555,7 +1553,7 @@ body {
   }
 
   .age-select {
-    width: 4.4rem;
+    width: 5.25rem;
   }
 
   .hub-panel,

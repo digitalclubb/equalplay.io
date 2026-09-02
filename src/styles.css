@@ -296,8 +296,7 @@ body {
   margin-bottom: var(--sp-2xs);
 }
 
-.setup-field input,
-.setup-field select {
+.setup-field input {
   width: 100%;
   min-height: 44px;
   padding: var(--sp-xs);
@@ -316,14 +315,12 @@ body {
   appearance: none;
 }
 
-.setup-field input:focus,
-.setup-field select:focus {
+.setup-field input:focus {
   outline: none;
   border-color: var(--color-primary);
 }
 
-.setup-field input:focus-visible,
-.setup-field select:focus-visible {
+.setup-field input:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }

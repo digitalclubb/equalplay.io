@@ -279,6 +279,50 @@
   outline-offset: 2px;
 }
 
+/* ---- Select ----
+ *
+ * One shape for every select in the product. The native control is a different
+ * height, radius and arrow in every browser. On iOS it is a rounded grey box
+ * that matches nothing else here, so `appearance: none` takes the lot off and
+ * the chevron is drawn instead.
+ *
+ * It is drawn as two gradients rather than an SVG because a data URI cannot
+ * read `currentColor`, so an icon file would need a copy per colour scheme and
+ * a token to pick between them. Two stripes meeting at a point cost four lines
+ * and follow the text colour on their own. The right padding reserves the room
+ * they sit in, so a long option never runs under them.
+ */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: var(--touch-min);
+  padding-block: 0;
+  padding-inline: var(--sp-sm) 2rem;
+  font-family: inherit;
+  /* 16px minimum or iOS Safari zooms the whole page on focus */
+  font-size: 1rem;
+  line-height: 1.2;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  background-image:
+    linear-gradient(45deg, transparent 43%, currentColor 43% 57%, transparent 57%),
+    linear-gradient(135deg, transparent 43%, currentColor 43% 57%, transparent 57%);
+  background-size: 7px 7px;
+  /* The two tiles sit edge to edge, 24px and 17px in from the right, so the
+     strokes meet at a point rather than leaving a gap. */
+  background-position: right 24px center, right 17px center;
+  background-repeat: no-repeat;
+  border: 1px solid var(--color-control-edge);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+select:hover {
+  border-color: var(--color-text);
+}
+
 /* ---- Reduced motion ---- */
 
 @media (prefers-reduced-motion: reduce) {
