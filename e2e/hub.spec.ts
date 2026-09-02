@@ -1757,6 +1757,41 @@ test("buttons sitting in a row line up with each other", async ({ page }) => {
   }
 });
 
+test("what to do with a session answers a pointer and does not overlap", async ({ page }) => {
+  // Two faults in the one panel. Print it and Duplicate were spaced by
+  // `.hub-btn + .hub-btn`, a top margin on a phone and a left one at 900px.
+  // Once they go to auto width they are inline boxes, so a pair that wraps onto
+  // two lines has nothing spacing them vertically and the second sat 25px up
+  // inside the first. The other is that only the filled tier had a hover rule,
+  // which left all three of these dead under a mouse.
+  const planId = await runnableSession(page);
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.goto(`/hub/#/plan/${planId}/edit`);
+  await expect(page.locator("#plan-delete")).toBeVisible();
+
+  const rows = await page.locator(".plan-actions .hub-btn").evaluateAll((els) =>
+    els.map((el) => {
+      const box = el.getBoundingClientRect();
+      return { top: Math.round(box.top), bottom: Math.round(box.bottom) };
+    }),
+  );
+  expect(rows.length).toBe(2);
+  const [first, second] = rows;
+  const sideBySide = first.top === second.top;
+  expect(sideBySide || second.top >= first.bottom, "Print it and Duplicate overlap").toBe(true);
+
+  for (const id of ["#plan-print", "#plan-duplicate", "#plan-delete"]) {
+    const button = page.locator(id);
+    const before = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await button.hover();
+    await page.waitForTimeout(200);
+    const after = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(after, `${id} does nothing on hover`).not.toBe(before);
+    // Off the button, so the next one is measured from rest rather than hover.
+    await page.mouse.move(0, 0);
+  }
+});
+
 test("stretching a block gives it the minutes it was stretched to", async ({ page }) => {
   const planId = await runnableSession(page);
   await page.locator("text=Run it").click();

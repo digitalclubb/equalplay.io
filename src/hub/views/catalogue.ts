@@ -32,6 +32,15 @@ import {
 } from "../content/types.js";
 
 /**
+ * Same shape as the nav's icons, meaning a 24 viewBox drawn in strokes on
+ * `currentColor`, so the icon and the label beside it change colour together.
+ */
+const ICON = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+
+/** A plus, on the one button this whole page is building towards. */
+const iconAdd = `<svg ${ICON}><path d="M12 5v14"/><path d="M5 12h14"/></svg>`;
+
+/**
  * Favourites is a route rather than a filter, so it is somewhere a coach can
  * land, link to and come back to. Everything else about the list is the same,
  * which is why it renders through here instead of getting a view of its own.
@@ -144,7 +153,7 @@ function welcome(age: string): string {
         Not official RFU guidance. Every grade links out to
         ${rulesLink("their rules of play", REGULATION_15_URL)}.
       </p>
-      <button type="button" class="hub-btn" id="dismiss-welcome">Got it</button>
+      <button type="button" class="hub-btn hub-btn-quiet" id="dismiss-welcome">Got it</button>
     </section>`;
 }
 
@@ -516,10 +525,14 @@ function gradeForNewPlan(drill: Drill, browsing: AgeGroup): AgeGroup {
  */
 function addPanel(drill: Drill): string {
   if (!addOpen) {
+    // No panel around it. A card holding one button drew a box the width of the
+    // page with the button adrift inside it, which read as an empty container
+    // rather than as the thing to do next. On its own with the page behind it,
+    // the one filled button on the screen is the only thing it can be.
     return `
-      <section class="hub-panel drill-add">
-        <button type="button" class="hub-btn hub-btn-primary" id="drill-add">Add to a session</button>
-      </section>`;
+      <div class="drill-add drill-add-cta">
+        <button type="button" class="hub-btn hub-btn-primary" id="drill-add">${iconAdd}Add to a session</button>
+      </div>`;
   }
 
   const all = currentUserId ? localPlans(currentUserId) : [];
@@ -571,7 +584,7 @@ function addPanel(drill: Drill): string {
         <button type="button" class="hub-btn" id="drill-add-new" data-newplan="${newPlanAge}">
           Start a new ${AGE_GROUP_LABELS[newPlanAge]} session with it
         </button>
-        <button type="button" class="hub-btn" id="drill-add-cancel">Not now</button>
+        <button type="button" class="hub-btn hub-btn-quiet" id="drill-add-cancel">Not now</button>
       </div>
     </section>`;
 }

@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-671 unit and integration tests across 22 files, 156 Playwright tests. Most are ordinary.
+671 unit and integration tests across 22 files, 157 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 156 tests across four files: `matchday` (14), `home` (11), `hub` (105)
+`pnpm test:e2e` is 157 tests across four files: `matchday` (14), `home` (11), `hub` (106)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -584,6 +584,27 @@ paywall.
 return early rather than firing a request that can only fail. Both report
 `reachedServer: true` when they do, because nothing failed. Claiming to be offline
 when there is simply nobody signed in is a lie the interface would then repeat.
+
+**Buttons come in three tiers and every one of them answers a pointer.** One
+filled button for what a screen is for, an outlined one for the other things a
+coach might do, then that same outlined button at the width of its own label for
+a dismissal. Material calls the quiet tier a text button and takes its edge off.
+This app has already decided a control needs an edge you can see, so it gives up
+its width instead. The outlined tier used to be a `--color-bg` fill on a
+`--color-surface` panel, a 1.05:1 step doing nothing except reading as grey.
+Only the filled tier had a `:hover` rule at all, so Print it, Duplicate, Delete
+this session, Got it and Not now were dead under a mouse. Hover is a wash of
+`--color-text` over whatever the button stands on, which is one rule for both
+schemes. The press is the same wash as an inset shadow, because a background
+there loses to hover on a mouse and brightness does nothing to a button with no
+fill. `e2e/hub.spec.ts` holds both halves of that: every tier changes on hover,
+then the buttons in a row that wraps do not overlap.
+
+**A panel is not a wrapper for one button.** The drill page's Add to a session
+sat in a card of its own, which drew a box the width of the page with the button
+adrift inside it. What it read as was an empty container. It stands on the page
+now with room around it, where the one filled button on the screen can only be
+the thing to do next.
 
 **A fixed brand colour is never a text colour.** `--color-navy` and `--navy` do not
 flip with `prefers-color-scheme`. Using either for text on a surface that does flip

@@ -149,12 +149,22 @@ body {
   font-weight: var(--weight-semi);
 }
 
-/* ---- Buttons ---- */
+/* ---- Buttons ----
 
-/* A secondary button sits on a panel. A panel is --color-surface, so a
+   Three tiers. The screen says which is which: one filled button for the
+   thing the screen exists to do, an outlined one for the other things a coach
+   might do, then that same outlined button at the width of its own label for a
+   dismissal. Material calls that last tier a text button and takes the edge
+   off it. This app has already decided a control needs an edge you can see, so
+   the quiet tier gives up its width instead of its outline.
+
+   A secondary button sits on a panel. A panel is --color-surface, so a
    --color-surface button with a --color-border edge was white on white at
-   1.19:1. WCAG wants 3:1 on the boundary of a control, so the edge is now a
-   text colour and the fill steps away from the panel it sits on.
+   1.19:1. WCAG wants 3:1 on the boundary of a control, so the edge is a text
+   colour. The fill used to step away from the panel as well, which made a
+   perfectly good button look like a disabled slab: --color-bg on
+   --color-surface is a 1.05:1 step, so it was doing nothing except reading as
+   grey. The outline carries it on its own now.
 
    This is worn by anchors as often as by buttons, so it cannot lean on what a
    <button> does for free. An inline box ignores min-height and width, which
@@ -165,17 +175,37 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--sp-xs);
   padding: 0 var(--sp-md);
   text-decoration: none;
   font-family: inherit;
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
   color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-muted);
+  background: transparent;
+  border: 1px solid var(--color-control-edge);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-out);
+}
+
+/* An icon says which action a button is before the label is read, which is what
+   tells Print it, Duplicate and Delete this session apart at a glance instead
+   of leaving three identical rows to be read one at a time. Sized in `em` so it
+   tracks the label rather than needing its own breakpoint. */
+.hub-btn svg {
+  flex: 0 0 auto;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* A dismissal is not what the panel it sits in is for, so it takes the width of
+   its own label. Full width made Got it the largest thing in the welcome panel
+   and gave Not now the same weight as the action beside it. */
+.hub-btn-quiet {
+  width: auto;
+  min-width: 0;
+  font-weight: var(--weight-semi);
+  color: var(--color-secondary);
 }
 
 /* .hub-fineprint carries a top margin and no bottom one, so anything after it
@@ -197,6 +227,9 @@ body {
   color: var(--color-on-dark);
   background: var(--color-primary);
   border-color: var(--color-primary);
+  /* The only raised thing on the page. Everything else here is flat, so a
+     shadow this small is enough to say which button the screen is about. */
+  box-shadow: 0 1px 3px var(--color-shadow);
 }
 
 /* The primary red lightens in the dark scheme, so a white label on it drops to
@@ -1108,6 +1141,30 @@ body {
   padding: 0 var(--sp-lg);
 }
 
+/* ---- What to do with a session ---- */
+
+/* Print it and Duplicate, as a row that wraps rather than two buttons leaning
+   on the sibling margin. That margin does nothing once `.hub-btn` goes to auto
+   width at 900px and the pair wraps onto two lines: they are inline boxes by
+   then, so the second sat 25px up inside the first in the editor's narrow
+   column. A gap spaces them whichever way they end up. */
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
+}
+
+.plan-actions .hub-btn {
+  margin: 0;
+}
+
+/* Delete this session is not in that row. It was only ever kept away from
+   Duplicate by the panel happening to be too narrow for three. A thumb going
+   for one of the other two needs somewhere to miss. */
+.plan-actions + .hub-btn-danger {
+  margin-top: var(--sp-md);
+}
+
 /* ---- Warnings ---- */
 
 .plan-warnings {
@@ -1423,7 +1480,9 @@ body {
   text-align: left;
   padding: var(--sp-xs) var(--sp-sm);
   margin-bottom: var(--sp-3xs);
-  background: var(--color-bg);
+  /* Outlined, like the buttons. A --color-bg fill on a --color-surface panel is
+     a 1.05:1 step doing nothing but reading as grey. */
+  background: transparent;
   border: 1px solid var(--color-control-edge);
   border-radius: var(--radius-sm);
   font-family: inherit;
@@ -1590,10 +1649,20 @@ body {
   background: var(--color-border);
 }
 
-.hub-btn:active:not(:disabled),
 .preset-card:active,
 .add-row:active {
   filter: brightness(0.97);
+}
+
+/* The press wash, as an inset shadow rather than a background. Two reasons.
+   Brightness does nothing to a button with no fill of its own, which the
+   outlined tier now is. And a background here loses to the hover rules further
+   down the file, so on a mouse the press would not show at all. In the shadow
+   it lands on all three tiers over whatever they are painted. It takes the
+   primary button's lift off while it is held as well, which is what a press
+   should look like. */
+.hub-btn:active:not(:disabled) {
+  box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--color-text) 14%, transparent);
 }
 
 .fav-btn:active .star {
@@ -1623,6 +1692,8 @@ body {
     transform var(--duration-fast) var(--ease-out),
     filter var(--duration-fast) var(--ease-out),
     opacity var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out);
 }
 
@@ -1879,10 +1950,46 @@ body {
   .preset-card:hover,
   .add-row:hover {
     border-color: var(--color-primary);
+    box-shadow: 0 1px 3px var(--color-shadow);
   }
 
+  /* Every tier answers a pointer. Only the filled one used to, which left Print
+     it, Duplicate, Delete this session, Got it and Not now sitting under a
+     mouse with nothing happening at all. What lands on the outlined tier is a
+     wash of the label colour over whatever the button is standing on, so one
+     rule covers both colour schemes without a token for either. */
+  .hub-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    border-color: var(--color-text);
+  }
+
+  /* The filled and tinted tiers paint their own background, so a wash over it
+     would take the tier off them. They deepen instead. */
   .hub-btn-primary:hover:not(:disabled) {
     background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    box-shadow: 0 3px 10px var(--color-shadow);
+  }
+
+  /* Not while it is being pressed. The press already owns the transform and
+     runs later in the file, so a lift here would win and the button would rise
+     under a thumb that is pushing it down. */
+  .hub-btn-primary:hover:not(:disabled):not(:active) {
+    transform: translateY(-1px);
+  }
+
+  .hub-btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 14%, var(--color-injured-bg));
+    border-color: var(--color-injured-text-strong);
+  }
+
+  .hub-reveal:hover {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-color: var(--color-primary);
+  }
+
+  .hub-link:hover {
+    color: var(--color-primary-hover);
   }
 
   .drill-card:hover {
@@ -1928,17 +2035,6 @@ body {
   .run-head-actions .hub-btn + .hub-btn,
   .run-clock-actions .hub-btn + .hub-btn,
   .run-stage-steps .hub-btn + .hub-btn {
-    margin-left: 0;
-  }
-
-  /* A destructive action does not join the row. Print it and Duplicate sitting
-     next to Delete this session only stayed apart because the panel happened to
-     be too narrow for all three. A wider one would have put delete a few pixels
-     from duplicate. */
-  .hub-btn + .hub-btn-danger {
-    display: block;
-    width: fit-content;
-    margin-top: var(--sp-sm);
     margin-left: 0;
   }
 
@@ -2346,6 +2442,16 @@ body {
    the other side and two copies of it would drift. */
 .drill-add {
   margin-top: var(--sp-md);
+}
+
+/* The closed state is not a panel. A card holding a single button drew a box
+   the width of the page with the button adrift inside it, so what a coach saw
+   at the foot of the drill was an empty container rather than the thing to do
+   next. Standing on the page with room around it, the one filled button on the
+   screen is unmistakable. */
+.drill-add-cta {
+  margin-top: var(--sp-lg);
+  margin-bottom: var(--sp-md);
 }
 
 .drill-add h3 {

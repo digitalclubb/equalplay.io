@@ -44,6 +44,23 @@ import {
   type SessionPlan,
 } from "../../logic/sessionPlan.js";
 
+/**
+ * Same shape as the nav's icons, meaning a 24 viewBox drawn in strokes on
+ * `currentColor`, so an icon and the label beside it change colour together.
+ * Three actions stacked in one panel, all wearing the same outline, had to be
+ * read one at a time to be told apart.
+ */
+const ICON = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+
+/** A printer, paper coming out of the top. */
+const iconPrint = `<svg ${ICON}><path d="M7 9V3.5h10V9"/><path d="M7 18H5.5A1.5 1.5 0 0 1 4 16.5V11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5.5a1.5 1.5 0 0 1-1.5 1.5H17"/><rect x="7" y="14.5" width="10" height="6" rx="1"/></svg>`;
+
+/** Two sheets, one behind the other. */
+const iconDuplicate = `<svg ${ICON}><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 5.5A2 2 0 0 0 13.5 3.5h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2"/></svg>`;
+
+/** A bin. The one irreversible thing on the page. */
+const iconDelete = `<svg ${ICON}><path d="M4.5 6.5h15"/><path d="M9.5 6.5V4.8a1.3 1.3 0 0 1 1.3-1.3h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7"/><path d="M6.5 6.5l.9 12.2a1.8 1.8 0 0 0 1.8 1.8h5.6a1.8 1.8 0 0 0 1.8-1.8l.9-12.2"/></svg>`;
+
 const KINDS: Array<{ value: DrillKind | ""; label: string }> = [
   { value: "", label: "All" },
   { value: "warmup", label: "Warm-ups" },
@@ -361,7 +378,7 @@ export function renderPlanView(
     ${sharePanel(found)}
 
     <section class="hub-panel">
-      <button type="button" class="hub-btn" id="plan-print">Print it</button>
+      <button type="button" class="hub-btn" id="plan-print">${iconPrint}Print it</button>
     </section>`;
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
@@ -1115,9 +1132,11 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
     ${kitList(totals)}
 
     <section class="hub-panel">
-      <button type="button" class="hub-btn" id="plan-print">Print it</button>
-      <button type="button" class="hub-btn" id="plan-duplicate">Duplicate</button>
-      <button type="button" class="hub-btn hub-btn-danger" id="plan-delete">Delete this session</button>
+      <div class="plan-actions">
+        <button type="button" class="hub-btn" id="plan-print">${iconPrint}Print it</button>
+        <button type="button" class="hub-btn" id="plan-duplicate">${iconDuplicate}Duplicate</button>
+      </div>
+      <button type="button" class="hub-btn hub-btn-danger" id="plan-delete">${iconDelete}Delete this session</button>
     </section>
     </div>
     </div>`;
