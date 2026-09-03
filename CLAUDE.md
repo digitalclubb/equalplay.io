@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-670 unit and integration tests across 22 files, 159 Playwright tests. Most are ordinary.
+670 unit and integration tests across 22 files, 160 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 159 tests across four files: `matchday` (12), `home` (11), `hub` (110)
+`pnpm test:e2e` is 160 tests across four files: `matchday` (12), `home` (11), `hub` (111)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that

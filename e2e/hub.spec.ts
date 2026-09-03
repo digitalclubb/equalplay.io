@@ -90,9 +90,15 @@ async function settled(page: Page) {
   await expect(page.locator("html")).not.toHaveAttribute("data-vt", /./);
 }
 
-/** Tap a theme filter chip. Pass "" for Anything. */
+/** Tap a theme filter chip. Tapping the active one again clears the filter. */
 async function pickTheme(page: Page, theme: string) {
   await page.locator(`[data-theme="${theme}"]`).click();
+  await settled(page);
+}
+
+/** Take whichever theme chip is lit back off, leaving the whole list. */
+async function clearTheme(page: Page) {
+  await page.locator("[data-theme].is-active").click();
   await settled(page);
 }
 
@@ -145,7 +151,7 @@ test("a tag age grade is never offered a contact drill", async ({ page }) => {
   }
 
   // And searching for it by name does not get round the gate
-  await pickTheme(page, "");
+  await clearTheme(page);
   await searchFor(page, "#f-search", "two second ruck");
   await expect(page.locator(".drill-card")).toHaveCount(0);
 });
@@ -171,6 +177,21 @@ test("a contact drill leads with its safety note", async ({ page }) => {
   const safetyBox = await safety.boundingBox();
   const setup = await page.locator(".hub-panel h3").filter({ hasText: "Set up" }).boundingBox();
   expect(safetyBox && setup && safetyBox.y < setup.y).toBe(true);
+});
+
+test("a theme chip comes off when it is tapped again", async ({ page }) => {
+  await signedIn(page, "u10");
+  const all = await page.locator(".drill-card").count();
+
+  await pickTheme(page, "breakdown");
+  const narrowed = await page.locator(".drill-card").count();
+  expect(narrowed).toBeLessThan(all);
+
+  // The same chip is how a coach gets the whole list back. There is no
+  // Anything chip to find, which is the point of it toggling.
+  await pickTheme(page, "breakdown");
+  await expect(page.locator('[data-theme="breakdown"]')).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".drill-card")).toHaveCount(all);
 });
 
 test("filters survive a trip into a drill and back", async ({ page }) => {
@@ -1852,11 +1873,10 @@ test("nothing shares a view transition name", async ({ page }) => {
   for (const hash of ["#/catalogue", "#/plans", `#/plan/${planId}`, `#/plan/${planId}/edit`, "#/account"]) {
     await page.goto(`/hub/${hash}`);
     await settled(page);
-    // With nothing switched on, one chip is lit and a class-wide name would
-    // look fine here. Small space and Favourites are their own switches and sit
-    // on top of a theme, so this turns on the ones each screen has first.
-    // Favourites in the catalogue is left out: it is a route rather than a
-    // switch and would walk off the page being counted.
+    // Small space and Favourites are their own switches, so this turns on the
+    // ones each screen has before counting. Favourites in the catalogue is left
+    // out: it is a route rather than a switch and would walk off the page being
+    // counted.
     for (const id of ["#f-space", "#add-space", "#add-fav"]) {
       const chip = page.locator(id);
       if (await chip.count()) {
@@ -1884,8 +1904,14 @@ test("a tap on a filter and a tap on a tab are both animated", async ({ page }) 
   expect(await started(page), "the segmented control did not slide").toBe(1);
 
   await page.locator('.hub-tab[data-route="plans"]').click();
+  // A tab changes the hash, so the transition is queued behind a hashchange
+  // rather than started by the click. `settled` asserts the absence of the
+  // attribute, which is true in the gap before it starts, so this waits for the
+  // count itself rather than for a moment that has already passed.
+  await expect
+    .poll(() => started(page), { message: "the nav pill did not slide" })
+    .toBe(2);
   await settled(page);
-  expect(await started(page), "the nav pill did not slide").toBe(2);
 });
 
 test("the three segments stay one width", async ({ page }) => {

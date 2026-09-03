@@ -1021,6 +1021,11 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
   if (!plan) return;
   starred = localFavourites(ctx.userId);
 
+  // The theme chips are the ones this grade is allowed, so a filter carried over
+  // from a higher grade has no chip left to switch it off. It is dropped instead
+  // of stranding the add panel on an empty list with nothing lit.
+  if (addTheme && !ageAtLeast(plan.ageGroup, THEME_MIN_AGE[addTheme])) addTheme = undefined;
+
   // Replacing innerHTML drops the page back to the top. On a phone the add panel
   // sits a long way down, so every keystroke and every expand threw the coach back
   // up the page. Only held on a redraw: arriving at a session should start at the top.
@@ -1117,7 +1122,6 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
           </button>
           <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">Small space</button>
           <span class="chip-divider" aria-hidden="true"></span>
-          <button type="button" data-addtheme="" class="chip-filter${addTheme ? "" : " is-active"}" aria-pressed="${!addTheme}">Anything</button>
           ${THEMES.filter((t) => ageAtLeast(plan.ageGroup, THEME_MIN_AGE[t]))
             .map(
               (t) =>
@@ -1463,8 +1467,9 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
 
   for (const chip of container.querySelectorAll<HTMLButtonElement>("[data-addtheme]")) {
     chip.addEventListener("click", () => {
-      const value = chip.dataset.addtheme ?? "";
-      addTheme = value ? (value as Theme) : undefined;
+      const value = chip.dataset.addtheme as Theme;
+      // Same as the catalogue: the chip you are on comes off when tapped again
+      addTheme = value === addTheme ? undefined : value;
       previewing = null;
       draw(container, ctx);
     });

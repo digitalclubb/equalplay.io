@@ -256,7 +256,6 @@ function renderList(container: HTMLElement): void {
         </button>
         <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">Small space</button>
         <span class="chip-divider" aria-hidden="true"></span>
-        <button type="button" data-theme="" class="chip-filter${active.theme ? "" : " is-active"}" aria-pressed="${active.theme ? "false" : "true"}">Anything</button>
         ${THEMES.map(
           (t) =>
             `<button type="button" data-theme="${t}" class="chip-filter${t === active.theme ? " is-active" : ""}" aria-pressed="${t === active.theme}">${esc(THEME_SHORT[t])}</button>`,
@@ -296,8 +295,12 @@ function renderList(container: HTMLElement): void {
 
   for (const chip of container.querySelectorAll<HTMLButtonElement>("[data-theme]")) {
     chip.addEventListener("click", () => {
-      const value = chip.dataset.theme ?? "";
-      update({ theme: value ? (value as Theme) : undefined }, undefined, true);
+      const value = chip.dataset.theme as Theme;
+      // Tapping the chip you are already on takes the filter back off, so there
+      // is nothing to hunt for once a coach has narrowed the list down. That is
+      // all the Anything chip ever did, in the chip they are already reaching
+      // for. Favourites and Small space have always worked this way.
+      update({ theme: value === active.theme ? undefined : value }, undefined, true);
     });
   }
 
