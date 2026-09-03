@@ -75,15 +75,11 @@ export function createForm(
       <div class="setup-field">
         <label for="minutes-per-match">Minutes a match</label>
         <input id="minutes-per-match" type="number" min="1" inputmode="numeric"
-               placeholder="Optional" aria-describedby="minutes-hint"
+               placeholder="Optional"
                value="${startsOn.minutesPerMatch ?? ""}" />
         <div class="field-error" id="error-minutesPerMatch"></div>
       </div>
     </div>
-    <p class="setup-hint" id="minutes-hint">
-      Say how long a match runs and match day checks the Half Game Rule in
-      minutes rather than in games.
-    </p>
   `;
   section.appendChild(settingsPanel);
 

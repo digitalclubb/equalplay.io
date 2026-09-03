@@ -1245,13 +1245,6 @@ body {
   border-color: var(--color-danger);
 }
 
-.setup-hint {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  margin-top: var(--sp-xs);
-  line-height: 1.4;
-}
-
 .fairness-list {
   display: flex;
   flex-direction: column;
