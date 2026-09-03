@@ -403,6 +403,17 @@ body {
   animation-timing-function: var(--ease-spring);
 }
 
+/* The root group is the whole view. A group animation interpolates its box.
+   Filtering the drill list changes the page's height, so the wildcard above had
+   the browser springing that box from the old height to the new one, stretching
+   everything standing in it on the way. The age select was riding that.
+   Nothing on that screen moved, so nothing should travel: the contents cross
+   fade at the size they are. A route still rises, because that is on the
+   snapshots rather than on the group. */
+::view-transition-group(root) {
+  animation: none;
+}
+
 /* A pill carries its own icon and label, so the two states of those cross-fade
    inside it while it travels. Over the length of the slide that reads as two
    labels printed on top of each other for a third of it. Settling the contents
@@ -417,6 +428,16 @@ body {
 ::view-transition-old(team-pill),
 ::view-transition-new(team-pill) {
   animation-duration: var(--duration-fast);
+}
+
+/* A filter is not navigation, so its pill does not travel like the nav's. The
+   spring is worth its 280ms and its overshoot crossing a tab bar or a rail. Over
+   the third of a filter row between Warm-ups and Exercises the same curve is a
+   bounce on a control a coach taps five times in a row. It moves and stops. */
+::view-transition-group(seg-pill),
+::view-transition-group(theme-pill) {
+  animation-duration: var(--duration-normal);
+  animation-timing-function: var(--ease-out);
 }
 
 /* A route change is a new screen, so it comes up from under the last one. The
