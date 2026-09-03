@@ -92,6 +92,7 @@ const {
   fetchSharedPlan,
   isShareToken,
   localPlans,
+  newPlanId,
   pendingCount,
   savePlan,
   stagePlan,
@@ -390,5 +391,20 @@ describe("sharing", () => {
     const { plan: shared } = await fetchSharedPlan(token as string);
     expect(shared).not.toBeNull();
     expect(JSON.stringify(shared)).not.toContain(USER);
+  });
+});
+
+describe("ids without a secure context", () => {
+  it("still mints a v4 uuid when crypto.randomUUID is missing", () => {
+    const held = crypto.randomUUID;
+    // A dev server reached over http from a phone has no randomUUID at all
+    Reflect.deleteProperty(crypto, "randomUUID");
+    try {
+      expect(newPlanId()).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+    } finally {
+      Object.defineProperty(crypto, "randomUUID", { value: held, configurable: true });
+    }
   });
 });

@@ -361,9 +361,25 @@ export async function deletePlan(userId: string, id: string): Promise<void> {
   }
 }
 
+/**
+ * A v4 uuid, whatever the page is being served over.
+ *
+ * `crypto.randomUUID` needs a secure context, so it is missing on a dev server
+ * reached at http://192.168.x.x from a phone, which is exactly how this gets
+ * tested. `getRandomValues` has no such rule.
+ */
+function uuid(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6]! & 0x0f) | 0x40;
+  b[8] = (b[8]! & 0x3f) | 0x80;
+  const hex = [...b].map((n) => n.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function newPlanId(): string {
   // Generated client-side so a plan can be created with no connection
-  return crypto.randomUUID();
+  return uuid();
 }
 
 // ---- Sharing ----
@@ -421,7 +437,7 @@ export async function startSharing(userId: string, planId: string): Promise<Shar
   if (!userId) return { token: null, reachedServer: true };
   const held = store(userId).plans.find((p) => p.id === planId);
   if (held?.shareToken) return { token: held.shareToken, reachedServer: true };
-  return setToken(userId, planId, crypto.randomUUID());
+  return setToken(userId, planId, uuid());
 }
 
 /** Clearing the token takes every copy of that link out of service at once. */
