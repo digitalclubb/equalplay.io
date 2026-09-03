@@ -318,7 +318,7 @@ export function renderPlanView(
 ): void {
   const found = localPlans(ctx.userId).find((p) => p.id === planId);
   if (!found) {
-    container.innerHTML = `<section class="hub-panel"><p class="hub-fineprint">Loading…</p></section>`;
+    container.innerHTML = `<div class="plan-read"><section class="hub-panel"><p class="hub-fineprint">Loading…</p></section></div>`;
     void syncPlans(ctx.userId).then(({ plans }) => {
       if (!stillOn("plan", planId)) return;
       if (plans.some((p) => p.id === planId)) renderPlanView(container, ctx, planId);
@@ -334,7 +334,11 @@ export function renderPlanView(
   const totals = planTotals(plan, DRILLS);
   const blocks = planDrills(plan, DRILLS);
 
+  // One column, capped and centred as a whole. Capping the blocks and leaving
+  // the panels under them full width put Share it and Print it 128px outside
+  // the session on both sides at 1280.
   container.innerHTML = `
+    <div class="plan-read">
     <p class="hub-back"><a href="#/plans">← All sessions</a></p>
 
     <section class="hub-panel run-head">
@@ -379,7 +383,8 @@ export function renderPlanView(
 
     <section class="hub-panel">
       <button type="button" class="hub-btn" id="plan-print">${iconPrint}Print it</button>
-    </section>`;
+    </section>
+    </div>`;
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
   wireShare(container, ctx, planId);
@@ -849,13 +854,14 @@ export function renderSharedPlan(
   /** The reader's own grade, when there is one. A stranger with no account has none. */
   readerAge?: AgeGroup,
 ): void {
-  container.innerHTML = `<section class="hub-panel"><p class="hub-fineprint">Fetching the session…</p></section>`;
+  container.innerHTML = `<div class="plan-read"><section class="hub-panel"><p class="hub-fineprint">Fetching the session…</p></section></div>`;
 
   void fetchSharedPlan(token).then(({ plan, reachedServer }) => {
     if (!stillOn("shared", token)) return;
 
     if (!plan) {
       container.innerHTML = `
+        <div class="plan-read">
         <section class="hub-panel hub-empty">
           <p>${
             reachedServer
@@ -863,7 +869,8 @@ export function renderSharedPlan(
               : "We couldn't reach the server. A session somebody shared with you needs signal the first time you open it."
           }</p>
           <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
-        </section>`;
+        </section>
+        </div>`;
       return;
     }
 
@@ -878,6 +885,7 @@ export function renderSharedPlan(
     };
 
     container.innerHTML = `
+      <div class="plan-read">
       <section class="hub-panel run-head">
         <p class="share-from">A coach shared this session with you</p>
         <h2>${esc(plan.title)}</h2>
@@ -919,7 +927,8 @@ export function renderSharedPlan(
           group you coach, so you'll only ever see the ones your players are ready for.
         </p>
         <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
-      </section>`;
+      </section>
+      </div>`;
 
     for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
       details.addEventListener("toggle", () => {
@@ -1115,20 +1124,17 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
             `<button type="button" data-addkind="${k.value}" class="hub-seg${(addKind ?? "") === k.value ? " is-active" : ""}" aria-pressed="${(addKind ?? "") === k.value}">${k.label}</button>`,
         ).join("")}
       </div>
-      <div class="chip-scroll-wrap">
-        <div class="chip-scroll" role="group" aria-label="Narrow the drills down">
-          <button type="button" id="add-fav" class="chip-filter chip-fav${addFavouritesOnly ? " is-active" : ""}" aria-pressed="${addFavouritesOnly}">
-            ${starIcon(addFavouritesOnly)} Favourites${starred.size > 0 ? ` (${starred.size})` : ""}
-          </button>
-          <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">Small space</button>
-          <span class="chip-divider" aria-hidden="true"></span>
-          ${THEMES.filter((t) => ageAtLeast(plan.ageGroup, THEME_MIN_AGE[t]))
-            .map(
-              (t) =>
-                `<button type="button" data-addtheme="${t}" class="chip-filter${t === addTheme ? " is-active" : ""}" aria-pressed="${t === addTheme}">${esc(THEME_SHORT[t])}</button>`,
-            )
-            .join("")}
-        </div>
+      <div class="chip-row" role="group" aria-label="Narrow the drills down">
+        <button type="button" id="add-fav" class="chip-filter chip-fav${addFavouritesOnly ? " is-active" : ""}" aria-pressed="${addFavouritesOnly}">
+          ${starIcon(addFavouritesOnly)} Favourites${starred.size > 0 ? ` (${starred.size})` : ""}
+        </button>
+        <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">Small space</button>
+        ${THEMES.filter((t) => ageAtLeast(plan.ageGroup, THEME_MIN_AGE[t]))
+          .map(
+            (t) =>
+              `<button type="button" data-addtheme="${t}" class="chip-filter${t === addTheme ? " is-active" : ""}" aria-pressed="${t === addTheme}">${esc(THEME_SHORT[t])}</button>`,
+          )
+          .join("")}
       </div>
       ${addList(plan.ageGroup, plan)}
     </section>

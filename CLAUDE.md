@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-670 unit and integration tests across 22 files, 160 Playwright tests. Most are ordinary.
+671 unit and integration tests across 22 files, 161 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 160 tests across four files: `matchday` (12), `home` (11), `hub` (111)
+`pnpm test:e2e` is 161 tests across four files: `matchday` (12), `home` (11), `hub` (112)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -626,10 +626,11 @@ three.
 **Not everything that changes should travel.** A slide answers a tap by moving
 the mark from where it was to where the tap landed, which only reads as an
 answer when the two are side by side and the same shape. The theme chips carried
-one and were neither: a row that scrolls sideways on a phone and wraps onto
+one and were neither: a row that scrolled sideways on a phone and wrapped onto
 three lines on a desk, so the pill flew between chips of different widths,
 sometimes across a line break and sometimes out of a chip already scrolled off
-the screen. They are switches now. They light up where they are while the tap
+the screen. They are switches now. The row wraps at every width rather than
+scrolling. They light up where they are while the tap
 crosses the rest of the screen over. What kept its slide is the one control
 shaped for it. That one had to be made honest first: three segments sized to
 their own labels put "All" at 33px beside "Warm-ups" at 70, so the pill grew and
@@ -731,6 +732,34 @@ actually different about them. `e2e/hub.spec.ts` measures one.
 **A control needs a visible edge.** Secondary buttons sit on `--color-surface` panels,
 so a `--color-surface` fill with a `--color-border` edge was 1.19:1 and effectively
 invisible. WCAG 1.4.11 wants 3:1 on a control's boundary. The same spec checks it.
+
+**A filter a coach cannot see is a filter they do not have.** The chip row used
+to scroll sideways below 640px. On a 390px phone that fitted three and a half of
+the eight: Tackle, Ruck and maul, Set piece and Game sense were reachable only by
+dragging a row that looks static, behind a 24px fade. It wraps at every width
+now. The cost is about 48px above the first drill at 390 and about 98px at 360,
+paid for partly by the age grade moving up beside the search box, where it takes
+no line of its own. The grade is the filter that decides what may be shown at
+all, so the top is where it belongs anyway. A select holding four characters
+never stretches either. `hub.spec.ts` sweeps 320 to 1440 on both screens that carry
+chips and fails if any of them is off the row's right edge.
+
+**A reading column is capped as one column, not panel by panel.** `#/plan/<id>`
+and `#/shared/<token>` both wrap themselves in `.plan-read`, which caps at 46rem
+and centres from 900px. Capping `.run-head` and `.run-block` and leaving what
+followed them full width put Share it and Print it 128px outside the session on
+both sides at 1280. It left the empty session's panel out of line with its own
+head as well.
+Present mode is not this: it has one `.run-stage` with a measure of its own.
+Centred rather than left aligned, because a 46rem column pinned to the inside
+edge of a 15rem navy rail puts all 464px it does not use in one lump on the
+right, which reads as a page that failed to load. The guide already did this.
+
+**The editor is two panes from 768px, not 900.** An iPad held upright read the
+session as one column with the add panel about 1,800px under it, so adding a
+drill meant scrolling down, picking, then hunting for where you were. The block
+rows stay stacked until 900, because 768 leaves the list about 370px, which is a
+phone's width. The side pane keeps its 18rem floor at both.
 
 **Favourites is a route, not a filter setting.** `#/favourites` is the catalogue
 with the stars kept in, rendered by `renderCatalogue` off `currentRoute()` rather

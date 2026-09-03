@@ -341,42 +341,48 @@ body {
 
 /* ---- Catalogue filters ---- */
 
-.hub-filters .hub-field {
-  margin-bottom: var(--sp-xs);
+/* One gap between every part rather than a margin on each, because the same
+   panel is a stack on a phone and a grid from 640px up and the two used to
+   disagree about which control owned the space under it. */
+.hub-filters {
+  display: grid;
+  gap: var(--sp-xs);
 }
 
-/* One row, scrolled sideways, rather than a stack of labelled selects. Five
-   stacked controls pushed the first drill 600px down a 320px screen. */
-.chip-scroll {
+.hub-filters .hub-field,
+.hub-filters .hub-segmented,
+.hub-filters .chip-row {
+  margin-bottom: 0;
+}
+
+/* Search with the age grade beside it. The grade is the one filter that decides
+   what a coach may be shown at all, so it goes at the top rather than under the
+   controls. It costs no height either, because a search box does not need the
+   whole line to itself. */
+.filter-top {
   display: flex;
   gap: var(--sp-2xs);
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  /* Bleed to the panel edges so the row reads as scrollable */
-  margin: 0 calc(-1 * var(--panel-pad, var(--sp-md))) var(--sp-xs);
-  padding: var(--sp-3xs) var(--panel-pad, var(--sp-md));
-  scrollbar-width: none;
+  align-items: center;
 }
 
-.chip-scroll::-webkit-scrollbar {
-  display: none;
+.filter-top .hub-field {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-/* Fades the right edge so it reads as "there is more this way" without adding a
-   scrollbar or an arrow nobody taps. */
-.chip-scroll-wrap {
-  position: relative;
-}
-
-.chip-scroll-wrap::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: calc(-1 * var(--panel-pad, var(--sp-md)));
-  width: var(--sp-lg);
-  height: 100%;
-  pointer-events: none;
-  background: linear-gradient(to right, transparent, var(--color-surface));
+/* Every chip on screen, wrapped, at every width. It used to be one row scrolled
+   sideways, which fitted three and a half of the eight on a phone: five filters
+   including Tackle and Ruck and maul were reachable only by dragging a row that
+   looks static, with a 24px fade as the only thing saying so. Wrapping costs
+   about 90px above the first drill on a 390px phone. Discoverability of the
+   control that navigates 100 drills is worth more than most of one card. */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2xs);
+  /* For the editor's add panel, which stacks its controls on margins. The
+     catalogue's panel is a grid with a gap and takes this back off. */
+  margin-bottom: var(--sp-md);
 }
 
 .chip-filter {
@@ -385,7 +391,6 @@ body {
      hands. These are the most tapped controls in the app. */
   min-height: 44px;
   padding: 0 var(--sp-sm);
-  scroll-snap-align: start;
   border: 1px solid var(--color-control-edge);
   border-radius: var(--radius-full);
   background: var(--color-surface);
@@ -405,32 +410,14 @@ body {
   color: var(--color-bg);
 }
 
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-xs);
-  align-items: stretch;
-}
-
-/* The control either fits its own three labels beside the age select or takes a
-   line of its own. `max-content` is what asks that question, so it keeps
-   answering it correctly if a label is ever reworded. It may not shrink: a
-   squeezed track is one whose segments fall back to their own widths, which is
-   the whole thing this is avoiding. A flat 12rem was tried and left every phone
-   from 340 to 380 rendering 53, 70, 63. */
-.filter-row .hub-segmented {
-  flex: 1 0 max-content;
-  margin-bottom: 0;
-}
-
 /* Wide enough for "U12" plus the chevron. It used to centre its text inside a
    narrower box, which put the label off centre the moment the box grew an
    arrow, so it reads left to right like every other select now. 44 rather than
-   48 to match the chip row it sits beside. */
+   48 to match the chip row it sits beside. It never grows: a select holding
+   four characters stretched across a phone was telling a coach to expect
+   something much longer, which is the same rule `.hub-input-short` exists for. */
 .age-select {
-  /* It may grow. When the control beside it has taken a line of its own, this is
-     what stops a 92px select being left stranded on a line by itself. */
-  flex: 1 0 auto;
+  flex: 0 0 auto;
   width: 5.75rem;
   min-height: 44px;
   font-weight: var(--weight-bold);
@@ -578,6 +565,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2xs);
+  /* The star filter is a different axis from the themes, so it gets air after
+     it rather than a hairline. The row wraps at every width now. A hairline that
+     can land on a line break is worse than none. */
+  margin-right: var(--sp-sm);
 }
 
 .chip-fav .star {
@@ -587,17 +578,6 @@ body {
 
 .chip-fav.is-active .star {
   fill: currentColor;
-}
-
-/* The star filter is a different axis from the themes beside it, so it gets a
-   hairline rather than being mistaken for one of them. */
-.chip-divider {
-  flex: 0 0 auto;
-  align-self: center;
-  width: 1px;
-  height: 1.5rem;
-  margin: 0 var(--sp-2xs);
-  background: var(--color-border);
 }
 
 /* ---- Drill cards ---- */
@@ -847,9 +827,13 @@ body {
   color: var(--color-text);
 }
 
-/* The account page. Three panels, one of which is the reason a coach came and
-   two of which are housekeeping, so on a wide screen they sit beside each other
-   rather than in one column a metre wide.
+/* The account page. Four panels: the two that are your account on one side, the
+   two that are this device and this session on the other, so on a wide screen
+   they sit beside each other rather than in one column a metre wide.
+
+   Split two and two rather than one and three. One tall panel beside a stack of
+   three left about 400px of nothing under the first column, which is the "small
+   boxes stacked down one side" look. Password belongs with your details anyway.
 
    The fields inside stay in one column at every width. Side by side form fields
    read slower and put the tab order in doubt. Neither of those changes because
@@ -1812,10 +1796,10 @@ body {
     height: 100%;
   }
 
-  /* Search and the two small controls share the top line, chips run underneath,
-     the count sits last. Named areas because auto-placement left a dead gap. */
+  /* Search with the age grade beside it takes the top line, the warm-up switch
+     sits to its right, chips run underneath and the count last. Named areas
+     because auto-placement left a dead gap. */
   .hub-filters {
-    display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "search controls"
@@ -1826,73 +1810,41 @@ body {
     row-gap: var(--sp-xs);
   }
 
-  .hub-filters .hub-field {
+  .filter-top {
     grid-area: search;
-    margin-bottom: 0;
   }
 
-  /* The column is auto-sized here, so a wrap does not give the control more
-     room. It shrinks the column and drops the age select underneath instead. */
-  .filter-row {
+  /* The column is auto-sized here, so the control is asked for the width its
+     own three labels need and gets exactly that. */
+  .hub-filters .hub-segmented {
     grid-area: controls;
-    flex-wrap: nowrap;
   }
 
-  .chip-scroll-wrap {
+  .chip-row {
     grid-area: chips;
   }
 
   .hub-count {
     grid-area: count;
   }
-
-  /* With room to spare the chips can simply wrap instead of scrolling */
-  .chip-scroll {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    margin: 0;
-    padding: 0;
-  }
-
-  /* A hairline that can land on a line break is worse than none. The star and the
-     count already mark this chip out as a different kind of filter. */
-  .chip-divider {
-    display: none;
-  }
-
-  .chip-fav {
-    margin-right: var(--sp-sm);
-  }
-
-  .chip-scroll-wrap::after {
-    display: none;
-  }
 }
 
-/* ---- 900px: a tool with a rail, not a phone in a window ---- */
+/* ---- 768px: the session and the drill you are adding to it, together ---- */
 
-@media (min-width: 56.25rem) {
-  .run-head,
-  .run-block,
-  .run-break,
-  .hub-back + .hub-panel.hub-empty {
-    max-width: 46rem;
-  }
+/* Two panes so adding a drill does not mean scrolling away from the session.
+   This used to start at 900px, which left an iPad held upright reading the
+   session as one long column with the add panel about 1,800px under it: pick a
+   drill, scroll back up, find where you were. A tablet is the kitchen table
+   case, so it is the one screen where a coach is most likely to be building
+   rather than reading.
 
-  /* The reading column is about 44rem here, where an 11rem picture sat marooned
-     in the middle of it. A coach at a pitch is on a phone, so this width is the
-     kitchen table case and can afford the room. */
-  .run-block-figure .drill-diagram {
-    height: 15rem;
-  }
-
-  /* Two panes so adding a drill does not mean scrolling away from the session.
-     The side pane has a floor because it holds the same three-way control the
-     catalogue does. At a bare 900px a zero floor took it under what its own
-     labels need, which is where the three stopped being one width. Before that it
-     clipped the end off "Exercises" outright. 18rem is the panel's padding plus
-     that control, measured rather than guessed. It costs the block list about
-     35px at 900, which is the narrowest this layout is ever asked to be. */
+   The side pane has a floor because it holds the same three-way control the
+   catalogue does. A zero floor took it under what its own labels need, which is
+   where the three stopped being one width. Before that it clipped the end off
+   "Exercises" outright. 18rem is the panel's padding plus that control,
+   measured rather than guessed. At 768 that leaves the block list about 370px,
+   which is a phone's width, so the rows stay stacked until 900. */
+@media (min-width: 48rem) {
   .plan-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 1fr);
@@ -1903,6 +1855,34 @@ body {
   .plan-side {
     position: sticky;
     top: var(--sp-lg);
+  }
+}
+
+/* ---- 900px: a tool with a rail, not a phone in a window ---- */
+
+@media (min-width: 56.25rem) {
+  /* The whole reading column, capped and centred as one thing.
+     `renderPlanView` and `renderSharedPlan` both wrap themselves in this, which
+     is what makes the cap complete: capping the blocks and letting whatever
+     followed them run full width put Share it and Print it 128px outside the
+     session on both sides at 1280. It left the empty session's panel out of
+     line with its own head as well.
+
+     Centred rather than left aligned. A 46rem column pinned to the inside edge
+     of a 15rem navy rail leaves every one of the 464px it does not use in one
+     lump on the right, which reads as a page that failed to load rather than as
+     a measure. The guide already centres its column. These are the same kind of
+     screen. */
+  .plan-read {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  /* The reading column is about 44rem here, where an 11rem picture sat marooned
+     in the middle of it. A coach at a pitch is on a phone, so this width is the
+     kitchen table case and can afford the room. */
+  .run-block-figure .drill-diagram {
+    height: 15rem;
   }
 
   /* A drill reads as a document: prose in a measure, facts to one side. Tracks are

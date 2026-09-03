@@ -31,6 +31,7 @@ export function renderAccount(
 
   container.innerHTML = `
     <div class="account-layout">
+    <div class="account-col">
     <section class="hub-panel account-main">
       <h2>${profile ? "Your details" : "Finish setting up"}</h2>
       ${
@@ -74,7 +75,6 @@ export function renderAccount(
       <p class="hub-fineprint">Signed in as ${esc(email)}.</p>
     </section>
 
-    <div class="account-side">
     <section class="hub-panel">
       <h2>Password</h2>
       <form id="password-form" novalidate>
@@ -86,7 +86,9 @@ export function renderAccount(
         <button type="submit" class="hub-btn">Change password</button>
       </form>
     </section>
+    </div>
 
+    <div class="account-side">
     <section class="hub-panel" id="device-panel">
       <h2>On this device</h2>
       ${deviceState()}

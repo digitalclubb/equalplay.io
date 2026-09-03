@@ -244,31 +244,10 @@ function renderList(container: HTMLElement): void {
       onFavourites() ? "Your starred drills" : `Drills for ${AGE_GROUP_LABELS[active.ageGroup]}`
     }</h2>
     <section class="hub-panel hub-filters">
-      <div class="hub-field">
-        <label for="f-search" class="visually-hidden">Search drills</label>
-        <input id="f-search" type="search" value="${esc(active.search ?? "")}" placeholder="Search ruck, passing, tag…" />
-      </div>
-
-      <div class="chip-scroll-wrap">
-      <div class="chip-scroll" role="group" aria-label="Narrow the drills down">
-        <button type="button" id="f-fav" class="chip-filter chip-fav${active.onlyFavourites ? " is-active" : ""}" aria-pressed="${Boolean(active.onlyFavourites)}">
-          ${star(Boolean(active.onlyFavourites))} Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}
-        </button>
-        <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">Small space</button>
-        <span class="chip-divider" aria-hidden="true"></span>
-        ${THEMES.map(
-          (t) =>
-            `<button type="button" data-theme="${t}" class="chip-filter${t === active.theme ? " is-active" : ""}" aria-pressed="${t === active.theme}">${esc(THEME_SHORT[t])}</button>`,
-        ).join("")}
-      </div>
-      </div>
-
-      <div class="filter-row">
-        <div class="hub-segmented" role="group" aria-label="Warm-up or exercise">
-          ${KINDS.map(
-            (k) =>
-              `<button type="button" data-kind="${k.value}" class="hub-seg${(active.kind ?? "") === k.value ? " is-active" : ""}" aria-pressed="${(active.kind ?? "") === k.value}">${k.label}</button>`,
-          ).join("")}
+      <div class="filter-top">
+        <div class="hub-field">
+          <label for="f-search" class="visually-hidden">Search drills</label>
+          <input id="f-search" type="search" value="${esc(active.search ?? "")}" placeholder="Search ruck, passing, tag…" />
         </div>
         <label for="f-age" class="visually-hidden">Age group</label>
         <select id="f-age" class="age-select">
@@ -277,6 +256,24 @@ function renderList(container: HTMLElement): void {
               `<option value="${g}"${g === active.ageGroup ? " selected" : ""}>${AGE_GROUP_LABELS[g]}</option>`,
           ).join("")}
         </select>
+      </div>
+
+      <div class="chip-row" role="group" aria-label="Narrow the drills down">
+        <button type="button" id="f-fav" class="chip-filter chip-fav${active.onlyFavourites ? " is-active" : ""}" aria-pressed="${Boolean(active.onlyFavourites)}">
+          ${star(Boolean(active.onlyFavourites))} Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}
+        </button>
+        <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">Small space</button>
+        ${THEMES.map(
+          (t) =>
+            `<button type="button" data-theme="${t}" class="chip-filter${t === active.theme ? " is-active" : ""}" aria-pressed="${t === active.theme}">${esc(THEME_SHORT[t])}</button>`,
+        ).join("")}
+      </div>
+
+      <div class="hub-segmented" role="group" aria-label="Warm-up or exercise">
+        ${KINDS.map(
+          (k) =>
+            `<button type="button" data-kind="${k.value}" class="hub-seg${(active.kind ?? "") === k.value ? " is-active" : ""}" aria-pressed="${(active.kind ?? "") === k.value}">${k.label}</button>`,
+        ).join("")}
       </div>
 
       <p class="hub-count" role="status">${countLabel(results.length, active)}</p>

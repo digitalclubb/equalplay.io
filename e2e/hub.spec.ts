@@ -852,12 +852,19 @@ test("expanding a drill does not throw the page around", async ({ page }) => {
   await page.locator("#add-search").scrollIntoViewIfNeeded();
   const list = page.locator(".add-list");
   await list.evaluate((el) => { el.scrollTop = 200; });
+
+  const row = page.locator("[data-peek]").nth(6);
+  // On screen before it is tapped. A click on a row below the fold makes
+  // Playwright scroll to it first, so the scroll this measures would be its own
+  // rather than the app's, and the test would then be reporting on how tall the
+  // panel above the list happens to be.
+  await row.scrollIntoViewIfNeeded();
+
   const listScroll = await list.evaluate((el) => el.scrollTop);
   const pageScroll = await page.evaluate(() => window.scrollY);
   expect(pageScroll).toBeGreaterThan(0);
   expect(listScroll).toBeGreaterThan(0);
 
-  const row = page.locator("[data-peek]").nth(6);
   const before = await row.boundingBox();
   await row.click();
 
@@ -1922,7 +1929,7 @@ test("the three segments stay one width", async ({ page }) => {
   // beside 103 on a desk. The same control is in the editor's add panel, where
   // the pane it stands in is the thing that can starve it.
   const planId = await runnableSession(page);
-  const widths = [320, 340, 360, 375, 390, 414, 480, 700, 900, 1000, 1280, 1440];
+  const widths = [320, 340, 360, 375, 390, 414, 480, 700, 768, 820, 900, 1000, 1280, 1440];
 
   for (const hash of ["#/catalogue", `#/plan/${planId}/edit`]) {
     for (const width of widths) {
@@ -1954,6 +1961,42 @@ test("the three segments stay one width", async ({ page }) => {
       for (const seg of segs) {
         expect(seg.cut, `${where}: "${seg.text}" is truncated`).toBe(false);
       }
+    }
+  }
+});
+
+test("every filter chip is on screen at every width", async ({ page }) => {
+  // The row used to scroll sideways below 640px, which fitted three and a half
+  // of the eight chips on a 390px phone. Tackle, Ruck and maul, Set piece and
+  // Game sense were reachable only by dragging a row that looks static, behind a
+  // 24px fade. A filter a coach cannot see is a filter they do not have, and
+  // this is the control that navigates 100 drills. The same row is in the
+  // editor's add panel, where the pane it stands in is narrower still.
+  const planId = await runnableSession(page);
+  const widths = [320, 360, 375, 390, 414, 480, 700, 768, 820, 900, 1000, 1280, 1440];
+
+  for (const hash of ["#/catalogue", `#/plan/${planId}/edit`]) {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/hub/${hash}`);
+      await page.locator(".chip-filter").first().waitFor();
+
+      const row = page.locator(".chip-row").first();
+      const measured = await row.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          hidden: el.scrollWidth - el.clientWidth,
+          spills: [...el.querySelectorAll(".chip-filter")]
+            .filter((chip) => chip.getBoundingClientRect().right > box.right + 0.5)
+            .map((chip) => chip.textContent?.trim()),
+          count: el.querySelectorAll(".chip-filter").length,
+        };
+      });
+
+      const where = `${hash} at ${width}px`;
+      expect(measured.count, `${where}: no chips`).toBeGreaterThan(2);
+      expect(measured.hidden, `${where}: the row scrolls sideways`).toBe(0);
+      expect(measured.spills, `${where}: chips past the right edge`).toEqual([]);
     }
   }
 });
