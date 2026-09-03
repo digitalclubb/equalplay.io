@@ -167,6 +167,15 @@ function rulesPagesPlugin(): Plugin {
 
 export default defineConfig({
   root: ".",
+  // Listen on every interface, not on loopback. Vite's default resolves to the
+  // machine's own localhost, which under ChromeOS Crostini is the container's
+  // loopback and nothing else: the browser runs outside the container and
+  // reaches it on the eth0 address, so every request came back
+  // ERR_CONNECTION_RESET while curl inside the container got a 200. The
+  // service worker hid it by answering the shell from cache, which looks like
+  // a page that loads its nav then stops.
+  server: { host: true },
+  preview: { host: true },
   // Not an SPA. Without this, Vite's dev and preview servers rewrite every
   // non-file request to /index.html, so /hub and everything under public/
   // silently serve the rotation planner instead of the page you asked for.
