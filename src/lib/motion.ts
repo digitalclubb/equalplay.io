@@ -23,6 +23,9 @@
  * uses it too and nothing may drag `@supabase/supabase-js` into that bundle.
  */
 
+/** Counts transitions started, so a superseded one knows it is no longer the page. */
+let latest = 0;
+
 export function transition(kind: string, update: () => void): void {
   // `in` rather than a plain truthiness check: TypeScript's DOM types have this
   // as always present, which is a promise about a browser rather than about this
@@ -35,11 +38,18 @@ export function transition(kind: string, update: () => void): void {
 
   const root = document.documentElement;
   root.dataset.vt = kind;
+  // Only the newest may clear. A second transition starting before this one has
+  // finished rejects `finished`. That rejection lands after the newcomer has
+  // already written its own `data-vt`, so clearing on the way out strips the
+  // kind off a transition still running, which drops it to the browser's plain
+  // cross-fade with nothing on screen to say why. Two nav taps inside 280ms is
+  // an ordinary thing for a coach to do.
+  const mine = ++latest;
   const clear = (): void => {
-    delete root.dataset.vt;
+    if (latest === mine) delete root.dataset.vt;
   };
   // Both arms, because `finished` rejects when a second navigation cuts this one
-  // short. That is an ordinary thing for a coach to do and not an error, but an
-  // unhandled rejection would still be logged and `data-vt` would stick.
+  // short. That is not an error, but an unhandled rejection would still be
+  // logged and `data-vt` would stick.
   void document.startViewTransition(update).finished.then(clear, clear);
 }
