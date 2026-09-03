@@ -423,8 +423,6 @@ body {
 ::view-transition-new(nav-pill),
 ::view-transition-old(seg-pill),
 ::view-transition-new(seg-pill),
-::view-transition-old(theme-pill),
-::view-transition-new(theme-pill),
 ::view-transition-old(team-pill),
 ::view-transition-new(team-pill) {
   animation-duration: var(--duration-fast);
@@ -433,9 +431,14 @@ body {
 /* A filter is not navigation, so its pill does not travel like the nav's. The
    spring is worth its 280ms and its overshoot crossing a tab bar or a rail. Over
    the third of a filter row between Warm-ups and Exercises the same curve is a
-   bounce on a control a coach taps five times in a row. It moves and stops. */
-::view-transition-group(seg-pill),
-::view-transition-group(theme-pill) {
+   bounce on a control a coach taps five times in a row. It moves and stops.
+
+   The theme chips used to carry one of these too. They are a row that scrolls
+   sideways on a phone and wraps onto three lines on a desk, so the pill flew
+   between two chips of different widths, sometimes across a line break and
+   sometimes from a chip that had been scrolled off the screen. A chip is a
+   switch. It lights up where it is. */
+::view-transition-group(seg-pill) {
   animation-duration: var(--duration-normal);
   animation-timing-function: var(--ease-out);
 }

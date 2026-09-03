@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-670 unit and integration tests across 22 files, 158 Playwright tests. Most are ordinary.
+670 unit and integration tests across 22 files, 159 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 158 tests across four files: `matchday` (12), `home` (11), `hub` (109)
+`pnpm test:e2e` is 159 tests across four files: `matchday` (12), `home` (11), `hub` (110)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -604,9 +604,9 @@ then the buttons in a row that wraps do not overlap.
 change to `startViewTransition`, which photographs the page either side of it and
 animates between the two. Anything carrying a `view-transition-name` is matched
 across the pair by that name and moved from where it was to where it ended up.
-That is the whole of the sliding pills in the nav, the segmented control, the
-theme chips and match day's team tabs: the name sits on whichever one is active,
-so the browser is handed the same pill in two places. Nothing measures a tab,
+That is the whole of the sliding pills in the nav, the segmented control and
+match day's team tabs: the name sits on whichever one is active, so the browser
+is handed the same pill in two places. Nothing measures a tab,
 which is what every other way of doing this spends its time on. No number goes
 stale when a label changes either. The kind of change goes on `<html>` as
 `data-vt` while it runs, so a route, a filter and a panel get three animations
@@ -616,13 +616,26 @@ Three things about it are load bearing. A name has to be unique in a snapshot or
 the browser drops the whole transition rather than choosing, so every slide in
 the app stops at once with nothing on screen to say why: `.hub-seg.is-active`
 appears in the catalogue's filters and in the editor's add panel and is only ever
-one of them at a time. Only the theme row's chip is named, because Small space or
-Favourites can be lit alongside it. The rail at 900px opts out, because a
+one of them at a time. The rail at 900px opts out, because a
 translucent pill with half a column to cross drags the label it is leaving over
 every label it passes. And reduced motion is honoured in `motion.ts` rather than
 in CSS, because the sweep in `base.css` matches elements and the
 `::view-transition` tree is not any element's descendant. `hub.spec.ts` holds all
 three.
+
+**Not everything that changes should travel.** A slide answers a tap by moving
+the mark from where it was to where the tap landed, which only reads as an
+answer when the two are side by side and the same shape. The theme chips carried
+one and were neither: a row that scrolls sideways on a phone and wraps onto
+three lines on a desk, so the pill flew between chips of different widths,
+sometimes across a line break and sometimes out of a chip already scrolled off
+the screen. They are switches now. They light up where they are while the tap
+crosses the rest of the screen over. What kept its slide is the one control
+shaped for it. That one had to be made honest first: three segments sized to
+their own labels put "All" at 33px beside "Warm-ups" at 70, so the pill grew and
+shrank as it crossed. The track is a grid of equal columns which takes a line of its
+own rather than squeeze. `hub.spec.ts` measures the three from 320px to 1440px
+on both screens that carry them.
 
 **The update lands a frame late, which is the price.** `startViewTransition` runs
 its callback at the next rendering opportunity, so anything that has to happen

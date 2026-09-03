@@ -405,22 +405,21 @@ body {
   color: var(--color-bg);
 }
 
-/* Only the theme row's chip is named. Small space and Favourites are their own
-   switches and can be on at the same time as a theme, so naming the class would
-   put three of one name in a snapshot and the browser would drop the whole
-   transition rather than pick one. */
-.chip-filter[data-theme].is-active {
-  view-transition-name: theme-pill;
-}
-
 .filter-row {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-xs);
   align-items: stretch;
 }
 
+/* The control either fits its own three labels beside the age select or takes a
+   line of its own. `max-content` is what asks that question, so it keeps
+   answering it correctly if a label is ever reworded. It may not shrink: a
+   squeezed track is one whose segments fall back to their own widths, which is
+   the whole thing this is avoiding. A flat 12rem was tried and left every phone
+   from 340 to 380 rendering 53, 70, 63. */
 .filter-row .hub-segmented {
-  flex: 1;
+  flex: 1 0 max-content;
   margin-bottom: 0;
 }
 
@@ -429,14 +428,24 @@ body {
    arrow, so it reads left to right like every other select now. 44 rather than
    48 to match the chip row it sits beside. */
 .age-select {
-  flex: 0 0 auto;
+  /* It may grow. When the control beside it has taken a line of its own, this is
+     what stops a 92px select being left stranded on a line by itself. */
+  flex: 1 0 auto;
   width: 5.75rem;
   min-height: 44px;
   font-weight: var(--weight-bold);
 }
 
+/* A grid rather than a flex row, because equal columns is the whole job.
+   `1fr` is `minmax(auto, 1fr)`: the three share the width evenly and none of
+   them goes under its own label, so the track still reports a real width to
+   whatever it is sitting in. Flexing them to a zero basis levelled them too, but
+   it told the wide layout's auto-sized column they needed nothing and the
+   labels came back truncated. */
 .hub-segmented {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: var(--sp-2xs);
   padding: var(--sp-3xs);
   background: var(--color-bg);
@@ -444,9 +453,18 @@ body {
   margin-bottom: var(--sp-md);
 }
 
+/* A segment sized to its own label makes the pill grow and shrink as it
+   crosses, which is the one thing a toggle does not do. The grid above is what
+   levels them. */
 .hub-seg {
-  flex: 1;
   min-height: 44px;
+  /* Air either side of the label, so the widest one is not printed edge to edge
+     on its own pill at the width where the track is tightest. It is part of what
+     the track has to hold, which is why it is here rather than only where it
+     shows. It is the smallest step there is because it is paid three times over
+     at the two widths with nothing left to give: a 320px phone and the editor's
+     side pane. */
+  padding: 0 var(--sp-3xs);
   white-space: nowrap;
   font-family: inherit;
   font-size: var(--text-sm);
@@ -1618,11 +1636,6 @@ body {
 /* ---- Small phones ---- */
 
 @media (max-width: 360px) {
-  .hub-seg {
-    padding: 0 var(--sp-2xs);
-    font-size: var(--text-xs);
-  }
-
   .age-select {
     width: 5.25rem;
   }
@@ -1818,8 +1831,11 @@ body {
     margin-bottom: 0;
   }
 
+  /* The column is auto-sized here, so a wrap does not give the control more
+     room. It shrinks the column and drops the age select underneath instead. */
   .filter-row {
     grid-area: controls;
+    flex-wrap: nowrap;
   }
 
   .chip-scroll-wrap {
@@ -1828,16 +1844,6 @@ body {
 
   .hub-count {
     grid-area: count;
-  }
-
-  /* Squeezing three labels into a flexed track collapsed them into one blob */
-  .filter-row .hub-segmented {
-    flex: 0 0 auto;
-  }
-
-  .hub-seg {
-    flex: 0 0 auto;
-    padding: 0 var(--sp-md);
   }
 
   /* With room to spare the chips can simply wrap instead of scrolling */
@@ -1880,10 +1886,16 @@ body {
     height: 15rem;
   }
 
-  /* Two panes so adding a drill does not mean scrolling away from the session */
+  /* Two panes so adding a drill does not mean scrolling away from the session.
+     The side pane has a floor because it holds the same three-way control the
+     catalogue does. At a bare 900px a zero floor took it under what its own
+     labels need, which is where the three stopped being one width. Before that it
+     clipped the end off "Exercises" outright. 18rem is the panel's padding plus
+     that control, measured rather than guessed. It costs the block list about
+     35px at 900, which is the narrowest this layout is ever asked to be. */
   .plan-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 1fr);
     gap: var(--stack);
     align-items: start;
   }

@@ -1888,6 +1888,50 @@ test("a tap on a filter and a tap on a tab are both animated", async ({ page }) 
   expect(await started(page), "the nav pill did not slide").toBe(2);
 });
 
+test("the three segments stay one width", async ({ page }) => {
+  // The pill that marks the chosen one is the segment itself, so a segment
+  // sized to its own label makes the pill grow and shrink as it crosses. It read
+  // as the control rearranging itself rather than as a toggle. Sizing to the
+  // label put "All" at 33px beside "Warm-ups" at 70 on a 320px phone, and 47
+  // beside 103 on a desk. The same control is in the editor's add panel, where
+  // the pane it stands in is the thing that can starve it.
+  const planId = await runnableSession(page);
+  const widths = [320, 340, 360, 375, 390, 414, 480, 700, 900, 1000, 1280, 1440];
+
+  for (const hash of ["#/catalogue", `#/plan/${planId}/edit`]) {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/hub/${hash}`);
+      await page.locator(".hub-seg").first().waitFor();
+
+      const track = page.locator(".hub-segmented").first();
+      const segs = await track.evaluate((el) =>
+        [...el.querySelectorAll(".hub-seg")].map((seg) => ({
+          text: seg.textContent?.trim(),
+          width: seg.getBoundingClientRect().width,
+          cut: seg.scrollWidth > Math.ceil(seg.getBoundingClientRect().width),
+        })),
+      );
+      // Three columns that will not go under their own labels overflow the panel
+      // rather than shrinking, which is how the editor's side pane used to cut
+      // the end off "Exercises". The pane carries a floor for it.
+      const spills = await track.evaluate((el) => el.scrollWidth > el.clientWidth + 0.5);
+
+      const where = `${hash} at ${width}px`;
+      expect(spills, `${where}: the control overflows what it stands in`).toBe(false);
+      expect(segs, `${where}: segment count`).toHaveLength(3);
+      const spread = Math.max(...segs.map((s) => s.width)) - Math.min(...segs.map((s) => s.width));
+      // A pixel of slack for a track dividing by three. Anything a coach could
+      // see is a segment that has fallen back to its own label.
+      expect(spread, `${where}: ${segs.map((s) => `${s.text} ${s.width.toFixed(1)}`).join(", ")}`)
+        .toBeLessThan(1);
+      for (const seg of segs) {
+        expect(seg.cut, `${where}: "${seg.text}" is truncated`).toBe(false);
+      }
+    }
+  }
+});
+
 test("a coach who has asked for less motion gets none of it", async ({ page }) => {
   // The promise the reduced-motion sweep in `base.css` cannot keep on its own.
   // That sweep matches elements and the ::view-transition tree is not any
