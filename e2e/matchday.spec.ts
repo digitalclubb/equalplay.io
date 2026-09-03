@@ -482,6 +482,59 @@ test("the planner points at the drills once match day is worked out", async ({ p
   await expect(page).toHaveURL(/\/hub/);
 });
 
+test("a rotation sits beside the squad rather than a mile under it", async ({ page }) => {
+  // Match day is one long scroll by design, which is right on a phone and was
+  // wrong on a laptop: a 46rem column against the rail with 464px of nothing
+  // beside it, and the squad about 2,000px above the game being played.
+  //
+  // The trade only holds where the second column can carry what the single
+  // column already had. At 1200 it could not: the games measured 504px against
+  // the 688 they got one pixel earlier, so widening the window shrank the
+  // rotation. Both halves of that are checked here, because a breakpoint that
+  // makes content smaller as the window grows is worse than no breakpoint.
+  await freshStart(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await addPlayers(page, ["Alfie", "Ben", "Charlie", "Dylan", "Ethan", "Finn", "George", "Harry"]);
+
+  // Nothing to put in a second column yet, so there is not one. An empty right
+  // hand column would only buy a narrower form.
+  const columns = () =>
+    page.locator("#app").evaluate((el) => getComputedStyle(el).gridTemplateColumns);
+  expect(await columns(), "two columns before there is a rotation").not.toContain(" ");
+
+  await generate(page);
+
+  const measure = () =>
+    page.evaluate(() => {
+      const box = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+      return {
+        results: Math.round(box("#results").width),
+        squadRight: Math.round(box("#main-content").right),
+        resultsLeft: Math.round(box("#results").left),
+        firstGameTop: Math.round(box("[data-testid^='game-']").top),
+        squadTop: Math.round(box(".squad-panel").top),
+        sideways:
+          document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      };
+    });
+
+  const wide = await measure();
+  expect(wide.resultsLeft, "the games are beside the squad").toBeGreaterThan(wide.squadRight);
+  expect(wide.sideways, "the page scrolls sideways").toBe(false);
+  // The whole point: both on screen together rather than a rotation two
+  // thousand pixels below the names it was built from.
+  expect(Math.abs(wide.firstGameTop - wide.squadTop)).toBeLessThan(400);
+
+  // One column below the breakpoint, and the games are no narrower up here than
+  // they were down there.
+  await page.setViewportSize({ width: 1439, height: 900 });
+  const narrow = await measure();
+  expect(await columns(), "still two columns at 1439").not.toContain(" ");
+  expect(wide.results, "widening the window shrank the rotation").toBeGreaterThanOrEqual(
+    narrow.results,
+  );
+});
+
 test("teams belong to the planner, not to the navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 820 });
   await freshStart(page);

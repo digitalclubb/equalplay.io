@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-671 unit and integration tests across 22 files, 161 Playwright tests. Most are ordinary.
+671 unit and integration tests across 22 files, 162 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 161 tests across four files: `matchday` (12), `home` (11), `hub` (112)
+`pnpm test:e2e` is 162 tests across four files: `matchday` (13), `home` (11), `hub` (112)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -760,6 +760,16 @@ session as one column with the add panel about 1,800px under it, so adding a
 drill meant scrolling down, picking, then hunting for where you were. The block
 rows stay stacked until 900, because 768 leaves the list about 370px, which is a
 phone's width. The side pane keeps its 18rem floor at both.
+
+**Match day is two columns once there is a rotation.** At 1440px and up, gated on
+`#app:has(#results > *)` so an empty right hand column never buys a narrower
+form. Before that the squad sat about 2,000px above the game being played. The
+whole tool was a 46rem column against the rail with 464px of nothing beside it.
+The squad keeps a phone's width, because that is what a list of first names
+needs. The games take the rest. 1440 rather than 1200 because below it the
+second column cannot hold what the single column already had: at 1200 the games
+measured 504px against 688 one pixel earlier, so widening the window shrank the
+rotation. At 1440 they get 744.
 
 **Favourites is a route, not a filter setting.** `#/favourites` is the catalogue
 with the stars kept in, rendered by `renderCatalogue` off `currentRoute()` rather

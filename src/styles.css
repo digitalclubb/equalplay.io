@@ -17,6 +17,40 @@ body {
   max-width: 46rem;
 }
 
+/* ---- 1200px: the squad and the rotation at the same time ---- */
+
+/* Match day is one long scroll by design: type the squad, sort it, then work
+   down the games. On a phone that is right. On a laptop it left a 46rem column
+   pinned against the rail with 464px of nothing beside it. It also put the squad
+   about 2,000px above the game being played, so checking who is on next meant
+   scrolling away from the names.
+
+   Two columns once there is a rotation to look at. The squad and its settings
+   keep a phone's width, because that is what a list of first names needs. The
+   games take the rest. Only when there is something in `#results`: an empty
+   right hand column would be a narrower form for nothing.
+
+   1440 rather than 1200, because below it the second column cannot hold what
+   the single column already had. At 1200 the games measured 504px against the
+   688px they get one pixel earlier, so widening the window shrank the rotation,
+   and it did not win the width back until about 1385. 1440 is the first width
+   where the squad's 24rem plus the gap still leaves the games more than they
+   started with: 744px against 688. Nothing below it changes at all. */
+@media (min-width: 90rem) {
+  #app:has(#results > *) {
+    max-width: 78rem;
+    display: grid;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+    column-gap: var(--stack);
+    align-items: start;
+  }
+
+  /* Picking a team governs both columns, so it sits above them. */
+  #app:has(#results > *) > .team-tabs {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ---- Team Tabs (inside header bar) ---- */
 
 .next-step {
