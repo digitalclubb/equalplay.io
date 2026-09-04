@@ -2932,6 +2932,83 @@ body {
   font-size: var(--text-lg);
 }
 
+/* The setup, which is the first thing a block needs: where the cones go, before
+   anybody runs anywhere. Smaller than the coaching points on purpose. It gets
+   read once, standing still, with the bag open. */
+.run-stage-setup {
+  margin: 0 0 var(--sp-sm);
+  font-size: var(--text-lg);
+}
+
+/* Taller than the reading view's 11rem. This one is held at arm's length and
+   the picture is the instruction, so it is worth the screen it takes. */
+.run-stage-figure .drill-diagram {
+  width: auto;
+  max-width: 100%;
+  height: 13rem;
+  margin: 0 auto var(--sp-md);
+}
+
+.run-stage-more {
+  margin: 0 0 var(--sp-lg);
+  font-size: var(--text-lg);
+}
+
+/* Flex kills the disclosure triangle in Chromium, so the arrow is written out
+   the way the reading view's safety note already does it. Without one this is a
+   line of orange text that looks like a link and says nothing about opening. */
+.run-stage-more summary {
+  cursor: pointer;
+  padding: var(--sp-2xs) 0;
+  color: var(--color-primary);
+  font-weight: var(--weight-semi);
+  list-style: none;
+  /* A 44px target. The summary is the only way into the prose and it gets
+     tapped with cold wet hands. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.run-stage-more summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A margin rather than a space in the content. The summary is a flex container,
+   which collapses leading whitespace, so the arrow sat against the last word. */
+.run-stage-more summary::after {
+  content: "▾";
+  margin-left: 0.35em;
+  font-weight: var(--weight-normal);
+}
+
+.run-stage-more[open] summary::after {
+  content: " ▴";
+}
+
+.run-stage-more-body {
+  padding-left: var(--sp-sm);
+  border-left: 3px solid var(--color-border);
+}
+
+.run-stage-more-body p,
+.run-stage-more-body ul {
+  margin: 0 0 var(--sp-sm);
+}
+
+.run-stage-more-body ul {
+  padding-left: 1.2em;
+}
+
+.run-more-label {
+  margin: var(--sp-sm) 0 var(--sp-3xs);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .run-stage-points {
   margin: 0 0 var(--sp-lg);
   padding-left: 1.2em;

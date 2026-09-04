@@ -1842,6 +1842,31 @@ test("present mode says when a block is one the grade may not do", async ({ page
   await expect(page.locator(".run-stage .plan-warning-error").first()).toBeVisible();
 });
 
+test("present mode says how to set the drill up, not only what to watch for", async ({
+  page,
+}) => {
+  await runnableSession(page);
+  await page.locator("text=Run it").click();
+  await expect(page.locator("#run-time")).toBeVisible();
+
+  // The screen a coach holds while the cones go out. It carried the coaching
+  // points and none of the instructions, so it was a set of reminders for
+  // somebody who had never been told the drill in the first place. The drill
+  // page and the reading view both carry the picture; this is the one on the
+  // pitch.
+  await expect(page.locator(".run-stage-setup")).not.toBeEmpty();
+  await expect(page.locator(".run-stage-figure svg")).toBeVisible();
+
+  // How it runs plus the ways to change it are one tap away rather than on the
+  // page, because the points have to stay readable at arm's length.
+  const more = page.locator(".run-stage-more");
+  await expect(more.locator(".run-stage-more-body")).toBeHidden();
+  await more.locator("summary").click();
+  await expect(more.locator(".run-stage-more-body")).toBeVisible();
+  // Easier before harder. A block going wrong is why a coach opens this.
+  await expect(more.locator(".run-more-label").first()).toHaveText("Make it easier");
+});
+
 test("buttons sitting in a row line up with each other", async ({ page }) => {
   await runnableSession(page);
   await page.locator("text=Run it").click();

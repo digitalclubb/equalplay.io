@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-681 unit and integration tests across 22 files, 165 Playwright tests. Most are ordinary.
+681 unit and integration tests across 22 files, 167 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 165 tests across four files: `matchday` (13), `home` (11), `hub` (115)
+`pnpm test:e2e` is 167 tests across four files: `matchday` (14), `home` (11), `hub` (116)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -472,7 +472,13 @@ comes before the age picker.
 
 **A session opens to be read, is edited on purpose and is run on the pitch.**
 `#/plan/<id>/run/<n>` is present mode: one block, coaching points at a size you
-can read at arm's length, the minutes counting down. The block number is in the
+can read at arm's length, the minutes counting down. It carries the drill's
+`setup` and its diagram as well, because it shipped with the coaching points and
+none of the instructions: a set of reminders for the one coach who had never
+been told the drill. The drill page and the reading view both had the picture
+and the screen actually held on the pitch did not. `howItRuns` plus the ways to
+change it sit behind a `<details>`, easier before harder, since the points are
+what a glance has to land on and a paragraph over them pushes them off a phone. The block number is in the
 URL, so a phone that locks comes back to the drill actually being run rather
 than the top of the plan. The clock keeps a deadline rather than a count,
 because a backgrounded tab is throttled and would otherwise come back with
@@ -693,8 +699,12 @@ holding the button is a wobble. The press was 0.985 before, which is a scale you
 have to be told about; it is 0.97 on the big things and 0.94 on the chips and
 segments, since the same scale reads as less the smaller the thing wearing it.
 
-**Match day is not animated, apart from the team tabs.** Picking a team is
-navigation, so the pill slides and the squad crosses over. Everything else there
+**Match day is not animated, apart from the team tabs and one scroll.** Picking
+a team is navigation, so the pill slides and the squad crosses over. Sort my team
+scrolls the rotation into view, because a full squad plus the settings plus the
+button fill a phone and game one landed about 630px down an 844px screen: you
+tapped the only big button on the page and almost nothing moved. Only that path
+scrolls. Everything else there
 is a substitution, which has to land the instant it is tapped: a rotation table
 that slides is a rotation table a coach waits for. What match day did get is the
 pointer states it never had, since every control was written for a thumb and said

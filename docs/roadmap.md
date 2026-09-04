@@ -87,7 +87,9 @@ usually anonymous and RLS has nothing to match them against.
 **Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
 coaching points big, minutes counting down, the screen held awake. The block is
 in the URL so a phone that locks comes back to the drill being run. Overrunning
-counts up rather than stopping at zero.
+counts up rather than stopping at zero. It shows the drill's setup and its
+diagram, so a coach knows where the cones go, with how it runs plus the ways to
+change it one tap behind them.
 
 **A drill goes into a session from the drill page.** The planner's own search
 was the only way in. Sessions the drill's grade may not do are left out, with the

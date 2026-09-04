@@ -381,6 +381,18 @@ export function mountApp(root: HTMLElement): void {
       rerenderResults();
       persist();
       handle.setLoading(false);
+
+      // Bring the rotation into view. The squad, the settings and the button
+      // itself fill a phone, so the first game landed about 630px down an 844px
+      // screen: you tapped the one big button on the page and almost nothing
+      // moved. Only this path scrolls. A substitution has to land where the
+      // thumb already is, which is why `rerenderResults` does not do it.
+      resultsContainer.scrollIntoView({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
     }, 200);
   }
 

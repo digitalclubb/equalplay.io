@@ -595,6 +595,24 @@ test("match day checks the Half Game Rule in minutes when it is told the match l
   await expect(page.locator(".fairness-count").first()).toContainText("min");
 });
 
+test("sorting a team puts the rotation on screen", async ({ page }) => {
+  await freshStart(page);
+  await addPlayers(page, ["Alfie", "Noah", "Jack", "Harry", "Oscar", "Leo", "Charlie", "Ted", "Finn", "Arthur", "Sonny", "Rory"]);
+  await page.getByRole("button", { name: "Sort my team" }).click();
+  await page.waitForSelector("[data-testid^='game-']");
+
+  // A full squad, the settings and the button itself fill a phone, so game one
+  // used to land about 630px down an 844px screen. A coach tapped the only big
+  // button on the page and almost nothing moved.
+  // Retrying rather than read once. The scroll is smooth unless the coach has
+  // asked for less motion, so a single read lands mid-travel.
+  const viewport = page.viewportSize();
+  await expect
+    .poll(async () => (await page.locator("#results").boundingBox())?.y ?? Infinity)
+    .toBeLessThan((viewport?.height ?? 844) / 2);
+  await expect(page.locator("[data-testid^='game-']").first()).toBeInViewport();
+});
+
 test("match day says when no rotation can clear the floor", async ({ page }) => {
   // More than twice as many turned up as go on the pitch, so the even split is
   // under half whatever the rotation does. That is a fixture problem and the

@@ -765,6 +765,35 @@ function startRunClock(
   holdScreenAwake();
 }
 
+/**
+ * How the drill runs, plus the ways to change it, one tap away.
+ *
+ * The coaching points above this are reminders. A reminder only works for
+ * somebody who already knows the drill. Prose is collapsed rather than sitting
+ * on the page because at minute three the points are what has to be readable at
+ * arm's length. A paragraph over them would push them off a phone.
+ *
+ * Make it easier comes before make it harder. A block going wrong is the reason
+ * a coach opens this at all.
+ */
+function runStageMore(drill: Drill): string {
+  const change = (label: string, items: string[] | undefined): string =>
+    items?.length
+      ? `<p class="run-more-label">${label}</p>
+         <ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
+      : "";
+
+  return `
+    <details class="run-stage-more">
+      <summary>How it runs, plus how to change it</summary>
+      <div class="run-stage-more-body">
+        <p>${esc(drill.howItRuns)}</p>
+        ${change("Make it easier", drill.regressions)}
+        ${change("Make it harder", drill.progressions)}
+      </div>
+    </details>`;
+}
+
 export function renderPlanRun(
   container: HTMLElement,
   ctx: PlannerContext,
@@ -845,9 +874,22 @@ export function renderPlanRun(
           : ""
       }
 
+      ${
+        // What a coach needs in the first minute of a block, which is where the
+        // cones go. The drill page and the reading view both carry the picture.
+        // This is the screen actually held on the pitch. It carried the
+        // coaching points with none of the instructions, so a coach who did not
+        // already know the drill was being reminded of something nobody had
+        // told them.
+        `<p class="run-stage-setup">${esc(drill.setup)}</p>` +
+        (drill.diagram ? `<div class="run-stage-figure">${renderDiagram(drill.diagram)}</div>` : "")
+      }
+
       <ul class="run-stage-points">${drill.coachingPoints
         .map((point) => `<li>${esc(point)}</li>`)
         .join("")}</ul>
+
+      ${runStageMore(drill)}
 
       ${
         block.breakAfter
