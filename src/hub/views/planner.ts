@@ -89,10 +89,30 @@ let addHardGround = false;
 let previewing: string | null = null;
 let starred: Set<string> = new Set();
 /**
- * Which safety notes the coach has opened. The editor redraws on every keystroke,
- * and a <details> element loses its open state when its markup is replaced.
+ * Which disclosures the coach has opened, keyed by what they are. The editor
+ * redraws on every keystroke and a <details> element loses its open state when
+ * its markup is replaced, so a safety note or a set of instructions read
+ * halfway through would otherwise shut itself.
  */
-let openSafety: Set<string> = new Set();
+let openDetails: Set<string> = new Set();
+
+/**
+ * Remember which disclosures are open, so a redraw can put them back.
+ *
+ * Written once and called from all three views. It was three byte-identical
+ * loops, which is three places for the next rename of `data-keep` to catch two
+ * of.
+ */
+function keepDetailsOpen(container: HTMLElement): void {
+  for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-keep]")) {
+    details.addEventListener("toggle", () => {
+      const id = details.dataset.keep ?? "";
+      if (details.open) openDetails.add(id);
+      else openDetails.delete(id);
+    });
+  }
+}
+
 /**
  * Whether the current edit has reached the server.
  *
@@ -653,13 +673,7 @@ export function renderPlanView(
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
   wireShare(container, ctx, planId);
   wireRanIt(container, ctx, planId);
-  for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
-    details.addEventListener("toggle", () => {
-      const id = details.dataset.safety ?? "";
-      if (details.open) openSafety.add(id);
-      else openSafety.delete(id);
-    });
-  }
+  keepDetailsOpen(container);
 
   renderPrintable(plan, blocks, totals);
 }
@@ -861,7 +875,7 @@ function startRunClock(
  * first question is whether the drill is wrong or whether it is being done
  * wrong. Those have different answers.
  */
-function runStageMore(drill: Drill): string {
+function runStageMore(drill: Drill, keep?: string): string {
   const change = (label: string, items: string[] | undefined): string =>
     items?.length
       ? `<p class="run-more-label">${label}</p>
@@ -876,7 +890,7 @@ function runStageMore(drill: Drill): string {
     : "";
 
   return `
-    <details class="run-stage-more">
+    <details class="run-stage-more"${keep ? ` data-keep="${esc(keep)}"${openDetails.has(keep) ? " open" : ""}` : ""}>
       <summary>How it runs, plus how to change it</summary>
       <div class="run-stage-more-body">
         <p>${esc(drill.howItRuns)}</p>
@@ -1247,23 +1261,10 @@ export function renderSharedPlan(
       </section>
       </div>`;
 
-    for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
-      details.addEventListener("toggle", () => {
-        const id = details.dataset.safety ?? "";
-        if (details.open) openSafety.add(id);
-        else openSafety.delete(id);
-      });
-    }
+    keepDetailsOpen(container);
   });
 }
 
-/**
- * One block, sized to be read at arm's length with a whistle in the other hand.
- *
- * `planId` is absent on a shared session. The link it draws goes into the
- * catalogue and back out through a session the reader does not have, so on a
- * shared page the running order is the whole document.
- */
 function wireRanIt(container: HTMLElement, ctx: PlannerContext, planId: string): void {
   const plan = localPlans(ctx.userId).find((p) => p.id === planId);
 
@@ -1322,25 +1323,34 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
   </section>`;
 }
 
-function runBlock(
-  resolved: ResolvedBlock,
-  position: number,
-  planId?: string,
-): string {
+function runBlock(resolved: ResolvedBlock, position: number, planId?: string): string {
   const { block, drill } = resolved;
+  // Keyed by where the block sits rather than by which drill it holds. A
+  // session can hold the same drill twice. Two blocks sharing a key meant
+  // opening one of them opened the other on the next redraw.
+  const keep = (kind: string): string => `${kind}:${position}`;
   return `
     <article class="hub-panel run-block">
       <div class="run-block-head">
         <span class="run-number">${position + 1}</span>
         <div class="run-block-titles">
-          <h3>${esc(drill.title)} ${kindPill(drill)}</h3>
+          <h3>${
+            // The way back to the whole drill: its kit, its space, the star.
+            // The disclosure below answers how this one goes, which is not the
+            // same question. A shared session has no plan id and so gets no
+            // link, because its reader has no session of their own to come
+            // back to and no business being handed a route into the catalogue.
+            planId
+              ? `<a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>`
+              : esc(drill.title)
+          } ${kindPill(drill)}</h3>
           <p class="run-block-meta">${block.minutes} min · ${esc(drill.space)} · ${playersLabel(drill)}</p>
         </div>
       </div>
 
       ${
         drill.safety
-          ? `<details class="block-safety-details" data-safety="${esc(drill.id)}"${openSafety.has(drill.id) ? " open" : ""}>
+          ? `<details class="block-safety-details" data-keep="${keep("safety")}"${openDetails.has(keep("safety")) ? " open" : ""}>
                <summary><span class="block-safety">Safety note</span></summary>
                <p>${esc(drill.safety)}</p>
              </details>`
@@ -1348,17 +1358,24 @@ function runBlock(
       }
 
       ${
-        // Described rather than decorative. The running order never shows the
-        // drill's `setup`, so here the picture is the only place that
-        // information appears.
-        drill.diagram ? `<div class="run-block-figure">${renderDiagram(drill.diagram)}</div>` : ""
+        // The words that go with the picture, bare and directly above it the
+        // way present mode has them. A diagram says where the cones go rather
+        // than what a coach does with them. This is the page read on a Sunday
+        // morning by somebody working out whether they can run the thing.
+        `<p class="run-block-setup">${esc(drill.setup)}</p>` +
+        (drill.diagram ? `<div class="run-block-figure">${renderDiagram(drill.diagram)}</div>` : "")
       }
 
       <ul class="run-points">${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
+
       ${
-        planId
-          ? `<p class="run-more"><a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">How it runs, plus how to change it</a></p>`
-          : ""
+        // The same disclosure present mode uses, rather than a link out to the
+        // drill page. Reading the session is what this view is for, so the
+        // answer to "how does this one go" belongs in the block instead of one
+        // navigation away from it. The shared view gets it too, where it was
+        // previously unreachable by any route: a coach handed a link is the one
+        // least likely to already know the drill.
+        runStageMore(drill, keep("more"))
       }
     </article>
     ${
@@ -1599,7 +1616,7 @@ function blockRow(
           // phone at a pitch, where hover does not exist. Safety is also the last
           // thing that should sit behind an interaction nobody can perform.
           drill.safety
-            ? `<details class="block-safety-details" data-safety="${esc(drill.id)}"${openSafety.has(drill.id) ? " open" : ""}>
+            ? `<details class="block-safety-details" data-keep="safety:${index}"${openDetails.has(`safety:${index}`) ? " open" : ""}>
                  <summary><span class="block-safety">Safety note</span></summary>
                  <p>${esc(drill.safety)}</p>
                </details>`
@@ -1834,13 +1851,7 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
     change((plan) => ({ ...plan, blocks: plan.blocks.filter((b) => findDrill(b.drillId)) }));
   });
 
-  for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
-    details.addEventListener("toggle", () => {
-      const id = details.dataset.safety ?? "";
-      if (details.open) openSafety.add(id);
-      else openSafety.delete(id);
-    });
-  }
+  keepDetailsOpen(container);
 
   container.querySelector("#add-fav")?.addEventListener("click", () => {
     addFavouritesOnly = !addFavouritesOnly;
@@ -2030,7 +2041,7 @@ export function resetPlanner(): void {
   clearTimeout(addSearchTimer);
   addSearchTimer = undefined;
   previewing = null;
-  openSafety = new Set();
+  openDetails = new Set();
   saveState = "saved";
   planViewMode = null;
   // The log belongs to the coach who is leaving. Clubs share tablets.

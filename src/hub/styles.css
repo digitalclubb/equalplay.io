@@ -1383,6 +1383,19 @@ body {
   margin: 0;
 }
 
+/* The title carries the way back to the drill page, the same as the editor's
+   rows do. Undecorated, because a heading that looks like a link in a running
+   order reads as the thing to tap when it is not. */
+.run-block h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.run-block h3 a:hover,
+.run-block h3 a:focus-visible {
+  text-decoration: underline;
+}
+
 .run-block-meta {
   margin-top: var(--sp-3xs);
   font-size: var(--text-sm);
@@ -1401,13 +1414,10 @@ body {
   color: var(--color-text);
 }
 
-.run-more {
-  margin-top: var(--sp-xs);
-  font-size: var(--text-sm);
-}
-
-.run-more a {
-  color: var(--color-primary);
+/* Bare, sitting straight above the diagram, the same as present mode. A label
+   would be a second convention for the one piece of copy both views carry. */
+.run-block-setup {
+  margin: var(--sp-sm) 0;
 }
 
 .run-break {
@@ -3061,6 +3071,13 @@ body {
 }
 
 .run-stage-more {
+  margin: var(--sp-sm) 0 0;
+}
+
+/* Present mode only. The reading view carries the same disclosure inside a
+   block, where a block's own type size is the right one. Held at arm's length
+   it is not, so the size sits on the stage rather than on the component. */
+.run-stage > .run-stage-more {
   margin: 0 0 var(--sp-lg);
   font-size: var(--text-lg);
 }

@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-697 unit and integration tests across 22 files, 171 Playwright tests. Most are ordinary.
+694 unit and integration tests across 22 files, 173 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 171 tests across four files: `matchday` (14), `home` (11), `hub` (120)
+`pnpm test:e2e` is 173 tests across four files: `matchday` (15), `home` (11), `hub` (121)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -638,6 +638,31 @@ full size with coaching points on the page and safety expandable in place.
 `#/plan/<id>/edit` is the editor. Reading it on a wet Tuesday is the common case and
 editing it at the kitchen table is the rare one, so the route reflects that. Creating
 or duplicating lands in edit, because you have just made the thing.
+
+**A block says how to run the drill, in the block.** The reading view had the
+picture and the reminders with none of the instructions. The way to the words
+was a line of body text under the coaching points that left the session, so a
+coach reading five blocks on a cold Sunday morning left it five times. A block
+carries `setup` above the diagram now, bare the way present mode has it, plus
+the same `runStageMore` disclosure. That brings `howItRuns` and the faults into
+the reading view for the first time. The shared view gets them at all, where no
+route to them existed: somebody handed a link is the person least likely to
+already know the drill. The size lives on `.run-stage` rather than on the
+component, since arm's length is present mode's problem and a block that is one
+of five is not held at arm's length.
+
+The way to the drill page did not go, it moved onto the title, undecorated, the
+same as the editor's rows already do it. The disclosure answers how this one
+goes. The drill page answers what the drill is, which is where its kit, its
+space and its star live. Dropping that route would have taken all three with
+it. A shared session still has no link, because its reader has no session to
+come back to.
+
+`openDetails` keys on the block's position rather than on its drill, because a
+session may hold the same drill twice and two blocks sharing a key meant
+opening one opened the other on the next redraw. `keepDetailsOpen` wires all
+three views. It was three byte-identical loops, which is three places for the
+next rename to catch two of.
 
 **Block controls address `plan.blocks`, not the render order.** `planDrills` drops
 blocks whose drill no longer exists, so its array index is not the block's index. It

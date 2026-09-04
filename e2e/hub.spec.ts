@@ -1875,6 +1875,77 @@ test("present mode says how to set the drill up, not only what to watch for", as
   ]);
 });
 
+test("the reading view says how to run a drill without leaving the session", async ({
+  page,
+}) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}`);
+
+  const block = page.locator(".run-block").first();
+
+  // The page a coach reads on a Sunday morning. It used to carry the picture
+  // and the reminders with no instructions at all, and the way to the words
+  // was a link that took them out of the session they were reading.
+  await expect(block.locator(".run-block-setup")).not.toBeEmpty();
+  await expect(block.locator(".run-block-figure svg")).toBeVisible();
+
+  // The way to the whole drill moved onto the title. The disclosure below says
+  // how this one goes; the drill page says what it is, which is where the kit,
+  // the space and the star live.
+  await expect(block.locator("h3 a")).toHaveAttribute("href", /#\/catalogue\//);
+
+  const more = block.locator(".run-stage-more");
+  await expect(more.locator(".run-stage-more-body")).toBeHidden();
+  await more.locator("summary").click();
+  await expect(more.locator(".run-stage-more-body")).toBeVisible();
+  await expect(more.locator(".run-more-label")).toHaveText([
+    "When it is not working",
+    "Make it easier",
+    "Make it harder",
+  ]);
+
+  // Present mode's type size belongs to present mode, which is held at arm's
+  // length. Inside a block, where five of these stack up, the same component
+  // reads at the block's own size.
+  const size = (locator: string) =>
+    page.locator(locator).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const inBlock = await size(".run-block .run-stage-more");
+  expect(inBlock).toBe(await size("body"));
+
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  await expect(page.locator("#run-time")).toBeVisible();
+  expect(await size(".run-stage > .run-stage-more")).toBeGreaterThan(inBlock);
+});
+
+test("two blocks holding the same drill open one at a time", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/edit`);
+
+  // Nothing stops a coach running the same drill twice in a night, and it is
+  // the obvious thing to do with a warm-up. Keyed on the drill rather than on
+  // the block, both copies wore the same key, so opening one opened the other
+  // on the next redraw.
+  for (const _ of [0, 1]) {
+    await searchFor(page, "#add-search", "two hand relay");
+    await page.locator("[data-peek]").first().click();
+    await page.locator("[data-add]").first().click();
+  }
+  const titles = await page.locator(".block-title").allInnerTexts();
+  expect(titles.filter((t) => t === "Two hand relay")).toHaveLength(2);
+
+  // Waited on rather than assumed. This is a hash-only change away from the
+  // editor, which the editor's own rows would happily satisfy: they carry a
+  // `data-keep` of their own and the assertion would pass having read the
+  // wrong screen.
+  await page.goto(`/hub/#/plan/${planId}`);
+  await expect(page.locator(".run-block")).toHaveCount(titles.length);
+
+  const keys = await page.locator("[data-keep]").evaluateAll((els) =>
+    els.map((el) => (el as HTMLElement).dataset.keep),
+  );
+  expect(new Set(keys).size).toBe(keys.length);
+});
+
 test("marking a night as run fills in what you have covered", async ({ page }) => {
   const planId = await runnableSession(page);
   await page.goto(`/hub/#/plan/${planId}`);
