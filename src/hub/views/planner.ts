@@ -374,7 +374,7 @@ function viewToggle(view: PlanView): string {
 function syncNotice(state: "loading" | "synced" | "offline", pending: number): string {
   if (state === "offline") {
     return `<p class="sync-notice sync-notice-offline" role="status">
-      Showing what's saved on this phone. We couldn't reach the server${
+      Showing what's saved here. We couldn't reach the server${
         pending > 0
           ? `, so ${pending === 1 ? "one edit is" : `${pending} edits are`} still waiting to go up`
           : ""
@@ -384,7 +384,7 @@ function syncNotice(state: "loading" | "synced" | "offline", pending: number): s
   if (pending > 0) {
     return `<p class="sync-notice" role="status">
       ${pending === 1 ? "One edit is" : `${pending} edits are`} saved here but not on the
-      server yet. They will go up on their own.
+      server yet.
     </p>`;
   }
   return "";
@@ -1151,7 +1151,7 @@ function wireShare(container: HTMLElement, ctx: PlannerContext, planId: string):
       // sent to. The token is staged locally, so the link exists before the
       // server has heard about it and will not resolve until it has.
       if (!result.reachedServer) {
-        note("Made on this phone. It starts working once you're back in signal.");
+        note("The link starts working once you're back in signal.");
       }
     });
   });
@@ -1183,7 +1183,7 @@ function wireShare(container: HTMLElement, ctx: PlannerContext, planId: string):
       // rather than the one the click came from.
       renderPlanView(container, ctx, planId);
       if (!result.reachedServer) {
-        note("Stopped on this phone. The link you sent keeps working until this reaches the server.");
+        note("The link you sent keeps working until this reaches the server.");
       }
     });
   });
@@ -2129,7 +2129,7 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
 
 function saveLabel(): string {
   if (saveState === "saving") return "Saving…";
-  if (saveState === "local") return "Saved on this phone. It'll reach the server on its own.";
+  if (saveState === "local") return "Saved here but not on the server yet.";
   return "Saved";
 }
 

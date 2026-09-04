@@ -351,7 +351,7 @@ test("says so when it could not reach the server", async ({ page }) => {
   // Supabase is unreachable in this build, so the notice is the honest state.
   // A request to a host that does not resolve can outlast the default timeout.
   await expect(page.locator(".sync-notice-offline")).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator(".sync-notice-offline")).toContainText("saved on this phone");
+  await expect(page.locator(".sync-notice-offline")).toContainText("saved here");
   // And the plan is listed regardless
   await expect(page.locator(".drill-card-title")).toContainText("Rucking");
 });
@@ -960,7 +960,7 @@ test("says whether the session is saved", async ({ page }) => {
   await expect(page.locator("#save-state")).toHaveText("Saving…");
 
   // Supabase is unreachable in this build, so it settles on the honest answer
-  await expect(page.locator("#save-state")).toContainText("Saved on this phone", {
+  await expect(page.locator("#save-state")).toContainText("not on the server yet", {
     timeout: 15_000,
   });
 
