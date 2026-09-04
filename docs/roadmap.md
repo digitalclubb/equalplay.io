@@ -3,20 +3,9 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 27 August 2026, after present mode and the rules pages. See `docs/one-product.md` for the
-one-product change that preceded it and which of its phases are built.
-
-## Blocking: run `0003` before the next deploy
-
-`syncPlans` selects `share_token` and every upsert sends it. Against a schema without
-that column PostgREST rejects both, so a deploy that lands ahead of the migration
-takes out session sync for every coach, not just sharing. They would see the offline
-notice on a working connection and their edits would sit in `unsynced` until it ran.
-Nothing is lost, because the local mirror holds everything and retries, but it looks
-like the app has broken.
-
-Paste `supabase/migrations/0003_share_session.sql` into the SQL editor first, then
-push.
+Last updated 4 September 2026, after the colour scheme, the view transitions and the
+grouped filters. See `docs/one-product.md` for the one-product change that preceded it
+and which of its phases are built.
 
 ## Where the real project stands
 
@@ -30,7 +19,7 @@ have been used for real rather than against a stub.
 | --- | --- |
 | `supabase/migrations/0001_session_plans.sql` applied | done |
 | `supabase/migrations/0002_favourites.sql` applied | done |
-| `supabase/migrations/0003_share_session.sql` applied | **not yet** |
+| `supabase/migrations/0003_share_session.sql` applied | done |
 | Environment variables set in Vercel, service role key without a `VITE_` prefix | done |
 | Committed, pushed, deployed | done |
 | Register for real, confirm the email, build a session, star a drill, reload | done |
@@ -93,8 +82,7 @@ read it, they cannot change it and they need no account, because the person who 
 up on a Tuesday to help is not going to register first. The token is the whole
 permission and clearing it takes every copy of that link out of service. Read through
 `shared_plan` in migration `0003` rather than through the table, because the reader is
-usually anonymous and RLS has nothing to match them against. Needs `0003` run against
-the live project before a link resolves.
+usually anonymous and RLS has nothing to match them against.
 
 **Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
 coaching points big, minutes counting down, the screen held awake. The block is
@@ -109,6 +97,23 @@ gate enforced in `addDrillToPlan` rather than only in the render.
 drill's diagram, for the January hall and the half pitch. See `CLAUDE.md` for why
 the box is 25 by 15 rather than the sports hall it started at.
 
+**Hard ground.** The chip beside it, for a pitch baked solid or frozen. This one is
+authored rather than derived, because a shield drill where nobody goes down and one
+where everybody does read the same in the data while the surface is the whole
+question. 43 drills carry `softGround`: somebody goes to ground in them, works from
+their knees, or could be put there by a collision. Nothing below U9 has it at all, so
+a coach on a frozen U7 evening loses nothing. It is a browse filter rather than a
+verdict on the weather.
+
+**The filters are grouped by what they do.** Nine chips in one row put the pitch you
+have got tonight beside what the drill is about, all wearing the same shape, when
+tapping a theme replaces the theme before it and tapping the other two stacks with
+everything. Above the rule is the drill itself, its kind then its theme. Below it is
+your stars and your pitch. The two that stack carry a leading tick, which is how a
+control says it combines. Clear filters sits next to the count once there is
+something to clear, because every chip being its own way back still leaves four taps
+to reach the whole list.
+
 **The offline promise, said out loud.** The Account page says whether the app is
 saved on the device and offers the home screen install where a browser gives one.
 
@@ -116,6 +121,40 @@ saved on the device and offers the home screen install where a browser gives one
 coach reads with no signal, plus a static page per grade emitted at build for
 search. `/rugby-rules-u7` through `u12` plus an index, in the sitemap, linked
 from the drills cluster.
+
+**The app follows the reader's colour scheme, with a switch to overrule it.** Tokens
+flip in `src/base.css` using the values `public/pages.css` had already chosen, so the
+site and the app are one palette rather than two takes on it. The static pages had
+flipped for months while the app had not, which meant reading the homepage at night
+and tapping through got you a white screen in the face. The switch is one button that
+flips, top right of the phone bar and under Account in the rail, because the footer
+put it below a hundred drill cards. Light and Dark are the only two states. Auto sat
+ahead of them in the cycle for a while and read as a mode of its own rather than as
+the two colours it picks between, so the phone's own preference is the fallback now
+instead of a named option on screen.
+
+**Movement is the browser's job.** `src/lib/motion.ts` hands a DOM change to
+`startViewTransition`, which photographs the page either side of it and animates
+between the two. That is the whole of the sliding pill in the nav, the segmented
+controls and match day's team tabs, with nothing measuring a tab and no number to go
+stale when a label changes. The theme chips gave their slide up, because a pill flying
+between chips of different widths, sometimes across a line break, answers nothing.
+Reduced motion is honoured in `motion.ts` rather than in CSS.
+
+**The hub's buttons have three tiers and answer a pointer.** One filled button for
+what a screen is for, an outlined one for the other things a coach might do, then that
+same button at the width of its own label for a dismissal. Only the filled tier had a
+`:hover` rule before this, so Print it, Duplicate, Delete this session, Got it and Not
+now were all dead under a mouse. Every input, select, chip and stepper now wears
+`--color-control-edge`, which is the 3:1 boundary WCAG 1.4.11 asks of a control.
+
+**The sessions page is two lists you can read.** Both were wrapped in a panel, which
+made every card a card inside a card, so the only thing left telling one apart was a
+grey fill. They sit on the page under a heading now, the way the drill list already
+did. Your own sessions come first once there are any. Each card draws the shape of the
+evening, one segment per block flexed to its own minutes, so six cards look like six
+different evenings rather than six bold titles over a grey line. Grid or list is a
+toggle and the choice is kept.
 
 **Coaching hub.**
 
@@ -237,7 +276,6 @@ never things that would justify a price.
 - **A shared link needs signal the first time.** It was never the reader's plan to hold
   on their device, so there is nothing to cache. The view says so rather than looking
   broken.
-- **`0003_share_session.sql` is not applied yet.** See the blocker at the top.
 - **A stale second device can revoke a live link.** `share_token` is last-write-wins
   like the rest of the row, so a tablet holding an unsynced edit from before the coach
   shared will push null over the token. Marked `ponytail:` in `plans.ts`. The fix is

@@ -16,7 +16,7 @@ in this skill is about how it looks. It is about where things go.
 
 ## The rules that are not in the code
 
-The renderer cannot check these. They are what makes 103 diagrams look like one
+The renderer cannot check these. They are what makes 99 diagrams look like one
 person drew them.
 
 **Every drill runs bottom to top.** `y` increases towards the coach, so the

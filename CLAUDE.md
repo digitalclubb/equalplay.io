@@ -177,6 +177,9 @@ src/
     esc.ts                # HTML and attribute escaping, used by both halves
     rulesLink.ts          # Links out to the RFU, one wording in one place
     nav.ts                # The five tabs, shared by both entries. Imports nothing
+    theme.ts              # The colour switch. Two states, written into both chromes
+    motion.ts             # Hands a DOM change to startViewTransition, or straight on
+    sw.ts                 # Registers the worker in production, unregisters it in dev
     track.ts              # The two custom analytics events, lazily imported
   types/index.ts          # Rotation planner domain types
   logic/
@@ -185,6 +188,7 @@ src/
     storage.ts            # localStorage persistence (multi-team)
     teamState.ts          # Multi-team store
     sessionPlan.ts        # Hub: plan totals, warnings, kit list, breaks, reorder
+    playingTime.ts        # Match day: the Half Game Rule, checked per player
   seo/
     rulesPage.ts          # The rules guides as static pages, emitted at build
   hub/
@@ -203,6 +207,8 @@ src/
                           # THEME_SHORT, RULES_OF_PLAY
       drills.ts           # Pulls the catalogue together, plus filterDrills
       presets.ts          # 30 ready-made sessions, one per theme per age grade
+      guides.ts           # What each age grade may do, as data. Published twice
+      diagram.ts          # Renders a drill's coordinates to SVG at load
       catalogue/          # 100 drills by theme: warmups, handling, evasion,
                           # gamesense, tackle, breakdown, setpiece
     views/
@@ -210,6 +216,7 @@ src/
       authView.ts         # Sign in, register, reset, gate reasons, password reveal
       account.ts          # Details, password, sign out, delete. Also the setup form
       catalogue.ts        # Drill list, filters, favourites, drill page
+      guide.ts            # The rules guide, index plus one route per age grade
       planner.ts          # Sessions list, reading view, editor, present mode, print sheet
   components/             # Rotation planner only
     form.ts, playerList.ts, results.ts, teamTabs.ts, toast.ts, logo.ts, icons.ts
@@ -513,7 +520,7 @@ wooden floor.
 sibling filter next to it is derived from a diagram. This one cannot be:
 a shield drill where nobody goes down and one where everybody does read the
 same in data, while the surface is the whole question. So `softGround` sits on
-the 41 drills that need a forgiving pitch, meaning somebody goes to ground,
+the 43 drills that need a forgiving pitch, meaning somebody goes to ground,
 works from their knees, or could be put there by a collision with a player or
 a shield. Bending down, sitting or crouching is not it. Every tackle drill
 carries it and `content-age-gate.test.ts` says so, since a tackle ends on the
