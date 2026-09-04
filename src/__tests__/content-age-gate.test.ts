@@ -596,3 +596,33 @@ describe("the list leads with the session's work", () => {
     expect(exercises).toEqual(asAuthored);
   });
 });
+
+describe("Every drill says what going wrong looks like", () => {
+  it("gives every drill at least one fault", () => {
+    // The audience is a parent who never played. Coaching points tell them what
+    // should be happening, which only helps somebody who has seen it go right
+    // before. A drill with no faults is a drill that assumes rugby knowledge,
+    // which is the one thing this app is built not to do.
+    const bare = DRILLS.filter((drill) => !drill.faults?.length).map((d) => d.id);
+    expect(bare).toEqual([]);
+  });
+
+  it("describes a fault by what it looks like rather than by naming it", () => {
+    // "Poor body position" is the same problem in fewer words. A fault has to be
+    // spottable from the touchline by somebody who does not know the game.
+    const vague = /^(poor|bad|incorrect|wrong|weak|inadequate) /i;
+    for (const drill of DRILLS) {
+      for (const fault of drill.faults ?? []) {
+        expect(vague.test(fault.looks), `${drill.id}: "${fault.looks}" names the fault instead of describing it`).toBe(false);
+      }
+    }
+  });
+
+  it("gives something to say for every fault", () => {
+    for (const drill of DRILLS) {
+      for (const fault of drill.faults ?? []) {
+        expect(fault.say.length, `${drill.id}: nothing to say about "${fault.looks}"`).toBeGreaterThan(8);
+      }
+    }
+  });
+});

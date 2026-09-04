@@ -91,6 +91,32 @@ machine-written. It cannot enforce rhythm or voice. That part is on you.
 - A `minAge` no lower than the floor for every theme it claims.
 - A stable `id`. Saved session plans point at it, so renaming one breaks somebody's
   Tuesday. Never rename, only add.
+- At least one entry in `faults`. The test will fail without one.
+
+### Writing a fault
+
+A coaching point says what should be happening. It is a reminder. A reminder only
+works for somebody who has watched the drill go right before. The coach this
+is written for has not: they are a parent who never played, taking the age group
+because nobody else put their hand up. They read "keep the line flat", look at ten
+children, then genuinely cannot tell which of them is flat.
+
+So `looks` is what they can see from where they are standing. `say` is the one
+thing to tell the group. Both are fragments, same rules as a coaching point.
+
+- **`looks` describes, it never names.** "Poor body position" is the same problem
+  in fewer words and helps nobody. "Bending at the waist with a rounded back" can
+  be spotted by somebody who has never played. The test fails on a list of
+  openings like poor, bad and incorrect, which is a floor rather than a standard:
+  a fault can pass that check and still be useless.
+- **`say` is what you would actually shout.** Not a principle, an instruction. "Get
+  your feet to it. Then your hands" rather than "emphasise footwork".
+- **Two is usually right, one is fine.** The two most common ways it goes wrong,
+  which for most drills means one about the body and one about the decision.
+- **A vague fault is worse than none.** It fills the space the useful one would
+  have gone in and teaches the coach that this section is not worth reading. If
+  you cannot describe it precisely enough to be spotted from the touchline, leave
+  it out.
 
 ## How a ready-made session gets built
 

@@ -47,6 +47,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["No opposition, just the coach calling the sequence"],
     safety:
       "No pushing, ever, at this grade. Match front rows by size. Any collapse means everybody stands up and starts again from crouch. If a child does not want to be in the front row, they do not have to be.",
+    faults: [
+      {
+        looks: "Heads down looking at the grass on crouch",
+        say: "Eyes up. If you can see the floor, reset",
+      },
+      {
+        looks: "Somebody edging forward on set because they think it is a push",
+        say: "Nobody moves on set. Freeze and wait for the ball",
+      },
+    ],
   },
   {
     id: "drill-scrum-half-feed",
@@ -77,6 +87,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["Roll it in by hand with nobody bound", "Coach places the ball in the tunnel"],
     safety:
       "Nobody pushes. Front row stays bound and still. Stand everybody up between goes so nobody is holding a position for long.",
+    faults: [
+      {
+        looks: "The feed going in on a curve towards their own hooker",
+        say: "Roll it straight down the middle. Aim at the far side",
+      },
+      {
+        looks: "The hooker letting go of their bind to reach for the ball",
+        say: "Keep hold of your prop. Only the foot moves",
+      },
+    ],
   },
   {
     id: "drill-scrum-and-away",
@@ -118,6 +138,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["No defenders at all", "Coach hands the ball to nine"],
     safety:
       "Uncontested, no push. Stand up between goes. Age grade rules for anything that happens after the ball comes out.",
+    faults: [
+      {
+        looks: "The backs standing flat footed watching the scrum",
+        say: "Turn round. Be moving before the ball is out",
+      },
+      {
+        looks: "Nine arriving after the ball has stopped rolling",
+        say: "Be there as it comes out. Two steps early, not two late",
+      },
+    ],
   },
   {
     id: "drill-restart-receipt",
@@ -151,6 +181,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["Throw it gently and flat", "Nominate the catcher before each one"],
     safety:
       "Nobody jumps into anybody. If two children go for the same ball, stop it and sort out the calling before you carry on.",
+    faults: [
+      {
+        looks: "Three of them calling for it at once and nobody catching",
+        say: "One voice. Say your own name and everybody else backs off",
+      },
+      {
+        looks: "Waiting for the ball to drop to their chest",
+        say: "Hands up high. Take it at the top, not on the way down",
+      },
+    ],
   },
   {
     id: "drill-scrum-under-pressure",
@@ -184,6 +224,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["Uncontested strike", "Slower calls"],
     safety:
       "No push at U11. Contested strike means both hookers moving, so watch the bind stays intact. Match by size. Any collapse means everybody up and reset from crouch.",
+    faults: [
+      {
+        looks: "Front rows going on bind because they are anticipating",
+        say: "Wait for set. Every time. Early is a free kick",
+      },
+      {
+        looks: "A push creeping in once the strike is contested",
+        say: "Feet still. You are contesting the ball, not the ground",
+      },
+    ],
   },
   {
     id: "drill-free-kick-options",
@@ -214,6 +264,16 @@ export const SETPIECE: Drill[] = [
     ],
     progressions: ["Defence gets an extra player if you take longer than five seconds"],
     regressions: ["Coach calls which option to use", "No defence"],
+    faults: [
+      {
+        looks: "Picking the ball up then looking around for an idea",
+        say: "Look up first, then pick it up",
+      },
+      {
+        looks: "One child taking it quickly while the rest are still walking",
+        say: "Say which one it is. Everybody answers before you go",
+      },
+    ],
   },
   {
     id: "drill-five-player-scrum",
@@ -247,6 +307,16 @@ export const SETPIECE: Drill[] = [
     regressions: ["Three player scrum", "Static shape with no ball"],
     safety:
       "No pushing at U12 either. Second row heads go to the side of a hip, never into a backside or between two players. Match by size across both rows. Collapse means everybody up and reset. Nobody is made to be in a front row.",
+    faults: [
+      {
+        looks: "Second row binding on the shirt collar or round the neck",
+        say: "Grab the shorts. Head to the side of the hip, never the middle",
+      },
+      {
+        looks: "One bent back in the middle folding the whole shape",
+        say: "Straight backs all five. Fix the one that is bent",
+      },
+    ],
   },
   {
     id: "drill-restart-defence",
@@ -288,5 +358,15 @@ export const SETPIECE: Drill[] = [
     regressions: ["Nobody receiving, just practise the line", "Walk the chase"],
     safety:
       "Nobody goes into a player who is off the ground with the ball. Wait for their feet to land. Stop it and reset if two children arrive at the same catch.",
+    faults: [
+      {
+        looks: "The quickest child forty metres ahead of everybody else",
+        say: "Run at the pace of the slowest. Look sideways as you go",
+      },
+      {
+        looks: "Setting off before the ball has been kicked",
+        say: "Wait for the ball to leave the foot. Watch it, not them",
+      },
+    ],
   },
 ];

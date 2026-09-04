@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-694 unit and integration tests across 22 files, 170 Playwright tests. Most are ordinary.
+697 unit and integration tests across 22 files, 171 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 170 tests across four files: `matchday` (14), `home` (11), `hub` (119)
+`pnpm test:e2e` is 171 tests across four files: `matchday` (14), `home` (11), `hub` (120)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -302,6 +302,24 @@ channel runs up the long axis whatever order `space` puts the numbers in. Red is
 whoever has the ball or is doing the work, which in a pairs drill means the
 thrower rather than an opponent. `.claude/skills/drill-diagram/` has the rest,
 plus the authoring loop. Preview at card size before believing any of it.
+
+**Every drill says what going wrong looks like.** `drill.faults` is a pair per
+fault: `looks` is what a coach can see from the touchline, `say` is the one
+instruction to give. Coaching points tell a coach what should be happening,
+which only helps somebody who has watched the drill go right before. Most of
+this audience has not: they are a parent who never played, running the age group
+because nobody else volunteered. They read "keep the line flat", watch ten
+children, then cannot tell which of them is flat.
+
+This is the part every competitor buys with video. Video costs money and puts
+children on camera, so it is written instead, which means it has to be more
+precise than a picture would need to be. `looks` may never name the fault
+("poor body position" is the same problem in fewer words) and
+`content-age-gate.test.ts` fails on a list of those openings. All 100 drills
+carry at least one, held there by the same test, because a drill without one is
+a drill assuming rugby knowledge. It sits under the coaching points on a drill
+page and inside present mode's `<details>` above make it easier, since the first
+question is whether the drill is wrong or whether it is being done wrong.
 
 **The "Safety note" badge is keyed off `drill.safety`, not off contact.** Movement prep
 carries a safety note and involves no contact, so labelling it "contact" would be

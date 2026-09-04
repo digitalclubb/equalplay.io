@@ -35,6 +35,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Carry two balls", "Round the cone the other way so they turn both directions"],
     regressions: ["Shorter run", "Walk it once through first"],
+    faults: [
+      {
+        looks: "One hand on the ball the moment they start running",
+        say: "Two hands. If it drops, walk the next one",
+      },
+      {
+        looks: "The ball thrown at the next child rather than handed over",
+        say: "Put it in their hands. You should be able to feel them take it",
+      },
+    ],
   },
   {
     id: "drill-pass-down-the-line",
@@ -74,6 +84,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Jog it", "Fours instead of threes so the ball travels further"],
     regressions: ["Walk it", "Two metres apart instead of three"],
+    faults: [
+      {
+        looks: "One child a metre ahead of the rest, so the pass has to go forward",
+        say: "Stop. Get level, then walk again",
+      },
+      {
+        looks: "Hands hanging by their sides until the ball arrives",
+        say: "Hands up and out. Give them a target to hit",
+      },
+    ],
   },
   {
     id: "drill-corner-ball",
@@ -108,6 +128,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["One touch then the ball must move within three seconds", "A third scoring corner"],
     regressions: ["More attackers than defenders", "Bigger square"],
+    faults: [
+      {
+        looks: "Everybody piling towards whichever corner the ball is nearest",
+        say: "Look at both corners before you get it. Which one is emptier?",
+      },
+      {
+        looks: "Support running behind the carrier instead of beside them",
+        say: "Get level and a bit wide. Behind them is no use",
+      },
+    ],
   },
   {
     id: "drill-catch-and-turn",
@@ -140,6 +170,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Throw it slightly to one side so they have to move", "Catch it above your head"],
     regressions: ["Closer together", "Throw it chest high"],
+    faults: [
+      {
+        looks: "Waiting with the arms tucked in for the ball to arrive",
+        say: "Reach up and meet it. Take it at the top",
+      },
+      {
+        looks: "Palms flat so the ball bounces off",
+        say: "Spread your fingers. Thumbs together, make a W",
+      },
+    ],
   },
   {
     id: "drill-pop-pass-gates",
@@ -172,6 +212,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Add a defender in one gate who can only stand still"],
     regressions: ["Wider gates", "Walk through the first two gates"],
+    faults: [
+      {
+        looks: "The pass thrown hard, so the receiver has to check",
+        say: "Softer. Just lift it into their hands",
+      },
+      {
+        looks: "The support runner slowing down to collect it",
+        say: "Run onto it. Full speed through the gate",
+      },
+    ],
   },
   {
     id: "drill-numbers-up",
@@ -210,6 +260,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Four against three in a wider channel", "Defence starts a metre closer"],
     regressions: ["Three against one", "Defenders may only move sideways"],
+    faults: [
+      {
+        looks: "Passing straight away without looking at the defence",
+        say: "Count them out loud first. How many are there?",
+      },
+      {
+        looks: "Running sideways looking for space instead of at a defender",
+        say: "Run at their inside shoulder. Make them pick you",
+      },
+    ],
   },
   {
     id: "drill-loop-and-go",
@@ -243,6 +303,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Two defenders", "The loop has to happen at pace with no slowing down"],
     regressions: ["No defender at all to start", "Walk the pattern first"],
+    faults: [
+      {
+        looks: "Standing still after the pass to watch what happens",
+        say: "Pass, then go. You are the next runner",
+      },
+      {
+        looks: "Looping so wide the ball cannot get back",
+        say: "Closer. Almost brushing their shoulder as you go round",
+      },
+    ],
   },
   {
     id: "drill-switch-pass",
@@ -276,6 +346,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Two defenders", "Threes so there is a dummy switch option"],
     regressions: ["No defender", "Walk the pattern through first"],
+    faults: [
+      {
+        looks: "The two runners crossing too far apart for the handover",
+        say: "Nearly touching as you pass each other",
+      },
+      {
+        looks: "The ball held out in front where the defender can see it",
+        say: "Hide it. Keep it on the far hip until they have gone past",
+      },
+    ],
   },
   {
     id: "drill-under-pressure-hands",
@@ -308,6 +388,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Eight passes instead of ten so it is quicker", "Smaller square"],
     regressions: ["Five passes", "One ball", "Defenders start two steps back"],
+    faults: [
+      {
+        looks: "Standing still once they have passed",
+        say: "Move after every pass. Nobody stays put",
+      },
+      {
+        looks: "Silence, so the carrier has to turn round to find anybody",
+        say: "Shout for it. Say your own name",
+      },
+    ],
   },
   {
     id: "drill-offload-in-the-tackle",
@@ -343,6 +433,16 @@ export const HANDLING: Drill[] = [
     regressions: ["Walk the whole thing", "Support stands still and calls for it"],
     safety:
       "Shield holders brace and absorb, never drive. Contact at hip height only. Nobody goes to ground in this one, so stop it if it turns into a wrestle.",
+    faults: [
+      {
+        looks: "Going to ground first and then trying to pass",
+        say: "Pop it before you go down. Standing up, not falling",
+      },
+      {
+        looks: "Support arriving early and stopping alongside",
+        say: "Come late and fast. Arrive as they hit it",
+      },
+    ],
   },
   {
     id: "drill-square-and-pass",
@@ -382,6 +482,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Defenders may move as soon as the attack does"],
     regressions: ["Five attackers against three", "Defenders walk"],
+    faults: [
+      {
+        looks: "The whole line drifting further towards the touchline every pass",
+        say: "Turn your hips up the pitch before you pass",
+      },
+      {
+        looks: "Carrying the ball sideways instead of moving it",
+        say: "Ball travels faster than you. Move it",
+      },
+    ],
   },
   {
     id: "drill-blind-pass-drill",
@@ -418,6 +528,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Hold the number up on the far side so they have to properly look across"],
     regressions: ["Walk it", "Call the number out loud yourself as well"],
+    faults: [
+      {
+        looks: "Eyes dropping to the ball at the moment of the pass",
+        say: "Keep looking at me. You know where their hands are",
+      },
+      {
+        looks: "Catching with stiff arms so the ball bounces out",
+        say: "Soft hands. Let it come into you",
+      },
+    ],
   },
   {
     id: "drill-spin-pass-build",
@@ -451,6 +571,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Stretch to twelve metres", "Pass off both hands equally"],
     regressions: ["Stay kneeling and closer", "No spin at all, just a firm push pass"],
+    faults: [
+      {
+        looks: "Both hands shoving the ball, so it wobbles and goes nowhere",
+        say: "Bottom hand does the work. Top hand only turns it",
+      },
+      {
+        looks: "The pass stopping at the chest with no follow through",
+        say: "Finish with both hands pointing at them",
+      },
+    ],
   },
   {
     id: "drill-two-on-one-continuous",
@@ -482,6 +612,16 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Three attackers against two at each station", "Five stations"],
     regressions: ["Two stations", "Defenders may only move sideways"],
+    faults: [
+      {
+        looks: "Passing before the defender has been made to choose",
+        say: "Take it another two steps. Make them come to you",
+      },
+      {
+        looks: "Support drifting level with the carrier so the pass goes forward",
+        say: "Stay behind the ball. A bit deeper than you think",
+      },
+    ],
   },
   {
     id: "drill-scrum-half-clearing-pass",
@@ -516,5 +656,15 @@ export const HANDLING: Drill[] = [
     ],
     progressions: ["Ball is rolled to them so they arrive at it moving", "Pass off both sides"],
     regressions: ["Shorter pass", "Two movements allowed to start with"],
+    faults: [
+      {
+        looks: "Standing up with the ball first, then passing",
+        say: "One movement. Sweep it away from where it is",
+      },
+      {
+        looks: "Feet planted too far from the ball so they have to stretch",
+        say: "Get your feet to it. Step, then sweep",
+      },
+    ],
   },
 ];

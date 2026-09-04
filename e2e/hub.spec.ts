@@ -1865,8 +1865,14 @@ test("present mode says how to set the drill up, not only what to watch for", as
   await expect(more.locator(".run-stage-more-body")).toBeHidden();
   await more.locator("summary").click();
   await expect(more.locator(".run-stage-more-body")).toBeVisible();
-  // Easier before harder. A block going wrong is why a coach opens this.
-  await expect(more.locator(".run-more-label").first()).toHaveText("Make it easier");
+  // The faults come first, because the first question when a block is going
+  // wrong is whether the drill is wrong or whether it is being done wrong.
+  // Then easier before harder, since that is the one a coach reaches for.
+  await expect(more.locator(".run-more-label")).toHaveText([
+    "When it is not working",
+    "Make it easier",
+    "Make it harder",
+  ]);
 });
 
 test("eight turned up, so the session says which blocks will not run", async ({ page }) => {
@@ -1938,6 +1944,24 @@ test("a U8 coach is never told they have neglected rucking", async ({ page }) =>
   expect(themes).not.toContain("Ruck and maul");
   expect(themes).not.toContain("Tackle");
   expect(themes).not.toContain("Set piece");
+});
+
+test("a drill says what going wrong looks like, plus what to say", async ({ page }) => {
+  await signedIn(page, "u10", "#/catalogue/drill-front-on-tackle");
+
+  // The audience is a parent who never played. "Head slips to the side of the
+  // hips" is a reminder, and a reminder only works for somebody who has seen it
+  // go right. This is the part that tells them what they are looking at.
+  const faults = page.locator(".drill-faults");
+  await expect(faults).toBeVisible();
+  await expect(faults.locator("dt").first()).toContainText("Head coming up");
+  await expect(faults.locator("dd").first()).toContainText("Eyes open");
+
+  // And it reaches the pitch, which is where the drill is actually going wrong.
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/run/0`);
+  await page.locator(".run-stage-more summary").click();
+  await expect(page.locator(".run-faults")).toBeVisible();
 });
 
 test("buttons sitting in a row line up with each other", async ({ page }) => {

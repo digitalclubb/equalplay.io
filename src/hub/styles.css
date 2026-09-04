@@ -2932,6 +2932,45 @@ body {
   font-size: var(--text-lg);
 }
 
+/* What going wrong looks like, next to what to say about it. Pairs rather than
+   bullets: a flat list loses which fix belongs to which fault. */
+.drill-faults {
+  margin: 0 0 var(--sp-md);
+}
+
+.drill-faults > div {
+  padding: var(--sp-xs) 0 var(--sp-xs) var(--sp-sm);
+  border-left: 3px solid var(--color-border);
+}
+
+.drill-faults > div + div {
+  margin-top: var(--sp-xs);
+}
+
+.drill-faults dt {
+  font-weight: var(--weight-semi);
+}
+
+.drill-faults dd {
+  margin: var(--sp-3xs) 0 0;
+  color: var(--color-muted);
+}
+
+/* Present mode's copy of the same. Inside the details, so it is already one
+   level in and does not want a second rule down the side. */
+.run-faults {
+  margin: 0 0 var(--sp-sm);
+}
+
+.run-faults dt {
+  font-weight: var(--weight-semi);
+}
+
+.run-faults dd {
+  margin: 0 0 var(--sp-xs);
+  color: var(--color-muted);
+}
+
 /* ---- What you have covered ---- */
 
 /* Under both session lists. It is a thing to notice on the way past rather than

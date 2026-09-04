@@ -97,6 +97,12 @@ permission and clearing it takes every copy of that link out of service. Read th
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
 
+**The drills teach rather than remind.** Every one of the 100 carries at least
+one fault: what it looks like when it is going wrong, plus the one thing to say.
+Coaching points assume a coach who has seen the drill go right before. This
+audience is a parent who never played. It is the gap the competition fills with
+video, which costs money and puts children on camera, so it is words instead.
+
 **What you have covered.** Framed as coverage rather than as a diary, because
 nobody keeps a diary. A coach marks a night as run from the session and the
 sessions page lists every theme their grade is allowed, worst first: never

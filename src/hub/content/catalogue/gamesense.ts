@@ -40,6 +40,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Three steps allowed with the ball", "Two balls at once"],
     regressions: ["Bigger pitch", "More players on the attacking team"],
+    faults: [
+      {
+        looks: "Everybody standing where they passed from",
+        say: "Move the second it leaves your hands",
+      },
+      {
+        looks: "The whole team in front of the ball with nobody to pass to",
+        say: "Somebody stay behind it. You cannot pass forwards",
+      },
+    ],
   },
   {
     id: "drill-four-goals",
@@ -83,6 +93,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Add a fifth goal in a corner", "Shrink the square"],
     regressions: ["Two goals only", "Bigger square"],
+    faults: [
+      {
+        looks: "All of them charging at the nearest goal",
+        say: "Look at all four. Which one has nobody in it?",
+      },
+      {
+        looks: "Nobody turning back because it feels like going backwards",
+        say: "Behind you is a goal too. Use it",
+      },
+    ],
   },
   {
     id: "drill-keep-ball-count",
@@ -116,6 +136,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Eight passes", "Smaller square"],
     regressions: ["Four passes", "One extra attacker"],
+    faults: [
+      {
+        looks: "Passing to whoever is closest, marker and all",
+        say: "Pass to somebody free. Look before you throw it",
+      },
+      {
+        looks: "Waiting until the carrier is in trouble before moving",
+        say: "Get free before they need you, not after",
+      },
+    ],
   },
   {
     id: "drill-two-ball-chaos",
@@ -147,6 +177,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Three balls", "Narrower pitch"],
     regressions: ["Take the second ball out for a few minutes", "Bigger pitch"],
+    faults: [
+      {
+        looks: "Both teams converging on whichever ball is nearest",
+        say: "That one is not yours. Where is yours?",
+      },
+      {
+        looks: "Heads down on their own ball, missing the empty half",
+        say: "Look up. They have all gone one way",
+      },
+    ],
   },
   {
     id: "drill-defend-the-line",
@@ -181,6 +221,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Six attackers against four", "Defenders start further back"],
     regressions: ["Even numbers", "Defenders may move as soon as the attack sets off"],
+    faults: [
+      {
+        looks: "One keen defender shooting out ahead of the rest",
+        say: "Come up together. Watch the person next to you",
+      },
+      {
+        looks: "Silence, so two of them take the same attacker",
+        say: "Say who you have got. Out loud, every time",
+      },
+    ],
   },
   {
     id: "drill-ten-metre-decisions",
@@ -211,6 +261,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Eight metres", "Three defenders"],
     regressions: ["Fifteen metres", "One defender"],
+    faults: [
+      {
+        looks: "Taking the ball then looking up to see what is on",
+        say: "Look before it comes. You have no time after",
+      },
+      {
+        looks: "Stepping sideways looking for room that is not there",
+        say: "Straight. Ten metres is not enough to go round anybody",
+      },
+    ],
   },
   {
     id: "drill-turnover-game",
@@ -241,6 +301,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Three seconds instead of five", "Narrower pitch"],
     regressions: ["Seven seconds", "Bigger pitch"],
+    faults: [
+      {
+        looks: "Winning it back then stopping to celebrate or reorganise",
+        say: "Go. Right now, while they are still turning round",
+      },
+      {
+        looks: "Nobody looking up at the moment the ball is won",
+        say: "One of you watch the pitch, not the ball",
+      },
+    ],
   },
   {
     id: "drill-scoring-zones",
@@ -287,6 +357,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Five in the wide zones and one in the middle", "Narrower middle zone"],
     regressions: ["Two in the wide zones", "Wider pitch"],
+    faults: [
+      {
+        looks: "Going straight for the wide zone from the first pass",
+        say: "Start in the middle. Make them come in first",
+      },
+      {
+        looks: "The wide player drifting in to get involved",
+        say: "Stay out there. Your job is to be alone",
+      },
+    ],
   },
   {
     id: "drill-no-talking-game",
@@ -317,6 +397,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Only the ball carrier may speak"],
     regressions: ["Two minutes each way"],
+    faults: [
+      {
+        looks: "Shouting constantly in the loud half so nothing is heard",
+        say: "A name and one word. That is all",
+      },
+      {
+        looks: "Heads down in the quiet half instead of looking around",
+        say: "You cannot shout, so look. Find their eyes",
+      },
+    ],
   },
   {
     id: "drill-outnumbered-defence",
@@ -351,6 +441,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Five against three", "Bigger pitch so there is more to cover"],
     regressions: ["Four against four", "Narrower pitch"],
+    faults: [
+      {
+        looks: "All the defenders converging on the ball carrier",
+        say: "One of you hold the outside. Do not follow the ball",
+      },
+      {
+        looks: "Rushing out to make something happen and getting stepped",
+        say: "Slow it down. You are not trying to win it, just delay it",
+      },
+    ],
   },
   {
     id: "drill-three-phase-game",
@@ -388,6 +488,16 @@ export const GAMESENSE: Drill[] = [
     regressions: ["Five phases", "Touch rules instead of contact"],
     safety:
       "Age grade contact rules apply exactly as they do on a Sunday. Nobody off their feet at the ruck, nobody joining from the side and stop it if heads start dropping through tiredness.",
+    faults: [
+      {
+        looks: "Every player piling into the first ruck",
+        say: "Two in. The rest of you get ready for phase two",
+      },
+      {
+        looks: "Standing around after the ruck deciding what to do next",
+        say: "Decide during phase one. Where is phase two going?",
+      },
+    ],
   },
   {
     id: "drill-space-then-contact",
@@ -437,6 +547,16 @@ export const GAMESENSE: Drill[] = [
     regressions: ["Touch everywhere", "Bigger pitch"],
     safety:
       "Age grade contact rules in the contact half. Watch for anybody carrying the touch-half habits into contact with a bad body position.",
+    faults: [
+      {
+        looks: "Running into a defender with acres of grass outside",
+        say: "Look at the space first. Contact is a choice",
+      },
+      {
+        looks: "Nobody knowing who is taking the contact until it happens",
+        say: "Say who is carrying it in before you get there",
+      },
+    ],
   },
   {
     id: "drill-last-play",
@@ -467,6 +587,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Twenty metres out with two defenders extra"],
     regressions: ["Two plays instead of one", "Even numbers"],
+    faults: [
+      {
+        looks: "Making the plan up on the pitch while the clock runs",
+        say: "Huddle first. Nobody moves until everybody knows it",
+      },
+      {
+        looks: "Somebody hoofing it downfield in a panic",
+        say: "Keep hold of it. A kick gives it away",
+      },
+    ],
   },
   {
     id: "drill-back-three-cover",
@@ -497,6 +627,16 @@ export const GAMESENSE: Drill[] = [
     ],
     progressions: ["Add two chasers", "Balls that bounce awkwardly"],
     regressions: ["Roll it along the ground", "Nominate the catcher first"],
+    faults: [
+      {
+        looks: "Two of them going for the same ball and colliding",
+        say: "One name, called early. Everybody else backs off",
+      },
+      {
+        looks: "Catching it then standing still facing their own line",
+        say: "Turn and face up the pitch before you do anything",
+      },
+    ],
   },
   {
     id: "drill-full-game-conditions",
@@ -542,5 +682,15 @@ export const GAMESENSE: Drill[] = [
     regressions: ["Shorter halves", "Fewer players and a smaller pitch"],
     safety:
       "Full age grade rules including every contact restriction for the grade. Referee the tackle height and the ruck properly. If a child is tired enough to be tackling badly, take them off.",
+    faults: [
+      {
+        looks: "Talking only when the ball is live, silence at every stoppage",
+        say: "The stoppage is when you sort yourselves out. Use it",
+      },
+      {
+        looks: "Waiting for a coach to organise them at each restart",
+        say: "Set yourselves. I am not going to tell you",
+      },
+    ],
   },
 ];

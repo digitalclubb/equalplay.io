@@ -41,6 +41,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Stay on the knees the whole session", "Wrap and hold without taking them down"],
     safety:
       "Match by size, never by age alone. Head position is the one thing that is not negotiable, so stop the drill instantly for any head in front of the carrier. Contact below the waist only. If anybody is tired enough to be dropping their technique, they stop.",
+    faults: [
+      {
+        looks: "Head going in front of the carrier rather than past their hip",
+        say: "Touch your ear to their back pocket before you wrap",
+      },
+      {
+        looks: "Arms pushing rather than gripping, so nobody goes anywhere",
+        say: "Lock your own hands together behind their legs",
+      },
+    ],
   },
   {
     id: "drill-long-placement",
@@ -80,6 +90,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Place from kneeling with no shield contact"],
     safety:
       "Shield holders brace and absorb, they never drive back into the carrier. Contact at hip height only. Check the ground first.",
+    faults: [
+      {
+        looks: "Landing chest first with both arms trapped underneath",
+        say: "Show me the shoulder you are landing on before you run",
+      },
+      {
+        looks: "Ball put down beside them rather than reached back",
+        say: "Put a cone where the ball should finish and make them touch it",
+      },
+    ],
   },
   {
     id: "drill-tackle-and-get-up",
@@ -119,6 +139,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Wrap and hold without going to ground"],
     safety:
       "Shield holders absorb only. Contact stays below the chest. Stop for any head going in front. Soft grass, checked first.",
+    faults: [
+      {
+        looks: "Pushing up off their front, which takes about three seconds",
+        say: "Roll onto your side first, then stand",
+      },
+      {
+        looks: "Standing up facing the way they came from",
+        say: "Pick a cone up the pitch. Stand up looking at it",
+      },
+    ],
   },
   {
     id: "drill-side-on-tackle",
@@ -152,6 +182,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Carrier walks slowly and in a straight line", "Tackler stays kneeling"],
     safety:
       "Side on only, never from directly in front in this one. Match by size. Below the waist. Stop instantly for a head going in front of the carrier.",
+    faults: [
+      {
+        looks: "Aiming at where the carrier is instead of where they are going",
+        say: "Run at the space in front of them",
+      },
+      {
+        looks: "Arms reaching out while the feet stop moving",
+        say: "Feet all the way to them first. Arms last",
+      },
+    ],
   },
   {
     id: "drill-front-on-tackle",
@@ -186,6 +226,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Shield only", "From the knees"],
     safety:
       "The single most important note in the catalogue. Any head going in front of the carrier stops the drill immediately. Contact below the waist, nowhere near the chest or the head. Match by size, never by age. No jogging until every rep is technically right at walking pace.",
+    faults: [
+      {
+        looks: "Head coming up and the eyes shutting at contact",
+        say: "Eyes open. Pick the pocket you are aiming for and watch it in",
+      },
+      {
+        looks: "Stopping dead on impact so the pair of them bounce apart",
+        say: "Keep your legs going for three steps after you hit",
+      },
+    ],
   },
   {
     id: "drill-two-tackle-shuttle",
@@ -220,6 +270,16 @@ export const TACKLE: Drill[] = [
     regressions: ["One shield with a walk back", "Wrap and hold without going down"],
     safety:
       "Tiredness is the risk here, so build in a real rest and cap it at four goes. Any drop in head position and that child is finished for the drill. Shield holders absorb, never drive.",
+    faults: [
+      {
+        looks: "The second tackle made from further away, arms first",
+        say: "Walk the second one until it looks like the first",
+      },
+      {
+        looks: "Setting off again from one knee",
+        say: "All the way up. Both feet, then go",
+      },
+    ],
   },
   {
     id: "drill-tackle-then-compete",
@@ -253,6 +313,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Walk everything", "Nobody competes, just get up and reset"],
     safety:
       "Age grade rules apply at the contest, so everybody stays on their feet and nobody joins from the side. Walking pace until the whole sequence is tidy. Stop for any head in front of the carrier.",
+    faults: [
+      {
+        looks: "Both of them lying on the floor watching the ball",
+        say: "First one up wins it. Count them up out loud",
+      },
+      {
+        looks: "Support player diving in off their feet",
+        say: "Arrive low but stay standing. On the floor you are no use",
+      },
+    ],
   },
   {
     id: "drill-defend-your-channel",
@@ -292,6 +362,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Walking pace", "Narrower channels still"],
     safety:
       "Match every pair by size before you start and keep the same pairs. Jogging pace only. Watch all four channels and if you cannot see all four, run two at a time instead.",
+    faults: [
+      {
+        looks: "Lunging from two metres and grabbing a shirt",
+        say: "Shorten your last three steps. Get close, then go",
+      },
+      {
+        looks: "Drifting sideways with the carrier so the tackle never happens",
+        say: "Meet them. Do not follow them",
+      },
+    ],
   },
   {
     id: "drill-double-tackle",
@@ -323,6 +403,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Shield instead of a player", "Walking pace with the roles fixed"],
     safety:
       "Two tacklers on one child needs watching closely. Walking pace until the calling is reliable. The high tackler is on the ball and below the chest, never near the head or the neck. Stop it the moment two heads end up in the same place.",
+    faults: [
+      {
+        looks: "Both going low, so nobody has the ball",
+        say: "Say low or high out loud before they reach you",
+      },
+      {
+        looks: "The high tackler creeping up towards the chest",
+        say: "Below the armpit. Show them where that is on themselves",
+      },
+    ],
   },
   {
     id: "drill-tackle-under-fatigue",
@@ -356,6 +446,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Shorter run", "Wrap and hold with no takedown"],
     safety:
       "This drill deliberately creates the conditions where technique fails, so it needs the closest watching of any of them. One tackle per go, three goes only, real rest between. Any drop in head position ends it for that child. Do not run this at the end of a session.",
+    faults: [
+      {
+        looks: "The head dropping in front once they are blowing",
+        say: "Stop the moment it moves. Being tired is not a reason",
+      },
+      {
+        looks: "Reaching from upright because bending down hurts",
+        say: "Get lower, not longer. Knees bend before the arms go",
+      },
+    ],
   },
   {
     id: "drill-tackle-the-offload",
@@ -390,6 +490,16 @@ export const TACKLE: Drill[] = [
     regressions: ["Walking pace", "Carrier holds the ball in one hand to make it obvious"],
     safety:
       "Both defenders stay below the chest. No grabbing round the neck to stop an arm. Walking pace until the two of them arrive together reliably.",
+    faults: [
+      {
+        looks: "Both defenders going for the ball, so the carrier stays up",
+        say: "One takes legs, one takes ball. Decide before you move",
+      },
+      {
+        looks: "Arriving one after the other so the pass goes between them",
+        say: "Go together. Count each other in",
+      },
+    ],
   },
   {
     id: "drill-choke-and-hold",
@@ -421,5 +531,15 @@ export const TACKLE: Drill[] = [
     regressions: ["One defender wrapping the ball only", "Carrier stands still"],
     safety:
       "Nobody goes to ground, so if the carrier starts falling, let them go rather than twisting them. No more than three players involved, per the age grade rules. Nothing above the chest and nothing near the neck.",
+    faults: [
+      {
+        looks: "Dragging the carrier to the floor out of habit",
+        say: "Keep them up. On the floor it does not count",
+      },
+      {
+        looks: "Two defenders wrestling separately so the carrier turns out",
+        say: "Grab each other, not just them",
+      },
+    ],
   },
 ];

@@ -877,7 +877,9 @@ function startRunClock(
  * arm's length. A paragraph over them would push them off a phone.
  *
  * Make it easier comes before make it harder. A block going wrong is the reason
- * a coach opens this at all.
+ * a coach opens this at all, which is also why the faults sit above both: the
+ * first question is whether the drill is wrong or whether it is being done
+ * wrong. Those have different answers.
  */
 function runStageMore(drill: Drill): string {
   const change = (label: string, items: string[] | undefined): string =>
@@ -886,11 +888,19 @@ function runStageMore(drill: Drill): string {
          <ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
       : "";
 
+  const faults = drill.faults?.length
+    ? `<p class="run-more-label">When it is not working</p>
+       <dl class="run-faults">${drill.faults
+         .map((fault) => `<dt>${esc(fault.looks)}</dt><dd>${esc(fault.say)}</dd>`)
+         .join("")}</dl>`
+    : "";
+
   return `
     <details class="run-stage-more">
       <summary>How it runs, plus how to change it</summary>
       <div class="run-stage-more-body">
         <p>${esc(drill.howItRuns)}</p>
+        ${faults}
         ${change("Make it easier", drill.regressions)}
         ${change("Make it harder", drill.progressions)}
       </div>

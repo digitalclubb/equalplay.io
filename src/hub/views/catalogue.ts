@@ -755,6 +755,8 @@ function renderDetail(
         <h3>Coaching points</h3>
         <ul>${drill.coachingPoints.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
 
+        ${faultList(drill)}
+
         ${list("Make it harder", drill.progressions)}
         ${list("Make it easier", drill.regressions)}
       </div>
@@ -856,6 +858,30 @@ function renderDetail(
   }
 
   if (scrollToTop) container.querySelector<HTMLElement>("h2")?.scrollIntoView({ block: "start" });
+}
+
+/**
+ * What going wrong looks like, next to the thing to say about it.
+ *
+ * Under the coaching points, because it only means anything once a coach knows
+ * what they were aiming at. A definition list rather than bullets: these come in
+ * pairs and a flat list of six lines loses which fix belongs to which fault.
+ */
+function faultList(drill: Drill): string {
+  if (!drill.faults?.length) return "";
+  return `
+    <h3>When it is not working</h3>
+    <dl class="drill-faults">
+      ${drill.faults
+        .map(
+          (fault) => `
+        <div>
+          <dt>${esc(fault.looks)}</dt>
+          <dd>${esc(fault.say)}</dd>
+        </div>`,
+        )
+        .join("")}
+    </dl>`;
 }
 
 function list(heading: string, items?: string[]): string {

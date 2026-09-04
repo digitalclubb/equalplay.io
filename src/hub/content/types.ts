@@ -224,6 +224,27 @@ export interface Drill {
   coachingPoints: string[];
   progressions?: string[];
   regressions?: string[];
+  /**
+   * What it looks like when it is going wrong, plus the one thing to say.
+   *
+   * Coaching points tell a coach what should be happening. They are reminders,
+   * and a reminder only works for somebody who has seen the drill go right
+   * before. Most of this audience has not: they are a parent who never played,
+   * running the age group because nobody else volunteered. They read "keep the
+   * line flat", watch ten children, then genuinely cannot tell which of them is
+   * flat.
+   *
+   * `looks` has to be spottable from the touchline by somebody who does not
+   * know the game. Not "poor body position", which is the same problem in
+   * fewer words. `say` is one instruction to give, in the words a coach would
+   * actually use.
+   *
+   * This is the part every competitor buys with video. Video costs money and
+   * puts children on camera, so it is written instead, which means it has to be
+   * more precise than a picture would need to be. A vague fault is worse than
+   * no fault: it fills the space the useful one would have gone in.
+   */
+  faults?: { looks: string; say: string }[];
   /** Contact drills only. */
   safety?: string;
   /**

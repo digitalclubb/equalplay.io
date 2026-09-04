@@ -42,6 +42,16 @@ export const WARMUPS: Drill[] = [
       "Two hunters with no tags of their own against everyone else",
     ],
     regressions: ["Bigger square", "One tag each instead of two"],
+    faults: [
+      {
+        looks: "Long strides right up to the person they are chasing",
+        say: "Chop your steps down as you get close",
+      },
+      {
+        looks: "Eyes on their own tags instead of up",
+        say: "Head up. Watch where you are going, not your waist",
+      },
+    ],
   },
   {
     id: "warmup-two-ball-square",
@@ -71,6 +81,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Add a third ball", "Move to a different part of the square after every pass"],
     regressions: ["Walk instead of jog", "One ball only"],
+    faults: [
+      {
+        looks: "Calling for it as it arrives, which is too late",
+        say: "Shout before you want it, not when you need it",
+      },
+      {
+        looks: "Passing at where they are standing rather than where they are going",
+        say: "Pass in front. Make them run onto it",
+      },
+    ],
   },
   {
     id: "warmup-name-and-pass",
@@ -99,6 +119,12 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Add a second ball going the other way", "Jog around the circle while passing"],
     regressions: ["Underarm pass only", "Smaller circle"],
+    faults: [
+      {
+        looks: "Name said as the ball is already in the air",
+        say: "Say it first, then pass. In that order",
+      },
+    ],
   },
   {
     id: "warmup-traffic-lights",
@@ -131,6 +157,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Say one colour and mean another so they have to listen", "Everyone carries a ball"],
     regressions: ["Three calls only", "Walk everything"],
+    faults: [
+      {
+        looks: "Freezing with a bit of a wobble and a shuffle",
+        say: "Still means still. Hold it until I say",
+      },
+      {
+        looks: "Skidding into the turn on straight legs",
+        say: "Bend your knees. Land quiet",
+      },
+    ],
   },
   {
     id: "warmup-shark-in-the-pond",
@@ -161,6 +197,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Narrow the channel", "Runners carry a ball in two hands"],
     regressions: ["Wider channel", "One shark to start"],
+    faults: [
+      {
+        looks: "Standing on the line waiting for a perfect gap",
+        say: "Go. A gap now beats a better one never",
+      },
+      {
+        looks: "Both sharks chasing the same runner",
+        say: "One each. Talk to each other",
+      },
+    ],
   },
   {
     id: "warmup-follow-the-leader",
@@ -191,6 +237,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Leader carries a ball", "Follower has to mirror rather than copy"],
     regressions: ["Walk it", "Leader changes direction on your call only"],
+    faults: [
+      {
+        looks: "Leaders running long slow curves that are easy to follow",
+        say: "Sharp changes. Make it hard for them",
+      },
+      {
+        looks: "Followers drifting five metres back",
+        say: "Close enough to touch them",
+      },
+    ],
   },
   {
     id: "warmup-rob-the-nest",
@@ -250,6 +306,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Balls must be placed on the ground with two hands and a bend of the knees"],
     regressions: ["Nests closer to the middle", "More balls so nobody waits"],
+    faults: [
+      {
+        looks: "The ball thrown into the nest from a stride away",
+        say: "Place it. Bend down and put it in",
+      },
+      {
+        looks: "Setting off before they have picked which nest",
+        say: "Look first, then run",
+      },
+    ],
   },
   {
     id: "warmup-four-corner-passing",
@@ -289,6 +355,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Three balls", "Pass then sprint to the far corner instead of the near one"],
     regressions: ["One ball", "Walk the first minute"],
+    faults: [
+      {
+        looks: "Arms swinging round the body so the pass loops",
+        say: "Push it across your chest. Do not wind up",
+      },
+      {
+        looks: "Standing still waiting for the ball to arrive",
+        say: "Run onto it. Keep moving",
+      },
+    ],
   },
 
   // ---- Movement prep ----
@@ -328,6 +404,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Shorter channel", "Drop the builds if it is really cold"],
     safety:
       "This comes before any contact, every session. The research on structured rugby warm-ups is that they cut soft tissue injuries and concussions by a long way. It takes eight minutes.",
+    faults: [
+      {
+        looks: "Straight legs and a rounded back on the brace",
+        say: "Bend your knees. Chest up, look at me",
+      },
+      {
+        looks: "Sprinting the first one and having nothing left",
+        say: "Build it. First one is a jog",
+      },
+    ],
   },
   {
     id: "warmup-ankles-and-knees",
@@ -351,6 +437,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Hold a partner for the balance", "Half depth on the squat"],
     safety:
       "Nobody is loading up here, so if a child says something hurts believe them and move them on to something else.",
+    faults: [
+      {
+        looks: "Knees falling inwards on the squat",
+        say: "Push your knees out over your toes",
+      },
+      {
+        looks: "Rushing through the reps to be finished",
+        say: "Slow. Fast does nothing here",
+      },
+    ],
   },
   {
     id: "warmup-partner-mirror",
@@ -386,6 +482,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Leader holds a ball and can step past on your call"],
     regressions: ["Walk it", "One metre apart so there is less to cover"],
+    faults: [
+      {
+        looks: "Feet crossing over and the balance going",
+        say: "Shuffle. Never cross them",
+      },
+      {
+        looks: "Watching the shoulders and getting sold every time",
+        say: "Watch their belly button. It cannot lie",
+      },
+    ],
   },
   {
     id: "warmup-down-and-up",
@@ -420,6 +526,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Start from kneeling rather than standing"],
     safety:
       "Ground contact only. Nobody touches anybody. Walk the pitch for stones and dog mess first. Stop if the ground is frozen.",
+    faults: [
+      {
+        looks: "Landing flat on the front or straight onto the back",
+        say: "On your side. Show me which side before you go",
+      },
+      {
+        looks: "The head thrown back on the way down",
+        say: "Chin on your chest. Tuck it in",
+      },
+    ],
   },
   {
     id: "warmup-shoulder-to-shield",
@@ -452,6 +568,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Stay on the knees for the whole thing"],
     safety:
       "Match by size, not by age. Shield holders brace and absorb, they never drive back. Contact stays below the chest. Stop the moment technique starts falling apart from tiredness.",
+    faults: [
+      {
+        looks: "The head going into the shield rather than past it",
+        say: "Head to the side. Ear to the shield, never the crown",
+      },
+      {
+        looks: "Arms shoving instead of wrapping",
+        say: "Wrap and grip. It is a hug",
+      },
+    ],
   },
   {
     id: "warmup-jog-and-place",
@@ -487,6 +613,16 @@ export const WARMUPS: Drill[] = [
     progressions: ["A support player arrives to pick up and carry on"],
     regressions: ["Walk it", "Place from kneeling"],
     safety: "Ground contact only. No player touches another player in this one.",
+    faults: [
+      {
+        looks: "Landing chest first with the arms underneath",
+        say: "On your side. Arms need to be free",
+      },
+      {
+        looks: "Lying there admiring the placement",
+        say: "Straight up. Do not stay down",
+      },
+    ],
   },
   {
     id: "warmup-wrestle-for-the-ball",
@@ -518,6 +654,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["One player attacks and one defends rather than both competing"],
     safety:
       "Knees down, heads up and to the side. No swinging anybody around. Stop it instantly if a head goes near the floor or anyone gets wound up.",
+    faults: [
+      {
+        looks: "Elbows out wide where they can be pulled",
+        say: "Elbows in. Squeeze it into your ribs",
+      },
+      {
+        looks: "Leaning back to pull it away",
+        say: "Get your weight over it, not behind it",
+      },
+    ],
   },
   {
     id: "warmup-body-position-ladder",
@@ -549,6 +695,16 @@ export const WARMUPS: Drill[] = [
     progressions: ["Add a shield to grip and hold at the last cone"],
     regressions: ["Walk the whole thing", "Fewer cones so there is more time between them"],
     safety: "No contact with another player. Bodies only.",
+    faults: [
+      {
+        looks: "Bending at the waist with a rounded back",
+        say: "Bend your knees. Back stays flat",
+      },
+      {
+        looks: "Head down looking at the grass",
+        say: "If you can see the floor, you are wrong",
+      },
+    ],
   },
   {
     id: "warmup-scrum-shape-hold",
@@ -577,6 +733,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Two players instead of three", "Hold for three seconds"],
     safety:
       "No opposition and no pushing in this one. It exists so the front row learns the shape without a load on it.",
+    faults: [
+      {
+        looks: "Heads down on crouch",
+        say: "Eyes up. Look at the player opposite",
+      },
+      {
+        looks: "Leaning on each other rather than standing on their own feet",
+        say: "Feet under you. Hold your own weight",
+      },
+    ],
   },
   {
     id: "warmup-numbers-scramble",
@@ -607,6 +773,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Call two numbers and they pick which to make", "No talking allowed"],
     regressions: ["Walk it", "Only call numbers, no shapes"],
+    faults: [
+      {
+        looks: "Standing still waiting to be picked up by a group",
+        say: "Move towards people. Go and find a group",
+      },
+      {
+        looks: "Counting silently then getting it wrong",
+        say: "Count out loud so you can hear each other",
+      },
+    ],
   },
   {
     id: "warmup-hospital-pass",
@@ -636,6 +812,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Both moving while you do it", "Bad passes at pace"],
     regressions: ["Closer together", "Only slightly bad passes to start"],
+    faults: [
+      {
+        looks: "Reaching for the low ball without moving the feet",
+        say: "Feet to it first. Then your hands",
+      },
+      {
+        looks: "Fingers apart so it goes straight through",
+        say: "Little fingers together underneath it",
+      },
+    ],
   },
   {
     id: "warmup-three-corner-sprint",
@@ -666,6 +852,16 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Carry a ball", "Turn the other way round the triangle"],
     regressions: ["Wider triangle", "Jog all three laps"],
+    faults: [
+      {
+        looks: "Running wide round the cone rather than turning at it",
+        say: "Little steps in. Turn tight",
+      },
+      {
+        looks: "Staying upright through the turn and losing all the speed",
+        say: "Drop your hips. Lean into it",
+      },
+    ],
   },
   {
     id: "warmup-tackle-tube-roll",
@@ -702,6 +898,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Start from kneeling", "Roll without getting up"],
     safety:
       "Ground contact only, nobody touches anybody. Check the pitch for stones first and skip it entirely if the ground is hard or frozen.",
+    faults: [
+      {
+        looks: "The head going back towards the floor",
+        say: "Chin tucked. Look at your own tummy",
+      },
+      {
+        looks: "Rolling straight over the top of the neck",
+        say: "Across your shoulder, on the diagonal",
+      },
+    ],
   },
   {
     id: "warmup-grip-and-drive",
@@ -733,6 +939,16 @@ export const WARMUPS: Drill[] = [
     regressions: ["Two steps", "No resistance at all"],
     safety:
       "You start in contact, so there is no impact in this one. Shield holders resist but never drive back. Match by size.",
+    faults: [
+      {
+        looks: "Feet moving before the arms are bound",
+        say: "Grip first. Then walk",
+      },
+      {
+        looks: "Long lunging steps that stand them up",
+        say: "Short steps. Lots of little ones",
+      },
+    ],
   },
   {
     id: "warmup-two-lap-and-in",
@@ -769,5 +985,15 @@ export const WARMUPS: Drill[] = [
     ],
     progressions: ["Threes instead of pairs so there is a proper line to move"],
     regressions: ["One lap", "Walk the first lap"],
+    faults: [
+      {
+        looks: "Passing behind the receiver so they have to check",
+        say: "In front of them. They should never slow down",
+      },
+      {
+        looks: "The pass telegraphed early with the arms out",
+        say: "Late hands. Hold it until the last moment",
+      },
+    ],
   },
 ];

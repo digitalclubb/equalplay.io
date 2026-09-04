@@ -35,6 +35,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Two defenders in the channel"],
     regressions: ["Walk it through", "Wider channel"],
+    faults: [
+      {
+        looks: "Running straight at the defender then stepping when it is too late",
+        say: "Change your angle from three steps away, not one",
+      },
+      {
+        looks: "Defenders watching the ball, so a shoulder drop beats them",
+        say: "Watch their hips. Hips cannot lie to you",
+      },
+    ],
   },
   {
     id: "drill-gate-choice",
@@ -75,6 +85,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Defender starts moving before you set off", "Two defenders in three gates"],
     regressions: ["Four gates", "Defender stands still until you commit"],
+    faults: [
+      {
+        looks: "Head down, running at whichever gate is straight ahead",
+        say: "Look up first. Where are they standing?",
+      },
+      {
+        looks: "Changing gate at the last second and getting caught between two",
+        say: "Pick it and commit. Wrong gate quickly beats right gate late",
+      },
+    ],
   },
   {
     id: "drill-side-step-slalom",
@@ -112,6 +132,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Carry a ball", "A defender stands at the last cone"],
     regressions: ["Wider spacing", "Walk it all the way through"],
+    faults: [
+      {
+        looks: "Leaning over at the cone with the feet carrying straight on",
+        say: "Push off the outside foot. Feel it in your leg",
+      },
+      {
+        looks: "Long strides into the cone so there is no time to change direction",
+        say: "Little steps as you get close. Chop them up",
+      },
+    ],
   },
   {
     id: "drill-british-bulldog-ball",
@@ -141,6 +171,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Everyone carries a ball", "Narrow the pitch"],
     regressions: ["Wider pitch", "One catcher to start"],
+    faults: [
+      {
+        looks: "Waiting at the line for a gap that never comes",
+        say: "Pick one early and go. Hesitating is how you get caught",
+      },
+      {
+        looks: "The ball tucked under one arm as soon as they start stepping",
+        say: "Two hands the whole way, even when you are dodging",
+      },
+    ],
   },
   {
     id: "drill-hit-the-hole",
@@ -171,6 +211,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Defenders may take one step forward", "Only two attackers"],
     regressions: ["Bigger gap", "Defenders stand still"],
+    faults: [
+      {
+        looks: "All three running at the same gap",
+        say: "One person calls it. Everyone else does their own job",
+      },
+      {
+        looks: "Drifting across the gap instead of through it",
+        say: "Square up and go straight. Sideways runs into the cover",
+      },
+    ],
   },
   {
     id: "drill-shadow-and-step",
@@ -200,6 +250,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Add a second carrier so the defender has a choice to make"],
     regressions: ["Walk the whole thing", "Bigger gap between them"],
+    faults: [
+      {
+        looks: "The step made with the feet only, so nobody is fooled",
+        say: "Drop your shoulder first. Sell it",
+      },
+      {
+        looks: "Defenders crossing their feet and losing their balance",
+        say: "Shuffle, do not cross. Stay square",
+      },
+    ],
   },
   {
     id: "drill-out-the-back-door",
@@ -230,6 +290,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Two defenders", "Support runners cross behind the carrier"],
     regressions: ["Defender must commit early", "Walk it"],
+    faults: [
+      {
+        looks: "Passing before the defender has committed to either side",
+        say: "Wait. Watch which way they lean, then give it the other way",
+      },
+      {
+        looks: "Both support runners flat alongside with no time to react",
+        say: "Get deeper. You want a full second to see it",
+      },
+    ],
   },
   {
     id: "drill-one-on-one-channel",
@@ -259,6 +329,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Narrower channel", "Defender starts closer"],
     regressions: ["Wider channel", "Defender may only move sideways"],
+    faults: [
+      {
+        looks: "Running at one speed the whole way",
+        say: "Slow down, then go. The change is what beats them",
+      },
+      {
+        looks: "Defenders diving in and getting stepped",
+        say: "Stay on your feet in front of them. Make them decide",
+      },
+    ],
   },
   {
     id: "drill-support-the-break",
@@ -288,6 +368,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Three defenders", "Support starts further back"],
     regressions: ["One defender", "Support starts alongside the carrier"],
+    faults: [
+      {
+        looks: "Support setting off once the carrier has already gone twenty metres",
+        say: "Go when the break happens. Do not wait to be sure",
+      },
+      {
+        looks: "Support running flat alongside so the pass has to go forward",
+        say: "Come from behind at an angle. Deeper than that",
+      },
+    ],
   },
   {
     id: "drill-narrow-to-wide",
@@ -330,6 +420,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Four defenders", "Narrower first channel"],
     regressions: ["Five attackers", "Wider first channel"],
+    faults: [
+      {
+        looks: "Carrying the ball out towards the touchline instead of passing it",
+        say: "The ball goes wide, not you",
+      },
+      {
+        looks: "The wide player shouting from the start and giving it away",
+        say: "Stay quiet until the space is there",
+      },
+    ],
   },
   {
     id: "drill-kick-chase-regather",
@@ -362,6 +462,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Ball is kicked so it bounces awkwardly", "Two chasers competing"],
     regressions: ["Roll it slowly", "No defender"],
+    faults: [
+      {
+        looks: "Reaching down at the last stride and knocking it on",
+        say: "Get down to it earlier. Two steps before, not one",
+      },
+      {
+        looks: "Fingers apart so the ball goes through their hands",
+        say: "Little fingers together. Scoop it into your chest",
+      },
+    ],
   },
   {
     id: "drill-two-touch-attack",
@@ -392,6 +502,16 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["One touch only", "Narrow the pitch"],
     regressions: ["Four touches", "Wider pitch"],
+    faults: [
+      {
+        looks: "Everybody stopping to think when the ball arrives",
+        say: "Decide before it gets to you. What is your next move?",
+      },
+      {
+        looks: "Nobody moving, so the second touch has nowhere to go",
+        say: "Somebody has to be running every time the ball moves",
+      },
+    ],
   },
   {
     id: "drill-fend-and-go",
@@ -423,6 +543,16 @@ export const EVASION: Drill[] = [
     regressions: ["Walk it", "Push the shield with no run afterwards"],
     safety:
       "The hand off stays below the armpits, never to the head or the neck. Shield holders absorb only. Walking pace until the height is right every time.",
+    faults: [
+      {
+        looks: "The hand going up towards the head or the neck",
+        say: "Below the armpits. Aim at their chest, nowhere higher",
+      },
+      {
+        looks: "Stopping to push, so all the pace goes",
+        say: "Push and run in the same movement. Do not plant your feet",
+      },
+    ],
   },
   {
     id: "drill-beat-the-drift",
@@ -459,5 +589,15 @@ export const EVASION: Drill[] = [
     ],
     progressions: ["Defenders drift faster", "Five defenders against four"],
     regressions: ["Defenders come straight instead of drifting", "Five attackers"],
+    faults: [
+      {
+        looks: "Everybody drifting the same way as the defence",
+        say: "One of you run straight. That is what stops it",
+      },
+      {
+        looks: "Slow ball, so the drift gets there first every time",
+        say: "Earlier. Move it before they are set",
+      },
+    ],
   },
 ];

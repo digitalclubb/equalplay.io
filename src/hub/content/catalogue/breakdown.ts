@@ -45,6 +45,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Walk it with no shield", "One support player and no clock"],
     safety:
       "Everybody stays on their feet. No diving in, nobody joining from the side. Stop it the moment somebody drops their head as they arrive.",
+    faults: [
+      {
+        looks: "The first arriver going straight to ground on top of the ball",
+        say: "Step over it and stay up. Feet either side",
+      },
+      {
+        looks: "Everyone waiting for the ball to stop before anybody moves",
+        say: "Start moving as the carrier goes down, not after",
+      },
+    ],
   },
   {
     id: "drill-step-over-and-stay",
@@ -77,6 +87,16 @@ export const BREAKDOWN: Drill[] = [
     progressions: ["A second player arrives and tries to shift you"],
     regressions: ["Stand over the ball without getting low", "Walk in from one metre"],
     safety: "No contact between players in the basic version. Bodies and feet only.",
+    faults: [
+      {
+        looks: "Standing over the ball with a rounded back and the head down",
+        say: "Chest up, look at me. Bend your knees, not your back",
+      },
+      {
+        looks: "Feet landing on the ball or side by side behind it",
+        say: "One foot each side. Straddle it like a puddle",
+      },
+    ],
   },
   {
     id: "drill-clear-the-threat",
@@ -111,6 +131,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Shield holder stands upright", "Walk in from one metre"],
     safety:
       "Shoulder to the shield, head to the side, never leading with the head. Shield holders brace and absorb only. Match by size and stop it if anybody starts launching themselves in.",
+    faults: [
+      {
+        looks: "Standing up into the shield so it stops them dead",
+        say: "Get your shoulder under theirs. Lower wins",
+      },
+      {
+        looks: "Hitting the shield then stopping, with no feet after contact",
+        say: "Little steps after you hit. Walk them backwards",
+      },
+    ],
   },
   {
     id: "drill-five-second-count",
@@ -146,6 +176,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Seven seconds", "No defender and no shield"],
     safety:
       "Age grade rules exactly. Everybody on their feet, nobody in from the side. Counting creates a rush so watch for heads dropping as they hurry.",
+    faults: [
+      {
+        looks: "Nobody counting, so nobody knows they are slow",
+        say: "Everyone counts out loud. You included",
+      },
+      {
+        looks: "Four or five players arriving for a ball nobody is contesting",
+        say: "Only go in if somebody is over it. Otherwise get in the line",
+      },
+    ],
   },
   {
     id: "drill-who-goes-in",
@@ -183,6 +223,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Three allowed in", "Touch instead of contact for the tackle"],
     safety:
       "Age grade contact rules. Nobody off their feet, nobody joining from the side. Keep numbers at the ruck low, which this drill does anyway.",
+    faults: [
+      {
+        looks: "Everybody following the ball, so nothing is left outside",
+        say: "Two in. Everybody else, get where the ball is going next",
+      },
+      {
+        looks: "Both going in from the same side and leaving one side open",
+        say: "Say mine or say out. Loud enough that they hear each other",
+      },
+    ],
   },
   {
     id: "drill-pick-and-go",
@@ -216,6 +266,16 @@ export const BREAKDOWN: Drill[] = [
     progressions: ["Two metre drives", "A defender walking alongside applying pressure"],
     regressions: ["Walk it", "Place from a kneel"],
     safety: "No contact between players in the basic version. Ground contact only, checked pitch.",
+    faults: [
+      {
+        looks: "Picking up one handed on the run so the ball spills",
+        say: "Stop, two hands, then go. Speed comes later",
+      },
+      {
+        looks: "Ball carried out from the chest where it can be knocked out",
+        say: "Squeeze it into your ribs before your feet move",
+      },
+    ],
   },
   {
     id: "drill-counter-ruck",
@@ -249,6 +309,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["One defender", "Attacker stands upright and offers no resistance"],
     safety:
       "Walking pace until the two arrive as one. Everybody on their feet, shoulders and arms only, no heads leading. Match by size across the whole group.",
+    faults: [
+      {
+        looks: "The two arriving a beat apart, so the first one gets shrugged off",
+        say: "Hold onto each other on the way in, then you cannot split up",
+      },
+      {
+        looks: "Both upright and pushing with their arms",
+        say: "Get under them. If your head is higher than theirs you have lost",
+      },
+    ],
   },
   {
     id: "drill-maul-three-and-move",
@@ -282,6 +352,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Static, no movement at all", "Carrier is held loosely"],
     safety:
       "Three players maximum, which is the rule at this grade. Nobody drags anybody to ground. If the carrier goes down it is a ruck and everybody stays on their feet. Nothing above the chest.",
+    faults: [
+      {
+        looks: "The ball staying at the front where everybody can grab it",
+        say: "Ball to the back player straight away. Show me the swap",
+      },
+      {
+        looks: "A fourth and fifth player joining because it looks like fun",
+        say: "Three only. The rest of you get in the line",
+      },
+    ],
   },
   {
     id: "drill-ruck-to-ruck",
@@ -315,6 +395,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Two rucks", "Two defenders"],
     safety:
       "Age grade contact rules throughout. Everybody on their feet at the ruck, nobody in from the side. Cap the reps and watch for tiredness rather than running it until somebody gets hurt.",
+    faults: [
+      {
+        looks: "Everybody watching the ruck instead of getting ready for the next one",
+        say: "Heads up. Where is the next carry going?",
+      },
+      {
+        looks: "The same two children carrying every time",
+        say: "Next carrier calls for it before the ball is out",
+      },
+    ],
   },
   {
     id: "drill-defend-the-ruck-edge",
@@ -347,6 +437,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Three guards", "Attack must go wide only"],
     safety:
       "Age grade contact rules. Guards are defending a space, not launching at anybody. Below the chest, heads to the side.",
+    faults: [
+      {
+        looks: "Guards drifting out with the ball and opening the gap next to the ruck",
+        say: "Stay by the ruck until the ball has gone past you",
+      },
+      {
+        looks: "Nobody saying which side they have got, so both go the same way",
+        say: "Point and shout. Left or right, before the ball comes out",
+      },
+    ],
   },
   {
     id: "drill-carry-into-space",
@@ -380,6 +480,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Wider channels", "Touch instead of contact"],
     safety:
       "Age grade contact rules. Everybody on their feet at the ruck. Watch for anybody dropping their head as they pick a gap late.",
+    faults: [
+      {
+        looks: "Running at the biggest defender because it feels brave",
+        say: "Find the gap first. Look before it gets to you",
+      },
+      {
+        looks: "Deciding where to go after the ball has arrived",
+        say: "Pick your channel while the ball is still coming",
+      },
+    ],
   },
   {
     id: "drill-lazy-ruck-punish",
@@ -415,6 +525,16 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Four seconds", "Touch rules with a simulated ruck"],
     safety:
       "The clock creates urgency so watch body positions closely as they hurry in. Age grade rules on everything. Stop for anybody going off their feet.",
+    faults: [
+      {
+        looks: "Blaming the scrum half when the ball is slow",
+        say: "Slow ball started at the placement. Watch who went down",
+      },
+      {
+        looks: "The defence breaking shape while they wait for the reward",
+        say: "Hold the line. Your five metres is coming",
+      },
+    ],
   },
   {
     id: "drill-turnover-to-try",
@@ -447,5 +567,15 @@ export const BREAKDOWN: Drill[] = [
     regressions: ["Fifteen seconds", "Coach calls the turnover rather than contesting for it"],
     safety:
       "Contesting at the ruck under age grade rules only. On your feet, through the gate, hands or feet but never a shoulder into a bent-over player. Stop it if the competition gets scrappy.",
+    faults: [
+      {
+        looks: "Winning the ball then stopping to reorganise",
+        say: "Go the second you have it. Ten seconds starts now",
+      },
+      {
+        looks: "Nobody looking up, so the space behind the ruck goes unused",
+        say: "One of you watches the pitch while the rest fight for it",
+      },
+    ],
   },
 ];

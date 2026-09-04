@@ -94,6 +94,10 @@ function drillCopy(): Array<[string, string]> {
     drill.coachingPoints.forEach((p, i) => out.push([at(`coachingPoints[${i}]`), p]));
     drill.progressions?.forEach((p, i) => out.push([at(`progressions[${i}]`), p]));
     drill.regressions?.forEach((p, i) => out.push([at(`regressions[${i}]`), p]));
+    drill.faults?.forEach((fault, i) => {
+      out.push([at(`faults[${i}].looks`), fault.looks]);
+      out.push([at(`faults[${i}].say`), fault.say]);
+    });
     for (const kit of drill.equipment) out.push([at("equipment"), kit.item]);
   }
   for (const preset of PRESETS) out.push([`${preset.id} title`, preset.title]);
@@ -148,8 +152,15 @@ describe("drill copy", () => {
 
   it("starts sentences with a capital and does not end a fragment with a full stop", () => {
     for (const drill of DRILLS) {
-      // Coaching points and progressions are fragments, so no trailing full stop
-      for (const point of [...drill.coachingPoints, ...(drill.progressions ?? []), ...(drill.regressions ?? [])]) {
+      // Coaching points, progressions and faults are fragments, so no trailing
+      // full stop. A fault is read at the same glance as a coaching point.
+      const faultLines = (drill.faults ?? []).flatMap((fault) => [fault.looks, fault.say]);
+      for (const point of [
+        ...drill.coachingPoints,
+        ...(drill.progressions ?? []),
+        ...(drill.regressions ?? []),
+        ...faultLines,
+      ]) {
         expect(point[0], `${drill.id}: "${point}" should start with a capital`).toBe(
           point[0].toUpperCase(),
         );
