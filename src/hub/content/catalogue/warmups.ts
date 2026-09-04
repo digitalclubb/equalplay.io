@@ -396,6 +396,7 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A loose group of six in a small square. One of them holds the ball and places it back towards the coach.",
@@ -429,6 +430,7 @@ export const WARMUPS: Drill[] = [
     minutes: 7,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Two pairs, a shield held low in each. The other player goes in from their knees.",
@@ -460,6 +462,7 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6 },
     space: "15 m channel",
+    softGround: true,
     diagram: {
       space: [12, 15],
       cones: [[0, 0], [12, 0], [0, 15], [12, 15]],
@@ -494,6 +497,7 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label: "Set up diagram. Two pairs kneeling face to face with a ball held between them.",
       space: [10, 10],
@@ -672,6 +676,7 @@ export const WARMUPS: Drill[] = [
     minutes: 5,
     players: { min: 4 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Four players spread out with a couple of metres each, rolling over a shoulder and back to their feet.",
@@ -707,6 +712,7 @@ export const WARMUPS: Drill[] = [
     minutes: 6,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label: "Set up diagram. One pair already in contact, driving the shield back three steps.",
       space: [10, 10],

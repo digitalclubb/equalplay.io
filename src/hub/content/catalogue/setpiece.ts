@@ -24,6 +24,7 @@ export const SETPIECE: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 16 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Two three player front rows facing each other with the ball in the tunnel between them.",
@@ -86,6 +87,7 @@ export const SETPIECE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 16 },
     space: "25 x 20 m",
+    softGround: true,
     diagram: {
       space: [25, 20],
       cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
@@ -126,6 +128,7 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 20 },
     space: "30 x 25 m",
+    softGround: true,
     diagram: {
       space: [30, 25],
       cones: [[0, 0], [30, 0], [0, 10], [30, 10], [0, 25], [30, 25]],
@@ -158,6 +161,7 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 16 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Two three player front rows with a referee alongside and both hookers striking for the ball.",
@@ -220,6 +224,7 @@ export const SETPIECE: Drill[] = [
     minutes: 11,
     players: { min: 10, max: 20 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A five player pack either side, three in each front row and two bound on behind, with the ball channelled back.",
@@ -252,6 +257,7 @@ export const SETPIECE: Drill[] = [
     minutes: 9,
     players: { min: 10, max: 22 },
     space: "35 x 30 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A chase line spread across the pitch behind the kick-off spot, going forward together as the ball goes up.",

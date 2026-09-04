@@ -361,6 +361,7 @@ export const GAMESENSE: Drill[] = [
     minutes: 12,
     players: { min: 12, max: 24 },
     space: "40 x 30 m",
+    softGround: true,
     diagram: {
       space: [40, 30],
       cones: [[0, 0], [13, 0], [27, 0], [40, 0], [0, 30], [13, 30], [27, 30], [40, 30]],
@@ -397,6 +398,7 @@ export const GAMESENSE: Drill[] = [
     minutes: 12,
     players: { min: 12, max: 24 },
     space: "40 x 30 m",
+    softGround: true,
     diagram: {
       space: [40, 30],
       cones: [
@@ -505,6 +507,7 @@ export const GAMESENSE: Drill[] = [
     minutes: 15,
     players: { min: 14, max: 24 },
     space: "60 x 43 m",
+    softGround: true,
     diagram: {
       space: [43, 60],
       cones: [

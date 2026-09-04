@@ -318,6 +318,7 @@ export const HANDLING: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       space: [15, 15],
       shields: [[7.5, 6]],
@@ -427,6 +428,7 @@ export const HANDLING: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 20 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label: "Set up diagram. Three pairs five metres apart, spin passing to each other.",
       space: [15, 15],

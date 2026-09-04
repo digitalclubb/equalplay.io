@@ -17,6 +17,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 12,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A carrier down with the ball placed long, a shield holder in front and two support players arriving from five metres back.",
@@ -54,6 +55,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Three pairs. In each one a player lies on the ground with the ball placed long while their partner steps over it.",
@@ -85,6 +87,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 18 },
     space: "12 x 12 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A ball on the floor with a shield holder crouched over it, a clearer three metres back and a second player waiting to pick up.",
@@ -118,6 +121,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 9, max: 21 },
     space: "20 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A carrier down at the contact with two support players arriving and a scrum half clearing the ball.",
@@ -152,6 +156,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 10, max: 21 },
     space: "25 x 20 m",
+    softGround: true,
     diagram: {
       space: [25, 20],
       cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
@@ -188,6 +193,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "20 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A line of players spread up a narrow channel with the ball on the floor at the start.",
@@ -220,6 +226,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. One attacker standing over the ball with two defenders bound together arriving from three metres away.",
@@ -252,6 +259,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 18 },
     space: "15 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A carrier held up by one opponent, a team mate bound on behind and the ball going to the back.",
@@ -284,6 +292,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 12,
     players: { min: 12, max: 24 },
     space: "30 x 25 m",
+    softGround: true,
     diagram: {
       space: [30, 25],
       cones: [[0, 0], [15, 0], [30, 0], [0, 12.5], [30, 12.5], [0, 25], [15, 25], [30, 25]],
@@ -316,6 +325,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 10, max: 21 },
     space: "25 x 20 m",
+    softGround: true,
     diagram: {
       space: [25, 20],
       cones: [[0, 0], [25, 0], [0, 10], [25, 10], [0, 20], [25, 20]],
@@ -347,6 +357,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 10,
     players: { min: 10, max: 21 },
     space: "30 x 25 m",
+    softGround: true,
     diagram: {
       space: [30, 25],
       cones: [[6, 14], [12, 14], [6, 8], [12, 8], [18, 14], [24, 14], [18, 8], [24, 8]],
@@ -379,6 +390,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 12, max: 24 },
     space: "35 x 25 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A ruck with the ball going to the scrum half and two defenders taking their five metre advance for slow ball.",
@@ -413,6 +425,7 @@ export const BREAKDOWN: Drill[] = [
     minutes: 11,
     players: { min: 12, max: 24 },
     space: "40 x 30 m",
+    softGround: true,
     diagram: {
       space: [30, 40],
       cones: [[0, 0], [15, 0], [30, 0], [0, 20], [30, 20], [0, 40], [15, 40], [30, 40]],

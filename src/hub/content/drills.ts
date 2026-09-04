@@ -74,6 +74,24 @@ export function fitsSmallSpace(drill: Drill): boolean {
   );
 }
 
+/**
+ * Whether a drill can be run on ground too hard to fall on.
+ *
+ * August dust and February frost both leave a pitch you can hear a child land
+ * on. The answer is not to cancel the session, it is to run the half of the
+ * catalogue that never asks anybody to go to the floor. A drill says so itself
+ * with `softGround`, because nothing about the surface can be worked out from
+ * the shape of a drill: a shield drill where nobody goes down reads the same in
+ * data as one where everybody does.
+ *
+ * This says nothing about whether the ground is safe to run on at all. Frozen
+ * ruts turn an ankle in a tag game as readily as in a tackle. That call stays
+ * with the coach standing on it.
+ */
+export function fitsHardGround(drill: Drill): boolean {
+  return !drill.softGround;
+}
+
 export interface DrillFilter {
   ageGroup: AgeGroup;
   kind?: DrillKind;
@@ -85,6 +103,8 @@ export interface DrillFilter {
   favourites?: ReadonlySet<string>;
   /** Narrow to what fits a sports hall or a corner of a pitch. */
   smallSpace?: boolean;
+  /** Narrow to what nobody has to hit the floor for. */
+  hardGround?: boolean;
 }
 
 /**
@@ -113,6 +133,7 @@ function matching(drills: Drill[], filter: DrillFilter, search: string | undefin
     if (!isAvailableAt(drill, filter.ageGroup)) return false;
     if (filter.onlyFavourites && !filter.favourites?.has(drill.id)) return false;
     if (filter.smallSpace && !fitsSmallSpace(drill)) return false;
+    if (filter.hardGround && !fitsHardGround(drill)) return false;
     if (filter.kind && drill.kind !== filter.kind) return false;
     if (filter.theme && !drill.themes.includes(filter.theme)) return false;
     if (!search) return true;

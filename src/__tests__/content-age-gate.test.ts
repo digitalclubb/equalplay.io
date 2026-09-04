@@ -3,7 +3,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
 import { localPlans, stagePlan } from "../hub/plans.js";
 import { addDrillToPlan } from "../hub/views/planner.js";
-import { DRILLS, filterDrills, fitsSmallSpace, isAvailableAt, findDrill } from "../hub/content/drills.js";
+import {
+  DRILLS,
+  filterDrills,
+  fitsHardGround,
+  fitsSmallSpace,
+  isAvailableAt,
+  findDrill,
+} from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
 import {
   AGE_GROUPS,
@@ -489,6 +496,77 @@ describe("drills that fit a small space", () => {
       expect(metres.length, `${drill.id} states no size`).toBeGreaterThan(0);
       expect(Math.max(...metres), drill.id).toBeLessThanOrEqual(25);
       expect(Math.min(...metres), drill.id).toBeLessThanOrEqual(15);
+    }
+  });
+});
+
+/**
+ * August bakes a pitch and February freezes one. Either way a coach still has a
+ * session to run, and the question is which half of the catalogue nobody has to
+ * land on to do. Unlike the small space filter this cannot be worked out from a
+ * diagram, so every drill states it and these tests hold the statements honest.
+ */
+describe("drills that work on hard ground", () => {
+  it("keeps every tackle drill off it", () => {
+    // The reason the filter exists. A tackle ends on the floor at every grade
+    // and in every variation, so no combination of the other filters may ever
+    // put one in front of a coach who has said the ground is hard.
+    const tackling = DRILLS.filter((drill) => drill.themes.includes("tackle"));
+    expect(tackling.length).toBeGreaterThan(10);
+    for (const drill of tackling) expect(fitsHardGround(drill), drill.id).toBe(false);
+
+    for (const age of AGE_GROUPS) {
+      const kept = filterDrills(DRILLS, { ageGroup: age, hardGround: true });
+      for (const drill of kept) expect(drill.themes.includes("tackle"), drill.id).toBe(false);
+    }
+  });
+
+  it("keeps the ruck and the maul off it as well, bar the one with no contact", () => {
+    // Body position ladder is themed breakdown and is a walk down a line of
+    // cones. It is the exception that proves the flag is read per drill rather
+    // than per theme, so the day a second no-contact ruck drill arrives it is
+    // one word rather than a rewrite.
+    const onIt = DRILLS.filter(
+      (drill) => drill.themes.includes("breakdown") && fitsHardGround(drill),
+    );
+    expect(onIt.length, "the exception has gone").toBeGreaterThan(0);
+    // Ruck work with anybody in it is written as an exercise, every time. What
+    // is left is body shape on your own feet.
+    for (const drill of onIt) expect(drill.kind, drill.id).toBe("warmup");
+  });
+
+  it("drops nothing at the grades that have no contact anyway", () => {
+    // Nothing below U9 goes to ground, so the filter is a no-op there. A coach
+    // on a frozen U7 pitch losing half their drills would be the filter being
+    // wrong rather than careful.
+    for (const age of ["u7", "u8"] as const) {
+      const all = filterDrills(DRILLS, { ageGroup: age });
+      const hard = filterDrills(DRILLS, { ageGroup: age, hardGround: true });
+      expect(hard.length, age).toBe(all.length);
+    }
+  });
+
+  it("leaves a full session at the grades it does bite on", () => {
+    for (const age of ["u10", "u11", "u12"] as const) {
+      const all = filterDrills(DRILLS, { ageGroup: age });
+      const hard = filterDrills(DRILLS, { ageGroup: age, hardGround: true });
+      expect(hard.length, `${age} is barely filtered`).toBeLessThan(all.length);
+      expect(hard.length, `${age} has too few`).toBeGreaterThan(all.length / 2);
+      expect(hard.some((drill) => drill.kind === "warmup"), age).toBe(true);
+      expect(hard.some((drill) => drill.kind === "exercise"), age).toBe(true);
+    }
+  });
+
+  it("never gets round the age gate", () => {
+    const u8 = filterDrills(DRILLS, { ageGroup: "u8", hardGround: true });
+    for (const drill of u8) expect(isAvailableAt(drill, "u8"), drill.id).toBe(true);
+  });
+
+  it("stacks with the small space filter rather than replacing it", () => {
+    const both = filterDrills(DRILLS, { ageGroup: "u12", hardGround: true, smallSpace: true });
+    for (const drill of both) {
+      expect(fitsHardGround(drill), drill.id).toBe(true);
+      expect(fitsSmallSpace(drill), drill.id).toBe(true);
     }
   });
 });

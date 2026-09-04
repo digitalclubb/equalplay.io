@@ -402,6 +402,7 @@ export const EVASION: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       space: [15, 15],
       shields: [[7.5, 7.5]],

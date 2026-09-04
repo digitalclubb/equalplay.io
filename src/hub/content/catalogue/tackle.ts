@@ -18,6 +18,7 @@ export const TACKLE: Drill[] = [
     minutes: 12,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       space: [10, 10],
       defence: [[2, 4.4], [5, 4.4], [8, 4.4]],
@@ -50,6 +51,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 18 },
     space: "10 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Two pairs. Each carrier runs into a shield and places the ball back towards their own end.",
@@ -88,6 +90,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 6, max: 18 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Three tacklers, each hitting a shield then getting back to their feet facing up the pitch.",
@@ -126,6 +129,7 @@ export const TACKLE: Drill[] = [
     minutes: 11,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       space: [10, 10],
       cones: [[2.5, 8], [7.5, 8], [2.5, 2], [7.5, 2]],
@@ -158,6 +162,7 @@ export const TACKLE: Drill[] = [
     minutes: 12,
     players: { min: 6, max: 20 },
     space: "10 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. One pair working into a shield and one pair with a walking carrier, three metres apart.",
@@ -191,6 +196,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 20 },
     space: "15 x 10 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Two shields five metres apart, one tackler hitting the first then the second, the rest queueing at the side.",
@@ -224,6 +230,7 @@ export const TACKLE: Drill[] = [
     minutes: 12,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A carrier and a tackler meeting in the middle with a support player arriving for each side.",
@@ -256,6 +263,7 @@ export const TACKLE: Drill[] = [
     minutes: 11,
     players: { min: 8, max: 20 },
     space: "20 x 20 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. Four narrow channels side by side with one carrier and one tackler in each.",
@@ -294,6 +302,7 @@ export const TACKLE: Drill[] = [
     minutes: 11,
     players: { min: 9, max: 21 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       space: [15, 15],
       defence: [[7, 7.8], [7.8, 6]],
@@ -324,6 +333,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 18 },
     space: "20 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A twenty metre run out and back, then two shields waiting for one tackle.",
@@ -356,6 +366,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       label:
         "Set up diagram. A carrier and a support runner meeting two tacklers, one taking the legs and one taking the ball.",
@@ -389,6 +400,7 @@ export const TACKLE: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 18 },
     space: "15 x 15 m",
+    softGround: true,
     diagram: {
       space: [15, 15],
       defence: [[6.9, 8.5], [8.1, 8.5]],

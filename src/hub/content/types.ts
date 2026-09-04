@@ -226,6 +226,18 @@ export interface Drill {
   regressions?: string[];
   /** Contact drills only. */
   safety?: string;
+  /**
+   * Set where the drill needs a forgiving surface, so it can be filtered out
+   * when the pitch is baked hard or frozen.
+   *
+   * True of a drill where somebody goes to ground, which includes working from
+   * the knees. True as well where a collision with a player or a shield could
+   * put them there. Not true of a drill that only asks a child to bend down, to
+   * sit or to crouch. `content-age-gate.test.ts` holds every tackle drill to it,
+   * because a tackle ends on the floor at every grade and in every variation.
+   * Ruck work is the same bar one warm-up that is a walk down a line of cones.
+   */
+  softGround?: true;
   /** Where everything stands, in metres. Rendered by `diagram.ts`. */
   diagram?: Diagram;
 }
