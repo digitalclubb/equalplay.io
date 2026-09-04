@@ -63,6 +63,84 @@ describe("catalogue filter state", () => {
 });
 
 /**
+ * The filters are two groups doing two different jobs. Above the rule is what
+ * the drill is, where picking a theme replaces the last one. Below it is your
+ * stars and the pitch you have got, where everything stacks. They were one row
+ * of nine identical chips, which said none of that.
+ */
+describe("the filter groups", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    window.location.hash = "";
+    localStorage.clear();
+    container = document.createElement("div");
+    document.body.replaceChildren(container);
+    // The filters are module state that survives a render on purpose, so each
+    // of these starts by re-seeding off a different grade to clear the last
+    // one's taps. Same thing the account page does when a coach corrects it.
+    renderCatalogue(container, "u9", USER);
+    renderCatalogue(container, "u12", USER);
+  });
+
+  const ids = (selector: string): string[] =>
+    [...container.querySelectorAll(`${selector} .chip-filter`)].map(
+      (chip) => chip.id || chip.getAttribute("data-theme") || "",
+    );
+
+  it("keeps the themes and the pitch apart", () => {
+    // Every theme in one group, nothing else in it. A pitch chip that lands
+    // among them is the thing this whole layout exists to stop.
+    expect(ids(".chip-themes")).toEqual([
+      "handling",
+      "evasion",
+      "tackle",
+      "breakdown",
+      "setpiece",
+      "gamesense",
+    ]);
+    expect(ids(".chip-picks")).toEqual(["f-fav", "f-space", "f-ground"]);
+  });
+
+  it("ticks what stacks and leaves the themes plain", () => {
+    // A theme replaces the theme before it, so it never gets a tick. The two
+    // pitch chips stack with each other and with whatever theme is lit, and the
+    // tick is the only thing on screen that says so.
+    container.querySelector<HTMLButtonElement>("#f-ground")?.click();
+    container.querySelector<HTMLButtonElement>('[data-theme="tackle"]')?.click();
+
+    expect(container.querySelector("#f-ground .chip-tick")).not.toBeNull();
+    expect(container.querySelector("#f-space .chip-tick")).toBeNull();
+    expect(container.querySelector(".chip-themes .chip-tick")).toBeNull();
+    expect(container.querySelector('[data-theme="tackle"]')?.className).toContain("is-active");
+  });
+
+  it("offers a way out only once there is something to clear", () => {
+    expect(container.querySelector(".filter-clear")).toBeNull();
+
+    container.querySelector<HTMLButtonElement>("#f-space")?.click();
+    expect(container.querySelector(".filter-clear")).not.toBeNull();
+
+    container.querySelector<HTMLButtonElement>(".filter-clear")?.click();
+    expect(container.querySelector("#f-space")?.getAttribute("aria-pressed")).toBe("false");
+    expect(container.querySelector(".filter-clear")).toBeNull();
+  });
+
+  it("clears the lot rather than one thing at a time", () => {
+    const search = container.querySelector<HTMLInputElement>("#f-search");
+    if (!search) throw new Error("no search box");
+    container.querySelector<HTMLButtonElement>("#f-ground")?.click();
+    container.querySelector<HTMLButtonElement>('[data-theme="tackle"]')?.click();
+    container.querySelector<HTMLButtonElement>('[data-kind="warmup"]')?.click();
+
+    container.querySelector<HTMLButtonElement>(".filter-clear")?.click();
+    expect(container.querySelector("#f-ground")?.getAttribute("aria-pressed")).toBe("false");
+    expect(container.querySelector(".chip-themes .is-active")).toBeNull();
+    expect(container.querySelector<HTMLSelectElement>("#f-age")?.value).toBe("u12");
+  });
+});
+
+/**
  * Signed out there is no profile, so the age grade comes off a local choice
  * instead. That is a third layer above `filterDrills` with the same power to
  * defeat the age gate, which is why it is covered here rather than trusted.

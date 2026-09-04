@@ -355,6 +355,69 @@ body {
   margin-bottom: 0;
 }
 
+/* Two groups, one rule between them. Above it is what the drill is: the kind
+   and the theme. Below it is nothing about the drill at all, it is your stars
+   and the pitch you have got tonight. They were one undifferentiated row of
+   nine chips, where Hard ground sat between Small space and Handling and
+   nothing said that tapping one of those replaces your theme while tapping the
+   other stacks with it. The rule is the whole separation on a phone, where the
+   two groups can only be stacked. */
+.chip-picks {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-xs);
+}
+
+/* Wide enough for both groups to stand side by side, where the space between
+   them says what the rule says when they are stacked. The pair needs about
+   950px of panel: six theme chips is around 600 and the three picks another
+   340. Below that the themes wrap into the picks' column and the two read as
+   one block again, which is the thing being fixed. */
+@media (min-width: 1280px) {
+  /* The catalogue's panel only. The editor's add panel carries the same two
+     groups in an 18rem side pane, where they are stacked at every width and
+     the rule between them is the only thing separating them. */
+  .hub-filters .chip-picks {
+    border-top: none;
+    padding-top: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* A tick sized to sit inside a 44px chip without pushing the label off it. */
+.chip-tick {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: var(--sp-3xs);
+  vertical-align: -0.15em;
+}
+
+/* The count and the way out of the filters, on one line. Clear filters is a
+   dismissal, so it is the quiet tier at the width of its own label. It is only
+   rendered when there is something to clear. */
+.filter-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+}
+
+.filter-clear {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 var(--sp-xs);
+  margin-right: calc(var(--sp-xs) * -1);
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--color-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 /* Search with the age grade beside it. The grade is the one filter that decides
    what a coach may be shown at all, so it goes at the top rather than under the
    controls. It costs no height either, because a search box does not need the
@@ -1803,8 +1866,9 @@ body {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "search controls"
-      "chips  chips"
-      "count  count";
+      "themes themes"
+      "picks  picks"
+      "foot   foot";
     align-items: center;
     column-gap: var(--sp-sm);
     row-gap: var(--sp-xs);
@@ -1820,12 +1884,27 @@ body {
     grid-area: controls;
   }
 
-  .chip-row {
-    grid-area: chips;
+  .chip-themes {
+    grid-area: themes;
   }
 
-  .hub-count {
-    grid-area: count;
+  .chip-picks {
+    grid-area: picks;
+  }
+
+  .filter-foot {
+    grid-area: foot;
+  }
+}
+
+/* ---- 1280px: the two chip groups share one line ---- */
+
+@media (min-width: 1280px) {
+  .hub-filters {
+    grid-template-areas:
+      "search controls"
+      "themes picks"
+      "foot   foot";
   }
 }
 

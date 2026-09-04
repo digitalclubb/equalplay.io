@@ -1981,23 +1981,69 @@ test("every filter chip is on screen at every width", async ({ page }) => {
       await page.goto(`/hub/${hash}`);
       await page.locator(".chip-filter").first().waitFor();
 
-      const row = page.locator(".chip-row").first();
-      const measured = await row.evaluate((el) => {
-        const box = el.getBoundingClientRect();
-        return {
-          hidden: el.scrollWidth - el.clientWidth,
-          spills: [...el.querySelectorAll(".chip-filter")]
-            .filter((chip) => chip.getBoundingClientRect().right > box.right + 0.5)
-            .map((chip) => chip.textContent?.trim()),
-          count: el.querySelectorAll(".chip-filter").length,
-        };
-      });
+      // Every row, not the first one. The chips are two groups now and a
+      // sweep that only measured the group it happened to find first would
+      // pass while the other one ran off the screen.
+      const measured = await page.evaluate(() =>
+        [...document.querySelectorAll(".chip-row")].map((el) => {
+          const box = el.getBoundingClientRect();
+          return {
+            hidden: el.scrollWidth - el.clientWidth,
+            spills: [...el.querySelectorAll(".chip-filter")]
+              .filter((chip) => chip.getBoundingClientRect().right > box.right + 0.5)
+              .map((chip) => chip.textContent?.trim()),
+            count: el.querySelectorAll(".chip-filter").length,
+          };
+        }),
+      );
 
       const where = `${hash} at ${width}px`;
-      expect(measured.count, `${where}: no chips`).toBeGreaterThan(2);
-      expect(measured.hidden, `${where}: the row scrolls sideways`).toBe(0);
-      expect(measured.spills, `${where}: chips past the right edge`).toEqual([]);
+      expect(measured.length, `${where}: no chip rows`).toBe(2);
+      for (const row of measured) {
+        expect(row.count, `${where}: an empty chip row`).toBeGreaterThan(2);
+        expect(row.hidden, `${where}: the row scrolls sideways`).toBe(0);
+        expect(row.spills, `${where}: chips past the right edge`).toEqual([]);
+      }
     }
+  }
+});
+
+test("the pitch chips never sit among the themes", async ({ page }) => {
+  // Nine identical chips in one row put Hard ground between Small space and
+  // Handling, where nothing said that a theme replaces the last theme while
+  // those two stack with everything. They are two groups now: what the drill
+  // is above the rule, what your evening looks like below it. Stacked on a
+  // phone, side by side once there is room for both, and never interleaved.
+  await signedIn(page, "u10");
+
+  for (const width of [320, 390, 768, 1024, 1279, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator(".chip-picks .chip-filter").first().waitFor();
+
+    const laid = await page.evaluate(() => {
+      const box = (selector: string) =>
+        document.querySelector(selector)!.getBoundingClientRect();
+      const themes = box(".chip-themes");
+      const picks = box(".chip-picks");
+      return {
+        beside: Math.abs(themes.top - picks.top) < 4,
+        below: picks.top >= themes.bottom - 0.5,
+        themed: [...document.querySelectorAll(".chip-themes .chip-filter")].every((chip) =>
+          chip.hasAttribute("data-theme"),
+        ),
+        picked: [...document.querySelectorAll(".chip-picks .chip-filter")].every(
+          (chip) => !chip.hasAttribute("data-theme"),
+        ),
+      };
+    });
+
+    const where = `at ${width}px`;
+    expect(laid.themed, `${where}: something that is not a theme is among them`).toBe(true);
+    expect(laid.picked, `${where}: a theme is among the pitch chips`).toBe(true);
+    // One or the other. Overlapping is the failure that would look like the
+    // row they used to be.
+    expect(laid.beside || laid.below, `${where}: the two groups overlap`).toBe(true);
+    expect(laid.beside, `${where}: wrong side of the breakpoint`).toBe(width >= 1280);
   }
 });
 

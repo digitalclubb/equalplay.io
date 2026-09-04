@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-671 unit and integration tests across 22 files, 162 Playwright tests. Most are ordinary.
+681 unit and integration tests across 22 files, 163 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 162 tests across four files: `matchday` (13), `home` (11), `hub` (112)
+`pnpm test:e2e` is 163 tests across four files: `matchday` (13), `home` (11), `hub` (113)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -509,6 +509,20 @@ called small space rather than indoors because it knows nothing about the
 surface. A filter should not look like it is blessing a tackle drill on a
 wooden floor.
 
+**Hard ground is authored, because nothing in the data implies it.** The
+sibling filter next to it is derived from a diagram. This one cannot be:
+a shield drill where nobody goes down and one where everybody does read the
+same in data, while the surface is the whole question. So `softGround` sits on
+the 41 drills that need a forgiving pitch, meaning somebody goes to ground,
+works from their knees, or could be put there by a collision with a player or
+a shield. Bending down, sitting or crouching is not it. Every tackle drill
+carries it and `content-age-gate.test.ts` says so, since a tackle ends on the
+floor at every grade. Nothing below U9 carries it at all, so a coach on a
+frozen U7 pitch loses nothing. The one breakdown drill that survives is a
+walk down a line of cones. It is a browse filter rather than a verdict on the
+weather. Frozen ruts turn an ankle in a tag game too, so that call still
+belongs to whoever is standing on it.
+
 **The offline promise is said out loud.** Everything else in the hub can be
 checked by a coach on the spot. Whether it still works at a pitch with no signal
 cannot, until the moment it matters. The Account page keys off the service
@@ -754,7 +768,29 @@ paid for partly by the age grade moving up beside the search box, where it takes
 no line of its own. The grade is the filter that decides what may be shown at
 all, so the top is where it belongs anyway. A select holding four characters
 never stretches either. `hub.spec.ts` sweeps 320 to 1440 on both screens that carry
-chips and fails if any of them is off the row's right edge.
+chips and fails if any of them is off the row's right edge, in every row.
+
+**The chips are two groups, because they do two different jobs.** Nine of them
+in one row put Hard ground between Small space and Handling, all the same
+shape, when tapping a theme replaces the theme before it and tapping the other
+two stacks with everything. Above the rule is what the drill is: the kind it
+is, then what it is about. Below it is nothing about the drill at all, it is
+your stars and the pitch you have got tonight. The two that stack carry a
+leading tick, which is the conventional way to say a control combines rather
+than replaces. Favourites says the same by filling its star. Stacked on a
+phone with a rule between them, side by side from 1280px where there is room
+for both, which is also what keeps the panel the height it was on a desk. The
+kind control moved above the chips at the same time, so the panel reads
+broadest cut first. `hub.spec.ts` holds the pairing to that breakpoint and
+fails if the groups ever overlap. The editor's add panel carries the same two
+groups in the same order, stacked at every width, because an 18rem side pane
+has room for one column of chips and no more.
+
+**Applied filters come off one at a time or all at once.** Every chip is its
+own way back, but four taps to get back to the whole list is not a way out.
+Clear filters sits beside the count, quiet tier, only rendered when there is
+something to clear. It is the same handler the empty state's Start again
+button uses.
 
 **A reading column is capped as one column, not panel by panel.** `#/plan/<id>`
 and `#/shared/<token>` both wrap themselves in `.plan-read`, which caps at 46rem

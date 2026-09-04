@@ -8,7 +8,14 @@ import {
   syncFavourites,
   toggleFavourite,
 } from "../favourites.js";
-import { DRILLS, filterDrills, findDrill, isAvailableAt, type DrillFilter } from "../content/drills.js";
+import {
+  DRILLS,
+  filterDrills,
+  findDrill,
+  fitsHardGround,
+  isAvailableAt,
+  type DrillFilter,
+} from "../content/drills.js";
 import { localPlans, syncPlans } from "../plans.js";
 import { addDrillToPlan, newPlanWithDrill, SEARCH_DEBOUNCE_MS } from "./planner.js";
 import { showToast } from "../../components/toast.js";
@@ -258,17 +265,8 @@ function renderList(container: HTMLElement): void {
         </select>
       </div>
 
-      <div class="chip-row" role="group" aria-label="Narrow the drills down">
-        <button type="button" id="f-fav" class="chip-filter chip-fav${active.onlyFavourites ? " is-active" : ""}" aria-pressed="${Boolean(active.onlyFavourites)}">
-          ${star(Boolean(active.onlyFavourites))} Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}
-        </button>
-        <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">Small space</button>
-        ${THEMES.map(
-          (t) =>
-            `<button type="button" data-theme="${t}" class="chip-filter${t === active.theme ? " is-active" : ""}" aria-pressed="${t === active.theme}">${esc(THEME_SHORT[t])}</button>`,
-        ).join("")}
-      </div>
-
+      <!-- What the drill is: the kind it is, then what it is about. One axis,
+           two controls, so they sit together above the rule. -->
       <div class="hub-segmented" role="group" aria-label="Warm-up or exercise">
         ${KINDS.map(
           (k) =>
@@ -276,7 +274,35 @@ function renderList(container: HTMLElement): void {
         ).join("")}
       </div>
 
-      <p class="hub-count" role="status">${countLabel(results.length, active)}</p>
+      <div class="chip-row chip-themes" role="group" aria-label="What the drill is about">
+        ${THEMES.map(
+          (t) =>
+            `<button type="button" data-theme="${t}" class="chip-filter${t === active.theme ? " is-active" : ""}" aria-pressed="${t === active.theme}">${esc(THEME_SHORT[t])}</button>`,
+        ).join("")}
+      </div>
+
+      <!-- Below the rule: nothing about the drill, everything about tonight.
+           Pick one theme, but any of these three at once, which is why they
+           carry a tick and the themes do not. -->
+      <div class="chip-row chip-picks" role="group" aria-label="Your stars and the pitch you have got">
+        <button type="button" id="f-fav" class="chip-filter chip-fav${active.onlyFavourites ? " is-active" : ""}" aria-pressed="${Boolean(active.onlyFavourites)}">
+          ${star(Boolean(active.onlyFavourites))} Favourites${favourites.size > 0 ? ` (${favourites.size})` : ""}
+        </button>
+        <button type="button" id="f-space" class="chip-filter${active.smallSpace ? " is-active" : ""}" aria-pressed="${Boolean(active.smallSpace)}">${tick(Boolean(active.smallSpace))}Small space</button>
+        <button type="button" id="f-ground" class="chip-filter${active.hardGround ? " is-active" : ""}" aria-pressed="${Boolean(active.hardGround)}">${tick(Boolean(active.hardGround))}Hard ground</button>
+      </div>
+
+      <div class="filter-foot">
+        <p class="hub-count" role="status">${countLabel(results.length, active)}</p>
+        ${
+          // Applied filters have to be removable in one go as well as one by
+          // one. Only when there is something to remove, or it is a dead
+          // control sitting under the count every time a coach opens the tab.
+          anyFilterOn(active)
+            ? `<button type="button" class="filter-clear" data-clear>Clear filters</button>`
+            : ""
+        }
+      </div>
     </section>
 
     ${
@@ -336,6 +362,10 @@ function renderList(container: HTMLElement): void {
     update({ smallSpace: !active.smallSpace }, undefined, true);
   });
 
+  container.querySelector("#f-ground")?.addEventListener("click", () => {
+    update({ hardGround: !active.hardGround }, undefined, true);
+  });
+
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-fav]")) {
     button.addEventListener("click", (event) => {
       // The whole card is a link, so stop the tap turning into navigation
@@ -354,13 +384,15 @@ function renderList(container: HTMLElement): void {
     renderList(container);
   });
 
-  container.querySelector("#clear-filters")?.addEventListener("click", () => {
-    filters = { ageGroup: active.ageGroup };
-    // The star is a route now, so clearing the filters alone would leave the list
-    // just as empty and the button doing nothing you can see.
-    if (active.onlyFavourites) go("catalogue");
-    else renderList(container);
-  });
+  for (const button of container.querySelectorAll<HTMLButtonElement>("[data-clear]")) {
+    button.addEventListener("click", () => {
+      filters = { ageGroup: active.ageGroup };
+      // The star is a route now, so clearing the filters alone would leave the
+      // list just as empty and the button doing nothing you can see.
+      if (active.onlyFavourites) go("catalogue");
+      else renderList(container);
+    });
+  }
 
   /**
    * `animate` is for a tap and not for a keystroke.
@@ -389,14 +421,20 @@ function renderList(container: HTMLElement): void {
 function countLabel(count: number, filter: DrillFilter): string {
   const age = AGE_GROUP_LABELS[filter.ageGroup];
   const room = filter.smallSpace ? " in a sports hall or a corner of the pitch" : "";
+  // Both on reads "in a sports hall or a corner of the pitch on ground nobody
+  // has to fall on", which is long but still one sentence a coach can follow.
+  const ground = filter.hardGround ? " on ground nobody has to fall on" : "";
   if (count === 0) return `Nothing for ${age} matches that.`;
   if (filter.onlyFavourites) {
     return count === 1
-      ? `One favourite your ${age} squad can do${room}.`
-      : `${count} favourites your ${age} squad can do${room}.`;
+      ? `One favourite your ${age} squad can do${room}${ground}.`
+      : `${count} favourites your ${age} squad can do${room}${ground}.`;
   }
-  return `${count} ${count === 1 ? "drill" : "drills"} your ${age} squad can do${room}.`;
+  return `${count} ${count === 1 ? "drill" : "drills"} your ${age} squad can do${room}${ground}.`;
 }
+
+const anyOnHardGround = (theme: Theme): boolean =>
+  DRILLS.some((drill) => drill.themes.includes(theme) && fitsHardGround(drill));
 
 function emptyState(filter: DrillFilter): string {
   const age = AGE_GROUP_LABELS[filter.ageGroup];
@@ -410,10 +448,23 @@ function emptyState(filter: DrillFilter): string {
     // We know exactly when it arrives, so say so
     const from = AGE_GROUP_LABELS[THEME_MIN_AGE[filter.theme]];
     reason = `${THEME_LABELS[filter.theme]} starts at ${from}. Nothing here for your ${age}s yet.`;
+  } else if (filter.hardGround && filter.theme && !anyOnHardGround(filter.theme)) {
+    // Tackle is the combination a coach reaches for first in exactly this
+    // weather. It can never hold anything. Worked out rather than named, so a
+    // theme that empties later says the same thing without being edited. The
+    // short label rather than the long one, because "Every scrum and restarts
+    // drill" is not a sentence.
+    reason = `Every ${THEME_SHORT[filter.theme].toLowerCase()} drill ends with somebody on the floor, so none of them are here.`;
   } else if (filter.smallSpace && filter.search?.trim()) {
     reason = `Nothing that small for ${age} matches "${filter.search.trim()}".`;
   } else if (filter.smallSpace) {
     reason = `Nothing for ${age} fits a small space with that on as well.`;
+  } else if (filter.hardGround && filter.search?.trim()) {
+    // Whatever was typed comes back, the same as it does above. A coach who
+    // gets a blank screen wants to see the word they typed in the answer.
+    reason = `Nothing on hard ground for ${age} matches "${filter.search.trim()}".`;
+  } else if (filter.hardGround) {
+    reason = `Nothing for ${age} works on hard ground with that on as well.`;
   } else if (filter.search?.trim()) {
     reason = `No ${age} drill matches "${filter.search.trim()}".`;
   } else if (filter.theme) {
@@ -429,9 +480,36 @@ function emptyState(filter: DrillFilter): string {
       ${
         filter.onlyFavourites && favourites.size === 0
           ? ""
-          : '<button type="button" class="hub-btn" id="clear-filters">Start again</button>'
+          : '<button type="button" class="hub-btn" id="clear-filters" data-clear>Start again</button>'
       }
     </section>`;
+}
+
+/**
+ * The leading tick on a chip that combines with the others.
+ *
+ * A theme chip and a pitch chip look alike and behave differently: one theme at
+ * a time, but Small space and Hard ground stack with each other and with
+ * whichever theme is lit. The tick is how a coach can see which is which
+ * without tapping one to find out. Favourites says the same thing by filling
+ * its star, so it does not carry one as well.
+ */
+function tick(on: boolean): string {
+  return on
+    ? `<svg class="chip-tick" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>`
+    : "";
+}
+
+/** Whether the coach has anything on that Clear filters would take off. */
+function anyFilterOn(filter: DrillFilter): boolean {
+  return Boolean(
+    filter.theme ||
+      filter.kind ||
+      filter.smallSpace ||
+      filter.hardGround ||
+      filter.onlyFavourites ||
+      filter.search?.trim(),
+  );
 }
 
 /** Outline when off, filled when on. Inline so it works with no signal. */

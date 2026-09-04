@@ -80,6 +80,8 @@ let addKind: DrillKind | undefined;
 let addFavouritesOnly = false;
 /** The pitch is frozen and you are in the hall. Same filter the catalogue has. */
 let addSmallSpace = false;
+/** The pitch is baked or frozen and nobody is going to ground on it. */
+let addHardGround = false;
 /** Which drill in the add list is expanded for a look before committing to it. */
 let previewing: string | null = null;
 let starred: Set<string> = new Set();
@@ -114,6 +116,13 @@ function starIcon(filled: boolean): string {
     ? `<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4l-5.8 3 1.1-6.4L2.6 9.4l6.5-.9z"/></svg>`
     : `<svg class="star" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.7-5.2-2.7-5.2 2.7 1-5.7L3.6 9.7l5.8-.8z"/></svg>`;
 }
+/** The tick a chip that stacks with the others wears. Matches the catalogue. */
+function tickIcon(on: boolean): string {
+  return on
+    ? `<svg class="chip-tick" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>`
+    : "";
+}
+
 let pushTimer: ReturnType<typeof setTimeout> | undefined;
 /** Same reason as the catalogue's. The add panel redraws the editor around it. */
 let addSearchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -1124,17 +1133,23 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
             `<button type="button" data-addkind="${k.value}" class="hub-seg${(addKind ?? "") === k.value ? " is-active" : ""}" aria-pressed="${(addKind ?? "") === k.value}">${k.label}</button>`,
         ).join("")}
       </div>
-      <div class="chip-row" role="group" aria-label="Narrow the drills down">
-        <button type="button" id="add-fav" class="chip-filter chip-fav${addFavouritesOnly ? " is-active" : ""}" aria-pressed="${addFavouritesOnly}">
-          ${starIcon(addFavouritesOnly)} Favourites${starred.size > 0 ? ` (${starred.size})` : ""}
-        </button>
-        <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">Small space</button>
+      <div class="chip-row chip-themes" role="group" aria-label="What the drill is about">
         ${THEMES.filter((t) => ageAtLeast(plan.ageGroup, THEME_MIN_AGE[t]))
           .map(
             (t) =>
               `<button type="button" data-addtheme="${t}" class="chip-filter${t === addTheme ? " is-active" : ""}" aria-pressed="${t === addTheme}">${esc(THEME_SHORT[t])}</button>`,
           )
           .join("")}
+      </div>
+
+      <!-- Same two groups as the catalogue, in the same order, because this is
+           the same list of drills being narrowed the same way. -->
+      <div class="chip-row chip-picks" role="group" aria-label="Your stars and the pitch you have got">
+        <button type="button" id="add-fav" class="chip-filter chip-fav${addFavouritesOnly ? " is-active" : ""}" aria-pressed="${addFavouritesOnly}">
+          ${starIcon(addFavouritesOnly)} Favourites${starred.size > 0 ? ` (${starred.size})` : ""}
+        </button>
+        <button type="button" id="add-space" class="chip-filter${addSmallSpace ? " is-active" : ""}" aria-pressed="${addSmallSpace}">${tickIcon(addSmallSpace)}Small space</button>
+        <button type="button" id="add-ground" class="chip-filter${addHardGround ? " is-active" : ""}" aria-pressed="${addHardGround}">${tickIcon(addHardGround)}Hard ground</button>
       </div>
       ${addList(plan.ageGroup, plan)}
     </section>
@@ -1263,15 +1278,21 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
     onlyFavourites: addFavouritesOnly,
     favourites: starred,
     smallSpace: addSmallSpace,
+    hardGround: addHardGround,
   });
 
   if (matches.length === 0) {
     return `<p class="hub-fineprint">${
       addFavouritesOnly && starred.size === 0
         ? "No favourites yet. Star a drill under Drills and it'll show up here."
-        : addSmallSpace
-          ? `Nothing for ${AGE_GROUP_LABELS[ageGroup]} fits a small space with that on as well.`
-          : `Nothing for ${AGE_GROUP_LABELS[ageGroup]} matches that.`
+        : // Hard ground first, because with both chips on it is the one doing
+          // the work: what fits a hall is mostly the contact drills a baked
+          // pitch rules out. Same order as the catalogue's empty state.
+          addHardGround
+          ? `Nothing for ${AGE_GROUP_LABELS[ageGroup]} works on hard ground with that on as well.`
+          : addSmallSpace
+            ? `Nothing for ${AGE_GROUP_LABELS[ageGroup]} fits a small space with that on as well.`
+            : `Nothing for ${AGE_GROUP_LABELS[ageGroup]} matches that.`
     }</p>`;
   }
 
@@ -1462,6 +1483,12 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
     draw(container, ctx);
   });
 
+  container.querySelector("#add-ground")?.addEventListener("click", () => {
+    addHardGround = !addHardGround;
+    previewing = null;
+    draw(container, ctx);
+  });
+
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-addkind]")) {
     button.addEventListener("click", () => {
       const value = button.dataset.addkind ?? "";
@@ -1628,6 +1655,7 @@ export function resetPlanner(): void {
   addKind = undefined;
   addFavouritesOnly = false;
   addSmallSpace = false;
+  addHardGround = false;
   clearTimeout(addSearchTimer);
   addSearchTimer = undefined;
   previewing = null;
