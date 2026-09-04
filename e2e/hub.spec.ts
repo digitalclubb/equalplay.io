@@ -1943,7 +1943,7 @@ test("a U8 coach is never told they have neglected rucking", async ({ page }) =>
   const themes = await page.locator(".coverage-theme").allInnerTexts();
   expect(themes).not.toContain("Ruck and maul");
   expect(themes).not.toContain("Tackle");
-  expect(themes).not.toContain("Set piece");
+  expect(themes).not.toContain("Scrum and restarts");
 });
 
 test("a drill says what going wrong looks like, plus what to say", async ({ page }) => {
@@ -2141,11 +2141,11 @@ test("the three segments stay one width", async ({ page }) => {
 
 test("every filter chip is on screen at every width", async ({ page }) => {
   // The row used to scroll sideways below 640px, which fitted three and a half
-  // of the eight chips on a 390px phone. Tackle, Ruck and maul, Set piece and
-  // Game sense were reachable only by dragging a row that looks static, behind a
-  // 24px fade. A filter a coach cannot see is a filter they do not have, and
-  // this is the control that navigates 100 drills. The same row is in the
-  // editor's add panel, where the pane it stands in is narrower still.
+  // of the eight chips on a 390px phone. Tackle, Ruck and maul, Scrum and
+  // restarts plus Game sense were reachable only by dragging a row that looks
+  // static, behind a 24px fade. A filter a coach cannot see is a filter they do
+  // not have, and this is the control that navigates 100 drills. The same row is
+  // in the editor's add panel, where the pane it stands in is narrower still.
   const planId = await runnableSession(page);
   const widths = [320, 360, 375, 390, 414, 480, 700, 768, 820, 900, 1000, 1280, 1440];
 
@@ -2188,9 +2188,12 @@ test("the pitch chips never sit among the themes", async ({ page }) => {
   // those two stack with everything. They are two groups now: what the drill
   // is above the rule, what your evening looks like below it. Stacked on a
   // phone, side by side once there is room for both, and never interleaved.
+  // The breakpoint moved from 1280 to 1360 when the set piece chip became
+  // "Scrum and restarts": six chips at 608px want a column 1280 does not have,
+  // so the themes wrapped to two rows and the picks centred against them.
   await signedIn(page, "u10");
 
-  for (const width of [320, 390, 768, 1024, 1279, 1280, 1440]) {
+  for (const width of [320, 390, 768, 1024, 1279, 1359, 1360, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator(".chip-picks .chip-filter").first().waitFor();
 
@@ -2217,7 +2220,7 @@ test("the pitch chips never sit among the themes", async ({ page }) => {
     // One or the other. Overlapping is the failure that would look like the
     // row they used to be.
     expect(laid.beside || laid.below, `${where}: the two groups overlap`).toBe(true);
-    expect(laid.beside, `${where}: wrong side of the breakpoint`).toBe(width >= 1280);
+    expect(laid.beside, `${where}: wrong side of the breakpoint`).toBe(width >= 1360);
   }
 });
 

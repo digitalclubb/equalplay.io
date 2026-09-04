@@ -369,10 +369,12 @@ body {
 
 /* Wide enough for both groups to stand side by side, where the space between
    them says what the rule says when they are stacked. The pair needs about
-   950px of panel: six theme chips is around 600 and the three picks another
+   1000px of panel: six theme chips is around 650 and the three picks another
    340. Below that the themes wrap into the picks' column and the two read as
-   one block again, which is the thing being fixed. */
-@media (min-width: 1280px) {
+   one block again, which is the thing being fixed. It was 1280 while the
+   set piece chip read "Set piece". "Scrum and restarts" is 60px longer, which
+   put the themes on two rows at exactly the width they were meant to fit. */
+@media (min-width: 1360px) {
   /* The catalogue's panel only. The editor's add panel carries the same two
      groups in an 18rem side pane, where they are stacked at every width and
      the rule between them is the only thing separating them. */
@@ -2148,9 +2150,9 @@ body {
   }
 }
 
-/* ---- 1280px: the two chip groups share one line ---- */
+/* ---- 1360px: the two chip groups share one line ---- */
 
-@media (min-width: 1280px) {
+@media (min-width: 1360px) {
   .hub-filters {
     grid-template-areas:
       "search controls"

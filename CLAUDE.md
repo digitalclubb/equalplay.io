@@ -161,7 +161,8 @@ and lifting held back to U15. The site said U12 on seven pages and shipped four
 lineout drills to match, one of them coaching a lift, until August 2026. The claim
 is banned by `landing-pages.test.ts` now, by the claim rather than by the word, so
 a page may still say a grade has no lineout. `THEME_LABELS.setpiece` reads "Scrum
-and restarts" for the same reason.
+and restarts" for the same reason. Since September 2026 so does its filter chip:
+"Set piece" fits a phone better but says lineout to anybody who has played.
 
 One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
 so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches
@@ -856,8 +857,11 @@ is, then what it is about. Below it is nothing about the drill at all, it is
 your stars and the pitch you have got tonight. The two that stack carry a
 leading tick, which is the conventional way to say a control combines rather
 than replaces. Favourites says the same by filling its star. Stacked on a
-phone with a rule between them, side by side from 1280px where there is room
-for both, which is also what keeps the panel the height it was on a desk. The
+phone with a rule between them, side by side from 1360px where there is room
+for both, which is also what keeps the panel the height it was on a desk. That
+was 1280 until the set piece chip took its full label: six themes at 608px want
+a column 1280 has not got, so they wrapped to two rows under a picks group
+centred against them. The
 kind control moved above the chips at the same time, so the panel reads
 broadest cut first. `hub.spec.ts` holds the pairing to that breakpoint and
 fails if the groups ever overlap. The editor's add panel carries the same two

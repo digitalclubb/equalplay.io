@@ -452,9 +452,9 @@ function emptyState(filter: DrillFilter): string {
     // Tackle is the combination a coach reaches for first in exactly this
     // weather. It can never hold anything. Worked out rather than named, so a
     // theme that empties later says the same thing without being edited. The
-    // short label rather than the long one, because "Every scrum and restarts
-    // drill" is not a sentence.
-    reason = `Every ${THEME_SHORT[filter.theme].toLowerCase()} drill ends with somebody on the floor, so none of them are here.`;
+    // theme goes after "in" rather than in front of "drill", because "every
+    // scrum and restarts drill" is not a sentence.
+    reason = `Every drill in ${THEME_LABELS[filter.theme].toLowerCase()} ends with somebody on the floor, so none of them are here.`;
   } else if (filter.smallSpace && filter.search?.trim()) {
     reason = `Nothing that small for ${age} matches "${filter.search.trim()}".`;
   } else if (filter.smallSpace) {

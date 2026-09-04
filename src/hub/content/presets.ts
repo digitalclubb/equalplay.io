@@ -383,7 +383,7 @@ export const PRESETS: Preset[] = [
   // ---- U12. The five player scrum, the restarts, a full week's shape ----
   {
     id: "preset-u12-set-piece-day",
-    title: "Set piece day",
+    title: "Scrums and restarts",
     ageGroup: "u12",
     theme: "setpiece",
     sessionMinutes: 75,

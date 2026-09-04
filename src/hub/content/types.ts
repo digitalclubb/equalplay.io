@@ -114,13 +114,18 @@ export type Theme = (typeof THEMES)[number];
  * Short forms for filter chips. The full labels are right on a drill page where
  * there is room to be descriptive. In a scrolling chip row they mean only one and
  * a half chips fit on a small phone.
+ *
+ * `setpiece` is the exception that keeps its full label. "Set piece" is shorter
+ * but says lineout to anybody who has played. There is no lineout at any grade
+ * here, so the chip promised something the eight drills behind it cannot hold.
+ * See `THEME_MIN_AGE` for why.
  */
 export const THEME_SHORT: Record<Theme, string> = {
   handling: "Handling",
   evasion: "Evasion",
   tackle: "Tackle",
   breakdown: "Ruck and maul",
-  setpiece: "Set piece",
+  setpiece: "Scrum and restarts",
   gamesense: "Game sense",
 };
 
