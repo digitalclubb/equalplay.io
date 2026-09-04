@@ -35,12 +35,9 @@ import {
   type StoredPlan,
 } from "../plans.js";
 import {
-  applySwaps,
-  drillAtHeadcount,
   moveBlock,
   planDrills,
   planTotals,
-  standIns,
   themeCoverage,
   withWaterBreak,
   type PlanBlock,
@@ -48,13 +45,6 @@ import {
   type ResolvedBlock,
   type SessionPlan,
 } from "../../logic/sessionPlan.js";
-import {
-  clearTonight,
-  setHeadcount,
-  swapBlock,
-  tonight,
-  unswapBlock,
-} from "../tonight.js";
 import { localRuns, logRun, removeRun, syncRuns, today, type SessionRun } from "../sessionLog.js";
 
 /**
@@ -604,10 +594,7 @@ export function renderPlanView(
   // A coach can land here from a link or a locked phone, so the log is read
   // rather than assumed: `renderPlanList` may never have run this visit.
   runs = localRuns(ctx.userId);
-  const evening = tonight(plan.id);
-  const blocks = evening
-    ? applySwaps(planDrills(plan, DRILLS), evening.swaps, DRILLS, plan.ageGroup)
-    : planDrills(plan, DRILLS);
+  const blocks = planDrills(plan, DRILLS);
 
   // One column, capped and centred as a whole. Capping the blocks and leaving
   // the panels under them full width put Share it and Print it 128px outside
@@ -645,19 +632,13 @@ export function renderPlanView(
       ${warningList(totals)}
     </section>
 
-    ${blocks.length > 0 ? tonightPanel(blocks, evening?.players) : ""}
-
     ${
       blocks.length === 0
         ? `<section class="hub-panel hub-empty">
              <p>Nothing in this session yet.</p>
              <a class="hub-btn" href="#/plan/${esc(plan.id)}/edit">Add some drills</a>
            </section>`
-        : blocks
-            .map((resolved, position) =>
-              runBlock(resolved, position, plan.id, evening?.players, plan),
-            )
-            .join("")
+        : blocks.map((resolved, position) => runBlock(resolved, position, plan.id)).join("")
     }
 
     ${blocks.length > 0 ? ranItPanel(plan, blocks) : ""}
@@ -671,7 +652,6 @@ export function renderPlanView(
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
   wireShare(container, ctx, planId);
-  wireTonight(container, ctx, planId);
   wireRanIt(container, ctx, planId);
   for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
     details.addEventListener("toggle", () => {
@@ -932,12 +912,7 @@ export function renderPlanRun(
   }
 
   const plan = stripMeta(found);
-  // Tonight's stand-ins run here too. A swap picked in the car park that did not
-  // reach the screen the drill is run from would be a swap that did nothing.
-  const evening = tonight(plan.id);
-  const blocks = evening
-    ? applySwaps(planDrills(plan, DRILLS), evening.swaps, DRILLS, plan.ageGroup)
-    : planDrills(plan, DRILLS);
+  const blocks = planDrills(plan, DRILLS);
   if (blocks.length === 0) {
     go(`plan/${planId}`);
     return;
@@ -953,7 +928,7 @@ export function renderPlanRun(
   // itself without leaving a step in history that bounces the coach forwards.
   if (index !== step) history.replaceState(null, "", `#/plan/${planId}/run/${index}`);
 
-  const { block, drill, swappedFor } = blocks[index];
+  const { block, drill } = blocks[index];
   const next = blocks[index + 1];
 
   // Errors only. This is the view a coach is holding while it happens, so a
@@ -989,12 +964,6 @@ export function renderPlanRun(
       ${
         drill.safety
           ? `<p class="run-stage-safety"><strong>Safety.</strong> ${esc(drill.safety)}</p>`
-          : ""
-      }
-
-      ${
-        swappedFor
-          ? `<p class="run-stage-swapped">Standing in for ${esc(swappedFor.title)} tonight.</p>`
           : ""
       }
 
@@ -1321,64 +1290,6 @@ function wireRanIt(container: HTMLElement, ctx: PlannerContext, planId: string):
 }
 
 /**
- * The headcount, the swaps and the way back.
- *
- * Every one of them re-renders the whole view, because the number changes what
- * each block says as well as the sentence at the top. Delegated rather than
- * bound per button: the buttons are inside the blocks the render replaces.
- */
-function wireTonight(container: HTMLElement, ctx: PlannerContext, planId: string): void {
-  const again = (): void => renderPlanView(container, ctx, planId);
-
-  const check = (): void => {
-    const input = container.querySelector<HTMLInputElement>("#tonight-players");
-    const players = Number(input?.value);
-    // A squad of nought is not a session and a typo of 900 is not a squad.
-    if (!Number.isFinite(players) || players < 1 || players > 60) {
-      showToast("How many turned up? A number between 1 and 60.");
-      input?.focus();
-      return;
-    }
-    setHeadcount(planId, Math.trunc(players));
-    again();
-  };
-
-  container.querySelector("#tonight-check")?.addEventListener("click", check);
-  container.querySelector("#tonight-players")?.addEventListener("keydown", (event) => {
-    // Enter is what a coach presses after typing a number into a lone field.
-    if ((event as KeyboardEvent).key === "Enter") {
-      event.preventDefault();
-      check();
-    }
-  });
-
-  container.querySelector("#tonight-clear")?.addEventListener("click", () => {
-    clearTonight();
-    again();
-    showToast("Back to the session as you wrote it.");
-  });
-
-  container.addEventListener("click", (event) => {
-    const button = (event.target as HTMLElement | null)?.closest<HTMLElement>(
-      "[data-swap], [data-unswap]",
-    );
-    if (!button) return;
-
-    const swapIndex = button.dataset.swap;
-    if (swapIndex !== undefined && button.dataset.drill) {
-      swapBlock(planId, Number(swapIndex), button.dataset.drill);
-      again();
-      return;
-    }
-    const undoIndex = button.dataset.unswap;
-    if (undoIndex !== undefined) {
-      unswapBlock(planId, Number(undoIndex));
-      again();
-    }
-  });
-}
-
-/**
  * Marking the night as run.
  *
  * On the reading view rather than at the end of present mode, because leaving
@@ -1387,12 +1298,10 @@ function wireTonight(container: HTMLElement, ctx: PlannerContext, planId: string
  * they had. This is the screen they come back to either way.
  *
  * Under the blocks rather than over them, which is the order the evening
- * happens in. The headcount is what a coach needs on arrival and this is what
- * they need on the way to the car.
+ * happens in: this is what a coach needs on the way to the car.
  *
- * It records the themes the session actually covered, taken off the blocks as
- * they stand tonight so a stand-in counts for what it is. Nothing about a child
- * goes anywhere near it.
+ * It records the themes the session actually covered, taken off the blocks.
+ * Nothing about a child goes anywhere near it.
  */
 function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
   const already = runs.find((run) => run.planId === plan.id && run.ranOn === today());
@@ -1413,114 +1322,10 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
   </section>`;
 }
 
-/**
- * The car park panel.
- *
- * Above the blocks rather than under them, because the number a coach types
- * here changes what every one of them says. It is the first thing they need at
- * 6:15 and the only thing on this screen that is about tonight rather than
- * about the session.
- *
- * The count of blocks in trouble is said in words. "Two blocks need a change"
- * is what a coach acts on; a green tick against eighteen numbers is not.
- */
-function tonightPanel(blocks: ResolvedBlock[], players: number | undefined): string {
-  const field = `
-    <div class="tonight-field">
-      <label for="tonight-players">How many turned up</label>
-      <input type="number" id="tonight-players" inputmode="numeric" min="1" max="60"
-             value="${players ?? ""}" placeholder="e.g. 8">
-      <button type="button" class="hub-btn hub-btn-primary" id="tonight-check">
-        ${players === undefined ? "Check the session" : "Check again"}
-      </button>
-    </div>`;
-
-  if (players === undefined) {
-    return `
-      <section class="hub-panel tonight">
-        <h3>Tonight</h3>
-        <p>Planned for a full squad and half of them came? Say how many are here and
-        this checks every block against the group it needs.</p>
-        ${field}
-      </section>`;
-  }
-
-  const short = blocks.filter(
-    (resolved) => !resolved.swappedFor && drillAtHeadcount(resolved.drill, players) === "short",
-  ).length;
-  const swapped = blocks.filter((resolved) => resolved.swappedFor).length;
-
-  const verdict =
-    short > 0
-      ? `${short} ${short === 1 ? "block needs" : "blocks need"} a change. They are marked below.`
-      : swapped > 0
-        ? "Everything runs with the stand-ins below."
-        : "The whole session works with that many.";
-
-  return `
-    <section class="hub-panel tonight">
-      <h3>Tonight</h3>
-      <p class="tonight-verdict"><strong>${players} here.</strong> ${verdict}</p>
-      ${field}
-      <p class="tonight-fineprint">
-        Stand-ins run tonight only. The session keeps the drills you gave it.
-        <button type="button" class="hub-btn hub-btn-done" id="tonight-clear">Back to the plan</button>
-      </p>
-    </section>`;
-}
-
-/**
- * What tonight's headcount does to one block.
- *
- * Short is the one worth acting on, so it is the only one offered a way out. Too
- * many is not a problem a swap solves: nearly every drill here runs twice over
- * with the group split, which is what a coach does anyway, so it says that
- * instead of pretending the block is broken.
- */
-function tonightNote(resolved: ResolvedBlock, plan: SessionPlan, players: number): string {
-  const { drill, index, swappedFor } = resolved;
-
-  if (swappedFor) {
-    return `<p class="tonight-note tonight-note-swapped">
-      Standing in for ${esc(swappedFor.title)} tonight.
-      <button type="button" class="hub-btn hub-btn-done" data-unswap="${index}">Put it back</button>
-    </p>`;
-  }
-
-  const verdict = drillAtHeadcount(drill, players);
-  if (verdict === "over") {
-    return `<p class="tonight-note">Built for up to ${drill.players.max}. Split into two groups and run it twice over.</p>`;
-  }
-  if (verdict === "works") return "";
-
-  const options = standIns(drill, plan, DRILLS, players);
-  return `<p class="tonight-note tonight-note-short">
-      Needs ${drill.players.min}. ${players} turned up.
-    </p>
-    ${
-      options.length > 0
-        ? `<div class="tonight-swaps">
-             <p class="tonight-swaps-label">Run one of these instead</p>
-             <ul>${options
-               .map(
-                 (option) =>
-                   `<li><button type="button" class="hub-btn" data-swap="${index}" data-drill="${esc(option.id)}">
-                      ${esc(option.title)}
-                      <span>${option.minutes} min · ${playersLabel(option)}</span>
-                    </button></li>`,
-               )
-               .join("")}</ul>
-           </div>`
-        : `<p class="tonight-swaps-label">Nothing else in ${AGE_GROUP_LABELS[plan.ageGroup]} fits ${players} for this. Drop it, or run it a player short and take one yourself.</p>`
-    }`;
-}
-
 function runBlock(
   resolved: ResolvedBlock,
   position: number,
   planId?: string,
-  players?: number,
-  plan?: SessionPlan,
 ): string {
   const { block, drill } = resolved;
   return `
@@ -1540,10 +1345,6 @@ function runBlock(
                <p>${esc(drill.safety)}</p>
              </details>`
           : ""
-      }
-
-      ${
-        players !== undefined && plan ? tonightNote(resolved, plan, players) : ""
       }
 
       ${
@@ -2232,10 +2033,8 @@ export function resetPlanner(): void {
   openSafety = new Set();
   saveState = "saved";
   planViewMode = null;
-  // The log belongs to the coach who is leaving. So does the evening they were
-  // part way through. Clubs share tablets.
+  // The log belongs to the coach who is leaving. Clubs share tablets.
   runs = [];
-  clearTonight();
   try {
     localStorage.removeItem(VIEW_KEY);
   } catch {

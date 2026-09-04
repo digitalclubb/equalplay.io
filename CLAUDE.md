@@ -511,27 +511,6 @@ reaching the server says nothing about whether the sessions did. An offline
 notice that quietly clears itself is worse than no notice. `hub.spec.ts` pins
 that, because it is exactly what a second sync on one screen gets wrong.
 
-**Eight turned up.** You wrote the session for twenty on Sunday and half of
-them came, so it is wrong before anybody has kicked a ball. `#/plan/<id>` takes
-a headcount and checks every block against the group its drill states. Short is
-the one worth acting on, so it is the only one offered a way out: `standIns` in
-`logic/sessionPlan.ts` finds drills of the same kind sharing a theme, legal at
-the grade, that fit who came. Too many is not a problem a swap solves, because
-nearly every drill here runs twice over with the group split, so it says that
-instead.
-
-**A stand-in runs tonight. It never edits the session.** `hub/tonight.ts` holds
-the headcount plus the swaps in localStorage and `applySwaps` resolves them at
-render, in the reading view and in present mode both. Next Tuesday twenty turn
-up again and the plan is still the plan. Swaps key on the index in `plan.blocks`
-like every other block control, which `sessionPlan.test.ts` pins against a plan
-with a dropped block. The gate is checked on the way out as well as on the way
-in: a swap naming a drill the grade may not do is ignored rather than honoured,
-because storage is the one thing here a coach can hand-edit. One session at a
-time, since a coach is stood at one pitch and a headcount held against the five
-they are not at is only ever stale. It is the one thing in the hub that is
-deliberately not synced.
-
 **A session opens to be read, is edited on purpose and is run on the pitch.**
 `#/plan/<id>/run/<n>` is present mode: one block, coaching points at a size you
 can read at arm's length, the minutes counting down. It carries the drill's

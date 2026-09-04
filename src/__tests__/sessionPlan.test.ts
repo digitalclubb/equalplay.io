@@ -1,12 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
-  applySwaps,
-  drillAtHeadcount,
   planTotals,
   planDrills,
   moveBlock,
   hasBlockingProblem,
-  standIns,
   themeCoverage,
   withWaterBreak,
   type SessionPlan,
@@ -519,96 +516,6 @@ describe("presets as real sessions", () => {
       blocks: [{ drillId: "a", minutes: 15 }, { drillId: "b", minutes: 15 }],
     });
     expect(withWaterBreak(short)).toBe(short);
-  });
-});
-
-describe("Tonight. Eight turned up", () => {
-  it("says whether a drill runs with the group that came", () => {
-    const tight = drill("tight", { players: { min: 10, max: 16 } });
-    expect(drillAtHeadcount(tight, 8)).toBe("short");
-    expect(drillAtHeadcount(tight, 12)).toBe("works");
-    expect(drillAtHeadcount(tight, 20)).toBe("over");
-  });
-
-  it("counts a drill with no ceiling as working however many turn up", () => {
-    const open = drill("open", { players: { min: 4 } });
-    expect(drillAtHeadcount(open, 40)).toBe("works");
-  });
-
-  it("never offers a stand-in the grade may not do", () => {
-    // The whole point of the app. A stand-in is a second route a drill can take
-    // to a session, so the gate has to hold on it as much as on the catalogue.
-    const catalogue = [
-      drill("legal", { minAge: "u7", players: { min: 4 } }),
-      drill("ruck", { minAge: "u12", players: { min: 4 } }),
-    ];
-    const broken = drill("broken", { players: { min: 30 } });
-    const found = standIns(broken, plan({ ageGroup: "u10", blocks: [] }), catalogue, 8);
-    expect(found.map((d) => d.id)).toEqual(["legal"]);
-  });
-
-  it("keeps a stand-in to the same kind and the same theme", () => {
-    const catalogue = [
-      drill("same", { themes: ["handling"], kind: "exercise" }),
-      drill("warmup", { themes: ["handling"], kind: "warmup" }),
-      drill("other", { themes: ["tackle"], kind: "exercise", minAge: "u9" }),
-    ];
-    const broken = drill("broken", { themes: ["handling"], players: { min: 30 } });
-    const found = standIns(broken, plan({ blocks: [] }), catalogue, 8);
-    expect(found.map((d) => d.id)).toEqual(["same"]);
-  });
-
-  it("never offers a drill the session already has", () => {
-    const catalogue = [drill("a"), drill("b")];
-    const broken = drill("broken", { players: { min: 30 } });
-    const found = standIns(
-      broken,
-      plan({ blocks: [{ drillId: "a", minutes: 10 }] }),
-      catalogue,
-      8,
-    );
-    expect(found.map((d) => d.id)).toEqual(["b"]);
-  });
-
-  it("stands a drill in for tonight without touching the session", () => {
-    const catalogue = [drill("a"), drill("b")];
-    const session = plan({ blocks: [{ drillId: "a", minutes: 10 }] });
-    const swapped = applySwaps(planDrills(session, catalogue), { 0: "b" }, catalogue, "u10");
-
-    expect(swapped[0].drill.id).toBe("b");
-    expect(swapped[0].swappedFor?.id).toBe("a");
-    // The plan is what the coach wrote. Next week twenty turn up again.
-    expect(session.blocks[0].drillId).toBe("a");
-  });
-
-  it("drops a swap naming a drill the grade may not do", () => {
-    // Storage is hand-editable and a grade can be corrected after the fact, so
-    // the gate is checked on the way out as well as on the way in.
-    const catalogue = [drill("a"), drill("ruck", { minAge: "u12" })];
-    const session = plan({ ageGroup: "u10", blocks: [{ drillId: "a", minutes: 10 }] });
-    const swapped = applySwaps(planDrills(session, catalogue), { 0: "ruck" }, catalogue, "u10");
-    expect(swapped[0].drill.id).toBe("a");
-    expect(swapped[0].swappedFor).toBeUndefined();
-  });
-
-  it("addresses plan.blocks rather than the render order", () => {
-    // A block whose drill is gone gets dropped from the render, so the second
-    // block on screen can be the third in the plan. Swapping on render order
-    // would stand a drill in for the wrong block.
-    const catalogue = [drill("a"), drill("c"), drill("stand-in")];
-    const session = plan({
-      blocks: [
-        { drillId: "a", minutes: 10 },
-        { drillId: "gone", minutes: 10 },
-        { drillId: "c", minutes: 10 },
-      ],
-    });
-    const resolved = planDrills(session, catalogue);
-    expect(resolved.map((r) => r.index)).toEqual([0, 2]);
-
-    const swapped = applySwaps(resolved, { 2: "stand-in" }, catalogue, "u10");
-    expect(swapped[1].drill.id).toBe("stand-in");
-    expect(swapped[0].drill.id).toBe("a");
   });
 });
 

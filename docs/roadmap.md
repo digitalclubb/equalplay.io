@@ -112,15 +112,6 @@ Local-first like the stars, so the button works at a pitch. Needs `0004` run
 against the live project before a second device sees any of it. Stores nothing
 about a child: a row is a date, a title and a list of themes.
 
-**Eight turned up.** The car park problem, which nobody else solves free or
-paid. You wrote the session for twenty on Sunday and half of them came. The
-session takes a headcount and marks every block whose drill needs more than
-that, then offers stand-ins of the same kind and theme that fit who came. Too
-many says to split the group rather than pretending the block is broken. A
-stand-in runs tonight only: it is an overlay in `hub/tonight.ts`, never an edit,
-so next Tuesday the plan is still the plan. It reaches present mode as well,
-because a swap that did not is a swap that did nothing.
-
 **Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
 coaching points big, minutes counting down, the screen held awake. The block is
 in the URL so a phone that locks comes back to the drill being run. Overrunning
@@ -290,6 +281,12 @@ never things that would justify a price.
   copyright question and it has not been taken.
 - **Payments and tiers.** Free for good, decided 21 August 2026. See above.
 - **Competing on drill count.** 100 a coach can trust beats 3,000 they have to check.
+- **A headcount check on a session.** Shipped 4 September 2026, taken out the same
+  week. It read a drill's stated group size as a rule and told a coach a block
+  would not run, when a coach adapts a drill to whoever turned up without being
+  asked. "Needs 6" is a note about the shape of the drill rather than a floor,
+  so checking a plan against it was the app being confidently wrong at the one
+  moment a coach has no time for it.
 - **A magazine or any editorial cadence.** That is Rugby Coach Weekly's business and it
   is a treadmill a volunteer project cannot keep up with.
 
