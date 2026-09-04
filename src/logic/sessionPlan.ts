@@ -1,6 +1,9 @@
 import {
+  ageAtLeast,
   isAvailableAt,
   mergeKit,
+  THEMES,
+  THEME_MIN_AGE,
   type AgeGroup,
   type Drill,
   type KitItem,
@@ -323,4 +326,70 @@ export function applySwaps(
     if (!swapped || !isAvailableAt(swapped, ageGroup)) return resolved;
     return { ...resolved, drill: swapped, swappedFor: resolved.drill };
   });
+}
+
+// ---- Coverage ----
+//
+// What a coach has been avoiding. A volunteer runs the session they are
+// comfortable with, which for most is handling. They arrive at a festival in
+// November having never worked on what to do when somebody runs at you. Nothing
+// in the app could see that until it started recording what actually ran.
+
+export interface ThemeCoverage {
+  theme: Theme;
+  /** Nights covering it inside the window. */
+  runs: number;
+  /** ISO date of the last one, or null if it has never been run. */
+  last: string | null;
+  /** Whole weeks since the last one. Null when it has never been run. */
+  weeksAgo: number | null;
+}
+
+/**
+ * How much of each theme has been coached lately, worst first.
+ *
+ * Only themes the grade is allowed to do. Telling a U8 coach they have neglected
+ * rucking would be telling them to break Regulation 15, which is the opposite of
+ * what this app is for.
+ *
+ * Never run sorts above run-a-while-ago, which sorts above run-recently. A tie
+ * goes to the theme with fewer nights, then alphabetically so the order is
+ * stable between renders rather than jumping about as dates tick over.
+ */
+export function themeCoverage(
+  runs: Array<{ themes: Theme[]; ranOn: string }>,
+  ageGroup: AgeGroup,
+  todayIso: string,
+): ThemeCoverage[] {
+  const allowed = THEMES.filter((theme) => ageAtLeast(ageGroup, THEME_MIN_AGE[theme]));
+
+  return allowed
+    .map((theme) => {
+      const hits = runs.filter((run) => run.themes.includes(theme));
+      const last = hits.reduce<string | null>(
+        (latest, run) => (latest === null || run.ranOn > latest ? run.ranOn : latest),
+        null,
+      );
+      return { theme, runs: hits.length, last, weeksAgo: weeksBetween(last, todayIso) };
+    })
+    .sort(
+      (a, b) =>
+        (b.weeksAgo ?? Number.MAX_SAFE_INTEGER) - (a.weeksAgo ?? Number.MAX_SAFE_INTEGER) ||
+        a.runs - b.runs ||
+        a.theme.localeCompare(b.theme),
+    );
+}
+
+/**
+ * Whole weeks between two ISO dates, floored, never negative.
+ *
+ * Dates rather than timestamps, because a training night is a day. A row dated
+ * in the future is a clock somebody set wrong. Reading it as "minus two weeks"
+ * would sort it above a theme genuinely never coached.
+ */
+function weeksBetween(from: string | null, to: string): number | null {
+  if (from === null) return null;
+  const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+  if (!Number.isFinite(days)) return null;
+  return Math.max(0, Math.floor(days / 7));
 }

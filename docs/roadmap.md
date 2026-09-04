@@ -7,6 +7,18 @@ Last updated 4 September 2026, after the colour scheme, the view transitions and
 grouped filters. See `docs/one-product.md` for the one-product change that preceded it
 and which of its phases are built.
 
+## Blocking: run `0004` before the next deploy
+
+`session_runs` is a new table, so a deploy ahead of the migration is not the
+disaster the share token would have been: sessions, favourites and everything
+else carry on. What breaks is only the log. A coach marks a night as run, it
+stays on their device. The coverage list looks right to them until they pick up
+a second phone and find it empty.
+
+Paste `supabase/migrations/0004_session_runs.sql` into the SQL editor, then push.
+Nothing is lost either way, because the local mirror holds every night and
+retries on the next load and whenever the browser comes back online.
+
 ## Where the real project stands
 
 The hub now runs against the real Supabase project. It is committed, pushed, deployed
@@ -20,6 +32,7 @@ have been used for real rather than against a stub.
 | `supabase/migrations/0001_session_plans.sql` applied | done |
 | `supabase/migrations/0002_favourites.sql` applied | done |
 | `supabase/migrations/0003_share_session.sql` applied | done |
+| `supabase/migrations/0004_session_runs.sql` applied | **not yet** |
 | Environment variables set in Vercel, service role key without a `VITE_` prefix | done |
 | Committed, pushed, deployed | done |
 | Register for real, confirm the email, build a session, star a drill, reload | done |
@@ -83,6 +96,15 @@ up on a Tuesday to help is not going to register first. The token is the whole
 permission and clearing it takes every copy of that link out of service. Read through
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
+
+**What you have covered.** Framed as coverage rather than as a diary, because
+nobody keeps a diary. A coach marks a night as run from the session and the
+sessions page lists every theme their grade is allowed, worst first: never
+coached above coached weeks ago. Handling four Tuesdays running and nothing on
+evasion since June is the failure a volunteer actually has. It was invisible.
+Local-first like the stars, so the button works at a pitch. Needs `0004` run
+against the live project before a second device sees any of it. Stores nothing
+about a child: a row is a date, a title and a list of themes.
 
 **Eight turned up.** The car park problem, which nobody else solves free or
 paid. You wrote the session for twenty on Sunday and half of them came. The
@@ -212,13 +234,10 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **What you have already run.** Framed as coverage rather than as a diary: handling
-   four weeks running and nothing on evasion since June is the failure a volunteer
-   actually has. Needs migration `0004`. Stores nothing about a child.
-2. **Your own drills.** Every club has three of its own. Without this the catalogue is
+1. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.
-3. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
+2. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
    on 27 August 2026. The drills cluster took months to get crawled because nobody
    told Google it existed, which is a mistake worth not repeating.
 

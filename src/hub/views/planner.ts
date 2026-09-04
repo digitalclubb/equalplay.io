@@ -41,6 +41,7 @@ import {
   planDrills,
   planTotals,
   standIns,
+  themeCoverage,
   withWaterBreak,
   type PlanBlock,
   type PlanTotals,
@@ -54,6 +55,7 @@ import {
   tonight,
   unswapBlock,
 } from "../tonight.js";
+import { localRuns, logRun, removeRun, syncRuns, today, type SessionRun } from "../sessionLog.js";
 
 /**
  * Same shape as the nav's icons, meaning a 24 viewBox drawn in strokes on
@@ -200,7 +202,8 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
     // with none needs the thing that makes the first one. Same two sections
     // either way, ordered so what they came for is the top of the screen rather
     // than six ready-made cards down.
-    container.innerHTML = plans.length > 0 ? mine + start : start + mine;
+    container.innerHTML =
+      (plans.length > 0 ? mine + start : start + mine) + coverageSection(ctx, runs);
 
     container.querySelector("#new-blank")?.addEventListener("click", () => {
       create(ctx, blankPlan(ctx.ageGroup));
@@ -226,12 +229,85 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
   };
 
   // Paint from the local mirror first so an offline coach sees their plans at once
-  draw(localPlans(ctx.userId), "loading");
+  runs = localRuns(ctx.userId);
+  let plans = localPlans(ctx.userId);
+  let state: "loading" | "synced" | "offline" = "loading";
+  draw(plans, state);
+
   void syncPlans(ctx.userId).then((result) => {
     // The coach may have opened a session while this was in flight
     if (!stillOn("plans")) return;
-    draw(result.plans, result.reachedServer ? "synced" : "offline");
+    plans = result.plans;
+    state = result.reachedServer ? "synced" : "offline";
+    draw(plans, state);
   });
+
+  // The log syncs on its own, because waiting on both would hold the list behind
+  // the least important of the two. It redraws with whatever the sessions have
+  // already decided about the network rather than a state of its own: the log
+  // reaching the server says nothing about whether the sessions did. A notice
+  // that quietly clears itself is worse than no notice.
+  void syncRuns(ctx.userId).then((result) => {
+    if (!stillOn("plans")) return;
+    runs = result.runs;
+    draw(plans, state);
+  });
+}
+
+/** The log, held between renders so a redraw does not read storage again. */
+let runs: SessionRun[] = [];
+
+/**
+ * What has been coached lately, worst first.
+ *
+ * Framed as coverage rather than as a diary. A list of dates is a diary and
+ * nobody keeps one. What a volunteer needs is the sentence they cannot get to on
+ * their own: handling four times and nothing on evasion since June.
+ *
+ * Only themes the grade may do, so a U8 coach is never told off for neglecting
+ * rucking. Under both session lists, because it is a thing to notice rather than
+ * a thing to tap.
+ */
+function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
+  if (log.length === 0) {
+    return `
+      <section class="hub-section coverage">
+        <div class="section-head"><h2>What you've covered</h2></div>
+        <p class="hub-lede">
+          Mark a session as run and this fills in. It keeps track of what you have
+          been coaching so you can see what you have not.
+        </p>
+      </section>`;
+  }
+
+  const coverage = themeCoverage(log, ctx.ageGroup, today());
+  const nights = log.length === 1 ? "1 night" : `${log.length} nights`;
+
+  return `
+    <section class="hub-section coverage">
+      <div class="section-head">
+        <h2>What you've covered</h2>
+        <span class="hub-count">${nights}</span>
+      </div>
+      <ul class="coverage-list">
+        ${coverage
+          .map(
+            (row) => `
+          <li class="coverage-row${row.runs === 0 ? " coverage-row-never" : ""}">
+            <span class="coverage-theme">${esc(THEME_SHORT[row.theme])}</span>
+            <span class="coverage-when">${coverageWhen(row.runs, row.weeksAgo)}</span>
+          </li>`,
+          )
+          .join("")}
+      </ul>
+    </section>`;
+}
+
+function coverageWhen(count: number, weeksAgo: number | null): string {
+  if (count === 0 || weeksAgo === null) return "Not yet";
+  if (weeksAgo === 0) return `This week · ${count}`;
+  if (weeksAgo === 1) return `Last week · ${count}`;
+  return `${weeksAgo} weeks ago · ${count}`;
 }
 
 type PlanView = "grid" | "list";
@@ -525,6 +601,9 @@ export function renderPlanView(
 
   const plan = stripMeta(found);
   const totals = planTotals(plan, DRILLS);
+  // A coach can land here from a link or a locked phone, so the log is read
+  // rather than assumed: `renderPlanList` may never have run this visit.
+  runs = localRuns(ctx.userId);
   const evening = tonight(plan.id);
   const blocks = evening
     ? applySwaps(planDrills(plan, DRILLS), evening.swaps, DRILLS, plan.ageGroup)
@@ -581,6 +660,8 @@ export function renderPlanView(
             .join("")
     }
 
+    ${blocks.length > 0 ? ranItPanel(plan, blocks) : ""}
+
     ${sharePanel(found)}
 
     <section class="hub-panel">
@@ -591,6 +672,7 @@ export function renderPlanView(
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());
   wireShare(container, ctx, planId);
   wireTonight(container, ctx, planId);
+  wireRanIt(container, ctx, planId);
   for (const details of container.querySelectorAll<HTMLDetailsElement>("[data-safety]")) {
     details.addEventListener("toggle", () => {
       const id = details.dataset.safety ?? "";
@@ -1203,6 +1285,31 @@ export function renderSharedPlan(
  * catalogue and back out through a session the reader does not have, so on a
  * shared page the running order is the whole document.
  */
+function wireRanIt(container: HTMLElement, ctx: PlannerContext, planId: string): void {
+  const plan = localPlans(ctx.userId).find((p) => p.id === planId);
+
+  container.querySelector<HTMLElement>("#plan-ran")?.addEventListener("click", (event) => {
+    if (!plan) return;
+    const themes = (event.currentTarget as HTMLElement).dataset.themes ?? "";
+    runs = logRun(ctx.userId, {
+      planId,
+      title: plan.title,
+      ageGroup: plan.ageGroup,
+      themes: themes ? (themes.split(",") as Theme[]) : [],
+    });
+    void syncRuns(ctx.userId);
+    renderPlanView(container, ctx, planId);
+    showToast("Logged. Have a look at what you've covered.");
+  });
+
+  container.querySelector<HTMLElement>("[data-unrun]")?.addEventListener("click", (event) => {
+    const id = (event.currentTarget as HTMLElement).dataset.unrun ?? "";
+    runs = removeRun(ctx.userId, id);
+    void syncRuns(ctx.userId);
+    renderPlanView(container, ctx, planId);
+  });
+}
+
 /**
  * The headcount, the swaps and the way back.
  *
@@ -1259,6 +1366,41 @@ function wireTonight(container: HTMLElement, ctx: PlannerContext, planId: string
       again();
     }
   });
+}
+
+/**
+ * Marking the night as run.
+ *
+ * On the reading view rather than at the end of present mode, because leaving
+ * present mode is not the same as having finished: a coach checks the running
+ * order in the car park at 6:15 and would be asked whether they ran it before
+ * they had. This is the screen they come back to either way.
+ *
+ * Under the blocks rather than over them, which is the order the evening
+ * happens in. The headcount is what a coach needs on arrival and this is what
+ * they need on the way to the car.
+ *
+ * It records the themes the session actually covered, taken off the blocks as
+ * they stand tonight so a stand-in counts for what it is. Nothing about a child
+ * goes anywhere near it.
+ */
+function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
+  const already = runs.find((run) => run.planId === plan.id && run.ranOn === today());
+  if (already) {
+    return `<section class="hub-panel ran-it ran-it-done">
+      <p><strong>Marked as run today.</strong> It counts towards what you have covered.</p>
+      <button type="button" class="hub-btn hub-btn-done" data-unrun="${esc(already.id)}">Undo</button>
+    </section>`;
+  }
+
+  const themes = [...new Set(blocks.flatMap((resolved) => resolved.drill.themes))];
+  return `<section class="hub-panel ran-it">
+    <p>Ran this tonight? It goes towards what you have covered, so the app can tell
+    you what you have not.</p>
+    <button type="button" class="hub-btn" id="plan-ran" data-themes="${esc(themes.join(","))}">
+      I ran this tonight
+    </button>
+  </section>`;
 }
 
 /**
@@ -2080,6 +2222,10 @@ export function resetPlanner(): void {
   openSafety = new Set();
   saveState = "saved";
   planViewMode = null;
+  // The log belongs to the coach who is leaving. So does the evening they were
+  // part way through. Clubs share tablets.
+  runs = [];
+  clearTonight();
   try {
     localStorage.removeItem(VIEW_KEY);
   } catch {

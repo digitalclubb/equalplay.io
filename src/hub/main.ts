@@ -15,6 +15,7 @@ import {
 } from "./views/planner.js";
 import { clearLocalPlans, retryPending } from "./plans.js";
 import { clearLocalFavourites, retryFavourites } from "./favourites.js";
+import { clearLocalRuns, retryRuns } from "./sessionLog.js";
 import { showToast } from "../components/toast.js";
 import {
   cacheProfile,
@@ -253,6 +254,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       if (stillWaiting === 0) render();
     });
     void retryFavourites(userId);
+    void retryRuns(userId);
   });
 
   onAuthChange((session) => {
@@ -266,6 +268,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       clearCachedProfile();
       clearLocalPlans();
       clearLocalFavourites();
+      clearLocalRuns();
       resetPlanner();
       resetCatalogue();
     } else {
@@ -274,6 +277,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         // last one before any of it can be rendered
         clearLocalPlans();
         clearLocalFavourites();
+        clearLocalRuns();
         resetPlanner();
         resetCatalogue();
       }

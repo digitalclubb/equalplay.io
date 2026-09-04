@@ -7,6 +7,7 @@ import {
   moveBlock,
   hasBlockingProblem,
   standIns,
+  themeCoverage,
   withWaterBreak,
   type SessionPlan,
 } from "../logic/sessionPlan.js";
@@ -608,5 +609,60 @@ describe("Tonight. Eight turned up", () => {
     const swapped = applySwaps(resolved, { 2: "stand-in" }, catalogue, "u10");
     expect(swapped[1].drill.id).toBe("stand-in");
     expect(swapped[0].drill.id).toBe("a");
+  });
+});
+
+describe("Coverage. What you have not been coaching", () => {
+  const run = (themes: string[], ranOn: string) => ({ themes: themes as never, ranOn });
+
+  it("puts a theme never coached above one coached a while ago", () => {
+    const rows = themeCoverage(
+      [run(["handling"], "2026-09-01")],
+      "u10",
+      "2026-09-29",
+    );
+    // Handling was four weeks back. Everything else has never happened at all,
+    // which is the thing a volunteer cannot see for themselves.
+    expect(rows[rows.length - 1].theme).toBe("handling");
+    expect(rows.filter((r) => r.runs === 0).length).toBe(5);
+  });
+
+  it("only counts themes the grade is allowed to do", () => {
+    // Telling a U8 coach they have neglected rucking is telling them to break
+    // Regulation 15, which is the opposite of what this app is for.
+    const rows = themeCoverage([], "u8", "2026-09-29");
+    expect(rows.map((r) => r.theme).sort()).toEqual(["evasion", "gamesense", "handling"]);
+  });
+
+  it("counts every night a theme appears in", () => {
+    const rows = themeCoverage(
+      [
+        run(["handling"], "2026-09-01"),
+        run(["handling", "evasion"], "2026-09-08"),
+        run(["handling"], "2026-09-15"),
+      ],
+      "u10",
+      "2026-09-15",
+    );
+    const handling = rows.find((r) => r.theme === "handling");
+    expect(handling?.runs).toBe(3);
+    expect(handling?.last).toBe("2026-09-15");
+    expect(handling?.weeksAgo).toBe(0);
+  });
+
+  it("measures in whole weeks from the most recent night", () => {
+    const rows = themeCoverage(
+      [run(["handling"], "2026-08-04"), run(["handling"], "2026-09-01")],
+      "u10",
+      "2026-09-15",
+    );
+    expect(rows.find((r) => r.theme === "handling")?.weeksAgo).toBe(2);
+  });
+
+  it("never reports a night in the future as coached weeks ago", () => {
+    // A phone with its clock set wrong would otherwise sort above a theme that
+    // has genuinely never been coached.
+    const rows = themeCoverage([run(["handling"], "2026-12-25")], "u10", "2026-09-15");
+    expect(rows.find((r) => r.theme === "handling")?.weeksAgo).toBe(0);
   });
 });

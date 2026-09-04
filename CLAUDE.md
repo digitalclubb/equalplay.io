@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-689 unit and integration tests across 22 files, 168 Playwright tests. Most are ordinary.
+694 unit and integration tests across 22 files, 170 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 168 tests across four files: `matchday` (14), `home` (11), `hub` (117)
+`pnpm test:e2e` is 170 tests across four files: `matchday` (14), `home` (11), `hub` (119)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -469,6 +469,28 @@ in September wants to read the U10 page in August, so hiding the grade above
 yours hides the thing they came for. It also needs no account and no grade at
 all, so `render()` takes it before both checks, the same way a shared session
 comes before the age picker.
+
+**What you have covered, so you can see what you have not.** A volunteer runs
+the session they are comfortable with, which for most is handling, then arrives
+at a festival in November having never worked on what to do when somebody runs
+at you. Nothing in the app could see that until it recorded what ran.
+`hub/sessionLog.ts` is the same local-first shape as `favourites.ts`, because
+the button gets tapped at a pitch. `themeCoverage` in `logic/sessionPlan.ts`
+sorts never-coached above coached-a-while-ago and lists only themes the grade
+may do: telling a U8 coach they have neglected rucking would be the app telling
+them to break Regulation 15.
+
+It is a new table rather than a column on `session_plans`. A deploy landing
+ahead of `0004` then degrades to the log not syncing, instead of taking session
+sync down with it the way the share token nearly did. The themes are copied off
+the plan as it ran, because a plan gets edited or deleted and the night still
+happened. Nothing about a child goes near it.
+
+**The log's sync never decides the sessions' network state.** Both run on the
+sessions page and the log resolving cannot repaint the list as "synced": the log
+reaching the server says nothing about whether the sessions did. An offline
+notice that quietly clears itself is worse than no notice. `hub.spec.ts` pins
+that, because it is exactly what a second sync on one screen gets wrong.
 
 **Eight turned up.** You wrote the session for twenty on Sunday and half of
 them came, so it is wrong before anybody has kicked a ball. `#/plan/<id>` takes

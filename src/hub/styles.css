@@ -2932,6 +2932,76 @@ body {
   font-size: var(--text-lg);
 }
 
+/* ---- What you have covered ---- */
+
+/* Under both session lists. It is a thing to notice on the way past rather than
+   a thing to tap, so it takes the bottom of the page and none of the emphasis. */
+.coverage-list {
+  display: grid;
+  gap: var(--sp-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coverage-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  padding: var(--sp-xs) var(--sp-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+/* A theme never coached is the whole point of the list, so it is the one row
+   that looks different. Warning rather than danger: neglecting evasion is worth
+   noticing, it is not a safety problem. Danger belongs to the age gate. */
+.coverage-row-never {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.coverage-theme {
+  font-weight: var(--weight-semi);
+}
+
+.coverage-when {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  text-align: right;
+}
+
+.coverage-row-never .coverage-when {
+  color: inherit;
+}
+
+/* ---- Ran it ---- */
+
+.ran-it {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.ran-it p {
+  flex: 1 1 14rem;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.ran-it .hub-btn {
+  width: auto;
+}
+
+.ran-it-done p {
+  color: inherit;
+}
+
 /* ---- Tonight ---- */
 
 /* The car park panel. It sits between the session's head and its blocks because

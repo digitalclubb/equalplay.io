@@ -243,13 +243,15 @@ test("your own sessions come first once there are any", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   const headings = () => page.locator(".hub-section h2").allInnerTexts();
   await expect(page.locator(".preset-card").first()).toBeVisible();
-  expect(await headings()).toEqual(["Start a session", "Your sessions"]);
+  // Coverage is always last. It is a thing to notice on the way past rather
+  // than a thing a coach came to the page for.
+  expect(await headings()).toEqual(["Start a session", "Your sessions", "What you've covered"]);
 
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator("#plan-title")).toBeVisible();
   await page.goto("/hub/#/plans");
   await expect(page.locator(".plan-card")).toHaveCount(1);
-  expect(await headings()).toEqual(["Your sessions", "Start a session"]);
+  expect(await headings()).toEqual(["Your sessions", "Start a session", "What you've covered"]);
 
   // The strip on the card is the session, so it carries a piece per block plus
   // the water break the preset comes with
@@ -1896,6 +1898,46 @@ test("eight turned up, so the session says which blocks will not run", async ({ 
   await page.locator("#tonight-clear").click();
   await expect(page.locator(".tonight-note-swapped")).toHaveCount(0);
   await expect(page.locator("#tonight-check")).toHaveText(/Check the session/);
+});
+
+test("marking a night as run fills in what you have covered", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}`);
+
+  // The server is unreachable, so this proves the log works at a pitch with no
+  // signal, which is exactly where it gets tapped.
+  await page.locator("#plan-ran").click();
+  await expect(page.locator(".ran-it-done")).toContainText("Marked as run today");
+
+  await page.goto("/hub/#/plans");
+  const covered = page.locator(".coverage-row-never");
+  // The rucking session covers ruck and maul, evasion and game sense, so the
+  // three it does not touch are the ones a coach needs pointing out.
+  await expect(covered).toHaveCount(3);
+  await expect(page.locator(".coverage")).toContainText("1 night");
+
+  // Undoing it takes the night back out.
+  await page.goto(`/hub/#/plan/${planId}`);
+  await page.locator("[data-unrun]").click();
+  await expect(page.locator("#plan-ran")).toBeVisible();
+});
+
+test("a U8 coach is never told they have neglected rucking", async ({ page }) => {
+  // Coverage lists themes to work on. Listing one Regulation 15 does not allow
+  // at the grade would be the app telling a coach to break it.
+  await signedIn(page, "u8", "#/plans");
+  await expect(page.locator(".coverage")).toBeVisible();
+  await expect(page.locator(".coverage-list")).toHaveCount(0);
+
+  await page.locator(".preset-card").first().click();
+  await page.getByRole("link", { name: "Done" }).click();
+  await page.locator("#plan-ran").click();
+  await page.goto("/hub/#/plans");
+
+  const themes = await page.locator(".coverage-theme").allInnerTexts();
+  expect(themes).not.toContain("Ruck and maul");
+  expect(themes).not.toContain("Tackle");
+  expect(themes).not.toContain("Set piece");
 });
 
 test("buttons sitting in a row line up with each other", async ({ page }) => {
