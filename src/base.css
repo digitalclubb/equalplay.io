@@ -266,10 +266,12 @@
 
 /* ---- The scheme a coach picked ----
  *
- * Absent means follow the phone, which is what almost everybody wants and the
- * only state that existed at first. The other two are for the case the phone
- * gets wrong: a screen pinned to dark is hard to read at a bright pitch on a
- * Sunday morning. Nobody is going into iOS settings with wet hands.
+ * Two of them. Absent is neither: it means nobody has picked yet, so the media
+ * query above is left to answer. That is the state every static page is
+ * in and the state the app is in until a coach taps the switch. A pick exists
+ * for the case the phone gets it wrong: a screen pinned to dark is hard to read
+ * at a bright pitch on a Sunday morning. Nobody is going into iOS settings with
+ * wet hands.
  *
  * Written on `<html>` before first paint by the inline script in each entry, so
  * a coach who picked dark never sees a white flash on the way in.

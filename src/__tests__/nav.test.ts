@@ -172,24 +172,26 @@ describe("the colour scheme switch", () => {
     expect(written(plannerHtml, "planner/index.html")).toBe(expected);
   });
 
-  it("ships following the phone, because the HTML cannot know", () => {
-    // The stored choice is read after paint. Anything else written here would
-    // be a lie on the first frame for everybody who picked something else.
-    expect(written(hubHtml, "hub/index.html")).toContain('data-scheme="system"');
+  it("ships on light, because the HTML cannot know", () => {
+    // What the phone asks for and what a coach stored are both read after
+    // paint, so one of the two has to be written here and corrected. Light is
+    // right for a light phone, which is most of them, and for a coach who
+    // picked light. A dark phone wears a sun until the bundle lands.
+    expect(written(hubHtml, "hub/index.html")).toContain('data-scheme="light"');
   });
 
   it("names the scheme it is on rather than the one a tap would give", () => {
-    // A cycling button whose name promises the next state is wrong the moment
-    // somebody tabs onto it and does not press.
+    // A button whose name promises the next state is wrong the moment somebody
+    // tabs onto it and does not press.
     for (const scheme of SCHEMES) {
       expect(schemeHtml(scheme), scheme).toContain(`data-scheme="${scheme}"`);
-      expect(schemeHtml(scheme), scheme).toMatch(/aria-label="Colours: (Auto|Light|Dark)"/);
+      expect(schemeHtml(scheme), scheme).toMatch(/aria-label="Colours: (Light|Dark)"/);
     }
   });
 
   it("gives every scheme its own glyph, hidden from a screen reader", () => {
-    // Auto and Light look identical on a phone already set to light, so the
-    // icon is the only thing that says which one you are on.
+    // The glyph is what a coach reads the state off, since the chrome is navy
+    // in both schemes and looks the same either way.
     const glyphs = SCHEMES.map((scheme) => schemeHtml(scheme).replace(/^<button[^>]*>/, ""));
     expect(new Set(glyphs).size).toBe(SCHEMES.length);
     for (const glyph of glyphs) {
@@ -198,8 +200,8 @@ describe("the colour scheme switch", () => {
     }
   });
 
-  it("cycles back round to the phone", () => {
-    expect(SCHEMES.map(nextScheme)).toEqual(["light", "dark", "system"]);
+  it("flips to the other one", () => {
+    expect(SCHEMES.map(nextScheme)).toEqual(["dark", "light"]);
   });
 
   it("applies the choice before the stylesheet, in both entries", () => {

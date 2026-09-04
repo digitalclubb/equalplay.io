@@ -115,35 +115,38 @@ const bg = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
 /**
- * One button in the chrome that cycles Auto, Light, Dark, so a scheme is
- * reached by tapping until it says so rather than by clicking one of three.
- * Three taps is the whole cycle, so anything more means it is stuck.
+ * One button in the chrome that flips between Light and Dark. The phone decides
+ * which one it starts on, so where a tap lands depends on where it began. One
+ * tap is the whole of it, so anything more means it is stuck.
  */
 async function setScheme(page: Page, want: string): Promise<void> {
+  // Twice rather than once. The static markup says light before the bundle has
+  // wired anything up, so a click landing in that window changes nothing and
+  // has to be repeated rather than failing the assertion under it.
   const toggle = page.locator(".scheme-toggle");
-  for (let tap = 0; tap < 3; tap++) {
-    if ((await toggle.getAttribute("data-scheme")) === want) return;
+  for (let tap = 0; tap < 2; tap++) {
+    if ((await toggle.getAttribute("data-scheme")) === want) break;
     await toggle.click();
   }
   await expect(toggle).toHaveAttribute("data-scheme", want);
 }
 
 test("a coach can pick a scheme and the phone stops deciding", async ({ page }) => {
-  // The phone says light. The switch has to be able to say otherwise, because a
-  // screen pinned one way is what this exists for.
+  // The phone says light, so the switch starts there and one tap is the whole
+  // of it. A screen pinned the wrong way is what this exists for.
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/hub/#/catalogue");
+  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "light");
   const light = await bg(page);
 
   await setScheme(page, "dark");
-  await expect(page.locator(".scheme-toggle")).toHaveAttribute("data-scheme", "dark");
   const dark = await bg(page);
   expect(dark).not.toBe(light);
 
-  // Back to the phone, and the attribute goes rather than being set to system
-  await setScheme(page, "system");
+  // And back, which is the same tap rather than a cycle round a third state
+  await setScheme(page, "light");
   expect(await bg(page)).toBe(light);
-  expect(await page.evaluate(() => document.documentElement.hasAttribute("data-theme"))).toBe(false);
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
 });
 
 test("the choice survives a reload, and lands before the first paint", async ({ page }) => {

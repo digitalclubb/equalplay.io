@@ -527,15 +527,27 @@ switch is the one exception, because both entries carry it identically and the
 footer put it under a hundred drill cards, which is a long scroll for the one
 setting a coach reaches for at the pitch.
 
-**The colour switch is one button that cycles, placed twice.** `src/lib/theme.ts`
+**The colour switch is one button that flips, placed twice.** `src/lib/theme.ts`
 renders it and both entries write it out the way they write the nav. Top right of
 the phone bar, positioned absolutely so the centred logo stays centred. At 900px it
 drops into the rail's flow, under Account, shaped like a tab with its label showing:
 the rail is 15rem and the logo has taken most of that, so there is no top right up
-there. Three pills do not fit either place, which is why it cycles Auto, Light, Dark
-rather than choosing. The icon carries the state, because Auto and Light are the
-same page on a phone already set to light. `hub.spec.ts` sweeps 320 to 480 measuring
-that it clears the logo, since absolute means nothing pushes back.
+there. Two pills do not fit either place, which is why one button carries the state
+and a tap swaps it. `hub.spec.ts` sweeps 320 to 480 measuring that it clears the
+logo, since absolute means nothing pushes back.
+
+**Light and Dark are the only two states. The phone picks the first one.** There
+was a third, Auto, sitting ahead of them in the cycle. It read as a mode of its
+own rather than as the two colours it picks between. Its monitor glyph on a
+phone said Desktop rather than System. So `storedScheme()` falls back to
+`matchMedia("(prefers-color-scheme: dark)")` instead, which is the same answer
+without a name of its own on screen. The phone still decides what a coach opens
+on. It keeps deciding until they tap, because nothing is written to `data-theme`
+while nobody has chosen, so a phone flipping at sunset takes the app with it the way
+it takes the static pages. `wireScheme` listens for that and repaints the glyph.
+A tap is a choice, which is then kept. Nothing else changed,
+because `data-theme` was always the whole mechanism and every token is still a
+`light-dark()` pair reading it.
 
 **A shared session is a document, not a route into the app.** `#/shared/<token>`
 comes before the age picker signed out, because asking which grade somebody coaches
