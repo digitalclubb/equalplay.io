@@ -207,6 +207,8 @@ export function hasBlockingProblem(totals: PlanTotals): boolean {
 export interface ResolvedBlock {
   block: PlanBlock;
   drill: Drill;
+  /** Set only when a stand-in is running tonight. The drill the plan names. */
+  swappedFor?: Drill;
   /**
    * Position in `plan.blocks`, which is not the position in this array.
    *
@@ -237,4 +239,88 @@ export function moveBlock(blocks: PlanBlock[], from: number, to: number): PlanBl
   const [moved] = next.splice(from, 1);
   next.splice(target, 0, moved);
   return next;
+}
+
+// ---- Tonight ----
+//
+// The car park problem. You planned for twenty and eight turned up, so the
+// session you wrote on Sunday is wrong before anybody has kicked a ball. Every
+// drill already states the group it needs, so the checking is arithmetic. What
+// it costs is saying it at the moment a coach is stood there, rather than in a
+// list of numbers nobody reads at 6:15.
+
+/** How a drill sits against the number who actually turned up. */
+export type Headcount = "works" | "short" | "over";
+
+export function drillAtHeadcount(drill: Drill, players: number): Headcount {
+  if (players < drill.players.min) return "short";
+  if (drill.players.max !== undefined && players > drill.players.max) return "over";
+  return "works";
+}
+
+/**
+ * Drills that could stand in for one too big for the group that turned up.
+ *
+ * Same theme, because swapping a tackle drill for a passing drill changes what
+ * the evening was for. Same kind, because a warm-up that stands in for an
+ * exercise leaves the session with two warm-ups and no work in it. Legal at the
+ * plan's grade, checked here rather than trusted from the caller: this is a
+ * second way a drill can reach a session and the age gate has to hold on all of
+ * them.
+ *
+ * Nothing already in the plan, since a coach who is about to run a drill does
+ * not want it twice. Ordered by how close they are to the minutes the block had,
+ * so the session keeps roughly the shape it was given.
+ */
+export function standIns(
+  drill: Drill,
+  plan: SessionPlan,
+  catalogue: Drill[],
+  players: number,
+  limit = 3,
+): Drill[] {
+  const taken = new Set(plan.blocks.map((block) => block.drillId));
+  const minutes = plan.blocks.find((block) => block.drillId === drill.id)?.minutes ?? drill.minutes;
+
+  return catalogue
+    .filter(
+      (candidate) =>
+        candidate.id !== drill.id &&
+        !taken.has(candidate.id) &&
+        candidate.kind === drill.kind &&
+        isAvailableAt(candidate, plan.ageGroup) &&
+        drillAtHeadcount(candidate, players) === "works" &&
+        candidate.themes.some((theme) => drill.themes.includes(theme)),
+    )
+    .sort(
+      (a, b) =>
+        Math.abs(a.minutes - minutes) - Math.abs(b.minutes - minutes) ||
+        a.title.localeCompare(b.title),
+    )
+    .slice(0, limit);
+}
+
+/**
+ * The blocks as they will actually run tonight.
+ *
+ * A swap stands a drill in for the evening rather than editing the session.
+ * Next Tuesday twenty turn up again and the plan a coach built is still the
+ * plan they built, which is the whole reason this is an overlay instead of an
+ * edit. Keyed on the index in `plan.blocks`, like every other block control.
+ *
+ * A swap naming a drill that is gone, or one the grade may not do, is dropped
+ * rather than honoured. Storage is the one thing here a coach can hand-edit.
+ */
+export function applySwaps(
+  blocks: ResolvedBlock[],
+  swaps: Record<number, string>,
+  catalogue: Drill[],
+  ageGroup: AgeGroup,
+): ResolvedBlock[] {
+  const byId = new Map(catalogue.map((entry) => [entry.id, entry]));
+  return blocks.map((resolved) => {
+    const swapped = byId.get(swaps[resolved.index] ?? "");
+    if (!swapped || !isAvailableAt(swapped, ageGroup)) return resolved;
+    return { ...resolved, drill: swapped, swappedFor: resolved.drill };
+  });
 }

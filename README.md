@@ -86,8 +86,8 @@ no signal.
 ## Testing
 
 ```
-pnpm test       681 unit and integration tests across 22 files
-pnpm test:e2e   167 Playwright tests, 14 match day, 11 homepage, 116 hub, 26 contrast
+pnpm test       689 unit and integration tests across 22 files
+pnpm test:e2e   168 Playwright tests, 14 match day, 11 homepage, 117 hub, 26 contrast
 ```
 
 The hub end-to-end tests stub auth in localStorage and run against a build carrying

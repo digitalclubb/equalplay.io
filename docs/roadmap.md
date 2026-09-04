@@ -84,6 +84,15 @@ permission and clearing it takes every copy of that link out of service. Read th
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
 
+**Eight turned up.** The car park problem, which nobody else solves free or
+paid. You wrote the session for twenty on Sunday and half of them came. The
+session takes a headcount and marks every block whose drill needs more than
+that, then offers stand-ins of the same kind and theme that fit who came. Too
+many says to split the group rather than pretending the block is broken. A
+stand-in runs tonight only: it is an overlay in `hub/tonight.ts`, never an edit,
+so next Tuesday the plan is still the plan. It reaches present mode as well,
+because a swap that did not is a swap that did nothing.
+
 **Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
 coaching points big, minutes counting down, the screen held awake. The block is
 in the URL so a phone that locks comes back to the drill being run. Overrunning
@@ -203,18 +212,13 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **"Eight turned up."** You planned for twenty, eight came, so you have to decide in
-   the car park. Nobody does this, free or paid. It is the most real problem a
-   volunteer has. Every drill already carries `players: { min, max? }`, so this is a
-   number input and a filter over the blocks, flagging what will not work. Present
-   mode gives it somewhere obvious to live now, on the block being run.
-2. **What you have already run.** Framed as coverage rather than as a diary: handling
+1. **What you have already run.** Framed as coverage rather than as a diary: handling
    four weeks running and nothing on evasion since June is the failure a volunteer
    actually has. Needs migration `0004`. Stores nothing about a child.
-3. **Your own drills.** Every club has three of its own. Without this the catalogue is
+2. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.
-4. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
+3. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
    on 27 August 2026. The drills cluster took months to get crawled because nobody
    told Google it existed, which is a mistake worth not repeating.
 

@@ -1867,6 +1867,37 @@ test("present mode says how to set the drill up, not only what to watch for", as
   await expect(more.locator(".run-more-label").first()).toHaveText("Make it easier");
 });
 
+test("eight turned up, so the session says which blocks will not run", async ({ page }) => {
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}`);
+
+  // The car park. You wrote this for a full squad on Sunday.
+  await page.locator("#tonight-players").fill("8");
+  await page.locator("#tonight-check").click();
+  await expect(page.locator(".tonight-verdict")).toContainText("8 here");
+  const short = page.locator(".tonight-note-short");
+  await expect(short.first()).toBeVisible();
+
+  // A stand-in runs tonight rather than editing the session.
+  const swap = page.locator("[data-swap]").first();
+  const index = await swap.getAttribute("data-swap");
+  await swap.click();
+  await expect(page.locator(".tonight-note-swapped").first()).toBeVisible();
+
+  // It reaches the screen the drill is actually run from.
+  await page.goto(`/hub/#/plan/${planId}/run/${index}`);
+  await expect(page.locator(".run-stage-swapped")).toContainText("Standing in for");
+
+  // And the session a coach wrote is still the session they wrote.
+  const stored = await page.evaluate(() => localStorage.getItem("equalplay_hub_plans") ?? "");
+  expect(stored).not.toContain("swaps");
+
+  await page.goto(`/hub/#/plan/${planId}`);
+  await page.locator("#tonight-clear").click();
+  await expect(page.locator(".tonight-note-swapped")).toHaveCount(0);
+  await expect(page.locator("#tonight-check")).toHaveText(/Check the session/);
+});
+
 test("buttons sitting in a row line up with each other", async ({ page }) => {
   await runnableSession(page);
   await page.locator("text=Run it").click();
