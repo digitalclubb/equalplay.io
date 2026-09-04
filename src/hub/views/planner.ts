@@ -1,4 +1,5 @@
 import { esc } from "../../lib/esc.js";
+import { transition } from "../../lib/motion.js";
 import { ageRulesLink } from "../../lib/rulesLink.js";
 import { showToast } from "../../components/toast.js";
 import { currentRoute, go, stillOn } from "../router.js";
@@ -8,7 +9,6 @@ import { PRESETS, presetsForAge } from "../content/presets.js";
 import {
   AGE_GROUP_LABELS,
   THEMES,
-  THEME_LABELS,
   RULES_OF_PLAY,
   THEME_MIN_AGE,
   THEME_SHORT,
@@ -142,30 +142,54 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
   const draw = (plans: StoredPlan[], state: "loading" | "synced" | "offline"): void => {
     const presets = presetsForAge(ctx.ageGroup);
     const age = AGE_GROUP_LABELS[ctx.ageGroup];
+    const view = planView();
 
-    container.innerHTML = `
-      <section class="hub-panel">
-        <h2>Ready-made sessions</h2>
+    const start = `
+      <section class="hub-section">
+        <div class="section-head">
+          <h2>Start a session</h2>
+        </div>
         <p class="hub-lede">
-          A ready-made ${esc(age)} session. Run it as it comes or change whatever you like.
+          Take a ready-made ${esc(age)} session and change whatever you like, or start from an
+          empty one.
         </p>
-        ${
-          presets.length === 0
-            ? `<p class="hub-fineprint">No ready-made ${esc(age)} sessions yet. Build one below.</p>`
-            : `<div class="preset-grid">${presets.map(presetCard).join("")}</div>`
-        }
-        <button type="button" class="hub-btn" id="new-blank">Build one from scratch</button>
-      </section>
+        <div class="preset-grid">
+          ${presets.map(presetCard).join("")}
+          <button type="button" class="preset-card preset-new" id="new-blank">
+            <span class="preset-new-mark" aria-hidden="true">+</span>
+            <span class="preset-title">Build one from scratch</span>
+            <span class="preset-meta">An empty session you fill yourself</span>
+          </button>
+        </div>
+      </section>`;
 
-      <section class="hub-panel">
-        <h2>Your sessions</h2>
+    const count = plans.length === 1 ? "1 session" : `${plans.length} sessions`;
+    const mine = `
+      <section class="hub-section">
+        <div class="section-head">
+          <h2>Your sessions</h2>
+          ${plans.length > 0 ? `<span class="hub-count">${count}</span>` : ""}
+          ${plans.length > 0 ? viewToggle(view) : ""}
+        </div>
         ${syncNotice(state, pendingCount(ctx.userId))}
         ${
           plans.length === 0
-            ? `<p class="hub-fineprint">${state === "loading" ? "Fetching your sessions…" : "Nothing saved yet."}</p>`
-            : `<div class="drill-list">${plans.map((plan) => planRow(plan)).join("")}</div>`
+            ? `<p class="hub-fineprint">${
+                state === "loading"
+                  ? "Fetching your sessions…"
+                  : "Nothing saved yet. Take a ready-made session or build your own and it will turn up here."
+              }</p>`
+            : `<div class="${view === "list" ? "plan-lines" : "drill-list"}">${plans
+                .map((plan) => planRow(plan, ctx.ageGroup, view))
+                .join("")}</div>`
         }
       </section>`;
+
+    // A coach who has sessions of their own came back for one of them. A coach
+    // with none needs the thing that makes the first one. Same two sections
+    // either way, ordered so what they came for is the top of the screen rather
+    // than six ready-made cards down.
+    container.innerHTML = plans.length > 0 ? mine + start : start + mine;
 
     container.querySelector("#new-blank")?.addEventListener("click", () => {
       create(ctx, blankPlan(ctx.ageGroup));
@@ -177,6 +201,17 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
         if (preset) create(ctx, fromPreset(preset));
       });
     }
+
+    for (const button of container.querySelectorAll<HTMLButtonElement>("[data-plan-view]")) {
+      button.addEventListener("click", () => {
+        const next: PlanView = button.dataset.planView === "list" ? "list" : "grid";
+        if (next === planView()) return;
+        setPlanView(next);
+        // A tap on one of two segments, answered by the pill moving to it. Same
+        // mechanism the catalogue's filters use.
+        transition("filter", () => draw(plans, state));
+      });
+    }
   };
 
   // Paint from the local mirror first so an offline coach sees their plans at once
@@ -186,6 +221,63 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
     if (!stillOn("plans")) return;
     draw(result.plans, result.reachedServer ? "synced" : "offline");
   });
+}
+
+type PlanView = "grid" | "list";
+
+const VIEW_KEY = "equalplay_hub_plan_view";
+
+const PLAN_VIEWS: Array<{ value: PlanView; label: string }> = [
+  { value: "grid", label: "Grid" },
+  { value: "list", label: "List" },
+];
+
+/**
+ * Held in memory as well as in storage.
+ *
+ * Reading it back out of localStorage on every render looks tidier and leaves
+ * the control dead in private mode, where the write is swallowed and the next
+ * read hands back the default the coach just tapped away from.
+ */
+let planViewMode: PlanView | null = null;
+
+/**
+ * Grid or list, kept between visits and cleared on sign out.
+ *
+ * Three sessions and you want to see the shape of each one. Fifteen and you
+ * want them all on one screen. Neither answer is right for the other coach,
+ * which is why this is a setting rather than a breakpoint. Clubs share tablets,
+ * so it goes with the rest of what belonged to whoever was signed in.
+ */
+function planView(): PlanView {
+  if (planViewMode) return planViewMode;
+  try {
+    planViewMode = localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+  } catch {
+    planViewMode = "grid";
+  }
+  return planViewMode;
+}
+
+function setPlanView(view: PlanView): void {
+  planViewMode = view;
+  try {
+    localStorage.setItem(VIEW_KEY, view);
+  } catch {
+    // Private mode with storage off. The choice lasts the visit instead
+  }
+}
+
+function viewToggle(view: PlanView): string {
+  return `
+    <div class="hub-segmented view-toggle" role="group" aria-label="How your sessions are shown">
+      ${PLAN_VIEWS.map(
+        (v) =>
+          `<button type="button" data-plan-view="${v.value}" class="hub-seg${
+            v.value === view ? " is-active" : ""
+          }" aria-pressed="${v.value === view}">${v.label}</button>`,
+      ).join("")}
+    </div>`;
 }
 
 /**
@@ -211,34 +303,115 @@ function syncNotice(state: "loading" | "synced" | "offline", pending: number): s
   return "";
 }
 
+/**
+ * The session drawn as a strip.
+ *
+ * One segment per block in the order they run, each flexed to its own minutes,
+ * cool for a warm-up and warm for an exercise the same as everywhere else. A
+ * water break is the pale gap between two of them.
+ *
+ * Six cards carrying a bold title over a grey line read as six of the same
+ * thing. Their shapes do not. A session that gives five minutes to the warm-up
+ * looks nothing like one that gives it a third of the evening, which is a real
+ * part of what a coach is choosing between and was nowhere on the card.
+ */
+function planShape(blocks: PlanBlock[]): string {
+  const segment = (kind: string, minutes: number): string => {
+    // Straight off a stored plan, so it can be anything a hand-edited row holds.
+    // A non-finite flex-grow is dropped by the browser and the segment vanishes.
+    const width = Number.isFinite(minutes) ? Math.max(1, Math.round(minutes)) : 1;
+    return `<span class="shape-seg${kind}" style="flex:${width}"></span>`;
+  };
+  const parts: string[] = [];
+  for (const block of blocks) {
+    const drill = findDrill(block.drillId);
+    if (!drill) continue;
+    parts.push(segment(drill.kind === "warmup" ? " shape-warmup" : "", block.minutes));
+    if (block.breakAfter) parts.push(segment(" shape-break", block.breakAfter));
+  }
+  // An empty session has no shape. One full width bar would say it had a drill in it
+  if (parts.length === 0) return "";
+  // Hidden from a screen reader on purpose. The meta line beside it already
+  // gives the block count and the minutes in words. A coach tabbing a list of
+  // sessions does not want a bar described on every one of them.
+  return `<span class="plan-shape" aria-hidden="true">${parts.join("")}</span>`;
+}
+
+/**
+ * When it was last touched, which is how a coach finds the one they wrote last
+ * night among five with similar names.
+ *
+ * Calendar days rather than elapsed hours. Something saved at eleven last night
+ * is yesterday at nine this morning. "Edited today" for it would be the kind of
+ * small wrongness that makes the rest of the page less believable.
+ */
+function editedLabel(iso: string): string {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  const localDay = (date: Date): number =>
+    Math.floor((date.getTime() - date.getTimezoneOffset() * 60_000) / 86_400_000);
+  const days = localDay(new Date()) - localDay(then);
+  if (days <= 0) return "edited today";
+  if (days === 1) return "edited yesterday";
+  if (days < 7) return `edited ${days} days ago`;
+  return `edited ${then.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+}
+
 function presetCard(preset: Preset): string {
+  // Built rather than counted, so the card shows the session the tap actually
+  // makes. `fromPreset` adds a water break, which is why the drills alone read
+  // three minutes short of the plan the coach ends up with. The minutes are what
+  // they check their pitch slot against and the shape is what they are picking.
+  const plan = fromPreset(preset);
   const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
-  // The session length rather than the drill total. `fromPreset` adds a water
-  // break, so the drills alone read three minutes short of the plan the coach
-  // ends up with. This is the number they check their pitch slot against.
+  // No age on the card. `presetsForAge` only ever returns the coach's own grade,
+  // so it was the one thing repeated identically on all six of them
   return `
     <button type="button" class="preset-card" data-preset="${esc(preset.id)}">
+      <span class="preset-theme">${esc(THEME_SHORT[preset.theme])}</span>
       <span class="preset-title">${esc(preset.title)}</span>
-      <span class="preset-meta">
-        ${AGE_GROUP_LABELS[preset.ageGroup]} · ${esc(THEME_LABELS[preset.theme])} ·
-        ${drills.length} drills · ${preset.sessionMinutes} min
-      </span>
+      ${planShape(plan.blocks)}
+      <span class="preset-meta">${drills.length} drills · ${preset.sessionMinutes} min</span>
     </button>`;
 }
 
-function planRow(plan: StoredPlan): string {
+function planRow(plan: StoredPlan, browsing: AgeGroup, view: PlanView): string {
   const totals = planTotals(plan, DRILLS);
   const problems = totals.warnings.filter((w) => w.level === "error").length;
+  const flag = problems > 0 ? '<span class="drill-kind plan-flag">Check</span>' : "";
+  // The grade only when it is not the one the coach is browsing. A plan keeps the
+  // grade it was written for, so a coach who has gone up in September still has
+  // last season's sessions in the list and needs telling which is which. Printed
+  // on every row it was noise on all of them
+  const grade = plan.ageGroup === browsing ? "" : `${AGE_GROUP_LABELS[plan.ageGroup]} · `;
+  const blocks = plan.blocks.length === 1 ? "1 block" : `${plan.blocks.length} blocks`;
+  const edited = editedLabel(plan.updatedAt);
+  const meta = `${grade}${blocks} · ${totals.plannedMinutes} of ${plan.sessionMinutes} min${
+    edited ? ` · ${edited}` : ""
+  }`;
+
+  if (view === "list") {
+    return `
+      <a class="plan-line" href="#/plan/${esc(plan.id)}">
+        <span class="plan-line-title">${esc(plan.title)}</span>
+        ${flag}
+        <span class="plan-line-meta">${meta}</span>
+      </a>`;
+  }
+  // Looked up rather than trusted. `isStoredPlan` does not check the theme. A
+  // plan off the local mirror is whatever localStorage holds, so a hand-edited
+  // one hands `THEME_SHORT` a key it has not got and `esc(undefined)` throws,
+  // which would take the whole sessions list down over a badge
+  const theme = plan.theme ? THEME_SHORT[plan.theme] : undefined;
   return `
-    <a class="drill-card" href="#/plan/${esc(plan.id)}">
+    <a class="drill-card plan-card" href="#/plan/${esc(plan.id)}">
+      ${theme ? `<span class="preset-theme">${esc(theme)}</span>` : ""}
       <span class="drill-card-head">
         <span class="drill-card-title">${esc(plan.title)}</span>
-        ${problems > 0 ? '<span class="drill-kind plan-flag">Check</span>' : ""}
+        ${flag}
       </span>
-      <span class="drill-meta">
-        ${AGE_GROUP_LABELS[plan.ageGroup]} · ${plan.blocks.length} blocks ·
-        ${totals.plannedMinutes} of ${plan.sessionMinutes} min
-      </span>
+      ${planShape(plan.blocks)}
+      <span class="drill-meta">${meta}</span>
     </a>`;
 }
 
@@ -1661,6 +1834,12 @@ export function resetPlanner(): void {
   previewing = null;
   openSafety = new Set();
   saveState = "saved";
+  planViewMode = null;
+  try {
+    localStorage.removeItem(VIEW_KEY);
+  } catch {
+    // Nothing to do
+  }
   clearTimeout(pushTimer);
   pushTimer = undefined;
   clearPrintable();

@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-681 unit and integration tests across 22 files, 163 Playwright tests. Most are ordinary.
+681 unit and integration tests across 22 files, 165 Playwright tests. Most are ordinary.
 These eleven are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -104,7 +104,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 163 tests across four files: `matchday` (13), `home` (11), `hub` (113)
+`pnpm test:e2e` is 165 tests across four files: `matchday` (13), `home` (11), `hub` (115)
 and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -818,6 +818,57 @@ needs. The games take the rest. 1440 rather than 1200 because below it the
 second column cannot hold what the single column already had: at 1200 the games
 measured 504px against 688 one pixel earlier, so widening the window shrank the
 rotation. At 1440 they get 744.
+
+**The sessions page is two lists on the page, not two panels.** Both were
+wrapped in a `.hub-panel`, which made every card a card inside a card: a white
+box on a white box, so the only thing left to tell one apart was a grey fill.
+Six of those in a column is what "large grey boxes" looks like. They sit on
+`--color-bg` under a heading now, the way the drill list already does, so
+Sessions and Drills are the same product. `.preset-card` keeps a
+`--color-control-edge` boundary rather than the hairline a drill card wears,
+because it is a button and `contrast.spec.ts` holds a button to 3:1 on its edge.
+
+**Your own sessions come first once there are any.** A coach with none needs the
+thing that makes the first one. A coach with three came back for one of the
+three. Six ready-made cards between them and it is the wrong way round. Same two
+sections either way, ordered on `plans.length`. `hub.spec.ts` holds both
+orders.
+
+**A session card shows the shape of the evening.** `planShape` draws one segment
+per block in the order they run, each flexed to its own minutes, cool for a
+warm-up and warm for an exercise the same as everywhere else, with the water
+break as the pale gap. Six cards carrying a bold title over a grey line read as
+six of the same thing. Their shapes do not. The fills are `--color-warmup-text`
+and `--color-exercise-text` rather than the pale `-bg` pair beside them: on a
+white card those measure about 1.1:1, which is a strip of nothing. Only the ends
+of the strip are rounded. Rounding every segment turned one bar into a row of
+dashes. It is `aria-hidden`, because the meta line beside it already gives the
+blocks and the minutes in words.
+
+**Build one from scratch is a tile in the grid, not the primary button.** It was
+an outlined button under the presets, which put the only way to a blank session
+outside the list of ways to start one. As a dashed tile with a plus it is a peer
+of the six beside it, taking the whole last row from 640px so the seventh does
+not sit alone with two empty cells. It is deliberately not the filled tier: that
+would point a coach at the six tap route ahead of the one tap one. A ready-made
+session is what gets somebody to a pitch with a plan.
+
+**The age grade comes off a card unless it is telling you something.**
+`presetsForAge` only ever returns the coach's own grade, so "U10" on all six
+ready-made cards was the one thing identical about them. A saved session keeps
+the grade it was written for, so that one is printed only when it differs from
+the grade being browsed, which is what a coach who went up in September needs.
+
+**Your sessions are a grid or a list. The choice is kept.** Three sessions
+and you want to see the shape of each one. Fifteen and you want them all on one
+screen. The toggle is the same segmented control the filters use, so it slides
+on the same mechanism. It renders from the first session rather than the second,
+because a coach who deletes their way down to one would otherwise be stuck in
+whichever view they had picked with no control on screen to leave it. The mode is
+held in
+memory as well as in `equalplay_hub_plan_view`: read back out of storage on every
+render it is a dead control in private mode, where the write is swallowed and the
+next read hands back the default the coach just tapped away from.
 
 **Favourites is a route, not a filter setting.** `#/favourites` is the catalogue
 with the stars kept in, rendered by `renderCatalogue` off `currentRoute()` rather

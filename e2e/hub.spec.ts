@@ -233,6 +233,58 @@ test("builds a session from a preset and totals it up", async ({ page }) => {
   await expect(page.locator(".is-over-text")).toBeVisible();
 });
 
+/**
+ * The sessions page is two lists, and which of them a coach came for depends on
+ * whether they have any. A coach with none needs the thing that makes the first
+ * one. A coach with three came back for one of the three, so making them scroll
+ * past six ready-made cards to reach it is the wrong way round.
+ */
+test("your own sessions come first once there are any", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  const headings = () => page.locator(".hub-section h2").allInnerTexts();
+  await expect(page.locator(".preset-card").first()).toBeVisible();
+  expect(await headings()).toEqual(["Start a session", "Your sessions"]);
+
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator("#plan-title")).toBeVisible();
+  await page.goto("/hub/#/plans");
+  await expect(page.locator(".plan-card")).toHaveCount(1);
+  expect(await headings()).toEqual(["Your sessions", "Start a session"]);
+
+  // The strip on the card is the session, so it carries a piece per block plus
+  // the water break the preset comes with
+  await expect(page.locator(".plan-card .shape-seg")).toHaveCount(BLOCKS + 1);
+});
+
+test("your sessions switch between grid and list, and stay switched", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator("#plan-title")).toBeVisible();
+  await page.goto("/hub/#/plans");
+  await expect(page.locator(".view-toggle")).toHaveCount(1);
+
+  await page.locator('[data-preset="preset-u10-quick-hands"]').click();
+  await expect(page.locator("#plan-title")).toBeVisible();
+  await page.goto("/hub/#/plans");
+  await expect(page.locator(".plan-card")).toHaveCount(2);
+
+  // Both segments one width, or the pill grows and shrinks as it crosses, which
+  // is the one thing a toggle does not do. The track is auto-sized in the
+  // heading row, so nothing else is levelling them
+  const segs = page.locator(".view-toggle .hub-seg");
+  const widths = await segs.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+  expect(new Set(widths).size).toBe(1);
+
+  await page.locator('[data-plan-view="list"]').click();
+  await settled(page);
+  await expect(page.locator(".plan-line")).toHaveCount(2);
+  await expect(page.locator(".plan-card")).toHaveCount(0);
+
+  // Kept, or it is a setting a coach has to make again on every visit
+  await page.reload();
+  await expect(page.locator(".plan-line")).toHaveCount(2);
+});
+
 test("reorders, removes and adds blocks", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   await page.locator('[data-preset="preset-u10-rucking"]').click();

@@ -939,31 +939,265 @@ body {
   white-space: nowrap;
 }
 
+/* A ready-made session, shaped like a drill card because it is the same kind of
+   thing being picked off the same kind of list. It sits on the page rather than
+   inside a panel: wrapped in one, a card is a white box on a white box, so the
+   only thing left to tell it apart was a grey fill, which is what six of them
+   in a column looked like.
+
+   The edge is `--color-control-edge` rather than the hairline a drill card
+   wears. This one is a button, so WCAG 1.4.11 wants 3:1 on its boundary and
+   `contrast.spec.ts` measures it. */
 .preset-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   text-align: left;
   padding: var(--sp-sm) var(--sp-md);
   margin-bottom: var(--sp-xs);
-  background: var(--color-bg);
+  background: var(--color-surface);
   border: 1px solid var(--color-control-edge);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   font-family: inherit;
   cursor: pointer;
 }
 
+/* What the session is about, above its name. It was the third item in a grey
+   meta line under the title, behind an age grade repeated on all six cards,
+   which is the wrong way round: a coach picks the evening's subject first and
+   reads the title to check it. */
+.preset-theme {
+  align-self: flex-start;
+  margin-bottom: var(--sp-2xs);
+  padding: var(--sp-3xs) var(--sp-xs);
+  border-radius: var(--radius-full);
+  /* Neutral on purpose. The two badge colours this app has are the drill kinds,
+     so a tackle session wearing the warm-up pair would be saying something it
+     does not mean. */
+  background: var(--color-bg);
+  color: var(--color-secondary);
+  font-size: var(--text-badge);
+  font-weight: var(--weight-heavy);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .preset-title {
   display: block;
+  font-family: 'Outfit', system-ui, sans-serif;
   font-weight: var(--weight-bold);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
+  line-height: 1.2;
   color: var(--color-text);
 }
 
 .preset-meta {
   display: block;
-  margin-top: var(--sp-3xs);
+  margin-top: auto;
+  padding-top: var(--sp-2xs);
   font-size: var(--text-xs);
   color: var(--color-muted);
+}
+
+/* The empty one, last in the row.
+   It used to be an outlined button under the grid, which put the only way to a
+   blank session outside the list of ways to start a session. As a tile it is a
+   peer of the six beside it. It is not the filled tier, because that would
+   point a coach at the six tap route ahead of the one tap one. A dashed edge is
+   the conventional way to draw a slot with nothing in it yet. */
+.preset-new {
+  align-items: flex-start;
+  justify-content: center;
+  border-style: dashed;
+  background: none;
+}
+
+.preset-new-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--sp-xs);
+  border-radius: var(--radius-full);
+  /* A tint of the colour, not the page's own background. The tile is unfilled,
+     so `--color-bg` here painted the circle the same colour as what it stood
+     on and left the plus floating. */
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+  font-size: 1.4rem;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+/* Its one line sits under the title rather than at the foot of the tile. There
+   is no shape strip between them to hold apart. */
+.preset-new .preset-meta {
+  margin-top: var(--sp-2xs);
+}
+
+/* It takes the whole last row rather than sitting in one cell of it. Six
+   ready-made sessions in three columns leave the seventh tile alone with two
+   empty cells beside it, which reads as a grid that failed to finish loading. */
+@media (min-width: 40rem) {
+  .preset-new {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+  }
+
+  .preset-new-mark,
+  .preset-new .preset-meta {
+    margin: 0;
+  }
+}
+
+/* A session card carries a theme badge too, so it stacks like a preset card
+   rather than laying the badge beside the title. */
+.plan-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Session shape ---- */
+
+/* The strip on a session card. One segment per block in the order they run,
+   each flexed to its own minutes, so the widths are the session rather than a
+   decoration laid over it.
+
+   The fills are `--color-warmup-text` and `--color-exercise-text`, not the pale
+   `-bg` pair beside them. On a white card those measure about 1.1:1, which is a
+   strip of nothing. Both are `light-dark()` pairs, so this inverts with the
+   scheme like the rest of the app. */
+.plan-shape {
+  display: flex;
+  gap: 1px;
+  height: 6px;
+  margin: var(--sp-xs) 0;
+  /* The ends are rounded, the joins between blocks are not. Rounding every
+     segment turned one bar into a row of dashes, which reads as a barcode
+     rather than as an evening laid out end to end. */
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.shape-seg {
+  background: var(--color-exercise-text);
+}
+
+/* A break is pitch time with nothing being coached in it, so it is drawn as the
+   absence of a block rather than as another one. */
+.shape-break {
+  background: color-mix(in srgb, var(--color-muted) 40%, transparent);
+}
+
+.shape-warmup {
+  background: var(--color-warmup-text);
+}
+
+/* ---- Sections on the page ---- */
+
+/* A heading with its cards under it, the way the drill list already reads.
+   Both lists here were wrapped in a panel, so every card was a card inside a
+   card. */
+.hub-section {
+  margin-bottom: var(--sp-lg);
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs) var(--sp-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-xs);
+}
+
+.hub-section h2 {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+/* Pushed to the far end of the heading row. Its own bottom margin goes as well,
+   since that belongs to the filter panel the control was written for. */
+.view-toggle {
+  margin-left: auto;
+  margin-bottom: 0;
+  /* `1fr` as the max rather than `auto`, so the two stay one width whatever
+     they are labelled. `auto` levels "Grid" and "List" today only because both
+     fall under the floor. A segment sized to its own label makes the pill grow
+     and shrink as it crosses. The floor is what stops the pair collapsing
+     to their text in a flex row, where nothing stretches the track. */
+  grid-auto-columns: minmax(3.75rem, 1fr);
+  /* The track is `--color-bg`, which is also what this section stands on, so on
+     the page it had no edges and the unpicked half read as a loose word. An
+     inset rule gives it a boundary without taking the pill's contrast off it.
+     `--color-control-edge` rather than the hairline. This is a control, so 1.4.11
+     wants 3:1 on its boundary. */
+  box-shadow: inset 0 0 0 1px var(--color-control-edge);
+}
+
+/* ---- Your sessions as a list ---- */
+
+/* The other half of the toggle. Rows rather than cards, so fifteen sessions are
+   one screen instead of five. No shape strip on them: a list is for finding the
+   one you named, a grid is for looking at what is in them. */
+.plan-lines {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* Title over meta on a phone, the two ends of one row once there is width for
+   it. Wrapping a single row instead put the meta right aligned under a long
+   title, which reads as a second column that lost its heading. */
+.plan-line {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-3xs);
+  min-height: var(--touch-min);
+  padding: var(--sp-xs) var(--sp-md);
+  border-top: 1px solid var(--color-border);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (min-width: 40rem) {
+  .plan-line {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-xs);
+  }
+}
+
+.plan-line:first-child {
+  border-top: none;
+}
+
+.plan-line-title {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+
+.plan-line-meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+@media (min-width: 40rem) {
+  .plan-line-meta {
+    margin-left: auto;
+  }
+}
+
+.plan-line:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .plan-flag {
@@ -1664,8 +1898,11 @@ body {
   margin-bottom: var(--sp-sm);
   padding: var(--sp-xs) var(--sp-sm);
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  border-left: 3px solid var(--color-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  /* Reads on the page background now the sessions list is not in a panel. A
+     `--color-bg` fill there was the same colour as what it stood on. */
+  border-left: 3px solid var(--color-control-edge);
   font-size: var(--text-sm);
   color: var(--color-secondary);
 }
@@ -1719,6 +1956,15 @@ body {
   transform: scale(0.97);
 }
 
+/* A row in a list is wide and short. The same 0.97 across a full width row
+   reads as the whole list flinching, so it takes the wash instead. As an inset
+   shadow rather than a background, for the reason the button below gives: a
+   background here has the same specificity as the hover rule further down the
+   file and loses to it, so on a mouse the press would not show at all. */
+.plan-line:active {
+  box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
 .hub-seg:active,
 .chip-filter:active {
   transform: scale(0.94);
@@ -1734,6 +1980,7 @@ body {
 .preset-card:active,
 .add-row:active,
 .drill-card:active,
+.plan-line:active,
 .hub-seg:active,
 .chip-filter:active,
 .block-controls button:active {
@@ -1778,6 +2025,7 @@ body {
    landed. A spring on the press too would put a wobble under a thumb that is
    still holding it down. */
 .drill-card,
+.plan-line,
 .preset-card,
 .add-row,
 .hub-btn,
@@ -1850,8 +2098,11 @@ body {
 
   .preset-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: var(--sp-xs);
+    /* The same track as `.drill-list`, so the ready-made sessions and the
+       coach's own line up on one set of columns rather than four against
+       three. */
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: var(--sp-sm);
   }
 
   .preset-card {
@@ -2032,7 +2283,8 @@ body {
 /* ---- 1200px: use the room rather than padding it out ---- */
 
 @media (min-width: 75rem) {
-  .drill-list {
+  .drill-list,
+  .preset-grid {
     grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
   }
 
@@ -2060,6 +2312,18 @@ body {
   .add-row:hover {
     border-color: var(--color-primary);
     box-shadow: 0 1px 3px var(--color-shadow);
+  }
+
+  /* A card that is picked up rather than only outlined. Same lift the filled
+     button has, off the same spring. Taken off again while it is being pressed
+     so it does not rise under a thumb pushing it down. */
+  .preset-card:hover:not(:active) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--color-shadow);
+  }
+
+  .plan-line:hover {
+    background: color-mix(in srgb, var(--color-text) 5%, transparent);
   }
 
   /* Every tier answers a pointer. Only the filled one used to, which left Print

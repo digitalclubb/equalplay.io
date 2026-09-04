@@ -377,8 +377,8 @@ body {
 
    A name has to be unique in a snapshot or the browser drops the whole
    transition, so every one of these is on a state only one element can be in at
-   a time. `.hub-seg.is-active` appears in the catalogue's filters and in the
-   session editor's add panel, never both at once.
+   a time. `.hub-seg.is-active` appears in the catalogue's filters, in the
+   session editor's add panel and on the sessions list, never two at once.
 
    None of it runs under reduced motion. `motion.ts` skips the transition
    outright, because the sweep below matches elements and these pseudo-elements
