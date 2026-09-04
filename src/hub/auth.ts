@@ -1,6 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase.js";
 import { isAgeGroup, type AgeGroup } from "./content/types.js";
+import { chooseAge } from "./ageChoice.js";
 
 /**
  * The coach's own details. Stored in Supabase user metadata rather than a
@@ -90,6 +91,11 @@ export function cachedProfile(): CachedProfile | null {
 }
 
 export function cacheProfile(userId: string, profile: Profile): void {
+  // Match day cannot read a profile: it has no Supabase in its bundle at all.
+  // This is the one funnel every signed-in grade goes through, so it is where
+  // the local answer is kept in step. Without it a coach who registered as U10
+  // without ever meeting the age picker gets match day's bare default.
+  chooseAge(profile.ageGroup);
   try {
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ userId, profile }));
   } catch {

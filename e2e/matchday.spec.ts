@@ -648,3 +648,25 @@ test("the match length survives a reload", async ({ page }) => {
   await expect(page.locator("#minutes-per-match")).toHaveValue("25");
   await expect(page.locator("#players-per-team")).toHaveValue("2");
 });
+
+test("a new squad starts on the grade the hub is set to", async ({ page }) => {
+  // The two halves are separate bundles that share one browser. Match day has
+  // no age picker of its own, so the grade written by the hub is the only way
+  // it can know a U10 coach plays eight a side rather than a hard-coded seven.
+  await page.goto("/planner");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("equalplay_age_group", "u10");
+  });
+  await page.reload();
+  await expect(page.locator("#players-per-team")).toHaveValue("8");
+
+  // And the squad on the phone wins over the grade, so going up in September
+  // does not rewrite what a coach set for themselves.
+  await page.locator("#players-per-team").fill("6");
+  await addPlayers(page, ["Alice", "Bob", "Cara", "Dan", "Evie", "Femi"]);
+  await generate(page);
+  await page.evaluate(() => localStorage.setItem("equalplay_age_group", "u12"));
+  await page.reload();
+  await expect(page.locator("#players-per-team")).toHaveValue("6");
+});

@@ -1,6 +1,7 @@
 import type { Player, ValidationErrors } from "../types/index.js";
 import { createPlayerList } from "./playerList.js";
 import { iconSquad, iconSettings, iconGenerate } from "./icons.js";
+import { playersASide } from "../lib/squadSize.js";
 
 /** What the settings panel starts on, so a reload comes back as it was left. */
 export interface FormSettings {
@@ -55,7 +56,7 @@ export function createForm(
   // 7 and 3 back in the boxes while the results below them were built from
   // whatever the coach had actually typed.
   const startsOn: FormSettings = settings ?? {
-    playersPerTeam: 7,
+    playersPerTeam: playersASide(),
     numberOfGames: 3,
     minutesPerMatch: null,
   };

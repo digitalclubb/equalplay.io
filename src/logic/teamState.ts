@@ -7,6 +7,7 @@ import type {
 import type { SavedData } from "./storage.js";
 import { generateInitialPlan } from "./rotation.js";
 import { isMatchLength } from "./playingTime.js";
+import { playersASide } from "../lib/squadSize.js";
 
 // ---- Per-team state ----
 
@@ -49,7 +50,7 @@ function createEmptyTeam(id: string, name: string): TeamState {
     name,
     initialPlan: null,
     originalPlayerIds: [],
-    playersPerTeam: 7,
+    playersPerTeam: playersASide(),
     numberOfGames: 3,
     minutesPerMatch: null,
     playerMap: new Map(),
@@ -144,7 +145,7 @@ export class TeamStore {
         this.nextTeamId = numPart + 1;
       }
 
-      const playersPerTeam = whole(st.playersPerTeam, 7);
+      const playersPerTeam = whole(st.playersPerTeam, playersASide());
       const numberOfGames = whole(st.numberOfGames, 3);
 
       const plan = st.players.length > 0

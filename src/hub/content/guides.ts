@@ -1,4 +1,5 @@
 import type { AgeGroup } from "./types.js";
+import { PLAYERS_A_SIDE } from "../../lib/squadSize.js";
 
 /**
  * What each RFU age grade is allowed to do, in plain English.
@@ -17,6 +18,9 @@ import type { AgeGroup } from "./types.js";
  * every string it renders, which is what lets this be edited without anyone
  * having to think about it.
  */
+
+/** How many a side, from the one map match day starts a new team off. */
+const side = (age: AgeGroup): string => String(PLAYERS_A_SIDE[age]);
 
 export interface GuideTable {
   caption: string;
@@ -66,13 +70,16 @@ export interface Guide {
 export const ARRIVALS: GuideTable = {
   caption: "The minis grades and the thing each one adds.",
   head: ["Grade", "Players", "What arrives"],
+  // The counts come off `PLAYERS_A_SIDE` rather than being typed here. Match day
+  // starts a new team on the same numbers, so one of them changing has to change
+  // both or the guide and the planner disagree about Regulation 15.
   rows: [
-    ["U7", "4", "Tag. No contact at all"],
-    ["U8", "6", "A bigger pitch and the six tag turnover"],
-    ["U9", "7", "The tackle. Still no contest for the ball"],
-    ["U10", "8", "Ruck, maul and a 3 player uncontested scrum. Contest is 1 against 1"],
-    ["U11", "9", "Contest goes to 2 against 2. Both hookers may strike, kicking from hand"],
-    ["U12", "12", "A 5 player scrum, no cap on the ruck, the hand off below the armpits"],
+    ["U7", side("u7"), "Tag. No contact at all"],
+    ["U8", side("u8"), "A bigger pitch and the six tag turnover"],
+    ["U9", side("u9"), "The tackle. Still no contest for the ball"],
+    ["U10", side("u10"), "Ruck, maul and a 3 player uncontested scrum. Contest is 1 against 1"],
+    ["U11", side("u11"), "Contest goes to 2 against 2. Both hookers may strike, kicking from hand"],
+    ["U12", side("u12"), "A 5 player scrum, no cap on the ruck, the hand off below the armpits"],
   ],
 };
 

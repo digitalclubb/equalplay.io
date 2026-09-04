@@ -1,4 +1,5 @@
 import { isAgeGroup, type AgeGroup } from "./content/types.js";
+import { storeAgeGroup, storedAgeGroup } from "../lib/squadSize.js";
 
 /**
  * The age grade a coach picked before registering.
@@ -9,23 +10,15 @@ import { isAgeGroup, type AgeGroup } from "./content/types.js";
  *
  * It survives registration on purpose. Somebody who browsed as U9 should find
  * U9 already filled in on the form rather than being asked twice.
+ *
+ * The storage itself is in `lib/squadSize.ts`, because match day reads the same
+ * answer to know how many a side to start on and may import nothing from here.
  */
-const KEY = "equalplay_age_group";
-
 export function chosenAge(): AgeGroup | null {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return isAgeGroup(raw) ? raw : null;
-  } catch {
-    // Private mode with storage off. Falls back to asking again.
-    return null;
-  }
+  const raw = storedAgeGroup();
+  return isAgeGroup(raw) ? raw : null;
 }
 
 export function chooseAge(age: AgeGroup): void {
-  try {
-    localStorage.setItem(KEY, age);
-  } catch {
-    // Nothing to do. The picker simply reappears next time.
-  }
+  storeAgeGroup(age);
 }

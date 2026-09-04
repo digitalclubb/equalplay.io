@@ -180,6 +180,8 @@ src/
     nav.ts                # The five tabs, shared by both entries. Imports nothing
     theme.ts              # The colour switch. Two states, written into both chromes
     motion.ts             # Hands a DOM change to startViewTransition, or straight on
+    squadSize.ts          # Players a side per grade, plus the grade this browser
+                          # is on. Read by both entries, imports nothing
     sw.ts                 # Registers the worker in production, unregisters it in dev
     track.ts              # The two custom analytics events, lazily imported
   types/index.ts          # Rotation planner domain types
@@ -750,6 +752,23 @@ is a substitution, which has to land the instant it is tapped: a rotation table
 that slides is a rotation table a coach waits for. What match day did get is the
 pointer states it never had, since every control was written for a thumb and said
 so in `:active` and nowhere else.
+
+**Match day starts a new squad on the grade the hub is set to.** A U10 coach
+plays eight a side, so opening the planner and being asked to change 7 to 8 is
+the app failing to use something it already knows. `lib/squadSize.ts` holds the
+Reg 15 numbers plus the age grade key, in `lib/` rather than in `hub/` because
+match day may import nothing from there. `ARRIVALS` in `hub/content/guides.ts`
+builds its Players column off the same map, so the guide and the planner cannot
+disagree about how many a side a grade plays.
+
+Two things it deliberately does not do. It only ever sets what a new team is
+born with, in `createEmptyTeam`: a squad already on the phone keeps the number
+the coach gave it, because going up a grade in September must not rewrite last
+season's squad. And it takes the default when the grade is missing or unknown,
+since storage is hand-editable and a typo must not put `NaN` in the box.
+`cacheProfile` writes the grade a signed-in coach registered with, which is the
+one funnel every signed-in grade passes through. Without it a coach who never
+met the age picker would get the bare default on a screen that could have known.
 
 **A panel is not a wrapper for one button.** The drill page's Add to a session
 sat in a card of its own, which drew a box the width of the page with the button
