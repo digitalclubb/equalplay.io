@@ -1857,7 +1857,7 @@ test("present mode says how to set the drill up, not only what to watch for", as
   // page and the reading view both carry the picture; this is the one on the
   // pitch.
   await expect(page.locator(".run-stage-setup")).not.toBeEmpty();
-  await expect(page.locator(".run-stage-figure svg")).toBeVisible();
+  await expect(page.locator(".run-stage-figure svg").first()).toBeVisible();
 
   // How it runs plus the ways to change it are one tap away rather than on the
   // page, because the points have to stay readable at arm's length.
@@ -1887,7 +1887,7 @@ test("the reading view says how to run a drill without leaving the session", asy
   // and the reminders with no instructions at all, and the way to the words
   // was a link that took them out of the session they were reading.
   await expect(block.locator(".run-block-setup")).not.toBeEmpty();
-  await expect(block.locator(".run-block-figure svg")).toBeVisible();
+  await expect(block.locator(".run-block-figure svg").first()).toBeVisible();
 
   // The way to the whole drill moved onto the title. The disclosure below says
   // how this one goes; the drill page says what it is, which is where the kit,

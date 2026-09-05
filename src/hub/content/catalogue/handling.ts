@@ -453,23 +453,41 @@ export const HANDLING: Drill[] = [
     minutes: 10,
     players: { min: 8, max: 21 },
     space: "30 x 20 m",
+    // Two frames, because the drill is a change rather than a shape. Drawn as
+    // one picture only the second half shows, so the drifting the whole thing
+    // exists to cure never appears.
     diagram: {
       space: [30, 20],
+      caption: "Drifting sideways",
       cones: [[0, 0], [30, 0], [0, 20], [30, 20], [5, 9], [12, 9], [19, 9], [26, 9]],
       attack: [[7, 15], [13, 15], [19, 15], [25, 15]],
       defence: [[10, 9], [16, 9], [22, 9]],
       runs: [
-        [[7, 14], [7, 10.6]],
-        [[13, 14], [13, 10.6]],
-        [[19, 14], [19, 10.6]],
-        [[25, 14], [25, 10.6]],
-      ],
-      passes: [
-        [[8.4, 15], [11.6, 15]],
-        [[14.4, 15], [17.6, 15]],
-        [[20.4, 15], [23.6, 15]],
+        [[8.4, 14.8], [11.9, 14]],
+        [[14.4, 14.8], [17.9, 14]],
+        [[20.4, 14.8], [23.9, 14]],
+        [[26.4, 14.8], [29.4, 14]],
       ],
       ball: [[7, 13.8]],
+      after: {
+        space: [30, 20],
+        caption: "Square up and move it",
+        cones: [[0, 0], [30, 0], [0, 20], [30, 20], [5, 9], [12, 9], [19, 9], [26, 9]],
+        attack: [[7, 15], [13, 15], [19, 15], [25, 15]],
+        defence: [[10, 9], [16, 9], [22, 9]],
+        runs: [
+          [[7, 14], [7, 10.6]],
+          [[13, 14], [13, 10.6]],
+          [[19, 14], [19, 10.6]],
+          [[25, 14], [25, 10.6]],
+        ],
+        passes: [
+          [[8.4, 15], [11.6, 15]],
+          [[14.4, 15], [17.6, 15]],
+          [[20.4, 15], [23.6, 15]],
+        ],
+        ball: [[7, 13.8]],
+      },
     },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "A line of four attackers against three defenders standing on a marked line.",

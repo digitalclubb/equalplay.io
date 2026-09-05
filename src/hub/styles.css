@@ -892,6 +892,41 @@ body {
   color: var(--color-text);
 }
 
+/* Two frames, for a drill that changes shape as it runs. Side by side from
+   30rem so the second reads as "then this" rather than as a second drill;
+   stacked below that, where two squares in a phone's width are two pictures
+   you cannot read instead of one you can. Capped as a pair rather than per
+   frame, so a 22rem single picture and a 34rem pair sit on the same centre. */
+.drill-frames {
+  display: grid;
+  gap: var(--sp-sm);
+  max-width: 34rem;
+  margin: var(--sp-sm) auto 0;
+}
+
+@media (min-width: 30rem) {
+  .drill-frames {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.drill-frame {
+  margin: 0;
+}
+
+/* The column decides the width here, not the picture. */
+.drill-frame .drill-diagram {
+  max-width: none;
+  margin: 0 auto;
+}
+
+.drill-frame figcaption {
+  margin-top: var(--sp-xs);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
 /* The account page. Four panels: the two that are your account on one side, the
    two that are this device and this session on the other, so on a wide screen
    they sit beside each other rather than in one column a metre wide.
@@ -1707,6 +1742,32 @@ body {
   max-width: 100%;
   height: 11rem;
   margin: var(--sp-sm) auto;
+}
+
+/* Two frames stay side by side here at every width, unlike the drill page,
+   which stacks them on a phone. Both these views cap the picture by height so
+   the coaching points under it stay on screen. Stacking would undo that:
+   two 13rem squares one above the other is a screen of picture before the
+   first point. Side by side the pair comes out shorter than the single picture
+   was, so the sequence costs nothing. The frames size off their column rather
+   than their height here, capped at 15rem each so a wide reading column does
+   not hand them half of it. */
+.run-block-figure .drill-frames,
+.run-stage-figure .drill-frames {
+  grid-template-columns: repeat(2, minmax(0, 15rem));
+  justify-content: center;
+  max-width: none;
+}
+
+.run-block-figure .drill-frames .drill-diagram,
+.run-stage-figure .drill-frames .drill-diagram {
+  width: 100%;
+  height: auto;
+  /* Three classes deep on purpose. Both views set their own margin on
+     `.drill-diagram`, which is the same weight as `.drill-frame .drill-diagram`
+     and later in the file, so a two class rule here left every caption sitting
+     nearer the next frame's picture than its own. */
+  margin: 0 auto;
 }
 
 /* The add list is a 26rem scroller, so a thumbnail sits inside the row's

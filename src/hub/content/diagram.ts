@@ -40,6 +40,23 @@ export interface Diagram {
   ball?: Point[];
   /** Overrides the generated description. Only worth writing when the default misleads. */
   label?: string;
+  /**
+   * A second frame, for a drill that changes shape as it runs.
+   *
+   * One frame has to show every run and pass at once, which on a drill whose
+   * whole point is that something changes reads as all of it happening
+   * together. "Square and pass" is the case: the line drifts across, then on
+   * the call it squares up. Drawn as one picture only the second half is
+   * visible, so the fault the drill exists to fix never appears.
+   *
+   * Only `renderSequence` draws it, so the places that show a drill in a list
+   * stay on the first frame: a card is 130 px and two of those side by side
+   * are two things you cannot read instead of one you can. The reading view
+   * and present mode have the room, at about 165 px a frame on a phone.
+   */
+  after?: Omit<Diagram, "after">;
+  /** What this frame is showing. Only used when there are two. */
+  caption?: string;
 }
 
 // The whole visual language, in one place. Tuned at 280, 150 and 104 px wide:
@@ -232,4 +249,38 @@ export function renderDiagram(d: Diagram, options: { decorative?: boolean } = {}
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BOX} ${BOX}" class="drill-diagram" ${options.decorative ? 'aria-hidden="true" focusable="false"' : `role="img" aria-label="${esc(describe(d))}"`}><defs><marker id="${uid}-run" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="currentColor"/></marker><marker id="${uid}-pass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0 1.5 9.2 5 0 8.5Z" fill="${PRIMARY}"/></marker></defs>${out.join("")}</svg>`;
+}
+
+/**
+ * Draws the drill as one picture, or as two when it has a second frame.
+ *
+ * Falls straight through to `renderDiagram` when there is no `after`, so every
+ * place that shows a diagram can call this and only the drills that need two
+ * get two.
+ */
+export function renderSequence(d: Diagram, options: { decorative?: boolean } = {}): string {
+  if (!d.after) return renderDiagram(d, options);
+  const frame = (one: Diagram, fallback: string) => {
+    const caption = one.caption ?? fallback;
+    // Two frames of the same drill hold near enough the same inventory, so the
+    // generated wording reads out twice and calls the second one a set up. The
+    // caption is the only thing that tells them apart, so it goes in front of
+    // the words as well as under the picture.
+    const inventory = one.label ?? describe(one).replace(/^Set up diagram\.\s*/, "");
+    const label = inventory ? `${caption}. ${inventory}` : caption;
+    return `<figure class="drill-frame">${renderDiagram({ ...one, label }, options)}<figcaption>${esc(caption)}</figcaption></figure>`;
+  };
+  return `<div class="drill-frames">${frame(d, "Set up")}${frame(d.after, "Then")}</div>`;
+}
+
+/**
+ * The one frame a list shows.
+ *
+ * A card, an add row and the add panel's preview each get a single picture. The
+ * drill's opening shape is not always the one that says what the drill is:
+ * "Square and pass" opens on the drifting it exists to cure. The shape it works
+ * towards is the honest thumbnail, so a list takes the last frame.
+ */
+export function listFrame(d: Diagram): Diagram {
+  return d.after ?? d;
 }

@@ -1,6 +1,13 @@
 import { describe as group, it, expect } from "vitest";
 import { DRILLS } from "../hub/content/drills.js";
-import { describe, renderDiagram, type Diagram, type Point } from "../hub/content/diagram.js";
+import {
+  describe,
+  listFrame,
+  renderDiagram,
+  renderSequence,
+  type Diagram,
+  type Point,
+} from "../hub/content/diagram.js";
 import type { Drill } from "../hub/content/types.js";
 
 /**
@@ -13,7 +20,24 @@ import type { Drill } from "../hub/content/types.js";
  * diagram is checked here rather than left to whoever eyeballs the next one.
  */
 
-const withDiagram = DRILLS.filter((d): d is Drill & { diagram: Diagram } => Boolean(d.diagram));
+/**
+ * Every drill paired with each frame it draws.
+ *
+ * A drill that changes shape as it runs carries a second frame under `after`.
+ * It is the same picture language against the same drill text, so it is held
+ * to the same cone counts, dimensions and bounds as the first rather than
+ * going out unchecked. Flattened here so every check below gets both without
+ * knowing there are two.
+ */
+const withDiagram: (Drill & { diagram: Diagram })[] = DRILLS.flatMap((drill) => {
+  if (!drill.diagram) return [];
+  const frames = [drill.diagram, ...(drill.diagram.after ? [drill.diagram.after] : [])];
+  return frames.map((diagram, i) => ({
+    ...drill,
+    diagram,
+    title: i ? `${drill.title} (second frame)` : drill.title,
+  }));
+});
 
 /** Pulls the metres out of a `space` string. "20 x 15 m" and "20 m channel" both work. */
 function statedMetres(space: string): number[] {
@@ -295,6 +319,74 @@ group("the diagram renderer", () => {
       [60, 43],
     ] as [number, number][]) {
       expect(renderDiagram({ space })).toContain('viewBox="0 0 280 280"');
+    }
+  });
+});
+
+group("a drill drawn in two frames", () => {
+  const setup: Diagram = { space: [10, 10], attack: [[2, 2]], caption: "Drifting" };
+  const both: Diagram = { ...setup, after: { space: [10, 10], attack: [[8, 8]], caption: "Square" } };
+
+  it("draws one picture when there is only one", () => {
+    const html = renderSequence(setup);
+    expect(html.startsWith("<svg")).toBe(true);
+    expect(html).not.toContain("drill-frames");
+  });
+
+  it("draws both, captioned, when there is a second", () => {
+    const html = renderSequence(both);
+    expect(html).toContain('class="drill-frames"');
+    expect((html.match(/<svg/g) ?? []).length).toBe(2);
+    expect(html).toContain("Drifting");
+    expect(html).toContain("Square");
+  });
+
+  /* The frames are two pictures on one page, which is the case the marker ids
+     exist for. Sharing one would point the second arrowhead at the first
+     frame's definition. */
+  it("gives each frame its own marker ids", () => {
+    const ids = (renderSequence(both).match(/ id="[^"]+"/g) ?? []).map((one) => one.trim());
+    expect(ids.length).toBeGreaterThan(2);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("escapes a caption", () => {
+    const html = renderSequence({ ...setup, caption: 'a "<caption>"', after: { space: [10, 10] } });
+    expect(html).not.toContain("<caption>");
+  });
+
+  /* Two frames of one drill hold the same cones and the same players, so the
+     generated wording is near enough identical. Without the caption in front
+     of it a screen reader hears the same sentence twice and the second one
+     calls the after state a set up. */
+  it("tells the frames apart for anyone who cannot see them", () => {
+    const html = renderSequence(both);
+    expect(html).toContain('aria-label="Drifting.');
+    expect(html).toContain('aria-label="Square.');
+  });
+
+  it("keeps an author's own wording, behind the caption", () => {
+    const html = renderSequence({ ...both, label: "Four in a line" });
+    expect(html).toContain('aria-label="Drifting. Four in a line"');
+  });
+
+  /* A card, an add row and the add panel's preview show one picture. On this
+     drill the opening frame is the fault, so the list has to take the shape the
+     drill works towards or it advertises the thing it exists to cure. */
+  it("hands a list the last frame", () => {
+    expect(listFrame(both)).toBe(both.after);
+    expect(listFrame(setup)).toBe(setup);
+  });
+
+  /* `renderDiagram` has nowhere to put a caption and `renderSequence` never
+     reaches one on a drill with a single frame, so it would go out silently. */
+  it("never captions a frame that stands alone", () => {
+    for (const drill of DRILLS) {
+      if (!drill.diagram) continue;
+      expect(
+        drill.diagram.caption === undefined || drill.diagram.after !== undefined,
+        `"${drill.title}" captions a diagram that has no second frame`,
+      ).toBe(true);
     }
   });
 });

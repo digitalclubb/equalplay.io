@@ -4,7 +4,7 @@ import { ageRulesLink } from "../../lib/rulesLink.js";
 import { showToast } from "../../components/toast.js";
 import { currentRoute, go, stillOn } from "../router.js";
 import { DRILLS, filterDrills, findDrill, isAvailableAt } from "../content/drills.js";
-import { renderDiagram } from "../content/diagram.js";
+import { listFrame, renderDiagram, renderSequence } from "../content/diagram.js";
 import { PRESETS, presetsForAge } from "../content/presets.js";
 import {
   AGE_GROUP_LABELS,
@@ -989,7 +989,7 @@ export function renderPlanRun(
         // already know the drill was being reminded of something nobody had
         // told them.
         `<p class="run-stage-setup">${esc(drill.setup)}</p>` +
-        (drill.diagram ? `<div class="run-stage-figure">${renderDiagram(drill.diagram)}</div>` : "")
+        (drill.diagram ? `<div class="run-stage-figure">${renderSequence(drill.diagram)}</div>` : "")
       }
 
       <ul class="run-stage-points">${drill.coachingPoints
@@ -1363,7 +1363,7 @@ function runBlock(resolved: ResolvedBlock, position: number, planId?: string): s
         // than what a coach does with them. This is the page read on a Sunday
         // morning by somebody working out whether they can run the thing.
         `<p class="run-block-setup">${esc(drill.setup)}</p>` +
-        (drill.diagram ? `<div class="run-block-figure">${renderDiagram(drill.diagram)}</div>` : "")
+        (drill.diagram ? `<div class="run-block-figure">${renderSequence(drill.diagram)}</div>` : "")
       }
 
       <ul class="run-points">${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
@@ -1693,7 +1693,7 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
         <li${open ? ' class="is-open"' : ""}>
           <button type="button" class="add-row" data-peek="${esc(drill.id)}" aria-expanded="${open}">
             <span class="add-row-figure">${
-              drill.diagram ? renderDiagram(drill.diagram, { decorative: true }) : ""
+              drill.diagram ? renderDiagram(listFrame(drill.diagram), { decorative: true }) : ""
             }</span>
             <span class="add-row-body">
               <span class="add-title">${esc(drill.title)}${starred.has(drill.id) ? ` ${starIcon(true)}` : ""}</span>
@@ -1705,7 +1705,7 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
               ? `<div class="add-peek">
                    ${
                      drill.diagram
-                       ? `<div class="add-peek-figure">${renderDiagram(drill.diagram)}</div>`
+                       ? `<div class="add-peek-figure">${renderDiagram(listFrame(drill.diagram))}</div>`
                        : ""
                    }
                    <p class="add-peek-facts">${playersLabel(drill)} · ${esc(drill.equipment.map(kitLabel).join(", ")) || "no kit"}</p>

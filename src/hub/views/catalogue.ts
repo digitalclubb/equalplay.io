@@ -19,7 +19,7 @@ import {
 import { localPlans, syncPlans } from "../plans.js";
 import { addDrillToPlan, newPlanWithDrill, SEARCH_DEBOUNCE_MS } from "./planner.js";
 import { showToast } from "../../components/toast.js";
-import { renderDiagram } from "../content/diagram.js";
+import { listFrame, renderDiagram, renderSequence } from "../content/diagram.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
@@ -539,7 +539,7 @@ function card(drill: Drill, base: string): string {
   // Decorative here. The title beside it already says which drill this is, so a
   // screen reader working down the catalogue would otherwise get a hundred set
   // up descriptions read out between the names it came for.
-  const figure = drill.diagram ? renderDiagram(drill.diagram, { decorative: true }) : "";
+  const figure = drill.diagram ? renderDiagram(listFrame(drill.diagram), { decorative: true }) : "";
   // The slot stays in the markup either way. Empty for the one drill with no
   // diagram, so a phone list keeps every title on the same left edge rather
   // than having one row jump out of the column.
@@ -747,7 +747,7 @@ function renderDetail(
 
         <h3>Set up</h3>
         <p>${esc(drill.setup)}</p>
-        ${drill.diagram ? renderDiagram(drill.diagram) : ""}
+        ${drill.diagram ? renderSequence(drill.diagram) : ""}
 
         <h3>How it runs</h3>
         <p>${esc(drill.howItRuns)}</p>
