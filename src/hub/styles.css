@@ -1759,6 +1759,18 @@ body {
   max-width: none;
 }
 
+/* The space under the picture, which both views set on `.drill-diagram` and a
+   pair takes off it: the caption has to hug its own frame, so the gap before
+   the coaching points moves out here. Present mode is the one that shows it,
+   because a figcaption against the first point is what it exists not to do. */
+.run-block-figure .drill-frames {
+  margin-bottom: var(--sp-sm);
+}
+
+.run-stage-figure .drill-frames {
+  margin-bottom: var(--sp-md);
+}
+
 .run-block-figure .drill-frames .drill-diagram,
 .run-stage-figure .drill-frames .drill-diagram {
   width: 100%;

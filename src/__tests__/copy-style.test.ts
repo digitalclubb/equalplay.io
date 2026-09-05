@@ -99,6 +99,13 @@ function drillCopy(): Array<[string, string]> {
       out.push([at(`faults[${i}].say`), fault.say]);
     });
     for (const kit of drill.equipment) out.push([at("equipment"), kit.item]);
+    // A diagram caption is a figcaption on the drill page, in a session block,
+    // in present mode and in a shared session. It reads on screen the same as
+    // anything else here, so it is held to the same house style.
+    if (drill.diagram?.caption) out.push([at("diagram.caption"), drill.diagram.caption]);
+    if (drill.diagram?.after?.caption) {
+      out.push([at("diagram.after.caption"), drill.diagram.after.caption]);
+    }
   }
   for (const preset of PRESETS) out.push([`${preset.id} title`, preset.title]);
   for (const label of Object.values(THEME_LABELS)) out.push(["theme label", label]);

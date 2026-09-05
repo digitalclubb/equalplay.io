@@ -52,6 +52,35 @@ the single most common correction when 89 of these were drawn at once.
 two discs merge into one blob on a card. The ball is drawn about the same size as
 a player, so it needs the same room.
 
+**Two frames, for a drill that is a change rather than a shape.** A diagram may
+carry `after`, a second frame, and both frames carry a `caption`. A handful of
+the hundred do, and no number is written down here because nothing holds one to
+the catalogue. The test is not whether the drill has stages, because they all do.
+It is whether one picture has to draw two different moments on top of each
+other, so the answer ends up drawn over the puzzle. "Square and pass" is four
+attackers drifting sideways until you call, then squaring up: drawn once, only
+the squaring up showed and the drifting the drill exists to cure was invisible.
+"Beat the drift" had the drift and the run that beats it on one frame.
+
+If you cannot say what changed in four words, it is one frame. Two frames of
+the same shape with an extra arrow is worse than one, because a coach now has
+two pictures to compare and nothing to find in them.
+
+- The outer diagram is the earlier moment. `after` is the later one.
+- Caption both. The caption goes in front of the generated description as well
+  as under the picture, so it has to name the moment rather than repeat the
+  drill title. "Drifting sideways" and "Square up and move it", not "Frame one".
+- Keep the caption to one line at 165 px, which is a frame on a phone. Anything
+  longer wraps and the pair goes uneven.
+- **Draw what the caption claims.** A caption saying the defender leans against a
+  picture with the defender in exactly the place the first frame had them is a
+  lie a coach cannot check. That one got as far as a screenshot.
+- `listFrame` hands a card, an add row and the add panel's preview the last
+  frame, because the opening shape of a drill like "Square and pass" is the
+  fault. So the frame to judge at card size is `after`, not the outer one.
+- There is no third frame. `after` is typed without an `after` of its own,
+  because one would render nowhere and escape every check in the test file.
+
 **Not every drill gets one.** `diagram` is optional. A mobility warm-up whose
 setup is "everyone with a bit of space around them" has nothing to draw, and an
 empty box with six dots in it is worse than no picture at all. `warmup-ankles-and-knees`
@@ -75,6 +104,11 @@ actually putting down rather than spacing eight evenly to make the count.
    full size **and** at about 130 px, which is card size. Things that look fine
    at 280 px turn to mush at 130. Delete the throwaway test afterwards, it is
    not something to commit.
+
+   Link the real `src/hub/styles.css` from that HTML rather than copying the
+   rules into it, or you are previewing a stylesheet nobody ships. Do not run
+   Prettier over the catalogue on the way past. It is not this repo's formatter
+   and it explodes every coordinate array onto its own line.
 4. `pnpm test`. `diagram.test.ts` will tell you if the cone count, the
    dimensions or the bounds disagree with the drill.
 5. `pnpm lint`, `pnpm build`, and `pnpm test:e2e` because this is the hub.
@@ -91,6 +125,9 @@ actually putting down rather than spacing eight evenly to make the count.
 - Anything overlapping? A ball under a player and an arrowhead on a marker are
   the two that keep happening.
 - Is the `label` earning its place, or does it repeat the generated wording?
+- If it has two frames: does the second one show something the first does not,
+  and does each caption describe the frame it is under? Judge `after` at card
+  size, since that is the one a list shows.
 
 ## What not to do
 

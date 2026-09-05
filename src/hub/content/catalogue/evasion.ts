@@ -270,14 +270,29 @@ export const EVASION: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "20 x 15 m",
+    // The defender chooses first and the attack reads it, so the frame that
+    // matters is the one before anybody has committed.
     diagram: {
       space: [15, 20],
+      caption: "Run at them",
       cones: [[0, 0], [15, 0], [0, 10], [15, 10], [0, 20], [15, 20]],
       defence: [[7, 9.5]],
       attack: [[7.5, 15.2], [4.5, 17], [10.5, 17]],
-      runs: [[[7.5, 13.5], [7.5, 11]], [[10.5, 15.8], [12.5, 8.5]]],
-      passes: [[[8.4, 15.6], [9.6, 16.6]]],
-      ball: [[7.5, 13.7]],
+      runs: [[[7.5, 13.7], [7.5, 11]]],
+      ball: [[9, 15.2]],
+      after: {
+        caption: "Give it the other way",
+        space: [15, 20],
+        cones: [[0, 0], [15, 0], [0, 10], [15, 10], [0, 20], [15, 20]],
+        // Leaned left, which is the whole reason the ball goes right. Drawn
+        // where the first frame had them the caption claimed a lean the
+        // picture had not got.
+        defence: [[5.4, 10.2]],
+        attack: [[7.5, 15.2], [4.5, 17], [10.5, 17]],
+        runs: [[[7.5, 13.5], [7.5, 11]], [[10.5, 15.8], [12.5, 8.5]]],
+        passes: [[[8.4, 15.6], [9.6, 16.6]]],
+        ball: [[7.5, 13.7]],
+      },
     },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "A carrier with two support runners, one on each shoulder. One defender in front.",
@@ -388,8 +403,11 @@ export const EVASION: Drill[] = [
     minutes: 10,
     players: { min: 10, max: 21 },
     space: "40 x 25 m",
+    // The pitch changes shape halfway up, so the drill is two pictures. One
+    // of them is the waiting, which is the half children skip.
     diagram: {
       space: [25, 40],
+      caption: "Held in tight",
       cones: [
         [6, 40],
         [6, 34],
@@ -404,9 +422,31 @@ export const EVASION: Drill[] = [
       ],
       defence: [[8.5, 28.5], [12.5, 27.5], [16.5, 28]],
       attack: [[9, 34.5], [12.8, 36.2], [16.5, 37.2], [22, 38.5]],
-      runs: [[[22, 37.1], [23.5, 14], 1.5]],
-      passes: [[[17.9, 37.5], [20.6, 38.1]]],
-      ball: [[16.5, 34.6]],
+      runs: [[[9, 33.2], [10, 30.2]]],
+      // Clear of the carrier rather than a metre and a half off. On a 40 m
+      // pitch that much is nine pixels, so the ball sat inside the disc.
+      ball: [[6.8, 32]],
+      after: {
+        caption: "Then use the width",
+        space: [25, 40],
+        cones: [
+          [6, 40],
+          [6, 34],
+          [6, 27],
+          [6, 20],
+          [19, 40],
+          [19, 34],
+          [19, 27],
+          [19, 20],
+          [0, 20],
+          [25, 20],
+        ],
+        defence: [[8.5, 28.5], [12.5, 27.5], [16.5, 28]],
+        attack: [[9, 34.5], [12.8, 36.2], [16.5, 37.2], [22, 38.5]],
+        runs: [[[22, 37.1], [23.5, 14], 1.5]],
+        passes: [[[17.9, 37.5], [20.6, 38.1]]],
+        ball: [[16.5, 34.6]],
+      },
     },
     equipment: [{ item: "cone", qty: 10 }, { item: "ball", qty: 1 }],
     setup:
@@ -563,8 +603,12 @@ export const EVASION: Drill[] = [
     minutes: 11,
     players: { min: 10, max: 21 },
     space: "40 x 30 m",
+    // The drift is still happening in both frames, because it is what the
+    // straight run has to beat. What changes is the attack: chasing the width
+    // and running out of room, then one runner going straight inside.
     diagram: {
       space: [30, 40],
+      caption: "They drift across",
       cones: [[0, 0], [30, 0], [0, 40], [30, 40], [0, 20], [30, 20], [0, 32], [30, 32]],
       defence: [[8, 20], [14, 20], [20, 20], [26, 20]],
       attack: [[6, 34], [12, 35], [18, 36], [24, 37]],
@@ -573,10 +617,29 @@ export const EVASION: Drill[] = [
         [[14, 21.4], [16.4, 23.2]],
         [[20, 21.4], [22.4, 23.2]],
         [[26, 21.4], [28.4, 23.2]],
-        [[12, 33.6], [12, 21.8]],
       ],
-      passes: [[[7.6, 34.3], [10.4, 34.7]]],
+      passes: [
+        [[7.6, 34.3], [10.4, 34.7]],
+        [[13.6, 35.3], [16.4, 35.7]],
+        [[19.6, 36.3], [22.4, 36.7]],
+      ],
       ball: [[6, 31.4]],
+      after: {
+        caption: "One straight run",
+        space: [30, 40],
+        cones: [[0, 0], [30, 0], [0, 40], [30, 40], [0, 20], [30, 20], [0, 32], [30, 32]],
+        defence: [[8, 20], [14, 20], [20, 20], [26, 20]],
+        attack: [[6, 34], [12, 35], [18, 36], [24, 37]],
+        runs: [
+          [[8, 21.4], [10.4, 23.2]],
+          [[14, 21.4], [16.4, 23.2]],
+          [[20, 21.4], [22.4, 23.2]],
+          [[26, 21.4], [28.4, 23.2]],
+          [[12, 33.6], [12, 21.8]],
+        ],
+        passes: [[[7.6, 34.3], [10.4, 34.7]]],
+        ball: [[6, 31.4]],
+      },
     },
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Four attackers against four defenders. Defenders told to drift across rather than come straight.",

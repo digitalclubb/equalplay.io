@@ -323,17 +323,34 @@ export const HANDLING: Drill[] = [
     minutes: 9,
     players: { min: 6, max: 18 },
     space: "20 x 15 m",
+    // It only works if the carrier drags the defender across first, so that
+    // is a frame of its own rather than a crossed pair of lines.
     diagram: {
       space: [15, 20],
+      caption: "Drag them wide",
       cones: [[0, 0], [15, 0], [0, 10], [15, 10], [0, 20], [15, 20]],
       attack: [[5.5, 16], [9.5, 16]],
       defence: [[7.5, 8]],
       runs: [
-        [[5.5, 15], [11, 10.5]],
-        [[9.5, 15], [4, 10.5]],
+        [[5.5, 14.5], [9.5, 12.3]],
+        [[7.5, 9.5], [9.2, 10.8]],
       ],
-      passes: [[[8.1, 12.9], [6.9, 12.9]]],
-      ball: [[5.5, 14.8]],
+      ball: [[4, 16]],
+      after: {
+        caption: "Cut back behind",
+        space: [15, 20],
+        cones: [[0, 0], [15, 0], [0, 10], [15, 10], [0, 20], [15, 20]],
+        attack: [[5.5, 16], [9.5, 16]],
+        // Where the first frame dragged them to. Left at [7.5, 8] the second
+        // picture undid the drag the whole drill depends on.
+        defence: [[9.4, 10.6]],
+        runs: [
+          [[5.5, 15], [11, 10.5]],
+          [[9.5, 15], [4, 10.5]],
+        ],
+        passes: [[[8.1, 12.9], [6.9, 12.9]]],
+        ball: [[5.5, 14.8]],
+      },
     },
     equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 1 }],
     setup: "Pairs running up a channel with one defender halfway who may walk forward only.",
