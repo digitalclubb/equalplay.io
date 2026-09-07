@@ -164,3 +164,20 @@ export function findDrill(id: string): Drill | undefined {
   return DRILLS.find((drill) => drill.id === id);
 }
 
+/**
+ * A drill's own address on the public site.
+ *
+ * It lives here rather than in `src/seo/` because both halves need it now. The
+ * generator writes the page. The hub links a coach to it. Importing it from
+ * `seo/` would pull the whole static page builder into a bundle a coach
+ * downloads at a pitch.
+ *
+ * Built off `drill.id`, which saved session plans reference and which is
+ * therefore never renamed, so an address published here is one that keeps
+ * working. The `drill-` and `warmup-` prefixes come off, because they say which
+ * half of the catalogue a drill sits in and that is the one thing an address
+ * does not need to carry.
+ */
+export function drillPath(drill: Drill): string {
+  return `/rugby-drill-${drill.id.replace(/^(?:drill|warmup)-/, "")}`;
+}

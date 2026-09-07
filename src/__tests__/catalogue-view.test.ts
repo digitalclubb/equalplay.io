@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
+import { DRILLS, drillPath } from "../hub/content/drills.js";
 import { chooseAge, chosenAge } from "../hub/ageChoice.js";
 
 const USER = "00000000-0000-4000-8000-000000000001";
@@ -193,3 +194,48 @@ describe("the age gate with no account", () => {
     }
   });
 });
+
+/**
+ * The way a coach sends one drill to whoever else is helping.
+ *
+ * What goes out has to be the drill's own public page rather than a hub route.
+ * The person opening it has no account and has never picked an age grade, so
+ * the hub would put a question in front of them before it showed them the
+ * drill. `drill-pages.test.ts` holds the other end of this, meaning that the
+ * build actually emits the page these link at.
+ */
+describe("sharing one drill", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    // jsdom has no layout, so the drill page's own scroll to the title throws
+    Element.prototype.scrollIntoView = (): void => {};
+    window.location.hash = "";
+    container = document.createElement("div");
+    document.body.replaceChildren(container);
+  });
+
+  const share = (): HTMLAnchorElement | null =>
+    container.querySelector<HTMLAnchorElement>("#drill-share");
+
+  it("points at the drill's own page rather than into the hub", () => {
+    for (const drill of [DRILLS[0], DRILLS[DRILLS.length - 1]]) {
+      renderCatalogue(container, "u12", "", drill.id);
+      expect(share()?.getAttribute("href"), drill.id).toBe(drillPath(drill));
+    }
+  });
+
+  it("is an anchor, so a browser with no clipboard still gets somewhere", () => {
+    // The share sheet and the clipboard are both absent outside a secure
+    // context. Left as a button that would be a dead control.
+    renderCatalogue(container, "u12", "", DRILLS[0].id);
+    expect(share()?.tagName).toBe("A");
+    expect(share()?.getAttribute("aria-label")).toContain(DRILLS[0].title);
+  });
+
+  it("is not on a card, only on the drill", () => {
+    renderCatalogue(container, "u12", "");
+    expect(share()).toBeNull();
+  });
+});
+

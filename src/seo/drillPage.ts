@@ -25,7 +25,7 @@
 import { esc } from "../lib/esc.js";
 import { DRILLS_INDEX_PATH, ORIGIN, page } from "./page.js";
 import { rulesPath } from "./rulesPage.js";
-import { DRILLS, fitsHardGround, fitsSmallSpace } from "../hub/content/drills.js";
+import { DRILLS, drillPath, fitsHardGround, fitsSmallSpace } from "../hub/content/drills.js";
 import { renderSequence } from "../hub/content/diagram.js";
 import {
   AGE_GROUPS,
@@ -47,20 +47,12 @@ import {
 // ---- Addresses ----
 
 /**
- * A drill's own URL.
- *
- * Built off `drill.id`, which saved session plans reference and which is
- * therefore never renamed, so an address published here is one that keeps
- * working. The `drill-` and `warmup-` prefixes come off, because they say which
- * half of the catalogue a drill sits in and that is the one thing an address
- * does not need to carry.
+ * A drill's own URL, defined next to the drills so the hub can link it too.
  *
  * Flat rather than nested under a directory, the same as every other page in
  * the product. That is what the host already resolves for the rules cluster.
  */
-export function drillPath(drill: Drill): string {
-  return `/rugby-drill-${drill.id.replace(/^(?:drill|warmup)-/, "")}`;
-}
+export { drillPath };
 
 /**
  * What a coach types, which is not always what the theme is called in here.

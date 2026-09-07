@@ -10,6 +10,7 @@ import {
 } from "../favourites.js";
 import {
   DRILLS,
+  drillPath,
   filterDrills,
   findDrill,
   fitsHardGround,
@@ -47,6 +48,9 @@ const ICON = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width
 
 /** A plus, on the one button this whole page is building towards. */
 const iconAdd = `<svg ${ICON}><path d="M12 5v14"/><path d="M5 12h14"/></svg>`;
+
+/** Out of a box and away, which is the arrow every phone draws for this. */
+const iconShare = `<svg ${ICON}><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>`;
 
 /**
  * Favourites is a route rather than a filter, so it is somewhere a coach can
@@ -536,6 +540,32 @@ function favButton(drill: Drill): string {
 }
 
 /**
+ * Sending one drill to whoever else is helping on Tuesday.
+ *
+ * What goes out is the drill's own public page rather than a route into the
+ * hub. The person being sent it is a parent who has never opened this, reading
+ * it in a WhatsApp thread on a Monday night. The hub would ask them which age
+ * group they coach before showing them anything. The static page is the same
+ * drill, the faults included, with nothing in front of it.
+ *
+ * It is an anchor rather than a button so the last resort is the browser doing
+ * what a link does. A phone gets its own share sheet. A desktop gets the link
+ * on the clipboard. A browser with neither opens the page, where the coach can
+ * take the address out of the bar. Only a page served outside a secure context
+ * ever reaches that last one, which is how a phone meets the dev server.
+ */
+function shareButton(drill: Drill): string {
+  return `<a
+    class="drill-share"
+    id="drill-share"
+    href="${esc(drillPath(drill))}"
+    target="_blank"
+    rel="noopener"
+    aria-label="Share ${esc(drill.title)}"
+  >${iconShare}</a>`;
+}
+
+/**
  * The card is a link with one secondary action, so the anchor stretches over the
  * whole card with a pseudo-element and the star sits above it. Nesting a button
  * inside an anchor would be invalid and would swallow the tap.
@@ -744,6 +774,7 @@ function renderDetail(
         <div class="drill-card-head">
           <h2>${esc(drill.title)}</h2>
           <span class="drill-kind drill-kind-${drill.kind}">${drill.kind === "warmup" ? "Warm-up" : "Exercise"}</span>
+          ${shareButton(drill)}
           ${favButton(drill)}
         </div>
         <p class="drill-themes">${drill.themes.map((t) => esc(THEME_LABELS[t])).join(" · ")}</p>
@@ -789,6 +820,40 @@ function renderDetail(
       toggleStar(button.dataset.fav ?? "", () => reopen(`[data-fav="${drill.id}"]`));
     });
   }
+
+  container.querySelector<HTMLAnchorElement>("#drill-share")?.addEventListener("click", (event) => {
+    const url = new URL(drillPath(drill), window.location.href).href;
+    const copy = (): void => {
+      void navigator.clipboard
+        .writeText(url)
+        .then(() => showToast("Link copied."))
+        .catch(() => showToast("Couldn't copy it. Open the drill's own page and take it from there."));
+    };
+
+    // Both of these want a secure context, so a page served without one has
+    // neither of them. Left alone the anchor opens the drill's page, which is
+    // the whole reason this is a link. It is also the only case where the two
+    // can disagree, so anywhere the share sheet exists the clipboard does too.
+    if (!navigator.share && !navigator.clipboard) return;
+    event.preventDefault();
+
+    // The phone's own share sheet where there is one, because sending a drill
+    // to another coach means picking WhatsApp out of a list and this is the
+    // control that already knows how.
+    if (!navigator.share) {
+      copy();
+      return;
+    }
+    void navigator.share({ title: drill.title, url }).catch((error: unknown) => {
+      // Backing out of the sheet is a coach changing their mind, so nothing is
+      // owed to them. Everything else is the sheet failing to open. Desktop
+      // builds that advertise it without an OS share target do exactly that,
+      // where silence would leave the tap doing nothing at all, so anything
+      // other than a coach backing out falls through to the clipboard.
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      copy();
+    });
+  });
 
   /**
    * Redraw the drill without moving the page, keeping focus somewhere useful.
