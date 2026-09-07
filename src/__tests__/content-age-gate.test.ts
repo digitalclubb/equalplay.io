@@ -212,6 +212,52 @@ describe("filterDrills", () => {
     expect(filterDrills(DRILLS, { ageGroup: "u12", search: "scrum unicycle" })).toHaveLength(0);
   });
 
+  /**
+   * A coach does not search for the drill, they search for what is happening in
+   * front of them. "dropping", "flat", "standing about" live in the faults and
+   * nowhere else in a drill, so leaving that field out of the haystack made the
+   * one part of the catalogue written for somebody who has never seen the drill
+   * go right the one part the search box could not reach.
+   *
+   * The words are taken off the drills rather than typed out here, so rewording
+   * a fault cannot leave the test asserting against copy nobody ships.
+   */
+  it("searches what going wrong looks like", () => {
+    const elsewhere = (drill: Drill): string =>
+      [
+        drill.title,
+        drill.setup,
+        drill.howItRuns,
+        ...drill.themes,
+        ...drill.coachingPoints,
+        ...drill.equipment.map((kit) => kit.item),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+    let checked = 0;
+    for (const drill of DRILLS) {
+      const rest = elsewhere(drill);
+      // A word the rest of the drill never uses. Anything shorter matches
+      // inside another word and would pass with the faults left out.
+      const word = (drill.faults ?? [])
+        .flatMap((fault) => `${fault.looks} ${fault.say}`.toLowerCase().split(/[^a-z]+/))
+        .find((candidate) => candidate.length > 5 && !rest.includes(candidate));
+      if (!word) continue;
+
+      checked += 1;
+      const found = filterDrills(DRILLS, { ageGroup: drill.minAge, search: word });
+      expect(
+        found.map((d) => d.id),
+        `"${word}" appears only in ${drill.id}'s faults`,
+      ).toContain(drill.id);
+    }
+
+    // Not every drill has a word of its own down there. A zero would mean the
+    // loop had stopped testing anything rather than that the search works.
+    expect(checked, "no drill had a word unique to its faults").toBeGreaterThan(50);
+  });
+
   it("applies the age gate even when a search would otherwise match", () => {
     expect(filterDrills(DRILLS, { ageGroup: "u12", search: "ruck" }).length).toBeGreaterThan(0);
     // A legal U8 drill may mention the word while explaining why it matters later.

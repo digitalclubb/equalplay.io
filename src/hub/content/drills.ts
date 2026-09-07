@@ -146,6 +146,12 @@ function matching(drills: Drill[], filter: DrillFilter, search: string | undefin
       drill.howItRuns,
       ...drill.themes,
       ...drill.coachingPoints,
+      // A coach does not search for a drill, they search for the thing going
+      // wrong in front of them. "dropping", "flat", "standing still" are all in
+      // the faults and nowhere else, so leaving them out meant the one part of
+      // the catalogue written for somebody who has never seen the drill go
+      // right was the one part the search box could not reach.
+      ...(drill.faults ?? []).flatMap((fault) => [fault.looks, fault.say]),
       ...drill.equipment.map((kit) => kit.item),
     ]
       .join(" ")
@@ -157,3 +163,4 @@ function matching(drills: Drill[], filter: DrillFilter, search: string | undefin
 export function findDrill(id: string): Drill | undefined {
   return DRILLS.find((drill) => drill.id === id);
 }
+
