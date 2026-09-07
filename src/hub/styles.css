@@ -997,11 +997,16 @@ body {
    The edge is `--color-control-edge` rather than the hairline a drill card
    wears. This one is a button, so WCAG 1.4.11 wants 3:1 on its boundary and
    `contrast.spec.ts` measures it. */
+/* A button signed in, an anchor signed out, because signed out there is no
+   list for the tap to put a session in. Both need the colour and the underline
+   saying nothing, since the title inside carries the whole card. */
 .preset-card {
   display: flex;
   flex-direction: column;
   width: 100%;
   text-align: left;
+  color: inherit;
+  text-decoration: none;
   padding: var(--sp-sm) var(--sp-md);
   margin-bottom: var(--sp-xs);
   background: var(--color-surface);

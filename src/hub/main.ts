@@ -8,9 +8,12 @@ import {
   renderPlanList,
   renderPlanRun,
   renderPlanView,
+  renderPresetList,
+  renderPresetView,
   renderSharedPlan,
   resetPlanner,
   stopRunClock,
+  takePreset,
   type PlannerContext,
 } from "./views/planner.js";
 import { clearLocalPlans, retryPending } from "./plans.js";
@@ -43,6 +46,7 @@ import { renderGuide } from "./views/guide.js";
  */
 const TAB_FOR_ROUTE: Record<string, string> = {
   plan: "plans",
+  preset: "plans",
   home: "catalogue",
   favourites: "catalogue",
 };
@@ -163,6 +167,19 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       case "plans":
         renderPlanList(view, ctx);
         break;
+      // Only reachable signed in by following a link somebody sent, since the
+      // card itself takes the session outright once there is a list to put it
+      // in. Doing the same here is the honest answer to the same tap.
+      //
+      // Replaced rather than left in history, the same as the join gate above
+      // and for the same reason. This route makes a session as a side effect of
+      // being on it, so a Back tap out of the editor would land here and make
+      // another one. Then another on every tap after that.
+      case "preset":
+        history.replaceState(null, "", "#/plans");
+        if (route.param) takePreset(ctx, route.param);
+        else render();
+        break;
       case "plan":
         // Viewing is the default. Editing is the deliberate detour.
         if (!route.param) go("plans");
@@ -207,12 +224,22 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       renderAuth(view, "signup", GATE_REASON.favourites);
       return;
     }
-    if (route.name === "plans" || route.name === "plan" || route.name === "account") {
+    const chosen = chosenAge();
+    // Reading a ready-made session is not something that has to persist, so it
+    // is not something the account gates. Keeping one is, which is what the
+    // button at the foot of it asks for. Both still need the grade, because a
+    // preset belongs to one and there is nothing to show until it is known.
+    if (chosen && (route.name === "plans" || route.name === "preset")) {
+      if (route.name === "preset" && route.param) renderPresetView(view, route.param, chosen);
+      else renderPresetList(view, chosen);
+      return;
+    }
+    if (route.name === "plan" || route.name === "account") {
       const signIn = route.name === "account";
       renderAuth(view, signIn ? "signin" : "signup", signIn ? "" : GATE_REASON.plans);
       return;
     }
-    const age = chosenAge();
+    const age = chosen;
     // Nothing can be shown until the grade is known, so this comes first
     if (!age) {
       renderAgePicker(view, render);

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { PRESETS } from "../src/hub/content/presets.js";
 
 /**
  * Happy path for the coaching hub.
@@ -1301,8 +1302,62 @@ test("starring with no account asks for one, and says why", async ({ page }) => 
   await expect(page.locator("#ageGroup")).toHaveValue("u10");
 });
 
-test("sessions with no account explains what an account is for", async ({ page }) => {
+test("a preset link with an account takes the session, once", async ({ page }) => {
+  await signedIn(page, "u10", "#/plans");
+  // Followed from inside the app rather than landed on cold, because a hash
+  // set during the initial load replaces its entry while one set afterwards
+  // pushes. Only the second of those can strand a coach.
+  await page.evaluate(() => {
+    window.location.hash = "#/preset/preset-u10-rucking";
+  });
+  // There is a list to put it in, so it goes there rather than being read
+  await expect(page).toHaveURL(/#\/plan\/.+\/edit/);
+
+  // The route makes a session by being on it, so it must not be left in
+  // history. Back landing on it again would make a second one every tap.
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/plans$/);
+  await expect(page.locator(".plan-card, .plan-line")).toHaveCount(1);
+});
+
+test("a preset above the coach's grade is refused, account or not", async ({ page }) => {
+  // Nothing in the interface offers this. Reaching it means a link somebody
+  // sent or a bookmark, which is a route into the catalogue like any other.
+  await signedIn(page, "u8", "#/preset/preset-u12-winning-it-back");
+  await expect(page).toHaveURL(/#\/plans$/);
+  await expect(page.locator(".plan-card, .plan-line")).toHaveCount(0);
+  await expect(page.locator("#hub-view")).not.toContainText("Ruck");
+});
+
+test("the ready-made sessions are readable with no account", async ({ page }) => {
   await signedOut(page, "u10", "#/plans");
+  // Every one of them a link rather than a button, because signed out there is
+  // no list of your own for a tap to put a session in. Counted against the
+  // catalogue rather than against a number typed in here, so adding a preset
+  // does not quietly leave the test asserting the old six.
+  const cards = page.locator("a.preset-card");
+  await expect(cards).toHaveCount(PRESETS.filter((p) => p.ageGroup === "u10").length);
+  await expect(page.locator("#hub-view")).toContainText("Start a session");
+  // No sign-in form in the way of it. The account is offered further down.
+  await expect(page.locator("#auth-form")).toHaveCount(0);
+  await expect(page.locator('a[href="#/join/plans"]').first()).toBeVisible();
+});
+
+test("opening one with no account gives the whole session, then asks", async ({ page }) => {
+  await signedOut(page, "u10", "#/plans");
+  await page.locator("a.preset-card").first().click();
+  await expect(page).toHaveURL(/#\/preset\//);
+
+  // The evening in full: the running order, a diagram and the coaching in it.
+  // A title and a bar tells a coach who never played nothing about whether the
+  // session suits their lot, which is the whole reason this is readable.
+  await expect(page.locator(".run-block").first()).toBeVisible();
+  await expect(page.locator(".run-points").first()).toBeVisible();
+  await expect(page.locator(".drill-diagram").first()).toBeVisible();
+
+  // Sessions is still the tab you are on, and the gate is at the foot of it.
+  await expect(page.locator('.hub-nav [aria-current="page"]')).toContainText("Sessions");
+  await page.locator('a[href="#/join/plans"]').first().click();
   await expect(page.locator(".hub-gate")).toContainText("still there next week");
   await expect(page.locator("#auth-form")).toBeVisible();
 });

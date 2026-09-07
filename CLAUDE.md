@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-735 unit and integration tests across 23 files, 182 Playwright tests. Most are ordinary.
+746 unit and integration tests across 23 files, 185 Playwright tests. Most are ordinary.
 These twelve are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -105,7 +105,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 182 tests across four files: `matchday` (15), `home` (11), `hub` (126)
+`pnpm test:e2e` is 185 tests across four files: `matchday` (15), `home` (11), `hub` (129)
 and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -746,7 +746,11 @@ resolving after the coach has moved on will happily replace whatever is on scree
 **Signed out is a real state, not a wall.** `render()` in `hub/main.ts` sends a coach
 with no session to the age picker, then to the catalogue, which takes the grade from
 `ageChoice.ts` instead of a profile. Drills are free to read because the catalogue is
-what proves the thing is worth an account. What needs an account is anything that has
+what proves the thing is worth an account. So are the ready-made sessions: `#/plans`
+signed out lists them and `#/preset/<id>` opens one in full. A parent who never played
+can take a session off a list and go, while building an hour out of 120 drill cards is
+a different skill, so holding the presets back gave away the half of the job this
+audience can already do. What needs an account is anything that has
 to persist: saved sessions and starred drills. Those gates route through
 `#/join/<reason>`, which renders the register form with a line saying what the coach
 was reaching for. Landing on that route with a session is what signing up through it
@@ -1043,6 +1047,37 @@ held in
 memory as well as in `equalplay_hub_plan_view`: read back out of storage on every
 render it is a dead control in private mode, where the write is swallowed and the
 next read hands back the default the coach just tapped away from.
+
+**A preset is age gated like any other route to a drill.** `renderPresetView`
+takes its id off the address bar, so it checks the grade itself rather than
+trusting that `presetsForAge` only ever listed the coach's own. The exception a
+shared session makes does not stretch to cover it: nobody sent a preset, it is
+our own content, so a U12 ruck session opening for a U8 coach would be the gate
+failing on our catalogue. Signed in the card still creates the session outright,
+because there is a list to put it in. `#/preset/<id>` reached with an account
+does the same thing rather than being a dead route.
+
+**Reading a session is one renderer, used twice.** `planDocument` in
+`hub/views/planner.ts` draws a plan with no authoring controls on it. A shared
+session and a signed-out preset are the same thing on screen, one line above and
+one below apart, so they are not two copies drifting. Neither links its blocks
+through to the catalogue. Neither reader has a session to come back to. A link
+out of a shared plan would also hand a U8 coach a route into U10 drill pages.
+
+**Search reads the faults.** `filterDrills` puts `looks` and `say` in the
+haystack. A coach does not search for a drill, they search for what is happening
+in front of them. "dropping", "flat" or "standing about" live in that field and
+nowhere else, so leaving it out made the part written for somebody who has never
+seen the drill go right the one part the search box could not find.
+
+**A drill is shared as its own public page.** `drillPath` lives in
+`hub/content/drills.ts` rather than in `src/seo/`, because both halves need it
+and importing it from there would pull the whole static page builder into the
+bundle. The control is an anchor rather than a button, so a phone gets its own
+share sheet while a desktop gets the clipboard. A browser with neither opens the
+page, where the address bar has the link. What goes out is never a hub route.
+Whoever opens it has no account and has picked no grade, so the hub would ask
+which age group they coach before showing them the drill.
 
 **Favourites is a route, not a filter setting.** `#/favourites` is the catalogue
 with the stars kept in, rendered by `renderCatalogue` off `currentRoute()` rather

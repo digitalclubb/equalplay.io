@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
 import { DRILLS, drillPath } from "../hub/content/drills.js";
+import { presetsForAge } from "../hub/content/presets.js";
+import { renderPresetList } from "../hub/views/planner.js";
+import { readFileSync } from "node:fs";
 import { chooseAge, chosenAge } from "../hub/ageChoice.js";
 
 const USER = "00000000-0000-4000-8000-000000000001";
@@ -239,3 +242,51 @@ describe("sharing one drill", () => {
   });
 });
 
+/**
+ * Reading a ready-made session takes no account.
+ *
+ * The gate is on persistence and always has been. Keeping a session is
+ * persistence. Reading one is not, and it is the half of the job this audience
+ * cannot do for itself: a parent who never played can take a session off a list
+ * and go. Building an hour out of 120 drill cards is a different skill. Behind
+ * the register form, what a coach without an account got was the drills with no
+ * help ordering them, which is the wrong half to give away.
+ */
+describe("reading a session with no account", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    window.location.hash = "";
+    container = document.createElement("div");
+    document.body.replaceChildren(container);
+  });
+
+  it("lists the ready-made sessions for the grade, as links", () => {
+    for (const age of ["u7", "u10", "u12"] as const) {
+      renderPresetList(container, age);
+      const cards = [...container.querySelectorAll<HTMLAnchorElement>("a.preset-card")];
+      expect(cards.map((card) => card.getAttribute("href")).sort()).toEqual(
+        presetsForAge(age)
+          .map((preset) => `#/preset/${preset.id}`)
+          .sort(),
+      );
+    }
+  });
+
+  it("asks for the account at the point of keeping one", () => {
+    renderPresetList(container, "u9");
+    const gate = container.querySelector<HTMLAnchorElement>('a[href="#/join/plans"]');
+    expect(gate, "no way through to the account").not.toBeNull();
+  });
+
+  it("does not offer to build one, since there is nowhere to put it", () => {
+    renderPresetList(container, "u9");
+    expect(container.querySelector("#new-blank")).toBeNull();
+  });
+
+  it("is what the signed-out route renders instead of the register form", () => {
+    const main = readFileSync("src/hub/main.ts", "utf8");
+    expect(main).toContain('if (chosen && (route.name === "plans" || route.name === "preset"))');
+    expect(main).toContain("renderPresetList(view, chosen)");
+  });
+});

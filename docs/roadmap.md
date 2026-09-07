@@ -3,21 +3,10 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 7 September 2026, after the drill catalogue went out to search and
-the session planner learned about carousels. See `docs/one-product.md` for the one-product change that preceded it
+Last updated 7 September 2026, after the drill catalogue went out to search,
+the session planner learned about carousels and the ready-made sessions came out
+from behind the register form. See `docs/one-product.md` for the one-product change that preceded it
 and which of its phases are built.
-
-## Blocking: run `0004` before the next deploy
-
-`session_runs` is a new table, so a deploy ahead of the migration is not the
-disaster the share token would have been: sessions, favourites and everything
-else carry on. What breaks is only the log. A coach marks a night as run, it
-stays on their device. The coverage list looks right to them until they pick up
-a second phone and find it empty.
-
-Paste `supabase/migrations/0004_session_runs.sql` into the SQL editor, then push.
-Nothing is lost either way, because the local mirror holds every night and
-retries on the next load and whenever the browser comes back online.
 
 ## Where the real project stands
 
@@ -32,7 +21,7 @@ have been used for real rather than against a stub.
 | `supabase/migrations/0001_session_plans.sql` applied | done |
 | `supabase/migrations/0002_favourites.sql` applied | done |
 | `supabase/migrations/0003_share_session.sql` applied | done |
-| `supabase/migrations/0004_session_runs.sql` applied | **not yet** |
+| `supabase/migrations/0004_session_runs.sql` applied | done |
 | Environment variables set in Vercel, service role key without a `VITE_` prefix | done |
 | Committed, pushed, deployed | done |
 | Register for real, confirm the email, build a session, star a drill, reload | done |
@@ -97,6 +86,30 @@ permission and clearing it takes every copy of that link out of service. Read th
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
 
+**The ready-made sessions read with no account.** `#/plans` signed out lists the
+presets for the grade and `#/preset/<id>` opens one in full, meaning the running
+order, the diagrams and what to say when it goes wrong. The gate has always been
+on persistence and keeping a session is persistence, but reading one is not.
+What a coach without an account used to get was 120 drills and no help ordering
+them, which is the half of the job this audience cannot do for itself. The
+account is asked for at the foot of the session, next to the button that would
+keep it. Signed in nothing changes: the card still takes the session outright.
+The preset route is age gated like every other route into the catalogue, since
+its id comes off the address bar and the exception a shared link makes does not
+cover our own content.
+
+**Search finds the symptom.** `filterDrills` reads `faults` now, so a coach
+typing what is happening in front of them lands on the drill for it. That field
+is the part written for somebody who has never seen the drill go right. It was
+also the one part the search box could not reach.
+
+**A drill goes out as a link.** The share control on a drill page sends the
+drill's own public page rather than a hub route. Whoever is being sent it has
+no account and has picked no age grade, so the hub would ask which grade they
+coach before showing them anything. It is an anchor rather than a button, so a
+phone gets its own share sheet while a desktop gets the clipboard. A browser
+with neither opens the page, where the address bar has the link.
+
 **The drills teach rather than remind.** Every one of the 120 carries at least
 one fault: what it looks like when it is going wrong, plus the one thing to say.
 Coaching points assume a coach who has seen the drill go right before. This
@@ -108,9 +121,9 @@ nobody keeps a diary. A coach marks a night as run from the session and the
 sessions page lists every theme their grade is allowed, worst first: never
 coached above coached weeks ago. Handling four Tuesdays running and nothing on
 evasion since June is the failure a volunteer actually has. It was invisible.
-Local-first like the stars, so the button works at a pitch. Needs `0004` run
-against the live project before a second device sees any of it. Stores nothing
-about a child: a row is a date, a title and a list of themes.
+Local-first like the stars, so the button works at a pitch. `0004` is applied
+against the live project, so a second device sees the log. Stores nothing about
+a child: a row is a date, a title and a list of themes.
 
 **Carousels.** A block can hold stations that run at the same time, one coach on
 each, with the groups moving round. That is the Sunday shape: twenty children

@@ -190,7 +190,7 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
           empty one.
         </p>
         <div class="preset-grid">
-          ${presets.map(presetCard).join("")}
+          ${presets.map((preset) => presetCard(preset)).join("")}
           <button type="button" class="preset-card preset-new" id="new-blank">
             <span class="preset-new-mark" aria-hidden="true">+</span>
             <span class="preset-title">Build one from scratch</span>
@@ -470,7 +470,16 @@ function editedLabel(iso: string): string {
   return `edited ${then.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 }
 
-function presetCard(preset: Preset): string {
+/**
+ * `href` turns the card into a link instead of a button.
+ *
+ * Signed in, a tap takes the session, because there is somewhere for it to go
+ * and a coach who picked one wants it in their list. Signed out there is
+ * nowhere to put it yet, so the card opens the session to be read and the
+ * account gets asked for at the foot of it, next to the button that would keep
+ * it. The gate is on keeping the thing rather than on seeing it.
+ */
+function presetCard(preset: Preset, href?: string): string {
   // Built rather than counted, so the card shows the session the tap actually
   // makes. `fromPreset` adds a water break, which is why the drills alone read
   // three minutes short of the plan the coach ends up with. The minutes are what
@@ -479,13 +488,15 @@ function presetCard(preset: Preset): string {
   const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
   // No age on the card. `presetsForAge` only ever returns the coach's own grade,
   // so it was the one thing repeated identically on all six of them
-  return `
-    <button type="button" class="preset-card" data-preset="${esc(preset.id)}">
+  const body = `
       <span class="preset-theme">${esc(THEME_SHORT[preset.theme])}</span>
       <span class="preset-title">${esc(preset.title)}</span>
       ${planShape(plan.blocks)}
-      <span class="preset-meta">${drills.length} drills · ${preset.sessionMinutes} min</span>
-    </button>`;
+      <span class="preset-meta">${drills.length} drills · ${preset.sessionMinutes} min</span>`;
+
+  return href
+    ? `<a class="preset-card" href="${esc(href)}">${body}</a>`
+    : `<button type="button" class="preset-card" data-preset="${esc(preset.id)}">${body}</button>`;
 }
 
 function planRow(plan: StoredPlan, browsing: AgeGroup, view: PlanView): string {
@@ -586,6 +597,29 @@ export function newPlanWithDrill(userId: string, ageGroup: AgeGroup, drill: Dril
     { userId, ageGroup },
     { ...blankPlan(ageGroup), blocks: [{ drillId: drill.id, minutes: drill.minutes }] },
   );
+}
+
+/**
+ * Taking a ready-made session, from a `#/preset/<id>` link rather than a card.
+ *
+ * Signed out those links open the session to be read. A coach who follows one
+ * with an account has somewhere to put it, so they get what the card would have
+ * given them. An id nobody recognises goes back to the list rather than
+ * creating an empty session out of nothing.
+ */
+export function takePreset(ctx: PlannerContext, presetId: string): void {
+  const preset = PRESETS.find((p) => p.id === presetId);
+  // Gated here as well as in `renderPresetView`, because the id comes off the
+  // address bar on both routes and an account does not make a U12 ruck session
+  // legal for a U8 coach. A gate that lives only in the signed-out render is
+  // one new caller away from not existing, which is the rule `addDrillToPlan`
+  // is already written to. Everything downstream keys off `plan.ageGroup`, so
+  // staging one would open U12 ruck content in the editor and push it as well.
+  if (!preset || !ageAtLeast(ctx.ageGroup, preset.ageGroup)) {
+    go("plans");
+    return;
+  }
+  create(ctx, fromPreset(preset));
 }
 
 function create(ctx: PlannerContext, plan: SessionPlan): void {
@@ -1282,6 +1316,77 @@ function wireShare(container: HTMLElement, ctx: PlannerContext, planId: string):
 }
 
 /**
+ * A session laid out to be read rather than worked on.
+ *
+ * Two things arrive here and neither of them can be edited. A session somebody
+ * shared, because it is not the reader's. And a ready-made session opened
+ * signed out, because there is nowhere yet to keep a change. Both want the same
+ * thing on screen, which is the running order at full size with the coaching in
+ * it and no authoring controls anywhere, so both get the same markup with a
+ * different line above it and a different one below.
+ *
+ * Blocks carry no link through to the catalogue. Neither reader has a session
+ * of their own to come back to. A link out of a shared plan would also hand a
+ * U8 coach a route into U10 drill pages.
+ */
+function planDocument(
+  plan: SessionPlan,
+  /** The reader's own grade, when there is one. A stranger with no account has none. */
+  readerAge: AgeGroup | undefined,
+  intro: string,
+  footer: string,
+): string {
+  const totals = planTotals(plan, DRILLS);
+  const blocks = planDrills(plan, DRILLS);
+  const tooOld = readerAge && !ageAtLeast(readerAge, plan.ageGroup);
+  // Errors only. "26 minutes still to fill" is a nudge for whoever wrote the
+  // session. The person reading it cannot act on that anyway.
+  const problems: PlanTotals = {
+    ...totals,
+    warnings: totals.warnings.filter((w) => w.level === "error"),
+  };
+
+  return `
+    <div class="plan-read">
+    <section class="hub-panel run-head">
+      ${intro}
+      <h2>${esc(plan.title)}</h2>
+      ${
+        // The catalogue would never put this in front of them, so the one
+        // place a drill can reach a grade that is not allowed to do it says
+        // so out loud. Still rendered: the coach who sent it meant to.
+        tooOld
+          ? `<p class="share-grade" role="alert">
+               Written for ${AGE_GROUP_LABELS[plan.ageGroup]}. You coach
+               ${AGE_GROUP_LABELS[readerAge]}, so some of this is beyond what
+               your grade plays yet.
+             </p>`
+          : ""
+      }
+      <p class="run-meta">
+        ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min${
+          totals.breakMinutes > 0 ? ` including ${totals.breakMinutes} of breaks` : ""
+        } · ${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}
+      </p>
+      ${
+        totals.equipment.length > 0
+          ? `<p class="run-kit"><strong>Pack</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
+          : ""
+      }
+      <p class="hub-fineprint">${ageRulesLink(
+        AGE_GROUP_LABELS[plan.ageGroup],
+        RULES_OF_PLAY[plan.ageGroup],
+      )}</p>
+      ${warningList(problems)}
+    </section>
+
+    ${blocks.map((resolved, position) => runBlock(resolved, position)).join("")}
+
+    ${footer}
+    </div>`;
+}
+
+/**
  * Somebody else's session, read by token.
  *
  * No account, no age grade of their own, nothing cached. The plan says which
@@ -1314,64 +1419,114 @@ export function renderSharedPlan(
       return;
     }
 
-    const totals = planTotals(plan, DRILLS);
-    const blocks = planDrills(plan, DRILLS);
-    const tooOld = readerAge && !ageAtLeast(readerAge, plan.ageGroup);
-    // Errors only. "26 minutes still to fill" is a nudge for whoever wrote the
-    // session. The person reading it cannot act on that anyway.
-    const problems: PlanTotals = {
-      ...totals,
-      warnings: totals.warnings.filter((w) => w.level === "error"),
-    };
-
-    container.innerHTML = `
-      <div class="plan-read">
-      <section class="hub-panel run-head">
-        <p class="share-from">A coach shared this session with you</p>
-        <h2>${esc(plan.title)}</h2>
-        ${
-          // The catalogue would never put this in front of them, so the one
-          // place a drill can reach a grade that is not allowed to do it says
-          // so out loud. Still rendered: the coach who sent it meant to.
-          tooOld
-            ? `<p class="share-grade" role="alert">
-                 Written for ${AGE_GROUP_LABELS[plan.ageGroup]}. You coach
-                 ${AGE_GROUP_LABELS[readerAge]}, so some of this is beyond what
-                 your grade plays yet.
-               </p>`
-            : ""
-        }
-        <p class="run-meta">
-          ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min${
-            totals.breakMinutes > 0 ? ` including ${totals.breakMinutes} of breaks` : ""
-          } · ${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}
-        </p>
-        ${
-          totals.equipment.length > 0
-            ? `<p class="run-kit"><strong>Pack</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
-            : ""
-        }
-        <p class="hub-fineprint">${ageRulesLink(
-          AGE_GROUP_LABELS[plan.ageGroup],
-          RULES_OF_PLAY[plan.ageGroup],
-        )}</p>
-        ${warningList(problems)}
-      </section>
-
-      ${blocks.map((resolved, position) => runBlock(resolved, position)).join("")}
-
-      <section class="hub-panel">
+    container.innerHTML = planDocument(
+      plan,
+      readerAge,
+      '<p class="share-from">A coach shared this session with you</p>',
+      `<section class="hub-panel">
         <h3>Build your own</h3>
         <p>
           Equal Play is free for volunteer coaches. Every drill is matched to the age
           group you coach, so you'll only ever see the ones your players are ready for.
         </p>
         <a class="hub-btn" href="#/catalogue">Have a look at the drills</a>
-      </section>
-      </div>`;
+      </section>`,
+    );
 
     keepDetailsOpen(container);
   });
+}
+
+/**
+ * A ready-made session, read before there is an account to put it in.
+ *
+ * Signed out this is what a preset card opens. The whole evening is on the
+ * page, the drills, the diagrams and what to say when it goes wrong, because a
+ * coach who has never played cannot tell from a title and a bar whether a
+ * session suits their lot. Reading it is what proves the thing is worth
+ * registering for. It is also not something that has to persist.
+ *
+ * Signed in nobody lands here. The card makes the session instead, which is
+ * what a coach with a list of their own wants from one tap.
+ */
+export function renderPresetView(
+  container: HTMLElement,
+  presetId: string,
+  readerAge: AgeGroup,
+): void {
+  const preset = PRESETS.find((p) => p.id === presetId);
+  // The id comes off the address bar, so this is a route into the catalogue
+  // like any other and the age gate runs on it. `presetsForAge` only ever lists
+  // the coach's own grade, so nothing in the interface can reach here, but a
+  // typed URL is not the interface. The exception a shared session makes does
+  // not apply either. Nobody sent this one. It is our own content, so a U12
+  // ruck session opening for a U8 coach is the gate failing on our catalogue.
+  if (!preset || !ageAtLeast(readerAge, preset.ageGroup)) {
+    go("plans");
+    return;
+  }
+
+  container.innerHTML = planDocument(
+    fromPreset(preset),
+    // Nothing above the reader's grade got past the check above, so there is no
+    // banner left for this view to raise.
+    undefined,
+    '<p class="hub-back"><a href="#/plans">← All sessions</a></p>',
+    `<section class="hub-panel">
+      <h3>Make it yours</h3>
+      <p>
+        Take this one and change whatever you like, then it is in your list for
+        next week on whatever phone you have with you. That is what the account
+        is for and it is free.
+      </p>
+      <a class="hub-btn hub-btn-primary" href="#/join/plans">Set up an account</a>
+    </section>`,
+  );
+
+  keepDetailsOpen(container);
+}
+
+/**
+ * The ready-made sessions, signed out.
+ *
+ * The 32 presets used to sit behind the register form, so what a coach without
+ * an account got was 120 drills and no help ordering them. That is the half of
+ * the job they cannot do. A parent who never played can pick a session off a
+ * list and go. Assembling an hour out of a catalogue is another skill entirely.
+ * The gate belongs on keeping a session rather than on reading one.
+ *
+ * Their own sessions are not here, because signed out there are none. The
+ * coverage list is not either. It reads a log that only exists per account.
+ */
+export function renderPresetList(container: HTMLElement, ageGroup: AgeGroup): void {
+  const presets = presetsForAge(ageGroup);
+  const age = AGE_GROUP_LABELS[ageGroup];
+
+  container.innerHTML = `
+    <section class="hub-section">
+      <div class="section-head">
+        <h2>Start a session</h2>
+      </div>
+      <p class="hub-lede">
+        Ready-made ${esc(age)} training nights, laid out in the order they run. Open
+        one and you get the drills, the diagrams and what to say when it goes wrong.
+      </p>
+      <div class="preset-grid">
+        ${presets.map((preset) => presetCard(preset, `#/preset/${preset.id}`)).join("")}
+      </div>
+    </section>
+
+    <section class="hub-section">
+      <div class="section-head">
+        <h2>Your sessions</h2>
+      </div>
+      <p class="hub-lede">
+        Take any of these and change whatever you like, or build one from an empty
+        session. Keeping it needs an account, so that the night you plan tonight is
+        still there next week on whatever phone you have with you.
+      </p>
+      <a class="hub-btn hub-btn-primary" href="#/join/plans">Set up an account</a>
+    </section>`;
 }
 
 function wireRanIt(container: HTMLElement, ctx: PlannerContext, planId: string): void {

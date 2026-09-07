@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderCatalogue } from "../hub/views/catalogue.js";
 import { localPlans, stagePlan } from "../hub/plans.js";
-import { addDrillToPlan } from "../hub/views/planner.js";
+import { addDrillToPlan, renderPresetView } from "../hub/views/planner.js";
 import {
   DRILLS,
   filterDrills,
@@ -351,6 +351,52 @@ describe("a shared session is the exception, and says so", () => {
     // Signed in it comes off the profile, signed out off the age they picked.
     expect(main).toContain("renderSharedPlan(view, route.param, profile?.ageGroup)");
     expect(main).toContain("renderSharedPlan(view, route.param, chosenAge() ?? undefined)");
+  });
+});
+
+/**
+ * A ready-made session is a route drill copy takes to a screen, so it is gated.
+ *
+ * The exception a shared link makes does not stretch to cover this. That one is
+ * a coach deliberately sending a session to another coach. A preset is our own
+ * content and the id comes off the address bar, so a U12 ruck session opening
+ * for a U8 coach would be the age gate failing on our own catalogue.
+ */
+describe("a ready-made session is gated like everything else", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    window.location.hash = "";
+    container = document.createElement("div");
+    document.body.replaceChildren(container);
+  });
+
+  it("opens one the coach's grade is allowed", () => {
+    for (const age of AGE_GROUPS) {
+      const preset = presetsForAge(age)[0];
+      container.innerHTML = "";
+      renderPresetView(container, preset.id, age);
+      expect(container.textContent, preset.id).toContain(preset.title);
+      expect(container.querySelectorAll(".run-block").length, preset.id).toBeGreaterThan(0);
+    }
+  });
+
+  it("refuses one written for a grade above the reader", () => {
+    // Nothing in the interface offers this. `presetsForAge` only ever lists the
+    // coach's own grade, so reaching it means a typed or pasted URL. It is
+    // still a way a ruck session could land on a U8 screen.
+    const above = PRESETS.filter((preset) => !ageAtLeast("u8", preset.ageGroup));
+    expect(above.length).toBeGreaterThan(0);
+    for (const preset of above) {
+      container.innerHTML = "";
+      renderPresetView(container, preset.id, "u8");
+      expect(container.textContent?.trim(), `${preset.id} rendered for a U8 coach`).toBe("");
+    }
+  });
+
+  it("hands the view the reader's own grade rather than a fixed one", () => {
+    const main = readFileSync("src/hub/main.ts", "utf8");
+    expect(main).toContain("renderPresetView(view, route.param, chosen)");
   });
 });
 
