@@ -274,6 +274,11 @@ function renderList(container: HTMLElement): void {
         ).join("")}
       </div>
 
+      <!-- Every theme, including the ones this grade may not do. Tapping one
+           it cannot is how a coach finds out: the empty state names the grade
+           it starts at and links the RFU's rules for the grade they are on.
+           The editor's add panel gates them instead, because there the answer
+           is a drill going into a session rather than a question being asked. -->
       <div class="chip-row chip-themes" role="group" aria-label="What the drill is about">
         ${THEMES.map(
           (t) =>

@@ -6,6 +6,7 @@ import { GAMESENSE } from "./catalogue/gamesense.js";
 import { TACKLE } from "./catalogue/tackle.js";
 import { BREAKDOWN } from "./catalogue/breakdown.js";
 import { SETPIECE } from "./catalogue/setpiece.js";
+import { KICKING } from "./catalogue/kicking.js";
 
 export { isAvailableAt };
 
@@ -27,6 +28,7 @@ export const DRILLS: Drill[] = [
   ...TACKLE,
   ...BREAKDOWN,
   ...SETPIECE,
+  ...KICKING,
 ];
 
 // ---- Queries ----

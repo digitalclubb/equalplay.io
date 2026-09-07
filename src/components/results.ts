@@ -1146,7 +1146,7 @@ function renderNextStep(): HTMLElement {
   section.innerHTML = `
     <h4>Planning the training session too?</h4>
     <p>
-      There are 100 drills in here for the age group you coach, with a planner that
+      There are 120 drills in here for the age group you coach, with a planner that
       adds the minutes up as you build. Free to look round with no account.
     </p>
     <a class="next-step-link" href="/hub#/catalogue" data-route="catalogue">See the drills</a>

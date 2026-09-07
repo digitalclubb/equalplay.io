@@ -58,11 +58,11 @@ Nothing leaves the device. No account, no team code, nothing to delete if a pare
 
 ## The coaching hub
 
-100 drills and 30 ready-made sessions covering U7 to U12, written from scratch.
+120 drills and 32 ready-made sessions covering U7 to U12, written from scratch.
 
 The point of it is the age gate. RFU Regulation 15 introduces contact in stages, so the
 catalogue only ever offers what your grade is allowed to do: tackling from U9, rucks,
-mauls and the uncontested scrum from U10, no lineout at all. Every claim links out to
+mauls and the uncontested scrum from U10, kicking from U11, no lineout at all. Every claim links out to
 the RFU's own rules of play so a coach can check it.
 
 - Filter by age grade, focus, warm-up or exercise, or free text

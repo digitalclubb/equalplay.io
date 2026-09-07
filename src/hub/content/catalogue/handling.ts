@@ -702,4 +702,220 @@ export const HANDLING: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "drill-free-pass-restart",
+    title: "Taking a free pass",
+    kind: "exercise",
+    themes: ["handling", "gamesense"],
+    minAge: "u7",
+    minutes: 8,
+    players: { min: 6, max: 20 },
+    space: "15 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. One player about to take a free pass to a team mate behind them, with two defenders waiting seven metres away.",
+      space: [10, 15],
+      cones: [[0, 15], [10, 15], [0, 5], [10, 5], [0, 0], [10, 0]],
+      attack: [[6, 12], [3, 13]],
+      defence: [[3, 5], [7, 5]],
+      passes: [[[5.2, 12.3], [3.9, 12.8]]],
+      runs: [[[2.6, 11.8], [2, 6.5]]],
+      ball: [[7.5, 12]],
+    },
+    equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }],
+    setup:
+      "A line of cones seven metres in front of the player taking the pass, with the defenders standing on it.",
+    howItRuns:
+      "Every game below U11 restarts with one of these. Even once free kicks arrive at U11 the free pass is still what follows a kick into touch, so it is worth ten minutes rather than being discovered on a Sunday. The passer holds the ball out, calls play, then passes it backwards to somebody arriving. The defenders cannot move until the ball has left their hands. Everybody takes a turn at passing it, because the child who does it in a match will not be the one you expect.",
+    coachingPoints: [
+      "Hold the ball out where everybody can see it, then shout play",
+      "The catcher runs onto it. Nobody stands still waiting",
+      "Pass it backwards. Level with you counts as forward when you are moving",
+    ],
+    progressions: [
+      "Defenders come from ten metres so there is real pressure on the catch",
+      "Two passes before anybody can be tagged",
+    ],
+    regressions: ["No defenders at all", "Walk the whole thing through once"],
+    faults: [
+      {
+        looks: "The ball put on the grass or rolled rather than passed out of the hands",
+        say: "Pass it. It comes off your hands, it does not go on the floor",
+      },
+      {
+        looks: "The catcher stood flat footed waiting for it to arrive",
+        say: "Run onto it. Take it moving or they will be on you",
+      },
+    ],
+  },
+  {
+    id: "drill-follow-your-mate",
+    title: "Follow your mate",
+    kind: "exercise",
+    themes: ["handling", "gamesense"],
+    minAge: "u7",
+    minutes: 9,
+    players: { min: 6, max: 21 },
+    space: "20 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A carrier running at one defender with two team mates tracking either side of them, a stride behind.",
+      space: [15, 20],
+      cones: [[0, 20], [15, 20], [0, 0], [15, 0]],
+      attack: [[7.5, 16], [5, 18], [10, 18]],
+      defence: [[7.5, 10]],
+      runs: [
+        [[7.5, 14.8], [7.5, 11.6]],
+        [[5, 16.8], [5.8, 12.6]],
+        [[10, 16.8], [9.2, 12.6]],
+      ],
+      ball: [[6, 16]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
+    setup: "Threes at one end, one defender in the middle of the square, a try line at the far end.",
+    howItRuns:
+      "The one with the ball runs at the defender. The other two go with them, a stride behind on either side. When the defender gets there the ball goes to whoever is closest. Six goes each, everybody carries. Most tries at this age are lost because the other two watched, so the only thing being coached is being somewhere useful when your mate runs out of room.",
+    coachingPoints: [
+      "Stay behind the ball. Level with it means you cannot be passed to",
+      "One either side. Both on the same side is one option, not two",
+      "Shout so they know you are there before they need you",
+    ],
+    progressions: ["Two defenders", "The carrier has to pass before the try line whatever happens"],
+    regressions: ["Defender walks", "Threes with no defender, just holding the shape"],
+    faults: [
+      {
+        looks: "The two without the ball drifting in front of the carrier",
+        say: "Get back behind him. You cannot catch a pass from in front",
+      },
+      {
+        looks: "Both supporters running on the same shoulder",
+        say: "One each side. Split up",
+      },
+    ],
+  },
+  {
+    id: "drill-scoop-off-the-ground",
+    title: "Scoop it off the floor",
+    kind: "exercise",
+    themes: ["handling"],
+    minAge: "u8",
+    minutes: 8,
+    players: { min: 4, max: 20 },
+    space: "20 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. A runner going forward onto a loose ball lying on the grass, with the next two waiting behind the start cones.",
+      space: [10, 20],
+      cones: [[2, 18], [8, 18], [2, 4], [8, 4]],
+      attack: [[5, 16]],
+      defence: [[3, 18.6], [7, 18.6]],
+      runs: [[[5, 14.8], [5, 12.4]]],
+      ball: [[5, 11]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
+    setup: "A ball lying still on the grass five metres in front of a short queue.",
+    howItRuns:
+      "Run onto the ball, pick it up without stopping, score at the far cones. Then the same with the ball rolling. More minis games are decided by a loose ball than by anything anybody passes, yet nobody ever puts a ball on the floor at training on purpose. Eight goes each. The word all night is early: get low two strides out rather than bending at the last second.",
+    coachingPoints: [
+      "Get low early. Bend your knees, not just your back",
+      "Little fingers together underneath it, scoop it up into your chest",
+      "Keep running through it. Do not stop over the ball",
+    ],
+    progressions: ["Ball rolling away from them", "A chaser starting a metre behind"],
+    regressions: ["Walk in to it", "Ball sat on a cone so it is off the grass"],
+    faults: [
+      {
+        looks: "Bending from the waist with straight legs and slapping it away",
+        say: "Bend your knees. Get your whole body down to it",
+      },
+      {
+        looks: "Stopping dead over the ball to pick it up",
+        say: "Run through it. Do not stop, scoop it as you go",
+      },
+    ],
+  },
+  {
+    id: "drill-rondo-keep-away",
+    title: "Keep away in a circle",
+    kind: "exercise",
+    themes: ["handling"],
+    minAge: "u8",
+    minutes: 8,
+    players: { min: 6, max: 18 },
+    space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Five players stood in a circle passing the ball across it, with one in the middle trying to touch it.",
+      space: [10, 10],
+      cones: [[0, 0], [10, 0], [0, 10], [10, 10]],
+      attack: [[5, 8.5], [8.3, 6.1], [7.1, 2.2], [2.9, 2.2], [1.7, 6.1]],
+      defence: [[5, 5]],
+      passes: [[[5.8, 7.9], [7.1, 7]]],
+      ball: [[3.4, 8.5]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1 }],
+    setup: "Five or six stood in a circle about seven metres across, one in the middle.",
+    howItRuns:
+      "Keep the ball away from the one in the middle. Pass it across the circle or round it, whichever is on. Touch the ball or force a drop and you swap with whoever gave it away. Count how many passes you string together and try to beat it. Nobody in the circle can move their feet, so the only thing that gets you out of trouble is passing it quicker than the middle one can turn.",
+    coachingPoints: [
+      "Hands out ready before it comes to you",
+      "Look across the circle before you catch, not after",
+      "Pass it to the far side rather than the child next to you",
+    ],
+    progressions: ["Two in the middle", "Two balls going at once"],
+    regressions: ["Bigger circle", "Middle player walks"],
+    faults: [
+      {
+        looks: "The ball going round the outside one player at a time",
+        say: "Across the middle. Find somebody on the far side",
+      },
+      {
+        looks: "Hands by their sides until the ball is halfway to them",
+        say: "Hands up and ready. Give them a target",
+      },
+    ],
+  },
+  {
+    id: "drill-miss-pass",
+    title: "Miss the man out",
+    kind: "exercise",
+    themes: ["handling"],
+    minAge: "u11",
+    minutes: 9,
+    players: { min: 8, max: 21 },
+    space: "20 x 15 m",
+    diagram: {
+      label:
+        "Set up diagram. A line of four moving forward, the ball travelling over the second one to reach the third, with two defenders in front of them.",
+      space: [15, 20],
+      cones: [[0, 20], [15, 20], [0, 0], [15, 0]],
+      attack: [[3, 15], [6.5, 15], [10, 15], [13.5, 15]],
+      defence: [[5, 11], [9, 11]],
+      passes: [[[3.9, 15.5], [9.1, 15.5], 1.4]],
+      runs: [[[10.6, 13.8], [11.4, 9.5]]],
+      ball: [[1.4, 15]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
+    setup: "Fours in a line five metres apart, two defenders in front of them holding a flat line.",
+    howItRuns:
+      "Move forward together. The ball goes from the first player straight over the second to the third, so the two defenders end up marking nobody. Six goes, then rotate so everybody has been the one missed out. The pass wants to be flat rather than looping, because a ball hanging in the air gives the defence the time the miss pass was supposed to take away.",
+    coachingPoints: [
+      "Turn your shoulders to where it is going before you throw it",
+      "Flat and quick. A high looping one gives them time to get across",
+      "The one being missed stays in the line. Ducking out shows it early",
+    ],
+    progressions: ["Defenders allowed to press up hard", "Miss two out to the fourth player"],
+    regressions: ["Walking pace", "No defenders, just the pass"],
+    faults: [
+      {
+        looks: "The player being missed dropping back out of the line as it goes over",
+        say: "Stay where you are. Run like it is coming to you",
+      },
+      {
+        looks: "The pass looping high so the defence gets across in time",
+        say: "Flatter and harder. Fire it, do not lob it",
+      },
+    ],
+  },
 ];

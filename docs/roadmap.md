@@ -97,7 +97,7 @@ permission and clearing it takes every copy of that link out of service. Read th
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
 
-**The drills teach rather than remind.** Every one of the 100 carries at least
+**The drills teach rather than remind.** Every one of the 120 carries at least
 one fault: what it looks like when it is going wrong, plus the one thing to say.
 Coaching points assume a coach who has seen the drill go right before. This
 audience is a parent who never played. It is the gap the competition fills with
@@ -191,7 +191,7 @@ toggle and the choice is kept.
 - Account: register with name, club and age group, sign in, reset, change password, edit
   details, delete the account for real
 - Privacy notice at `/privacy`. The "no account" copy elsewhere is scoped so it stays true
-- Catalogue: 100 drills, U7 to U12, filtered by age grade, focus, type and free text
+- Catalogue: 120 drills, U7 to U12, filtered by age grade, focus, type and free text
 - Favourites, starred per coach, synced and filterable
 - Session planner: ready-made sessions, build from scratch, reorder, water breaks, live
   time budget, kit list, warnings, print sheet
@@ -280,7 +280,7 @@ never things that would justify a price.
   itself stays `noindex`. Publishing the drill copy is a different decision with its own
   copyright question and it has not been taken.
 - **Payments and tiers.** Free for good, decided 21 August 2026. See above.
-- **Competing on drill count.** 100 a coach can trust beats 3,000 they have to check.
+- **Competing on drill count.** 120 a coach can trust beats 3,000 they have to check.
 - **A headcount check on a session.** Shipped 4 September 2026, taken out the same
   week. It read a drill's stated group size as a rule and told a coach a block
   would not run, when a coach adapts a drill to whoever turned up without being

@@ -542,4 +542,49 @@ export const TACKLE: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "drill-track-and-close",
+    title: "Track them down",
+    kind: "exercise",
+    themes: ["tackle"],
+    minAge: "u9",
+    minutes: 10,
+    players: { min: 6, max: 20 },
+    space: "10 x 10 m",
+    softGround: true,
+    diagram: {
+      label:
+        "Set up diagram. A carrier running for the far corner with a tackler moving across to cut them off rather than chasing straight after them.",
+      space: [10, 10],
+      cones: [[0, 10], [10, 10], [0, 0], [10, 0]],
+      attack: [[3, 7]],
+      defence: [[7, 7]],
+      runs: [[[3, 5.8], [3.6, 2.6]], [[6.6, 6], [4.8, 3.4], -0.8]],
+      ball: [[1.5, 7]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1, per: "pair" }],
+    setup: "Pairs of similar size in a ten metre square, one with the ball, the tackler four metres across from them.",
+    howItRuns:
+      "The carrier jogs for the far corner. The tackler has to get across and make the tackle before the line rather than arriving behind them. Small steps as they close, then the tackle from the side. Six each way. Most missed tackles at this age are not technique at all, they are a child running at where somebody used to be, so the footwork before the contact is the whole drill.",
+    coachingPoints: [
+      "Run at the space in front of them, not at where they are now",
+      "Short steps in the last two metres so you can change direction",
+      "Head behind them, arms round the legs, squeeze",
+    ],
+    progressions: ["Carrier allowed one sidestep", "Start the tackler a metre further back"],
+    regressions: ["Carrier walks", "Touch instead of tackle until the footwork is right"],
+    safety:
+      "Match by size, never by age alone. Head behind the carrier every time and stop the drill the instant one goes in front. Nothing above the waist. Grass only. Anybody tired enough to be getting sloppy sits the next one out.",
+    faults: [
+      {
+        looks: "The tackler running at the carrier's back and arriving behind them",
+        say: "Aim in front of them. Cut them off, do not chase them",
+      },
+      {
+        looks: "Long strides right up to the contact so they cannot turn",
+        say: "Little steps at the end. Chop your feet",
+      },
+    ],
+  },
 ];

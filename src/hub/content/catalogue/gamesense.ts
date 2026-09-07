@@ -693,4 +693,51 @@ export const GAMESENSE: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "drill-up-as-one",
+    title: "Up as one",
+    kind: "exercise",
+    themes: ["gamesense"],
+    minAge: "u11",
+    minutes: 10,
+    players: { min: 8, max: 20 },
+    space: "30 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. Four defenders on a marked line moving forward together against four attackers coming the other way.",
+      space: [20, 30],
+      cones: [[0, 30], [20, 30], [0, 14], [20, 14], [0, 0], [20, 0]],
+      attack: [[4, 24], [9, 24], [14, 24], [18, 24]],
+      defence: [[3, 14], [8, 14], [12, 14], [17, 14]],
+      runs: [
+        [[3, 15.2], [3.4, 19]],
+        [[8, 15.2], [8.2, 19]],
+        [[12, 15.2], [12.2, 19]],
+        [[17, 15.2], [16.6, 19]],
+      ],
+      ball: [[1.4, 24]],
+    },
+    equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }],
+    setup: "A line of cones for the defence to start on, with attackers ten metres away holding a ball.",
+    howItRuns:
+      "The attack passes along their line. The defence walks up together on the first pass, keeping level with each other, then touches whoever ends up with the ball. Do it at a walk until the line holds its shape, then a jog, then properly. The one thing being coached is that they go at the same time: one child charging out on their own leaves a hole either side of them that nothing else on this list can fix.",
+    coachingPoints: [
+      "Go on the pass, all together. Nobody leaves before the ball does",
+      "Stay level with the two either side of you",
+      "Talk the whole way up. If it is quiet, nobody is connected",
+    ],
+    progressions: ["Attack gets an extra player so the defence has to slide", "Start from a turnover"],
+    regressions: ["Walk it", "Three against three so there is less line to hold"],
+    faults: [
+      {
+        looks: "One defender three metres ahead of the rest with a gap beside them",
+        say: "Get back in line. You go when they go",
+      },
+      {
+        looks: "The whole line coming up in silence",
+        say: "Talk. Tell the one next to you who you have got",
+      },
+    ],
+  },
 ];

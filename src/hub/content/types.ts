@@ -106,6 +106,7 @@ export const THEMES = [
   "tackle",
   "breakdown",
   "setpiece",
+  "kicking",
   "gamesense",
 ] as const;
 export type Theme = (typeof THEMES)[number];
@@ -126,6 +127,7 @@ export const THEME_SHORT: Record<Theme, string> = {
   tackle: "Tackle",
   breakdown: "Ruck and maul",
   setpiece: "Scrum and restarts",
+  kicking: "Kicking",
   gamesense: "Game sense",
 };
 
@@ -135,6 +137,7 @@ export const THEME_LABELS: Record<Theme, string> = {
   tackle: "Tackle",
   breakdown: "Ruck and maul",
   setpiece: "Scrum and restarts",
+  kicking: "Kicking and catching",
   gamesense: "Game sense",
 };
 
@@ -142,10 +145,11 @@ export const THEME_LABELS: Record<Theme, string> = {
  * The earliest RFU age grade at which each theme is legal to coach.
  *
  * Source: RFU Regulation 15 rules of play, checked August 2026. Tackling arrives
- * at U9. Rucks, mauls and the uncontested three-player scrum arrive at U10. There
- * is no lineout at any grade the hub covers: touch restarts with a free pass
- * through U13 and the uncontested lineout arrives at U14. Reg 15 is reissued
- * every year. Re-check these against the live appendices each season.
+ * at U9. Rucks, mauls and the uncontested three-player scrum arrive at U10.
+ * Kicking arrives at U11, after four seasons where a boot near the ball is a
+ * penalty. There is no lineout at any grade the hub covers: touch restarts with
+ * a free pass through U13 and the uncontested lineout arrives at U14. Reg 15 is
+ * reissued every year. Re-check these against the live appendices each season.
  *
  * `content-age-gate.test.ts` enforces this table against every drill. It is the
  * check that stops the catalogue offering rucking practice to seven-year-olds.
@@ -157,6 +161,7 @@ export const THEME_MIN_AGE: Record<Theme, AgeGroup> = {
   tackle: "u9",
   breakdown: "u10",
   setpiece: "u10",
+  kicking: "u11",
 };
 
 export type DrillKind = "warmup" | "exercise";

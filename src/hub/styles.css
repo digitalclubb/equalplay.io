@@ -369,12 +369,13 @@ body {
 
 /* Wide enough for both groups to stand side by side, where the space between
    them says what the rule says when they are stacked. The pair needs about
-   1000px of panel: six theme chips is around 650 and the three picks another
+   1080px of panel: seven theme chips is around 730 and the three picks another
    340. Below that the themes wrap into the picks' column and the two read as
    one block again, which is the thing being fixed. It was 1280 while the
-   set piece chip read "Set piece". "Scrum and restarts" is 60px longer, which
-   put the themes on two rows at exactly the width they were meant to fit. */
-@media (min-width: 1360px) {
+   set piece chip read "Set piece", then 1360 until kicking arrived at U11 as
+   a seventh chip. Both moves happened for the same reason: the themes went to
+   two rows at exactly the width they were meant to fit. */
+@media (min-width: 1440px) {
   /* The catalogue's panel only. The editor's add panel carries the same two
      groups in an 18rem side pane, where they are stacked at every width and
      the rule between them is the only thing separating them. */
@@ -2233,9 +2234,14 @@ body {
   }
 }
 
-/* ---- 1360px: the two chip groups share one line ---- */
+/* ---- 1440px: the two chip groups share one line ---- */
 
-@media (min-width: 1360px) {
+/* This was 1280 until the set piece chip took its full label, then 1360 until
+   the kicking theme arrived at U11. Seven chips measure 731px against the 665
+   a 1360 window leaves the column, so they wrapped to two rows and the picks
+   group landed across them. 1440 gives the column 745. The number is measured
+   rather than chosen, so re-measure it the day a theme is added or renamed. */
+@media (min-width: 1440px) {
   .hub-filters {
     grid-template-areas:
       "search controls"

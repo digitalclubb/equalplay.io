@@ -2229,11 +2229,15 @@ test("the pitch chips never sit among the themes", async ({ page }) => {
   // is above the rule, what your evening looks like below it. Stacked on a
   // phone, side by side once there is room for both, and never interleaved.
   // The breakpoint moved from 1280 to 1360 when the set piece chip became
-  // "Scrum and restarts": six chips at 608px want a column 1280 does not have,
-  // so the themes wrapped to two rows and the picks centred against them.
+  // "Scrum and restarts", then to 1440 when kicking became a seventh theme:
+  // seven chips measure 731px against the 665 a 1360 window leaves the
+  // column, so the themes wrapped to two rows and the picks centred across
+  // them. Every grade sees all seven, because a theme the grade may not do is
+  // how a coach is told it may not do it.
+  //
   await signedIn(page, "u10");
 
-  for (const width of [320, 390, 768, 1024, 1279, 1359, 1360, 1440]) {
+  for (const width of [320, 390, 768, 1024, 1279, 1439, 1440, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator(".chip-picks .chip-filter").first().waitFor();
 
@@ -2260,7 +2264,7 @@ test("the pitch chips never sit among the themes", async ({ page }) => {
     // One or the other. Overlapping is the failure that would look like the
     // row they used to be.
     expect(laid.beside || laid.below, `${where}: the two groups overlap`).toBe(true);
-    expect(laid.beside, `${where}: wrong side of the breakpoint`).toBe(width >= 1360);
+    expect(laid.beside, `${where}: wrong side of the breakpoint`).toBe(width >= 1440);
   }
 });
 

@@ -151,9 +151,9 @@ while working in production.
 **A landing page states counts the catalogue owns.** "73 drills" on the U10 page is
 true until somebody adds a drill. `landing-pages.test.ts` holds every count, theme
 row, card and session title to what `filterDrills` would return for that grade, plus
-the site-wide 100 to `DRILLS.length`, so a new drill fails the build rather than
+the site-wide 120 to `DRILLS.length`, so a new drill fails the build rather than
 quietly making seven pages lie. Note `maxAge`: one tag drill stops at U8, which is
-why no grade above U8 sees all 100.
+why no grade above U8 sees all 120.
 
 **There is no lineout at any grade the hub covers.** Reg 15 has touch restarting
 with a free pass all the way through U13, the uncontested lineout arriving at U14
@@ -209,11 +209,11 @@ src/
       types.ts            # Drill/Preset/KitItem, age grades, THEME_MIN_AGE,
                           # THEME_SHORT, RULES_OF_PLAY
       drills.ts           # Pulls the catalogue together, plus filterDrills
-      presets.ts          # 30 ready-made sessions, one per theme per age grade
+      presets.ts          # 32 ready-made sessions, one per theme per age grade
       guides.ts           # What each age grade may do, as data. Published twice
       diagram.ts          # Renders a drill's coordinates to SVG at load
-      catalogue/          # 100 drills by theme: warmups, handling, evasion,
-                          # gamesense, tackle, breakdown, setpiece
+      catalogue/          # 120 drills by theme: warmups, handling, evasion,
+                          # gamesense, tackle, breakdown, setpiece, kicking
     views/
       agePicker.ts        # First run, before any account. Seeds the age grade
       authView.ts         # Sign in, register, reset, gate reasons, password reveal
@@ -289,9 +289,9 @@ and arrangement. Read widely, never mirror one source's list, write every word o
 
 **A drill diagram is data, not a picture.** A drill says where things stand in
 metres and `hub/content/diagram.ts` renders it at load. Shipping one SVG file per
-drill would cost around 210 kB across 100 precache entries. It would also put
-the stroke weights, colours and marker sizes into 100 places where they drift.
-The renderer owns them once. 99 of the 100 drills carry one, for 10.6 kB gzipped
+drill would cost around 250 kB across 120 precache entries. It would also put
+the stroke weights, colours and marker sizes into 120 places where they drift.
+The renderer owns them once. 119 of the 120 drills carry one, for 12 kB gzipped
 across the whole hub. The one without is a mobility warm-up whose setup is
 "everyone with a bit of space around them", where a box with six dots in it says
 less than no picture. `diagram` is optional for exactly that reason.
@@ -318,7 +318,7 @@ This is the part every competitor buys with video. Video costs money and puts
 children on camera, so it is written instead, which means it has to be more
 precise than a picture would need to be. `looks` may never name the fault
 ("poor body position" is the same problem in fewer words) and
-`content-age-gate.test.ts` fails on a list of those openings. All 100 drills
+`content-age-gate.test.ts` fails on a list of those openings. All 120 drills
 carry at least one, held there by the same test, because a drill without one is
 a drill assuming rugby knowledge. It sits under the coaching points on a drill
 page and inside present mode's `<details>` above make it easier, since the first

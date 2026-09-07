@@ -97,6 +97,7 @@ describe("the filter groups", () => {
       "tackle",
       "breakdown",
       "setpiece",
+      "kicking",
       "gamesense",
     ]);
     expect(ids(".chip-picks")).toEqual(["f-fav", "f-space", "f-ground"]);

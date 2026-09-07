@@ -474,7 +474,39 @@ export const PRESETS: Preset[] = [
       "drill-two-touch-attack",
     ],
   },
+  // ---- Kicking, U11 and U12. The theme that arrives last ----
+  {
+    id: "preset-u11-kicking-night",
+    title: "The boot arrives",
+    ageGroup: "u11",
+    theme: "kicking",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-high-ball-hands",
+      "warmup-two-lap-and-in",
+      "drill-punt-to-your-partner",
+      "drill-grubber-into-space",
+      "drill-take-the-high-ball",
+      "drill-last-play",
+    ],
+  },
+  {
+    id: "preset-u12-kick-and-counter",
+    title: "Kick and counter",
+    ageGroup: "u12",
+    theme: "kicking",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-high-ball-hands",
+      "warmup-three-corner-sprint",
+      "drill-take-the-high-ball",
+      "drill-drop-kick-restart",
+      "drill-kick-or-run",
+      "drill-counter-from-the-catch",
+    ],
+  },
 ];
+
 
 export function findPreset(id: string): Preset | undefined {
   return PRESETS.find((preset) => preset.id === id);

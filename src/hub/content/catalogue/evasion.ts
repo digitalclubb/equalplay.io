@@ -663,4 +663,46 @@ export const EVASION: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "drill-drop-off-touch",
+    title: "Drop off touch",
+    kind: "exercise",
+    themes: ["evasion", "gamesense"],
+    minAge: "u8",
+    minutes: 10,
+    players: { min: 8, max: 20 },
+    space: "30 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. Three attackers coming forward against two defenders, because the one who made the last touch has left the pitch.",
+      space: [20, 30],
+      cones: [[0, 30], [20, 30], [0, 0], [20, 0]],
+      attack: [[6, 20], [10, 21], [14, 20]],
+      defence: [[7, 14], [13, 14]],
+      runs: [[[10, 19.8], [10.5, 15.6]]],
+      ball: [[12.8, 21]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
+    setup: "A pitch with a try line at each end, two even teams, one ball.",
+    howItRuns:
+      "Ordinary touch, with one change. Whoever makes a touch jogs off the side of the pitch and stays off until the ball turns over. So a defence that keeps touching people keeps getting smaller. Six minutes, then reset. It sounds unfair on the defence, which is exactly why it works: the attack starts seeing an extra player free instead of running into whoever is nearest.",
+    coachingPoints: [
+      "Look for the space where somebody has just left",
+      "Move the ball to the free side quickly, before they fill it",
+      "Defenders spread out again the moment one of you goes off",
+    ],
+    progressions: ["Two touches then hand it over", "Touched player has to pass within three seconds"],
+    regressions: ["Defender comes back on after five seconds", "Wider pitch"],
+    faults: [
+      {
+        looks: "The attack running at the same defenders with a gap out wide",
+        say: "Look where the spare man is. Move it that way",
+      },
+      {
+        looks: "Defenders bunched together after two of them have gone off",
+        say: "Spread out. There are fewer of you now, so cover more grass",
+      },
+    ],
+  },
 ];

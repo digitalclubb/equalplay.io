@@ -996,4 +996,215 @@ export const WARMUPS: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "warmup-stuck-in-the-mud",
+    title: "Stuck in the mud",
+    kind: "warmup",
+    themes: ["evasion"],
+    minAge: "u7",
+    minutes: 6,
+    players: { min: 8, max: 24 },
+    space: "20 x 20 m",
+    diagram: {
+      label:
+        "Set up diagram. Two catchers loose in a square with a ball each, chasing five runners. One runner is stood still with their feet apart waiting to be freed.",
+      space: [20, 20],
+      cones: [[0, 0], [20, 0], [0, 20], [20, 20]],
+      attack: [[5, 13], [15, 8]],
+      defence: [[8, 16], [12, 12], [4, 6], [16, 16], [10, 4]],
+      runs: [[[5.9, 13.7], [7.2, 15.2]], [[15, 8.9], [12.6, 11.2]]],
+      ball: [[3.4, 13], [16.6, 8]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
+    setup: "A square with two catchers in it, each carrying a ball. Everybody else is a runner.",
+    howItRuns:
+      "The catchers touch a runner with the ball to stick them. Stuck means feet apart, arms out, no moving. A free runner crawls between their legs to unstick them. Two minutes, then swap the catchers. It is the oldest game in any school playground and it earns its place here because nobody stands about and the ones who get caught still have a job.",
+    coachingPoints: [
+      "Change direction rather than running in a straight line",
+      "Look for someone stuck who nobody is guarding",
+      "Catchers work together. Push them towards each other",
+    ],
+    progressions: [
+      "Three catchers",
+      "Free somebody by passing them a ball instead of crawling through",
+    ],
+    regressions: ["Smaller square", "Stuck for a count of five, then free yourself"],
+    faults: [
+      {
+        looks: "Runners going nowhere near anybody who is stuck",
+        say: "Somebody go and free him. You cannot win this on your own",
+      },
+      {
+        looks: "A catcher throwing the ball at somebody rather than touching them",
+        say: "Keep hold of it. Touch them with it, do not throw it",
+      },
+    ],
+  },
+  {
+    id: "warmup-animal-moves",
+    title: "Animal moves",
+    kind: "warmup",
+    themes: ["evasion"],
+    minAge: "u7",
+    minutes: 6,
+    players: { min: 6, max: 24 },
+    space: "15 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Four lines of players at one end of a ten metre channel with a turning cone ahead of each line.",
+      space: [10, 15],
+      cones: [[1.5, 12], [4, 12], [6.5, 12], [9, 12], [1.5, 3], [4, 3], [6.5, 3], [9, 3]],
+      defence: [[1.5, 13.5], [4, 13.5], [6.5, 13.5], [9, 13.5]],
+      attack: [[1.5, 8], [4, 8], [6.5, 8], [9, 8]],
+      runs: [[[1.5, 6.8], [1.5, 4.4]], [[4, 6.8], [4, 4.4]]],
+    },
+    equipment: [{ item: "cone", qty: 8 }],
+    setup: "Four short lines with a cone ten metres in front of each one. No balls.",
+    howItRuns:
+      "Bear crawl down on hands and feet, jog back. Then crab walk down on your hands and heels with your tummy up. Then frog jumps, landing on two feet and holding it still for a second. Two lengths of each. It looks like messing about and it is the only part of the night where they load their shoulders, their hips and their landing, which is the whole point of the RFU's Activate work at this age.",
+    coachingPoints: [
+      "Bear crawl with your bottom down, not sticking up in the air",
+      "Crab walk with your hips lifted off the grass",
+      "Land your jumps on two feet and freeze. Wobbling means slow down",
+    ],
+    progressions: ["Race the lines against each other", "Crawl sideways as well as forwards"],
+    regressions: ["Five metres instead of ten", "One length of each"],
+    faults: [
+      {
+        looks: "Knees dragging on the grass in the bear crawl",
+        say: "Knees off the floor. Hands and toes only",
+      },
+      {
+        looks: "Landing a frog jump on one foot then hopping to steady up",
+        say: "Two feet at once, then hold still. Smaller jump if you have to",
+      },
+    ],
+  },
+  {
+    id: "warmup-land-on-one",
+    title: "Land on one",
+    kind: "warmup",
+    themes: ["evasion"],
+    minAge: "u9",
+    minutes: 6,
+    players: { min: 6, max: 24 },
+    space: "10 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Four players hopping between a pair of cones each, landing and holding on one foot.",
+      space: [10, 10],
+      cones: [[1.5, 7], [1.5, 3], [4, 7], [4, 3], [6.5, 7], [6.5, 3], [9, 7], [9, 3]],
+      attack: [[1.5, 8.4], [4, 8.4], [6.5, 8.4], [9, 8.4]],
+      runs: [
+        [[1.5, 6.4], [1.5, 3.9]],
+        [[4, 6.4], [4, 3.9]],
+        [[6.5, 6.4], [6.5, 3.9]],
+        [[9, 6.4], [9, 3.9]],
+      ],
+    },
+    equipment: [{ item: "cone", qty: 2, per: "player" }],
+    setup: "A pair of cones each, four metres apart. Everybody has their own pair.",
+    howItRuns:
+      "Hop from one cone to the other on one foot, land, then hold it still for three seconds before you go back. Five each leg. Then the same thing sideways. An ankle or a knee gives way in the second the foot lands, so this is the bit of the warm-up that is actually about staying on the pitch until Christmas. It is quiet and it is boring and it takes four minutes.",
+    coachingPoints: [
+      "Land with a soft knee bent over your toes, never locked straight",
+      "Knee over the middle of your foot, not falling inwards",
+      "Freeze for three. If you have to put the other foot down, hop shorter",
+    ],
+    progressions: ["Land with your eyes shut", "A partner gives you a gentle nudge as you land"],
+    regressions: ["Two metres apart", "Land on two feet and hold that first"],
+    faults: [
+      {
+        looks: "The knee falling inwards towards the other leg as they land",
+        say: "Knee over your toes. Point it where your foot points",
+      },
+      {
+        looks: "Landing stiff legged with a thump you can hear",
+        say: "Bend as you land. Quiet feet, like you are landing on ice",
+      },
+    ],
+  },
+  {
+    id: "warmup-back-to-back-wrestle",
+    title: "Back to back wrestle",
+    kind: "warmup",
+    themes: ["tackle"],
+    minAge: "u9",
+    minutes: 6,
+    players: { min: 6, max: 20 },
+    space: "10 x 10 m",
+    softGround: true,
+    diagram: {
+      label:
+        "Set up diagram. Three pairs sat back to back on the grass, spread out so nobody rolls into anybody else.",
+      space: [10, 10],
+      attack: [[2.5, 7], [7.5, 7], [5, 2.5]],
+      defence: [[2.5, 5.6], [7.5, 5.6], [5, 1.1]],
+    },
+    equipment: [],
+    setup: "Pairs of similar size sat on the grass back to back, legs out in front. Plenty of room between pairs.",
+    howItRuns:
+      "On go they get up onto their knees, turn round and wrestle, trying to get the other one onto their back. Stay on your knees throughout. Twenty seconds, then stop on the whistle whatever is happening. Three rounds. Getting used to somebody else's weight against you is most of what makes a first tackle frightening, so this comes before anything with a run up in it.",
+    coachingPoints: [
+      "Stay on your knees. Nobody stands up",
+      "Get low and get your chest onto them",
+      "Grip clothing or arms. Never a neck, never a head",
+    ],
+    progressions: ["Start lying on your front", "A ball between them to be won rather than a pin"],
+    regressions: ["Ten seconds a round", "Kneel facing each other rather than back to back"],
+    safety:
+      "Match by size, never by age alone. No hands on a head or a neck at any point and stop it instantly if one goes near. Both stay on their knees, so nobody falls from standing. Grass only. Stop the moment somebody says stop.",
+    faults: [
+      {
+        looks: "One of them up on their feet driving down at the other",
+        say: "Back on your knees. Both of you stay down there",
+      },
+      {
+        looks: "An arm going round the head or the neck",
+        say: "Hands off the head. Grab the shirt or the arm",
+      },
+    ],
+  },
+  {
+    id: "warmup-high-ball-hands",
+    title: "High ball hands",
+    kind: "warmup",
+    themes: ["kicking"],
+    minAge: "u11",
+    minutes: 6,
+    players: { min: 4, max: 24 },
+    space: "15 x 10 m",
+    diagram: {
+      label:
+        "Set up diagram. Three pairs a few metres apart, one of each pair throwing the ball high for the other to catch above their head.",
+      space: [10, 15],
+      cones: [[2, 12], [8, 12], [2, 3], [8, 3]],
+      attack: [[2, 11], [8, 11], [5, 5]],
+      defence: [[2, 7], [8, 7], [5, 1.5]],
+      passes: [[[2, 10], [2, 8]], [[8, 10], [8, 8]], [[5, 4], [5, 2.5]]],
+      ball: [[3.5, 11], [9.5, 11], [6.5, 5]],
+    },
+    equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1, per: "pair" }],
+    setup: "Pairs four metres apart, one ball each. Four cones marking the area so they stay spread out.",
+    howItRuns:
+      "Throw it high above your partner's head so they have to reach up for it. Ten each, calling for it every time. Then the same again with a step in to take it at the top rather than waiting for it to drop. Hands above the eyes is not how anybody catches naturally, so it wants doing cold every week rather than discovering it on a Sunday under a kick.",
+    coachingPoints: [
+      "Call it before it comes down. Mine, out loud",
+      "Hands up early with the thumbs nearly touching",
+      "Watch it into your fingers, then pull it down into your chest",
+    ],
+    progressions: ["Take it moving forward onto the ball", "Turn on the call and find it late"],
+    regressions: ["Throw it chest high", "Two hands out in front rather than above the head"],
+    faults: [
+      {
+        looks: "Hands coming up only once the ball has started dropping",
+        say: "Hands up early. Get them there before the ball does",
+      },
+      {
+        looks: "The ball caught into the forearms and squeezed rather than held",
+        say: "Fingers first. Catch it, then bring it in",
+      },
+    ],
+  },
 ];

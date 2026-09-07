@@ -271,6 +271,11 @@ describe("every static page reaches the product", () => {
       "public/rugby-substitution-app/index.html",
       "public/equal-playing-time-calculator/index.html",
       "public/rfu-regulation-15-playing-time/index.html",
+      // Not a page. Match day's cross-sell into the hub states the same
+      // number, and because it lives in TypeScript rather than in `public/`
+      // it sat outside this list saying 100 while the catalogue reached 120.
+      // A coach reads it one tap from the catalogue that contradicts it.
+      "src/components/results.ts",
     ];
     for (const path of TALKS_ABOUT_THE_WHOLE_CATALOGUE) {
       const html = page(path).replace(/\s+/g, " ");
@@ -279,6 +284,18 @@ describe("every static page reaches the product", () => {
       for (const claim of claims) {
         expect(Number(claim.split(" ")[0]), `${path}: "${claim}"`).toBe(DRILLS.length);
       }
+    }
+  });
+
+  it("states the number of ready-made sessions there are", () => {
+    // The per-grade pages are held to `presetsForAge` above. The homepage
+    // states the site-wide total instead, which no test could see: it said 30
+    // while U11 and U12 each gained a kicking session.
+    const html = page("index.html").replace(/\s+/g, " ");
+    const claims = html.match(/\b\d+ ready-made sessions\b/g) ?? [];
+    expect(claims.length, "the homepage states no session count").toBeGreaterThan(0);
+    for (const claim of claims) {
+      expect(Number(claim.split(" ")[0]), `index.html: "${claim}"`).toBe(PRESETS.length);
     }
   });
 

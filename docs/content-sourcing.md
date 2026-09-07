@@ -138,11 +138,11 @@ words, which is to say it is the ordinary shape of a Tuesday.
 
 One session per theme per age grade, so a coach who opens the planner at U10 finds a
 rucking night, a scrum night, a tackle night, a handling night, a beat-your-man night
-and a match week. `sessionPlan.test.ts` builds all thirty into real plans and fails if
-any of them raises a single warning.
+and a match week. `sessionPlan.test.ts` builds every one of them into a real plan and
+fails if any raises a single warning.
 
 Ages move at the pace of the regulation, not our own: the tag grades get games and
-hands, tackling appears at U9, ruck and scrum at U10. There is no lineout at any
+hands, tackling appears at U9, ruck and scrum at U10, kicking at U11. There is no lineout at any
 grade covered here, because Reg 15 does not bring one in until U14.
 
 ## Where things live
@@ -160,4 +160,5 @@ src/hub/content/
     tackle.ts           U9 and up
     breakdown.ts        ruck and maul, U10 and up
     setpiece.ts         scrum U10 and up, plus the restarts around it
+    kicking.ts          kicking and catching, U11 and up
 ```

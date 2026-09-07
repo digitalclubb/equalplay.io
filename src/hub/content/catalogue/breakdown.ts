@@ -578,4 +578,47 @@ export const BREAKDOWN: Drill[] = [
       },
     ],
   },
+  // ---- Added later, filling the grades that were thin ----
+  {
+    id: "drill-turn-the-turtle",
+    title: "Turn the turtle",
+    kind: "exercise",
+    themes: ["breakdown"],
+    minAge: "u10",
+    minutes: 8,
+    players: { min: 6, max: 20 },
+    space: "10 x 10 m",
+    softGround: true,
+    diagram: {
+      label:
+        "Set up diagram. Two pairs on the grass, one of each curled over a ball while the other works to shift them off it.",
+      space: [10, 10],
+      attack: [[3, 7], [7, 3]],
+      defence: [[4.8, 7], [8.8, 3]],
+      ball: [[3, 5.5], [7, 1.5]],
+    },
+    equipment: [{ item: "ball", qty: 1, per: "pair" }],
+    setup: "Pairs of similar size, one on all fours curled over a ball, the other kneeling beside them.",
+    howItRuns:
+      "On go, the one on their knees has five seconds to shift the turtle off the ball. Get low, get underneath, lift and turn rather than pulling. The turtle keeps their elbows in and their knees under them. Five goes each, then swap. Nobody stands up in this one. It is the shape of a clear out with none of the running, which is the half that goes wrong first at U10.",
+    coachingPoints: [
+      "Get lower than them. You cannot lift what you are above",
+      "Shoulder into their side, both arms round, then drive",
+      "Turtle keeps elbows tucked in and knees underneath",
+    ],
+    progressions: ["Start from lying on your front", "Turtle holds a ball in both arms rather than under them"],
+    regressions: ["Turtle offers no resistance", "Three seconds instead of five"],
+    safety:
+      "Both stay on their knees so nobody falls from standing. No hands on a head or a neck at any point. Nobody gets rolled onto their neck or their shoulder. Match by size. Grass only, so stop the moment either of them says stop.",
+    faults: [
+      {
+        looks: "The worker pulling at a shirt from above with straight arms",
+        say: "Get underneath. Shoulder in first, then drive up",
+      },
+      {
+        looks: "The turtle flat on their front with their legs out behind",
+        say: "Knees under you. Stay in a ball, do not lie down",
+      },
+    ],
+  },
 ];
