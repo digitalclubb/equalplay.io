@@ -3,7 +3,8 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 7 September 2026, after the drill catalogue went out to search. See `docs/one-product.md` for the one-product change that preceded it
+Last updated 7 September 2026, after the drill catalogue went out to search and
+the session planner learned about carousels. See `docs/one-product.md` for the one-product change that preceded it
 and which of its phases are built.
 
 ## Blocking: run `0004` before the next deploy
@@ -111,6 +112,18 @@ Local-first like the stars, so the button works at a pitch. Needs `0004` run
 against the live project before a second device sees any of it. Stores nothing
 about a child: a row is a date, a title and a list of themes.
 
+**Carousels.** A block can hold stations that run at the same time, one coach on
+each, with the groups moving round. That is the Sunday shape: twenty children
+and four parents helping is four groups of five rather than twenty children
+queueing for a turn. Built in the editor by adding stations to a block, so it is
+one item in the running order however many drills are in it. The arithmetic
+follows: minutes are per station, the block's length is minutes times stations,
+and the kit is added up across the stations because they are all on the grass at
+once. Present mode becomes the rotation caller's board, saying which group is at
+which station, because in a carousel the coach stays and the children move. The
+helpers get the print sheet, one section per station, or the share link, which
+renders every station in full. See `CLAUDE.md` for the rest.
+
 **Present mode.** `#/plan/<id>/run/<n>`. One block at a time at arm's length,
 coaching points big, minutes counting down, the screen held awake. The block is
 in the URL so a phone that locks comes back to the drill being run. Overrunning
@@ -146,7 +159,11 @@ to reach the whole list.
 **The offline promise, said out loud.** The Account page says whether the app is
 saved on the device and offers the home screen install where a browser gives one.
 
-**The drills are indexed.** The catalogue was the best thing here and a search
+**The drills are indexed.** Sitemap submitted to Search Console on 7 September
+2026, so the 150 new URLs plus the seven rules pages from 27 August are finally
+in front of a crawler.
+
+ The catalogue was the best thing here and a search
 engine could not read a word of it: the hub is `noindex` and a hash route is one
 URL to a crawler however many drills sit behind it. So every drill is published
 as its own page at `/rugby-drill-<name>`, gathered by a page per theme per grade
@@ -242,12 +259,10 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **Ask Search Console to fetch the sitemap again.** The drill cluster is 150
-   new URLs plus the seven rules pages that went in on 27 August and were never
-   submitted. The drills cluster took months to get crawled the first time
-   because nobody told Google it existed, which is the mistake worth not
-   repeating. Deploy first: the sitemap is emitted at build, so the live one is
-   the old twenty until then.
+1. **Carousel presets.** The 32 ready-made sessions are all one drill at a time.
+   A coach with four helpers has nothing to start from, so the first carousel is
+   built from scratch every time. One per grade would fix it and it is content
+   work rather than code.
 2. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.

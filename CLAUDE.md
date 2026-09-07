@@ -82,13 +82,13 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-723 unit and integration tests across 23 files, 177 Playwright tests. Most are ordinary.
+735 unit and integration tests across 23 files, 182 Playwright tests. Most are ordinary.
 These twelve are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
 | `content-age-gate.test.ts` | A ruck drill can never reach a U8 coach. Theme floors, maxAge, presets, favourites, search, plus the one exception a shared link makes and the warning that pays for it |
-| `sessionPlan.test.ts` | Plan arithmetic, the kit list, water breaks, block indexes addressing `plan.blocks` |
+| `sessionPlan.test.ts` | Plan arithmetic, the kit list, water breaks, block indexes addressing `plan.blocks`. A carousel's length against its stations, its kit added up rather than reused, the age gate on every station rather than the first |
 | `plans.test.ts` | Persistence with the server mocked off. Offline creates, offline deletes staying deleted |
 | `copy-style.test.ts` | House style across drills, interface and pages. Em dashes, commas before "and", Americanisms, a ban list |
 | `catalogue-view.test.ts` | Filter state above `filterDrills` cannot defeat the age gate, signed in or out |
@@ -105,7 +105,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 177 tests across four files: `matchday` (15), `home` (11), `hub` (121)
+`pnpm test:e2e` is 182 tests across four files: `matchday` (15), `home` (11), `hub` (126)
 and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -561,6 +561,56 @@ flight when present mode is left releases what it is handed rather than keeping
 it. Only that abandoned case asks again, because Chrome refuses outright
 under battery saver, so retrying on every settle spun rejected requests for the
 length of the session.
+
+**A carousel is one block, not four.** Twenty children and four parents helping
+is four groups of five rotating round four stations, which is what a Sunday
+actually looks like. It is modelled as `alongside` on `PlanBlock`, a list of the
+drills running beside the block's own: the block's `drillId` is station one, so
+a plan saved before any of this existed still loads and still reads correctly.
+One block is also the truth of it, because a carousel is one item in the running
+order however many drills are inside it. Reordering moves the lot and removing
+takes the lot, with no adjacency or numbering to keep straight.
+
+**Minutes on a carousel are per station.** That is the number a coach decides,
+because it is the thing they call. The block's real length is `blockMinutes`,
+minutes times stations, since a group that has not been to every station has not
+done the block. Four stations of eight minutes is thirty-two minutes of pitch
+time. Counting it as eight is how a plan that looks like an hour turns out to be
+two. Everything that spends a block's time uses `blockMinutes`: the
+budget, the water break's halfway point, the shape drawn on a session card.
+
+**Kit inside a carousel is added up, not reused.** `mergeKit` keeps the largest
+requirement across blocks, which is right when one follows another and the same
+eight cones go back out. Stations are the opposite: four of them are on the
+grass at once, so `sumKit` adds them first and hands the total to the merge. A
+coach who packed for the biggest station turns up three sets short with twenty
+children waiting. Each station's own list is collapsed before the addition, so a
+drill naming cones twice still wants the larger of the two.
+
+**Every station passes the age gate, not only the first.** A carousel is a new
+route a drill can take to a screen, so `planTotals` checks each one and the
+editor's add checks again in the handler rather than trusting the filtered list.
+A ruck drill reaching an U8 through station three is the same failure as it
+reaching them through the catalogue. `sessionPlan.test.ts` pins it.
+
+**In a carousel the coach stays and the children move.** So present mode is not
+four drills a coach steps through, it is one screen for whoever is calling the
+rotations. The one thing they cannot hold in their head is which group is at
+which station. `#/plan/<id>/run/<n>/<r>` carries the rotation the way `<n>`
+carries the block, so a phone that locks comes back to the rotation being run.
+Station `s` holds group `((s - r) mod n) + 1`. Each station is a disclosure over
+its own setup, diagram and points, shut by default, because a board you can read
+from arm's length beats four drills printed down a phone. Rotations are not
+advanced by the clock running out: overrunning counts up and says so, the same
+as every other block. One person calls the move.
+
+**The other three coaches get paper or a link.** They have no account and never
+will, so nothing here assumes they do. The print sheet gives a carousel one
+section per station, which is what gets handed to the parents who turned up.
+The share link renders every station in full, setup, diagram, coaching points
+and faults, because somebody handed a link is the person least likely to know
+the drill. There is no second present mode for them: a clock on four phones
+that started at different moments is worse than one person with a whistle.
 
 **A drill can go into a session from the drill page.** The planner's own search
 used to be the only way in, which meant reading a drill, remembering the title,

@@ -2347,3 +2347,128 @@ test("the session picker finds sessions that are only on the server", async ({ p
   await expect(page.locator(".drill-add")).toContainText("Nothing saved yet", { timeout: 10_000 });
   expect(saved).not.toBeNull();
 });
+
+/**
+ * Carousels. Four stations at once, one coach on each, the groups moving round.
+ *
+ * This is the Sunday shape rather than the Tuesday one: twenty children and four
+ * parents helping is four groups of five, not twenty children queueing. The
+ * arithmetic is the part that goes wrong quietly, so the budget is checked as
+ * well as the markup.
+ */
+
+/** Open the preset session in the editor, which is where a carousel is built. */
+async function editingRucking(page: Page) {
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+}
+
+/** Put the add panel into station mode for a block, then add the first match. */
+async function addStation(page: Page, block: number) {
+  const already = await page.locator(".station-line").count();
+  await page.locator(`[data-addstation="${block}"]`).first().click();
+  await expect(page.locator(".add-station-head")).toBeVisible();
+  const first = page.locator(".add-row").first();
+  const id = await first.getAttribute("data-peek");
+  await first.click();
+  await page.locator(`[data-add="${id}"]`).click();
+  // The row list grows by one, which is what says the add landed
+  await expect(page.locator(".station-line")).toHaveCount(already === 0 ? 2 : already + 1);
+}
+
+test("a block becomes a carousel by adding a station to it", async ({ page }) => {
+  await editingRucking(page);
+  const planned = async () =>
+    Number((await page.locator(".budget-text").innerText()).match(/(\d+) min/)?.[1]);
+
+  const before = await planned();
+  const minutes = Number(await page.locator('[data-minutes="0"]').inputValue());
+
+  await addStation(page, 0);
+
+  // Two stations of the same length is twice the pitch time. A carousel counted
+  // as one station is how an hour's plan turns into two hours on the grass.
+  expect(await planned()).toBe(before + minutes);
+  await expect(page.locator(".carousel-badge")).toHaveCount(1);
+  await expect(page.locator(".block-row.is-carousel")).toHaveCount(1);
+  await expect(page.locator(".carousel-head")).toContainText("2 stations, 2 groups");
+
+  // The panel stays in station mode, because building one means adding three or
+  // four in a row rather than going back to the block between each
+  await expect(page.locator(".add-station-head")).toBeVisible();
+  await addStation(page, 0);
+  await expect(page.locator(".carousel-head")).toContainText("3 stations, 3 groups");
+  expect(await planned()).toBe(before + minutes * 2);
+
+  // The minutes stepper is now per station, and says so
+  await expect(page.locator(".block-minutes-note")).toHaveText("each");
+});
+
+test("taking the last station off makes it an ordinary block again", async ({ page }) => {
+  await editingRucking(page);
+  await addStation(page, 0);
+  await expect(page.locator(".station-line")).toHaveCount(2);
+
+  await page.locator("[data-dropstation]").last().click();
+  // A carousel of one is a drill, so the badge goes with the second station
+  await expect(page.locator(".station-line")).toHaveCount(0);
+  await expect(page.locator(".carousel-badge")).toHaveCount(0);
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
+});
+
+test("a carousel reads as its stations, not as one drill", async ({ page }) => {
+  await editingRucking(page);
+  await addStation(page, 0);
+  await page.locator(".hub-btn-done").first().click();
+
+  const carousel = page.locator(".run-block.is-carousel");
+  await expect(carousel).toHaveCount(1);
+  await expect(carousel.locator(".run-station")).toHaveCount(2);
+  // Every station carries its own setup and its own points, because a helper
+  // coach reading this is running one station rather than the session
+  await expect(carousel.locator(".run-station .run-block-setup")).toHaveCount(2);
+  await expect(carousel.locator(".run-station .run-points")).toHaveCount(2);
+  await expect(carousel).toContainText("Carousel, 2 stations");
+});
+
+test("present mode says which group is at which station", async ({ page }) => {
+  await editingRucking(page);
+  await addStation(page, 0);
+  await addStation(page, 0);
+  await page.goto("/hub/#/plan/" + (await page.evaluate(() => location.hash.split("/")[2])) + "/run/0");
+
+  await expect(page.locator(".run-stage-title")).toHaveText("Carousel");
+  await expect(page.locator(".run-stage-meta")).toContainText("Rotation 1 of 3");
+
+  const groups = page.locator(".run-board-group");
+  await expect(groups).toHaveCount(3);
+  // Everybody starts where they start. Station one has group one.
+  await expect(groups.nth(0)).toHaveText("Group 1");
+  await expect(groups.nth(1)).toHaveText("Group 2");
+
+  await page.locator(".run-stage-next").click();
+  await expect(page.locator(".run-stage-meta")).toContainText("Rotation 2 of 3");
+  // Groups move on one station, so station one now holds the group that was at
+  // the last one. This is the thing nobody can hold in their head.
+  await expect(page.locator(".run-board-group").nth(0)).toHaveText("Group 3");
+  await expect(page.locator(".run-board-group").nth(1)).toHaveText("Group 1");
+
+  // The rotation is in the address, so a phone that locks comes back to the
+  // rotation being run rather than the start of the block
+  expect(page.url()).toContain("/run/0/1");
+});
+
+test("the last rotation hands on to the next block", async ({ page }) => {
+  await editingRucking(page);
+  await addStation(page, 0);
+  const id = await page.evaluate(() => location.hash.split("/")[2]);
+  await page.goto(`/hub/#/plan/${id}/run/0/1`);
+
+  await expect(page.locator(".run-stage-meta")).toContainText("Rotation 2 of 2");
+  await expect(page.locator(".run-board-note")).toContainText("Last one");
+  await page.locator(".run-stage-next").click();
+  // Off the carousel and on to block two, rather than a third rotation
+  expect(page.url()).toContain("/run/1");
+  await expect(page.locator(".run-stage-title")).not.toHaveText("Carousel");
+});

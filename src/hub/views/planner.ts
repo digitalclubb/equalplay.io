@@ -35,9 +35,12 @@ import {
   type StoredPlan,
 } from "../plans.js";
 import {
+  blockMinutes,
+  isCarousel,
   moveBlock,
   planDrills,
   planTotals,
+  stationIds,
   themeCoverage,
   withWaterBreak,
   type PlanBlock,
@@ -87,6 +90,16 @@ let addSmallSpace = false;
 let addHardGround = false;
 /** Which drill in the add list is expanded for a look before committing to it. */
 let previewing: string | null = null;
+/**
+ * The block the add panel is filling a station into, or null while it is adding
+ * a new block to the end of the session.
+ *
+ * A mode rather than a second panel. The add list is the same list filtered the
+ * same way against the same grade, in an 18rem side pane with no room for two of
+ * them. What changes is the heading, the button on each drill and where the
+ * chosen drill lands.
+ */
+let addingStationTo: number | null = null;
 let starred: Set<string> = new Set();
 /**
  * Which disclosures the coach has opened, keyed by what they are. The editor
@@ -423,7 +436,10 @@ function planShape(blocks: PlanBlock[]): string {
   for (const block of blocks) {
     const drill = findDrill(block.drillId);
     if (!drill) continue;
-    parts.push(segment(drill.kind === "warmup" ? " shape-warmup" : "", block.minutes));
+    // The block's whole length rather than one station's, so a carousel takes
+    // the width of the half hour it actually eats. Its kind comes off the first
+    // station, which is what the rest of the interface calls the block too.
+    parts.push(segment(drill.kind === "warmup" ? " shape-warmup" : "", blockMinutes(block)));
     if (block.breakAfter) parts.push(segment(" shape-break", block.breakAfter));
   }
   // An empty session has no shape. One full width bar would say it had a drill in it
@@ -717,8 +733,12 @@ interface RunClock {
  * Keyed rather than replaced because Next is a big primary button on a wet
  * screen. Tapping it by mistake and coming back used to hand the block a full
  * fresh ten minutes when eight of them had gone.
+ *
+ * A carousel keys its rotations separately, because each one is its own eight
+ * minutes. Going back to check what station three is doing must not hand
+ * rotation two the time rotation one had already used.
  */
-const runClocks = new Map<number, RunClock>();
+const runClocks = new Map<string, RunClock>();
 let runPlanId = "";
 let runClock: RunClock | null = null;
 let runTimer: ReturnType<typeof setInterval> | undefined;
@@ -840,7 +860,7 @@ function paintClock(container: HTMLElement): void {
 function startRunClock(
   container: HTMLElement,
   planId: string,
-  index: number,
+  key: string,
   drillId: string,
   minutes: number,
 ): void {
@@ -850,10 +870,10 @@ function startRunClock(
     runClocks.clear();
     runPlanId = planId;
   }
-  let clock = runClocks.get(index);
+  let clock = runClocks.get(key);
   if (!clock || clock.drillId !== drillId || clock.minutes !== minutes) {
     clock = { endsAt: Date.now() + minutes * 60_000, pausedAt: null, drillId, minutes };
-    runClocks.set(index, clock);
+    runClocks.set(key, clock);
   }
   runClock = clock;
 
@@ -906,6 +926,8 @@ export function renderPlanRun(
   ctx: PlannerContext,
   planId: string,
   step: number,
+  /** Which time round a carousel. Zero for a block that is one drill. */
+  turn = 0,
 ): void {
   const found = localPlans(ctx.userId).find((p) => p.id === planId);
   if (!found) {
@@ -916,7 +938,7 @@ export function renderPlanRun(
       // coach hit Back would paint the stage over it and restart both the timer
       // and the wake lock that leaving had just switched off.
       if (!stillRunning(planId)) return;
-      if (plans.some((p) => p.id === planId)) renderPlanRun(container, ctx, planId, step);
+      if (plans.some((p) => p.id === planId)) renderPlanRun(container, ctx, planId, step, turn);
       else {
         showToast("Can't find that session.");
         go("plans");
@@ -938,12 +960,26 @@ export function renderPlanRun(
     Math.max(0, Number.isFinite(step) ? Math.trunc(step) : 0),
     blocks.length - 1,
   );
+  const { block, drill, stations } = blocks[index];
+  const next = blocks[index + 1];
+  const carousel = isCarousel(block);
+  const turns = stationIds(block).length;
+  // Same treatment as the block number. A carousel that lost a station leaves
+  // links to a rotation it no longer has. A plain block has one rotation
+  // however many the address claims.
+  const rotation = carousel
+    ? Math.min(Math.max(0, Number.isFinite(turn) ? Math.trunc(turn) : 0), turns - 1)
+    : 0;
+
+  /** Where this block sits, rotation included once there is more than one. */
+  const at = (block: number, spin = 0): string =>
+    `#/plan/${esc(plan.id)}/run/${block}${spin > 0 ? `/${spin}` : ""}`;
+
   // Replaced rather than pushed. A typed or stale block number should correct
   // itself without leaving a step in history that bounces the coach forwards.
-  if (index !== step) history.replaceState(null, "", `#/plan/${planId}/run/${index}`);
-
-  const { block, drill } = blocks[index];
-  const next = blocks[index + 1];
+  if (index !== step || rotation !== turn) {
+    history.replaceState(null, "", `#/plan/${planId}/run/${index}${rotation > 0 ? `/${rotation}` : ""}`);
+  }
 
   // Errors only. This is the view a coach is holding while it happens, so a
   // block their grade is not allowed to run has to say so here as well. It is
@@ -964,8 +1000,12 @@ export function renderPlanRun(
 
       ${warningList(problems)}
 
-      <h2 class="run-stage-title">${esc(drill.title)}</h2>
-      <p class="run-stage-meta">${block.minutes} min &middot; ${esc(drill.space)} &middot; ${playersLabel(drill)}</p>
+      <h2 class="run-stage-title">${carousel ? `Carousel` : esc(drill.title)}</h2>
+      <p class="run-stage-meta">${
+        carousel
+          ? `Rotation ${rotation + 1} of ${turns} &middot; ${block.minutes} min at each station`
+          : `${block.minutes} min &middot; ${esc(drill.space)} &middot; ${playersLabel(drill)}`
+      }</p>
 
       <div class="run-clock">
         <p class="run-clock-time" id="run-time" role="timer" aria-live="off" data-over="false"></p>
@@ -976,10 +1016,54 @@ export function renderPlanRun(
       </div>
 
       ${
-        drill.safety
-          ? `<p class="run-stage-safety"><strong>Safety.</strong> ${esc(drill.safety)}</p>`
-          : ""
-      }
+        carousel
+          ? // The board. Whoever is calling the rotations is the one holding
+            // this. The thing they cannot hold in their head is which group is
+            // where. Each station opens for its own detail, shut by default so
+            // the board stays readable from arm's length.
+            `<ol class="run-board">
+              ${stations
+                .map((station, spot) => {
+                  const group = ((((spot - rotation) % turns) + turns) % turns) + 1;
+                  const keep = `board:${index}:${spot}`;
+                  return `
+                  <li>
+                    <details class="run-board-station" data-keep="${esc(keep)}"${openDetails.has(keep) ? " open" : ""}>
+                      <summary>
+                        <span class="station-number" aria-hidden="true">${spot + 1}</span>
+                        <span class="run-board-title">${esc(station.title)}</span>
+                        <span class="run-board-group">Group ${group}</span>
+                      </summary>
+                      <div class="run-board-body">
+                        ${
+                          station.safety
+                            ? `<p class="run-stage-safety"><strong>Safety.</strong> ${esc(station.safety)}</p>`
+                            : ""
+                        }
+                        <p class="run-stage-setup">${esc(station.setup)}</p>
+                        ${station.diagram ? `<div class="run-stage-figure">${renderSequence(station.diagram)}</div>` : ""}
+                        <ul class="run-stage-points">${station.coachingPoints
+                          .map((point) => `<li>${esc(point)}</li>`)
+                          .join("")}</ul>
+                        ${runStageMore(station, `boardmore:${index}:${spot}`)}
+                      </div>
+                    </details>
+                  </li>`;
+                })
+                .join("")}
+            </ol>
+            <p class="run-board-note">
+              ${
+                rotation + 1 < turns
+                  ? `When the clock goes, everybody moves on one. ${turns - rotation - 1} to go after this.`
+                  : `Last one. After this everybody has done every station.`
+              }
+            </p>`
+          : `${
+              drill.safety
+                ? `<p class="run-stage-safety"><strong>Safety.</strong> ${esc(drill.safety)}</p>`
+                : ""
+            }
 
       ${
         // What a coach needs in the first minute of a block, which is where the
@@ -996,7 +1080,8 @@ export function renderPlanRun(
         .map((point) => `<li>${esc(point)}</li>`)
         .join("")}</ul>
 
-      ${runStageMore(drill)}
+      ${runStageMore(drill)}`
+      }
 
       ${
         block.breakAfter
@@ -1006,22 +1091,42 @@ export function renderPlanRun(
 
       <nav class="run-stage-steps" aria-label="Through the session">
         ${
-          index > 0
-            ? `<a class="hub-btn" href="#/plan/${esc(plan.id)}/run/${index - 1}">Back</a>`
-            : `<a class="hub-btn" href="#/plan/${esc(plan.id)}">Back</a>`
+          // Back inside a carousel is the rotation before this one. Stepping
+          // straight out of a block halfway through it would lose whichever
+          // rotation the squad is actually on.
+          rotation > 0
+            ? `<a class="hub-btn" href="${at(index, rotation - 1)}">Back</a>`
+            : index > 0
+              ? `<a class="hub-btn" href="${at(index - 1)}">Back</a>`
+              : `<a class="hub-btn" href="#/plan/${esc(plan.id)}">Back</a>`
         }
         ${
-          next
-            ? `<a class="hub-btn hub-btn-primary run-stage-next" href="#/plan/${esc(plan.id)}/run/${index + 1}">
-                 <span class="run-stage-next-label">Next</span>
-                 <span class="run-stage-next-drill">${esc(next.drill.title)}</span>
+          // The rotation is the next thing to happen while there is one left,
+          // so it takes the primary button rather than sitting under Next as a
+          // second way forward. It names what changes, because "Next" on a
+          // screen whose drills all stay put says nothing.
+          rotation + 1 < turns
+            ? `<a class="hub-btn hub-btn-primary run-stage-next" href="${at(index, rotation + 1)}">
+                 <span class="run-stage-next-label">Move on</span>
+                 <span class="run-stage-next-drill">Rotation ${rotation + 2} of ${turns}</span>
                </a>`
-            : `<a class="hub-btn hub-btn-primary" href="#/plan/${esc(plan.id)}">That's the session</a>`
+            : next
+              ? `<a class="hub-btn hub-btn-primary run-stage-next" href="${at(index + 1)}">
+                   <span class="run-stage-next-label">Next</span>
+                   <span class="run-stage-next-drill">${esc(
+                     isCarousel(next.block) ? `Carousel, ${stationIds(next.block).length} stations` : next.drill.title,
+                   )}</span>
+                 </a>`
+              : `<a class="hub-btn hub-btn-primary" href="#/plan/${esc(plan.id)}">That's the session</a>`
         }
       </nav>
     </section>`;
 
-  startRunClock(container, planId, index, drill.id, block.minutes);
+  // Keyed on the rotation as well as the block, so each time round gets its own
+  // minutes. `drill.id` is the block's lead station, which is stable across the
+  // rotations of one carousel and changes the moment the block does.
+  const clockKey = `${index}:${rotation}`;
+  startRunClock(container, planId, clockKey, drill.id, block.minutes);
 
   const pause = container.querySelector<HTMLButtonElement>("#run-pause");
 
@@ -1051,10 +1156,14 @@ export function renderPlanRun(
   });
 
   container.querySelector("#run-reset")?.addEventListener("click", () => {
-    runClocks.delete(index);
-    startRunClock(container, planId, index, drill.id, block.minutes);
+    runClocks.delete(clockKey);
+    startRunClock(container, planId, clockKey, drill.id, block.minutes);
     paintPause();
   });
+
+  // The board's stations are disclosures like every other one in the hub, so a
+  // coach who opened station three to read it keeps it open through a repaint.
+  keepDetailsOpen(container);
 
   // The plan route keeps whatever sheet the last view built. Print hides
   // `#hub-view`, so without this a Ctrl+P from present mode after a reload
@@ -1313,7 +1422,9 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
     </section>`;
   }
 
-  const themes = [...new Set(blocks.flatMap((resolved) => resolved.drill.themes))];
+  // Every station, not only the lead. A carousel is four drills that ran, so a
+  // night of four themes must not be logged as one.
+  const themes = [...new Set(blocks.flatMap((resolved) => resolved.stations.flatMap((d) => d.themes)))];
   return `<section class="hub-panel ran-it">
     <p>Ran this tonight? It goes towards what you have covered, so the app can tell
     you what you have not.</p>
@@ -1323,31 +1434,19 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
   </section>`;
 }
 
-function runBlock(resolved: ResolvedBlock, position: number, planId?: string): string {
-  const { block, drill } = resolved;
-  // Keyed by where the block sits rather than by which drill it holds. A
-  // session can hold the same drill twice. Two blocks sharing a key meant
-  // opening one of them opened the other on the next redraw.
-  const keep = (kind: string): string => `${kind}:${position}`;
+/**
+ * One drill inside a block, at reading size.
+ *
+ * Written once and used for a plain block and for every station of a carousel,
+ * so a station is never a thinner version of a block. A helper coach handed a
+ * link is the person least likely to know the drill. The station they are about
+ * to run is all they are reading.
+ *
+ * The way to the full drill page is the title above this rather than a link
+ * inside it, the same as the editor's rows already do it.
+ */
+function runDrill(drill: Drill, keep: (kind: string) => string): string {
   return `
-    <article class="hub-panel run-block">
-      <div class="run-block-head">
-        <span class="run-number">${position + 1}</span>
-        <div class="run-block-titles">
-          <h3>${
-            // The way back to the whole drill: its kit, its space, the star.
-            // The disclosure below answers how this one goes, which is not the
-            // same question. A shared session has no plan id and so gets no
-            // link, because its reader has no session of their own to come
-            // back to and no business being handed a route into the catalogue.
-            planId
-              ? `<a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>`
-              : esc(drill.title)
-          } ${kindPill(drill)}</h3>
-          <p class="run-block-meta">${block.minutes} min · ${esc(drill.space)} · ${playersLabel(drill)}</p>
-        </div>
-      </div>
-
       ${
         drill.safety
           ? `<details class="block-safety-details" data-keep="${keep("safety")}"${openDetails.has(keep("safety")) ? " open" : ""}>
@@ -1376,7 +1475,78 @@ function runBlock(resolved: ResolvedBlock, position: number, planId?: string): s
         // previously unreachable by any route: a coach handed a link is the one
         // least likely to already know the drill.
         runStageMore(drill, keep("more"))
-      }
+      }`;
+}
+
+function runBlock(resolved: ResolvedBlock, position: number, planId?: string): string {
+  const { block, drill, stations } = resolved;
+  // Keyed by where the block sits rather than by which drill it holds. A
+  // session can hold the same drill twice. Two blocks sharing a key meant
+  // opening one of them opened the other on the next redraw.
+  const keep = (kind: string): string => `${kind}:${position}`;
+  const carousel = isCarousel(block);
+  const count = stationIds(block).length;
+
+  const head = `
+      <div class="run-block-head">
+        <span class="run-number">${position + 1}</span>
+        <div class="run-block-titles">
+          <h3>${
+            carousel
+              ? `Carousel, ${count} stations`
+              : // The way back to the whole drill: its kit, its space, the star.
+                // The disclosure below answers how this one goes, which is not
+                // the same question. A shared session has no plan id and so gets
+                // no link, because its reader has no session of their own to
+                // come back to and no business being handed a route into the
+                // catalogue.
+                `${
+                  planId
+                    ? `<a href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>`
+                    : esc(drill.title)
+                } ${kindPill(drill)}`
+          }</h3>
+          <p class="run-block-meta">${
+            carousel
+              ? `${blockMinutes(block)} min &middot; ${block.minutes} min at each &middot; ${count} groups`
+              : `${block.minutes} min &middot; ${esc(drill.space)} &middot; ${playersLabel(drill)}`
+          }</p>
+        </div>
+      </div>`;
+
+  const body = carousel
+    ? `${head}
+      <p class="carousel-note">
+        Split the squad into ${count}. Each group starts at a station, does
+        ${block.minutes} minutes there, then they all move round. After ${count} goes
+        everybody has done everything.
+      </p>
+      <ol class="run-stations">
+        ${stations
+          .map(
+            (station, at) => `
+          <li class="run-station">
+            <div class="run-station-head">
+              <span class="station-number" aria-hidden="true">${at + 1}</span>
+              <div>
+                <h4>${
+                  planId
+                    ? `<a href="#/catalogue/${esc(station.id)}/from/${esc(planId)}">${esc(station.title)}</a>`
+                    : esc(station.title)
+                } ${kindPill(station)}</h4>
+                <p class="run-block-meta">${esc(station.space)} &middot; ${playersLabel(station)}</p>
+              </div>
+            </div>
+            ${runDrill(station, (kind) => `${kind}:${position}:${at}`)}
+          </li>`,
+          )
+          .join("")}
+      </ol>`
+    : `${head}${runDrill(drill, keep)}`;
+
+  return `
+    <article class="hub-panel run-block${carousel ? " is-carousel" : ""}">
+      ${body}
     </article>
     ${
       block.breakAfter
@@ -1431,6 +1601,10 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
   // from a higher grade has no chip left to switch it off. It is dropped instead
   // of stranding the add panel on an empty list with nothing lit.
   if (addTheme && !ageAtLeast(plan.ageGroup, THEME_MIN_AGE[addTheme])) addTheme = undefined;
+
+  // The block being filled can be removed while the panel is open. The add
+  // would then land on whichever block inherited the index. Dropped instead.
+  if (addingStationTo !== null && !plan.blocks[addingStationTo]) addingStationTo = null;
 
   // Replacing innerHTML drops the page back to the top. On a phone the add panel
   // sits a long way down, so every keystroke and every expand threw the coach back
@@ -1495,9 +1669,7 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
         blocks.length === 0
           ? '<p class="hub-fineprint">Empty so far. Add a drill below.</p>'
           : blocks
-              .map(({ block, drill, index }, position) =>
-                blockRow(block, drill, index, position, blocks.length, plan.id),
-              )
+              .map((resolved, position) => blockRow(resolved, position, blocks.length, plan.id))
               .join("")
       }
       ${
@@ -1509,8 +1681,19 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
     </div>
 
     <div class="plan-side">
-    <section class="hub-panel">
-      <h2>Add a drill</h2>
+    <section class="hub-panel${addingStationTo !== null ? " is-adding-station" : ""}">
+      ${
+        addingStationTo === null
+          ? `<h2>Add a drill</h2>`
+          : `<div class="add-station-head">
+               <h2>Add a station</h2>
+               <p class="hub-fineprint">
+                 Going beside block ${addingStationTo + 1}, running at the same time with its
+                 own coach. Keep adding for as many stations as you have grown-ups.
+               </p>
+               <button type="button" class="hub-btn hub-btn-done" id="cancel-station">Done adding</button>
+             </div>`
+      }
       <div class="hub-field">
         <label for="add-search" class="visually-hidden">Search ${esc(AGE_GROUP_LABELS[plan.ageGroup])} drills</label>
         <input id="add-search" type="search" value="${esc(addSearch)}" placeholder="Search ${esc(AGE_GROUP_LABELS[plan.ageGroup])} drills…" />
@@ -1595,18 +1778,69 @@ function warningList(totals: PlanTotals): string {
  * match when every block resolves to a drill, so the controls use index and the
  * up/down disabling uses position.
  */
-function blockRow(
-  block: PlanBlock,
+/**
+ * One station's own line inside a carousel row.
+ *
+ * The number is the station, which is what a coach shouts. Removing the first
+ * station is allowed: the one below it becomes the first. A carousel worn down
+ * to a single station is a plain block again, which is what it now is.
+ */
+function stationLine(
   drill: Drill,
-  index: number,
+  blockIndex: number,
+  at: number,
+  planId: string,
+  removable: boolean,
+): string {
+  const keep = `safety:${blockIndex}:${at}`;
+  return `
+    <li class="station-line">
+      <span class="station-number" aria-hidden="true">${at + 1}</span>
+      <div class="station-body">
+        <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>
+        <p class="block-meta">${kindPill(drill)} ${esc(drill.space)}</p>
+        ${
+          drill.safety
+            ? `<details class="block-safety-details" data-keep="${keep}"${openDetails.has(keep) ? " open" : ""}>
+                 <summary><span class="block-safety">Safety note</span></summary>
+                 <p>${esc(drill.safety)}</p>
+               </details>`
+            : ""
+        }
+      </div>
+      ${
+        removable
+          ? `<button type="button" class="station-drop" data-dropstation="${blockIndex}:${at}" aria-label="Remove ${esc(drill.title)} from station ${at + 1}">✕</button>`
+          : ""
+      }
+    </li>`;
+}
+
+function blockRow(
+  resolved: ResolvedBlock,
   position: number,
   total: number,
   planId: string,
 ): string {
+  const { block, drill, stations, index } = resolved;
   const pause = block.breakAfter ?? 0;
-  return `
-    <div class="block-row">
-      <div class="block-main">
+  const carousel = isCarousel(block);
+  const count = stationIds(block).length;
+
+  const main = carousel
+    ? `<div class="block-main">
+        <p class="carousel-head">
+          <span class="carousel-badge">Carousel</span>
+          <span>${count} stations, ${count} groups, ${blockMinutes(block)} min in all</span>
+        </p>
+        <ol class="station-list">
+          ${stations
+            .map((station, at) => stationLine(station, index, at, planId, stations.length > 1))
+            .join("")}
+        </ol>
+        <button type="button" class="station-add" data-addstation="${index}">+ station</button>
+      </div>`
+    : `<div class="block-main">
         <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>
         <p class="block-meta">
           ${kindPill(drill)} ${esc(drill.space)}
@@ -1622,31 +1856,51 @@ function blockRow(
                </details>`
             : ""
         }
-      </div>
+      </div>`;
+
+  return `
+    <div class="block-row${carousel ? " is-carousel" : ""}">
+      ${main}
       <div class="block-controls">
         <label class="block-minutes">
-          <span class="visually-hidden">Minutes for ${esc(drill.title)}</span>
+          <span class="visually-hidden">${
+            carousel
+              ? `Minutes at each station in this carousel`
+              : `Minutes for ${esc(drill.title)}`
+          }</span>
           <input type="number" inputmode="numeric" min="0" max="90" step="1" value="${block.minutes}" data-minutes="${index}" />
+          ${carousel ? `<span class="block-minutes-note" aria-hidden="true">each</span>` : ""}
         </label>
         <button type="button" data-up="${index}" aria-label="Move ${esc(drill.title)} earlier"${position === 0 ? " disabled" : ""}>▲</button>
         <button type="button" data-down="${index}" aria-label="Move ${esc(drill.title)} later"${position === total - 1 ? " disabled" : ""}>▼</button>
-        <button type="button" data-remove="${index}" aria-label="Remove ${esc(drill.title)}">✕</button>
+        <button type="button" data-remove="${index}" aria-label="Remove ${
+          carousel ? "this carousel" : esc(drill.title)
+        }">✕</button>
       </div>
     </div>
-    ${
-      pause > 0
-        ? `<div class="break-row">
-             <span class="break-label">Water break</span>
-             <div class="block-controls">
-               <label class="block-minutes">
-                 <span class="visually-hidden">Break minutes after ${esc(drill.title)}</span>
-                 <input type="number" inputmode="numeric" min="1" max="20" step="1" value="${pause}" data-break="${index}" />
-               </label>
-               <button type="button" data-nobreak="${index}" aria-label="Remove the water break after ${esc(drill.title)}">✕</button>
-             </div>
-           </div>`
-        : `<button type="button" class="break-add" data-addbreak="${index}">+ water break</button>`
-    }`;
+    <div class="block-actions">
+      ${
+        pause > 0
+          ? `<div class="break-row">
+               <span class="break-label">Water break</span>
+               <div class="block-controls">
+                 <label class="block-minutes">
+                   <span class="visually-hidden">Break minutes after ${esc(drill.title)}</span>
+                   <input type="number" inputmode="numeric" min="1" max="20" step="1" value="${pause}" data-break="${index}" />
+                 </label>
+                 <button type="button" data-nobreak="${index}" aria-label="Remove the water break after ${esc(drill.title)}">✕</button>
+               </div>
+             </div>`
+          : `<button type="button" class="break-add" data-addbreak="${index}">+ water break</button>`
+      }
+      ${
+        // Only offered on a plain block. Once there are stations the list has
+        // its own add at the end of it, which is where a list is added to.
+        carousel
+          ? ""
+          : `<button type="button" class="break-add" data-addstation="${index}">+ station</button>`
+      }
+    </div>`;
 }
 
 /**
@@ -1710,7 +1964,15 @@ function addList(ageGroup: AgeGroup, plan: SessionPlan): string {
                    }
                    <p class="add-peek-facts">${playersLabel(drill)} · ${esc(drill.equipment.map(kitLabel).join(", ")) || "no kit"}</p>
                    <div class="add-peek-actions">
-                     <button type="button" class="hub-btn hub-btn-primary" data-add="${esc(drill.id)}">Add ${drill.minutes} min to the session</button>
+                     <button type="button" class="hub-btn hub-btn-primary" data-add="${esc(drill.id)}">${
+                       // A station takes the carousel's minutes rather than its
+                       // own, because every station in one runs for the same
+                       // length. Saying "add 10 min" there would be a promise
+                       // the block does not keep.
+                       addingStationTo === null
+                         ? `Add ${drill.minutes} min to the session`
+                         : `Add as station ${stationIds(plan.blocks[addingStationTo]).length + 1}`
+                     }</button>
                      <a class="hub-link" href="#/catalogue/${esc(drill.id)}/from/${esc(plan.id)}">Open the full drill</a>
                    </div>
                    ${drill.safety ? `<p class="add-peek-safety"><strong>Safety.</strong> ${esc(drill.safety)}</p>` : ""}
@@ -1834,16 +2096,80 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
     });
   }
 
+  for (const button of container.querySelectorAll<HTMLButtonElement>("[data-addstation]")) {
+    button.addEventListener("click", () => {
+      addingStationTo = Number(button.dataset.addstation);
+      previewing = null;
+      draw(container, ctx);
+      // The panel is a long way down a phone. The coach has just asked for
+      // something that happens in it, so sending them to it beats leaving them
+      // to find out where it went.
+      container.querySelector(".is-adding-station")?.scrollIntoView({ block: "start" });
+    });
+  }
+
+  container.querySelector("#cancel-station")?.addEventListener("click", () => {
+    addingStationTo = null;
+    previewing = null;
+    draw(container, ctx);
+  });
+
+  for (const button of container.querySelectorAll<HTMLButtonElement>("[data-dropstation]")) {
+    button.addEventListener("click", () => {
+      const [index, at] = (button.dataset.dropstation ?? "").split(":").map(Number);
+      change((plan) => ({
+        ...plan,
+        blocks: plan.blocks.map((b, i) => {
+          if (i !== index) return b;
+          const [first, ...rest] = stationIds(b).filter((_, s) => s !== at);
+          // Back to a plain block once one station is left. A carousel of one is
+          // a drill. Leaving an empty `alongside` on it would keep the row
+          // wearing a badge that no longer describes it.
+          const { alongside: _drop, ...plain } = b;
+          return rest.length > 0
+            ? { ...plain, drillId: first, alongside: rest }
+            : { ...plain, drillId: first };
+        }),
+      }));
+    });
+  }
+
   for (const button of container.querySelectorAll<HTMLButtonElement>("[data-add]")) {
     button.addEventListener("click", () => {
       const drill = findDrill(button.dataset.add ?? "");
       if (!drill) return;
+      // Checked here as well as in the picker that draws the list, for the same
+      // reason `addDrillToPlan` checks it. A station is a new way into a plan,
+      // and a gate that only exists in a render is a gate one new caller away
+      // from not existing.
+      if (editing && !isAvailableAt(drill, editing.ageGroup)) {
+        showToast(`${drill.title} is not for ${AGE_GROUP_LABELS[editing.ageGroup]}.`);
+        return;
+      }
       previewing = null;
+      const into = addingStationTo;
+      if (into === null) {
+        change((plan) => ({
+          ...plan,
+          blocks: [...plan.blocks, { drillId: drill.id, minutes: drill.minutes }],
+        }));
+        showToast(`${drill.title} added.`);
+        return;
+      }
+
+      // The mode stays on. Building a carousel means adding three or four in a
+      // row. Dropping out of it after each one would make that four trips back
+      // to the block.
+      let station = 0;
       change((plan) => ({
         ...plan,
-        blocks: [...plan.blocks, { drillId: drill.id, minutes: drill.minutes }],
+        blocks: plan.blocks.map((b, i) => {
+          if (i !== into) return b;
+          station = stationIds(b).length + 1;
+          return { ...b, alongside: [...(b.alongside ?? []), drill.id] };
+        }),
       }));
-      showToast(`${drill.title} added.`);
+      showToast(`${drill.title} added as station ${station}.`);
     });
   }
 
@@ -1984,7 +2310,7 @@ export function flushPlanPush(userId: string): void {
  */
 function renderPrintable(
   plan: SessionPlan,
-  blocks: Array<{ block: PlanBlock; drill: Drill }>,
+  blocks: ResolvedBlock[],
   totals: PlanTotals,
 ): void {
   let sheet = document.getElementById("plan-print-sheet");
@@ -1995,10 +2321,17 @@ function renderPrintable(
     document.body.appendChild(sheet);
   }
 
+  /** One drill's worth of paper. The same for a block and for a station. */
+  const printDrill = (drill: Drill): string => `
+        <p class="print-meta">${esc(drill.space)} &middot; ${esc(drill.equipment.map(kitLabel).join(", ")) || "no kit"}</p>
+        ${drill.safety ? `<p class="print-safety"><strong>Safety:</strong> ${esc(drill.safety)}</p>` : ""}
+        <p>${esc(drill.howItRuns)}</p>
+        <ul>${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>`;
+
   sheet.innerHTML = `
     <h1>${esc(plan.title)}</h1>
     <p class="print-sub">
-      ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min planned of
+      ${AGE_GROUP_LABELS[plan.ageGroup]} &middot; ${totals.plannedMinutes} min planned of
       ${plan.sessionMinutes} min
     </p>
     ${
@@ -2007,18 +2340,33 @@ function renderPrintable(
         : ""
     }
     ${blocks
-      .map(
-        ({ block, drill }, index) => `
-      <section class="print-block">
+      .map(({ block, drill, stations }, index) =>
+        isCarousel(block)
+          ? // Printed as one station per section. This is the sheet a coach
+            // hands to the three parents helping on a Sunday, so each of them
+            // needs a piece of paper that is only their own drill.
+            `<section class="print-block">
+        <h2>${index + 1}. Carousel. ${stations.length} stations, ${block.minutes} min at each</h2>
+        <p class="print-meta">Split into ${stations.length} groups. Everybody moves on together after each go.</p>
+      </section>
+      ${stations
+        .map(
+          (station, at) => `
+      <section class="print-block print-station">
+        <h3>Station ${at + 1}. ${esc(station.title)}</h3>
+        ${printDrill(station)}
+      </section>`,
+        )
+        .join("")}${
+              block.breakAfter
+                ? `<p class="print-break">Water break, ${block.breakAfter} min</p>`
+                : ""
+            }`
+          : `<section class="print-block">
         <h2>${index + 1}. ${esc(drill.title)}. ${block.minutes} min</h2>
-        <p class="print-meta">${esc(drill.space)} · ${esc(drill.equipment.map(kitLabel).join(", ")) || "no kit"}</p>
-        ${drill.safety ? `<p class="print-safety"><strong>Safety:</strong> ${esc(drill.safety)}</p>` : ""}
-        <p>${esc(drill.howItRuns)}</p>
-        <ul>${drill.coachingPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
+        ${printDrill(drill)}
       </section>${
-        block.breakAfter
-          ? `<p class="print-break">Water break, ${block.breakAfter} min</p>`
-          : ""
+        block.breakAfter ? `<p class="print-break">Water break, ${block.breakAfter} min</p>` : ""
       }`,
       )
       .join("")}`;
@@ -2041,6 +2389,7 @@ export function resetPlanner(): void {
   clearTimeout(addSearchTimer);
   addSearchTimer = undefined;
   previewing = null;
+  addingStationTo = null;
   openDetails = new Set();
   saveState = "saved";
   planViewMode = null;

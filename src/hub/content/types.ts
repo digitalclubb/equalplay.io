@@ -192,10 +192,18 @@ export function kitLabel(kit: KitItem): string {
  *
  * A per-player requirement always outweighs a per-pair one and either outweighs
  * any absolute count, because they scale with however many players turn up.
- * Absolute counts take the largest, never the sum. Drills run one at a time.
+ * Absolute counts take the largest, never the sum, because one block follows
+ * another and the same cones go back out. Stations inside a carousel run at the
+ * same time and are added up first by `sumKit`, then handed to this.
  */
+/**
+ * How specific a requirement is. A "per player" count cannot be compared with a
+ * flat one, so the more specific always wins rather than the two being reckoned
+ * against each other.
+ */
+const kitRank = (kit: KitItem): number => (kit.per === "player" ? 2 : kit.per === "pair" ? 1 : 0);
+
 export function mergeKit(items: KitItem[]): KitItem[] {
-  const rank = (kit: KitItem): number => (kit.per === "player" ? 2 : kit.per === "pair" ? 1 : 0);
   const merged = new Map<string, KitItem>();
 
   for (const kit of items) {
@@ -204,12 +212,43 @@ export function mergeKit(items: KitItem[]): KitItem[] {
       merged.set(kit.item, kit);
       continue;
     }
-    if (rank(kit) > rank(held) || (rank(kit) === rank(held) && kit.qty > held.qty)) {
+    if (kitRank(kit) > kitRank(held) || (kitRank(kit) === kitRank(held) && kit.qty > held.qty)) {
       merged.set(kit.item, kit);
     }
   }
 
   return [...merged.values()];
+}
+
+/**
+ * Kit for things happening at the same time, added up rather than reused.
+ *
+ * `mergeKit` keeps the largest requirement, which is right for blocks running
+ * one after another: the same eight cones go back out for the next drill. A
+ * carousel is the opposite. Four stations run at once, so four sets of cones
+ * are on the grass at once. A coach who packed for the biggest station arrives
+ * three sets short with twenty children waiting.
+ *
+ * Only counts in the same unit are added. A "per player" requirement still
+ * beats a "per pair" one and both beat a flat count, the same ranking
+ * `mergeKit` uses, because two of those cannot be added at all.
+ */
+export function sumKit(items: KitItem[]): KitItem[] {
+  const summed = new Map<string, KitItem>();
+
+  for (const kit of items) {
+    const held = summed.get(kit.item);
+    if (!held) {
+      summed.set(kit.item, kit);
+      continue;
+    }
+    if (kitRank(kit) > kitRank(held)) summed.set(kit.item, kit);
+    else if (kitRank(kit) === kitRank(held)) {
+      summed.set(kit.item, { ...held, qty: held.qty + kit.qty });
+    }
+  }
+
+  return [...summed.values()];
 }
 
 export interface Drill {

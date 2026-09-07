@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
+  blockMinutes,
+  isCarousel,
   planTotals,
   planDrills,
+  stationIds,
   moveBlock,
   hasBlockingProblem,
   themeCoverage,
@@ -571,5 +574,150 @@ describe("Coverage. What you have not been coaching", () => {
     // has genuinely never been coached.
     const rows = themeCoverage([run(["handling"], "2026-12-25")], "u10", "2026-09-15");
     expect(rows.find((r) => r.theme === "handling")?.weeksAgo).toBe(0);
+  });
+});
+
+/**
+ * Carousels. Four stations running at once, one coach on each, groups rotating.
+ *
+ * The whole feature is arithmetic plus an age gate, and both are easy to get
+ * subtly wrong in a way nobody notices until a Sunday. A carousel counted as one
+ * station's minutes turns an hour's plan into two hours on the grass. Kit taken
+ * as the largest station rather than the sum sends a coach to a pitch with a
+ * quarter of the cones. A gate checked on the first station only lets a ruck
+ * drill reach an U8 through station three.
+ */
+describe("planTotals. Carousels", () => {
+  const four = { drillId: "a", minutes: 8, alongside: ["b", "c", "d"] };
+  const catalogue = [drill("a"), drill("b"), drill("c"), drill("d")];
+
+  it("knows a station's minutes from the block's", () => {
+    expect(blockMinutes(four)).toBe(32);
+    expect(blockMinutes({ drillId: "a", minutes: 8 })).toBe(8);
+    expect(isCarousel(four)).toBe(true);
+    expect(isCarousel({ drillId: "a", minutes: 8 })).toBe(false);
+    expect(stationIds(four)).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("counts every group's trip round, not one station", () => {
+    const totals = planTotals(plan({ blocks: [four] }), catalogue);
+    // Eight minutes at each of four stations is half an hour of pitch time.
+    // Counting it as eight is how a session that looks like an hour runs two.
+    expect(totals.plannedMinutes).toBe(32);
+    expect(totals.remainingMinutes).toBe(28);
+  });
+
+  it("splits the time by what each station is", () => {
+    const totals = planTotals(
+      plan({ blocks: [{ drillId: "a", minutes: 8, alongside: ["w"] }] }),
+      [drill("a"), drill("w", { kind: "warmup" })],
+    );
+    expect(totals.byKind).toEqual({ warmup: 8, exercise: 8 });
+  });
+
+  it("adds the kit up across the stations, because they are all out at once", () => {
+    const totals = planTotals(
+      plan({ blocks: [{ drillId: "a", minutes: 8, alongside: ["b"] }] }),
+      [
+        drill("a", { equipment: [{ item: "cone", qty: 8 }] }),
+        drill("b", { equipment: [{ item: "cone", qty: 6 }, { item: "ball", qty: 2 }] }),
+      ],
+    );
+    expect(totals.equipment.map(kitLabel)).toEqual(["14 cones", "2 balls"]);
+  });
+
+  it("still takes the largest across blocks that follow one another", () => {
+    // The carousel needs fourteen at once. The block after it needs four, and
+    // the same cones go back out for it, so fourteen is what goes in the bag.
+    const totals = planTotals(
+      plan({
+        blocks: [
+          { drillId: "a", minutes: 8, alongside: ["b"] },
+          { drillId: "c", minutes: 10 },
+        ],
+      }),
+      [
+        drill("a", { equipment: [{ item: "cone", qty: 8 }] }),
+        drill("b", { equipment: [{ item: "cone", qty: 6 }] }),
+        drill("c", { equipment: [{ item: "cone", qty: 4 }] }),
+      ],
+    );
+    expect(totals.equipment.map(kitLabel)).toEqual(["14 cones"]);
+  });
+
+  it("gates every station, not only the first", () => {
+    // The one that matters. A carousel is a route a drill can take to a screen
+    // without passing the catalogue, so a ruck drill at station three has to be
+    // caught here or it is not caught at all.
+    const totals = planTotals(
+      plan({ ageGroup: "u8", blocks: [{ drillId: "a", minutes: 8, alongside: ["ruck"] }] }),
+      [drill("a"), drill("ruck", { minAge: "u10", themes: ["breakdown"] })],
+    );
+    expect(totals.warnings[0].level).toBe("error");
+    expect(totals.warnings[0].message).toContain("ruck");
+    expect(hasBlockingProblem(totals)).toBe(true);
+  });
+
+  it("says an illegal drill once however many stations it is on", () => {
+    const totals = planTotals(
+      plan({ ageGroup: "u8", blocks: [{ drillId: "ruck", minutes: 8, alongside: ["ruck"] }] }),
+      [drill("ruck", { minAge: "u10" })],
+    );
+    expect(totals.warnings.filter((w) => w.level === "error")).toHaveLength(1);
+  });
+
+  it("reports a station that no longer exists", () => {
+    const totals = planTotals(
+      plan({ blocks: [{ drillId: "a", minutes: 8, alongside: ["gone"] }] }),
+      [drill("a")],
+    );
+    expect(totals.missingDrillIds).toEqual(["gone"]);
+    // The slot still counts. A total that shrinks when a drill is renamed is one
+    // nobody can reconcile against the stations in front of them.
+    expect(totals.plannedMinutes).toBe(16);
+  });
+
+  it("puts the water break at the halfway point of the real length", () => {
+    // Sixteen minutes of carousel then a ten minute block is halfway through the
+    // carousel, so the break belongs after it rather than after the short block.
+    const withBreak = withWaterBreak(
+      plan({
+        sessionMinutes: 60,
+        blocks: [
+          { drillId: "a", minutes: 8, alongside: ["b"] },
+          { drillId: "c", minutes: 10 },
+        ],
+      }),
+    );
+    expect(withBreak.blocks[0].breakAfter).toBe(3);
+    expect(withBreak.blocks[1].breakAfter).toBeUndefined();
+  });
+});
+
+describe("planDrills. Carousels", () => {
+  it("resolves every station, in order, the lead first", () => {
+    const resolved = planDrills(
+      plan({ blocks: [{ drillId: "a", minutes: 8, alongside: ["b", "c"] }] }),
+      [drill("a"), drill("b"), drill("c")],
+    );
+    expect(resolved[0].stations.map((d) => d.id)).toEqual(["a", "b", "c"]);
+    expect(resolved[0].drill.id).toBe("a");
+  });
+
+  it("keeps the block when the lead station has gone", () => {
+    // Dropping the block would take three good drills out of the running order
+    // because a fourth was renamed.
+    const resolved = planDrills(
+      plan({ blocks: [{ drillId: "gone", minutes: 8, alongside: ["b", "c"] }] }),
+      [drill("b"), drill("c")],
+    );
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].drill.id).toBe("b");
+    expect(resolved[0].stations.map((d) => d.id)).toEqual(["b", "c"]);
+  });
+
+  it("gives a plain block one station", () => {
+    const resolved = planDrills(plan({ blocks: [{ drillId: "a", minutes: 10 }] }), [drill("a")]);
+    expect(resolved[0].stations).toEqual([resolved[0].drill]);
   });
 });

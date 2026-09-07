@@ -110,8 +110,13 @@ function isString(value: unknown): value is string {
 function isBlock(value: unknown): value is PlanBlock {
   const block = value as PlanBlock | null;
   if (!block || !isString(block.drillId) || typeof block.minutes !== "number") return false;
-  // Optional. Plans saved before breaks existed simply do not have it
-  return block.breakAfter === undefined || typeof block.breakAfter === "number";
+  // Both optional. A plan saved before breaks or before carousels existed
+  // simply does not have them, which is the point of adding fields this way.
+  if (block.breakAfter !== undefined && typeof block.breakAfter !== "number") return false;
+  return (
+    block.alongside === undefined ||
+    (Array.isArray(block.alongside) && block.alongside.every(isString))
+  );
 }
 
 /**

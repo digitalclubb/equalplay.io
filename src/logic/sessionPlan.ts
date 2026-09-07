@@ -2,6 +2,7 @@ import {
   ageAtLeast,
   isAvailableAt,
   mergeKit,
+  sumKit,
   THEMES,
   THEME_MIN_AGE,
   type AgeGroup,
@@ -27,6 +28,48 @@ export interface PlanBlock {
    * plain list of drills. It also means plans saved before breaks still load.
    */
   breakAfter?: number;
+  /**
+   * Drills running beside this one at the same time, each on its own patch of
+   * grass with its own coach. The block is then a carousel: the squad splits
+   * into one group per station, every group does `minutes` at a station, then
+   * they all rotate. Nobody sits out and nobody queues.
+   *
+   * This is the Sunday shape. Twenty children and four parents helping is four
+   * groups of five, not twenty children in a line waiting for a turn.
+   *
+   * The block's own `drillId` is the first station, so a plan saved before this
+   * existed still loads and still reads correctly. `minutes` stays what it
+   * always was, the time a group spends at one station, which is the number a
+   * coach actually decides. The block's total is derived from it by
+   * `blockMinutes`, because every group has to visit every station.
+   */
+  alongside?: string[];
+}
+
+/** Every drill id in a block, its own first. One station each, in order. */
+export function stationIds(block: PlanBlock): string[] {
+  return [block.drillId, ...(block.alongside ?? [])];
+}
+
+/** True when a block is stations running at once rather than one drill for everybody. */
+export function isCarousel(block: PlanBlock): boolean {
+  return (block.alongside?.length ?? 0) > 0;
+}
+
+/**
+ * What a block costs the evening.
+ *
+ * A carousel runs its minutes once per station, because a group that has not
+ * been to every station has not done the block. Four stations of eight minutes
+ * is thirty-two minutes of pitch time, not eight. Counting it as eight is how a
+ * session that looks like an hour turns out to be two.
+ *
+ * A station that no longer exists still counts. It is an error the coach has to
+ * clear either way. A total that shrinks when a drill is renamed is a total
+ * nobody can reconcile against the stations in front of them.
+ */
+export function blockMinutes(block: PlanBlock): number {
+  return Math.max(0, block.minutes) * stationIds(block).length;
 }
 
 export interface SessionPlan {
@@ -85,37 +128,53 @@ export function planTotals(plan: SessionPlan, catalogue: Drill[]): PlanTotals {
   const kitUse = new Map<string, { blocks: number; minutes: number }>();
 
   for (const block of plan.blocks) {
-    const drill = byId.get(block.drillId);
-    if (!drill) {
-      missingDrillIds.push(block.drillId);
-      continue;
-    }
+    const ids = stationIds(block);
+    const stations = ids.map((id) => byId.get(id));
+    ids.forEach((id, at) => {
+      if (!stations[at]) missingDrillIds.push(id);
+    });
 
+    const present = stations.filter((drill): drill is Drill => Boolean(drill));
+    if (present.length === 0) continue;
+
+    // Per station. Every group spends this long at each one, so the block's own
+    // total multiplies it out while the split by kind counts each station once.
     const minutes = Math.max(0, block.minutes);
-    plannedMinutes += minutes;
-    byKind[drill.kind] += minutes;
+    plannedMinutes += blockMinutes(block);
+    for (const drill of present) byKind[drill.kind] += minutes;
 
     const pause = Math.max(0, block.breakAfter ?? 0);
     breakMinutes += pause;
     plannedMinutes += pause;
 
-    if (!isAvailableAt(drill, plan.ageGroup)) illegal.push(drill);
+    // Every station, not only the first. A carousel is the one place a drill
+    // can reach a grade without passing the catalogue, so the gate is checked
+    // per station rather than per block.
+    for (const drill of present) {
+      if (!isAvailableAt(drill, plan.ageGroup)) illegal.push(drill);
+    }
 
+    // Each station's own list is collapsed first, then the stations are added
+    // up, because they are on the grass at the same time. A drill naming cones
+    // twice still wants the larger of the two rather than both. What comes out
+    // goes to the cross-block merge, which still takes the largest.
+    const blockKit = sumKit(present.flatMap((drill) => mergeKit(drill.equipment)));
     const seenHere = new Set<string>();
-    for (const entry of drill.equipment) {
+    for (const entry of blockKit) {
       kit.push(entry);
       if (seenHere.has(entry.item)) continue;
       seenHere.add(entry.item);
       const use = kitUse.get(entry.item) ?? { blocks: 0, minutes: 0 };
-      kitUse.set(entry.item, { blocks: use.blocks + 1, minutes: use.minutes + minutes });
+      kitUse.set(entry.item, { blocks: use.blocks + 1, minutes: use.minutes + blockMinutes(block) });
     }
   }
 
   const warnings: PlanWarning[] = [];
 
   // The age gate first and loudest. It is the only thing here that is a safety
-  // matter rather than a scheduling one.
-  for (const drill of illegal) {
+  // matter rather than a scheduling one. Said once per drill: the same drill at
+  // two stations, or in two blocks, is one thing to take out rather than two.
+  for (const drill of new Map(illegal.map((drill) => [drill.id, drill])).values()) {
     warnings.push({
       level: "error",
       message: `${drill.title} is not for ${plan.ageGroup.toUpperCase()}. Take it out.`,
@@ -190,9 +249,9 @@ export function withWaterBreak(plan: SessionPlan, minutes = 3): SessionPlan {
   if (plan.sessionMinutes < BREAK_EXPECTED_FROM_MINUTES) return plan;
   if (plan.blocks.length < 2 || plan.blocks.some((block) => block.breakAfter)) return plan;
 
-  const half = plan.blocks.reduce((sum, block) => sum + block.minutes, 0) / 2;
+  const half = plan.blocks.reduce((sum, block) => sum + blockMinutes(block), 0) / 2;
   let run = 0;
-  const crosses = plan.blocks.findIndex((block) => (run += block.minutes) >= half);
+  const crosses = plan.blocks.findIndex((block) => (run += blockMinutes(block)) >= half);
   // Never after the last block. A break at the end is just going home.
   const at = Math.min(crosses, plan.blocks.length - 2);
 
@@ -209,7 +268,21 @@ export function hasBlockingProblem(totals: PlanTotals): boolean {
 
 export interface ResolvedBlock {
   block: PlanBlock;
+  /**
+   * The block's own drill, which is the first station of a carousel.
+   *
+   * Kept beside `stations` so anything showing a block one drill at a time
+   * still has one to show. A carousel that has not been taught about renders as
+   * its first station rather than as nothing.
+   */
   drill: Drill;
+  /**
+   * Every station in the block, the lead first. One entry for a plain block.
+   *
+   * Stations pointing at a drill that no longer exists are dropped, the same as
+   * the block itself would be, so this can be shorter than `stationIds(block)`.
+   */
+  stations: Drill[];
   /**
    * Position in `plan.blocks`, which is not the position in this array.
    *
@@ -225,8 +298,13 @@ export function planDrills(plan: SessionPlan, catalogue: Drill[]): ResolvedBlock
   const byId = new Map(catalogue.map((drill) => [drill.id, drill]));
   const resolved: ResolvedBlock[] = [];
   plan.blocks.forEach((block, index) => {
-    const drill = byId.get(block.drillId);
-    if (drill) resolved.push({ block, drill, index });
+    const stations = stationIds(block)
+      .map((id) => byId.get(id))
+      .filter((drill): drill is Drill => Boolean(drill));
+    // A carousel whose first station has gone still has stations to run, so the
+    // lead falls back to the first one that resolved rather than dropping the
+    // whole block and taking three good drills with it.
+    if (stations.length > 0) resolved.push({ block, drill: stations[0], stations, index });
   });
   return resolved;
 }

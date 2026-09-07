@@ -168,7 +168,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         if (!route.param) go("plans");
         else if (route.rest[0] === "edit") renderPlanEditor(view, ctx, route.param);
         else if (route.rest[0] === "run") {
-          renderPlanRun(view, ctx, route.param, Number(route.rest[1] ?? 0));
+          renderPlanRun(view, ctx, route.param, Number(route.rest[1] ?? 0), Number(route.rest[2] ?? 0));
         } else renderPlanView(view, ctx, route.param);
         break;
       // Handled above the profile check, because a link is not a reason to ask
