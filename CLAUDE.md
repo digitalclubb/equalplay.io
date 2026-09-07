@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-694 unit and integration tests across 22 files, 173 Playwright tests. Most are ordinary.
-These eleven are load bearing and a failure means the code is wrong, not the test:
+723 unit and integration tests across 23 files, 177 Playwright tests. Most are ordinary.
+These twelve are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -97,6 +97,7 @@ These eleven are load bearing and a failure means the code is wrong, not the tes
 | `landing-pages.test.ts` | The age grade pages in `public/` state the counts the catalogue actually holds. Every static page's chrome points at the product, every FAQ is visible where it is claimed. Every grade has a rules page, linked from its drills page and from the index, in the sitemap, with no hand-written copy left in `public/` |
 | `install.test.ts` | The offline promise is only made once the service worker is serving the page. The install offer is spent once shown, never on a prompt the browser refused to display. iPhone never fires the event, so the way in stays written down |
 | `playingTime.test.ts` | The Half Game Rule check, which is the only verdict the product gives against an RFU regulation. A late arrival measured against the rugby they were there for rather than the whole day, an absent player left out of it, a squad too big for any rotation to clear the floor |
+| `drill-pages.test.ts` | The age gate on the one surface nobody signs in for. No theme page below the grade Reg 15 allows it at, no drill on a grade's page the grade cannot do, no lineout claim. Plus the sitemap against what the build emits in both directions, with every generated page reachable by a link rather than only by the sitemap |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -104,8 +105,8 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 173 tests across four files: `matchday` (15), `home` (11), `hub` (121)
-and `contrast` (26). `contrast.spec.ts` is the load-bearing one of those. It measures
+`pnpm test:e2e` is 177 tests across four files: `matchday` (15), `home` (11), `hub` (121)
+and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
 has shipped three times: 1.5:1 on a button border, 1.12:1 on the homepage, then 1:1
@@ -125,19 +126,32 @@ Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
 homepage ships no JavaScript at all. Static SEO pages fall into three clusters:
 match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
-`rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group` plus one
-page per grade, `rugby-drills-u7` through `rugby-drills-u12`) and the rules guides
-(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`). The
-first two are hand-written in `public/` and copied verbatim. The third is
-generated at build from `hub/content/guides.ts` by `src/seo/rulesPage.ts`, so it
-never appears in `public/` at all. All of them share `public/pages.css` with the
+`rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group`, one page
+per grade, one page per drill plus one per theme per grade) and the rules guides
+(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`).
+Match day and the six drill grade pages are hand-written in `public/` and copied
+verbatim. Everything else is generated at build out of `hub/content/` by
+`src/seo/`, so it never appears in `public/` at all. That is 157 generated pages
+against the 12 written by hand. All of them share `public/pages.css` with the
 homepage and point their chrome at `/hub`, because the chrome belongs to the
 product rather than to whichever half a coach landed on.
 
-**The rules guides are published twice, from one source.** The guide a coach
-reads is a hub route, in the bundle, so the Guide tab opens with no signal. The
-hub is `noindex`, so the same words are also emitted as static pages a search
-engine can read. Nothing is written twice: both come out of `guides.ts`. A copy
+**The sitemap is built, not kept.** `src/seo/sitemap.ts` lists the hand-written
+pages with the dates they were last edited, then appends every generated path.
+It was a file under `public/` holding twenty URLs, which was fine while a human
+could count them. `drill-pages.test.ts` holds it to exactly what the build emits
+in both directions, so a page that exists but is not listed fails as loudly as a
+URL listed but never written. Generated pages carry no `lastmod` on purpose:
+theirs would move on every deploy whether a word had changed or not, which is a
+signal a crawler learns to ignore.
+
+**The guides and the drills are published twice, from one source.** What a coach
+reads is a hub route, in the bundle, so the tab opens with no signal. The hub is
+`noindex` and a hash route is one URL to a crawler however many drills sit behind
+it, so the same words are also emitted as static pages a search engine can read.
+Nothing is written twice: both come out of `guides.ts` and out of `catalogue/`.
+A drill page draws its diagram with the same renderer off the same coordinates
+as the app. A copy
 in `public/` would be a second source of truth going stale, which is why
 `landing-pages.test.ts` fails if one appears. Two traps are worth knowing about.
 `oxlint` loads `vite.config.ts` with plain Node, which cannot resolve a `.ts`
@@ -193,7 +207,12 @@ src/
     sessionPlan.ts        # Hub: plan totals, warnings, kit list, breaks, reorder
     playingTime.ts        # Match day: the Half Game Rule, checked per player
   seo/
+    page.ts               # The chrome every generated page wears. One head, one
+                          # footer, so a second generator is not a copy of the first
     rulesPage.ts          # The rules guides as static pages, emitted at build
+    drillPage.ts          # One page per drill, one per theme per grade. The
+                          # addresses, the age gate on them and the copy
+    sitemap.ts            # Every URL the site publishes, built rather than kept
   hub/
     main.ts               # Bootstrap, route dispatch, signed-out routing, online retry
     ageChoice.ts          # The age grade picked before registering, in localStorage

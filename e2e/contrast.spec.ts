@@ -200,6 +200,12 @@ for (const scheme of ["light", "dark"] as const) {
   for (const [name, url] of [
     ["homepage", "/"],
     ["planner", "/planner"],
+    // The generated drill cluster. It is the largest set of pages on the site
+    // and the newest CSS in `pages.css`, so it is the likeliest place for a
+    // muted token on a panel to land under 4.5:1 in one scheme only. One drill
+    // page and one theme page cover every rule the cluster adds.
+    ["a drill page", "/rugby-drill-animal-moves"],
+    ["a theme page", "/rugby-tackling-drills-u9"],
   ] as const) {
     test(`${name} text meets AA contrast in ${scheme} mode`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });

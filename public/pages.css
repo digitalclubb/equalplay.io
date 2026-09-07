@@ -22,6 +22,14 @@
   --field-bg: #ffffff;
   --field-edge: #b9bfcd;
 
+  /* The drill diagrams on the generated drill pages are drawn by
+     src/hub/content/diagram.ts, which is app code reused here rather than a
+     second renderer. It draws in currentColor and in --color-primary, so the
+     token the app names has to exist on these pages too. Same pair of values as
+     src/base.css: the dark end of the ramp all but disappears on a dark panel,
+     which is the very thing the renderer avoids everywhere else. */
+  --color-primary: #cf3918;
+
   /* The scheme, and the switch in the app that can force it. Same mechanism as
      `src/base.css`: the app writes `data-theme` onto `<html>` and every page in
      the product reads it, so a coach who picked one does not tap a footer link
@@ -40,6 +48,7 @@
     --link: light-dark(#b8391c, #ff8a6a);
     --field-bg: light-dark(#ffffff, #0a0e24);
     --field-edge: light-dark(#b9bfcd, #3a4064);
+    --color-primary: light-dark(#cf3918, #ff8a6a);
   }
 }
 
@@ -639,4 +648,130 @@ th {
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: 1.75rem;
   }
+}
+
+/* Drills. The generated pages under /rugby-drill-* and /rugby-*-drills-*. */
+
+/* The facts a coach checks before reading any of it: how long, how many, how
+   much room. A definition list rather than a table, because it is one drill
+   rather than a set of them being compared. */
+.drill-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 0.98rem;
+}
+
+.drill-facts dt {
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.drill-facts dd {
+  margin: 0;
+}
+
+/* What going wrong looks like, then what to say about it. The pair is the
+   point, so the answer sits under the symptom rather than beside it. */
+.drill-faults {
+  margin: 1rem 0 1.5rem;
+}
+
+.drill-faults dt {
+  font-weight: 700;
+  color: var(--heading);
+  margin-top: 1rem;
+}
+
+.drill-faults dd {
+  margin: 0.25rem 0 0;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--brand);
+  color: var(--muted);
+}
+
+/* A theme page's list of drills. Not bulleted: each row is a title, a meta line
+   and a symptom, which is more than a bullet holds. */
+.drill-index {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 2rem;
+}
+
+.drill-index li {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+
+.drill-index .calc-detail {
+  display: block;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.drill-figure {
+  margin: 1.25rem 0;
+}
+
+/* Lifted from the app rather than reinvented, because it is the same picture.
+   currentColor here is the page's body colour, so the pitch and the running
+   lines flip with the scheme the way everything else on the page does. */
+.drill-diagram {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.drill-frames {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.drill-frame {
+  margin: 0;
+}
+
+.drill-frame .drill-diagram {
+  max-width: none;
+}
+
+.drill-frame figcaption {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Side by side once there is room, so the second frame reads as "then this"
+   rather than as a second drill. */
+@media (min-width: 30rem) {
+  .drill-frames {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The theme index on /rugby-drills-by-age-group. One line per theme, its grades
+   in a row after it, so thirty links stay a list rather than a wall. */
+.theme-index {
+  list-style: none;
+  padding: 0;
+}
+
+.theme-index li {
+  margin: 0 0 0.6rem;
+}
+
+.theme-index a {
+  display: inline-block;
+  margin-right: 0.5rem;
 }

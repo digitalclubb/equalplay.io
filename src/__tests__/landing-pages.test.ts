@@ -3,6 +3,8 @@ import { describe, it, expect } from "vitest";
 import { DRILLS, filterDrills } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
 import { rulesPageHtml, rulesIndexHtml, rulesPagePaths, rulesPath } from "../seo/rulesPage.js";
+import { themePath } from "../seo/drillPage.js";
+import { sitemapXml } from "../seo/sitemap.js";
 import { GUIDES } from "../hub/content/guides.js";
 import { esc } from "../lib/esc.js";
 import {
@@ -84,12 +86,16 @@ describe("age group landing pages", () => {
       const html = agePage(age);
       for (const theme of THEMES) {
         const count = drills.filter((drill) => drill.themes.includes(theme)).length;
-        const row = `<tr><td>${THEME_LABELS[theme]}</td><td>${count}</td></tr>`;
+        // The label is the way through to that theme at that grade, so the row
+        // is checked as the link it is. A theme cell that stopped linking would
+        // leave thirty generated pages reachable only from the sitemap.
+        const row = `<tr><td><a href="${themePath(theme, age)}">${THEME_LABELS[theme]}</a></td><td>${count}</td></tr>`;
         if (count === 0) {
           // A theme the grade cannot do has no row at all, rather than a zero.
           expect(html, `${age}: ${theme} should not be listed`).not.toContain(
-            `<td>${THEME_LABELS[theme]}</td>`,
+            `>${THEME_LABELS[theme]}</a>`,
           );
+          expect(html, `${age} links ${theme}`).not.toContain(themePath(theme, age));
         } else {
           expect(html, `${age}: ${theme}`).toContain(row);
         }
@@ -132,7 +138,7 @@ describe("age group landing pages", () => {
       for (const theme of THEMES) {
         if (drills.some((drill) => drill.themes.includes(theme))) continue;
         expect(html, `${age} lists ${theme} in its table`).not.toContain(
-          `<td>${THEME_LABELS[theme]}</td>`,
+          `>${THEME_LABELS[theme]}</a>`,
         );
       }
     }
@@ -356,7 +362,10 @@ describe("every static page reaches the product", () => {
   });
 
   it("is in the sitemap, exactly once", () => {
-    const sitemap = page("public/sitemap.xml");
+    // Built rather than kept by hand since the catalogue took the site past a
+    // hundred and fifty URLs. `drill-pages.test.ts` holds it to what the build
+    // emits in both directions.
+    const sitemap = sitemapXml();
     const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
     expect(new Set(urls).size, "duplicate url").toBe(urls.length);
     for (const age of AGE_GROUPS) {

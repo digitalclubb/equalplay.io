@@ -113,32 +113,53 @@ function inlineCss(): Plugin {
 }
 
 /**
- * Write the rules guides out as static pages a search engine can read.
+ * Write the drills and the rules guides out as static pages, plus the sitemap.
  *
- * The guide is hub content and stays there, in the bundle, so the Guide tab
- * opens with no signal. But `/hub` is `noindex`, so six guides written from the
- * RFU's own rules of play sit where nothing can find them.
+ * Both are hub content and both stay there, in the bundle, so the Drills tab
+ * and the Guide tab open with no signal. But `/hub` is `noindex` and a hash
+ * route is one URL to a crawler however many drills sit behind it, so the
+ * catalogue and the six guides sat where nothing could find them.
  *
  * Emitted rather than kept in `public/`, because a copy there would be a second
  * source of truth going stale in the repository. Generated at build from
- * `hub/content/guides.ts`, so a page cannot disagree with the guide.
+ * `hub/content/`, so a page cannot disagree with what a coach reads in the app.
  */
-function rulesPagesPlugin(): Plugin {
+function staticPages(): Plugin {
+  // Imported inside the hooks rather than at the top of the file. `oxlint`
+  // loads this config with plain Node, which cannot resolve a `.ts` behind the
+  // `.js` specifier the rest of the project uses, so a top level import of it
+  // takes out `pnpm lint`. Inside a hook it is only ever reached by Vite, which
+  // resolves it the same way it resolves the app.
+  const pages = async (): Promise<Array<{ path: string; html: string }>> => {
+    const [{ rulesPages }, { drillPages }] = await Promise.all([
+      import("./src/seo/rulesPage.js"),
+      import("./src/seo/drillPage.js"),
+    ]);
+    return [...rulesPages(), ...drillPages()];
+  };
+
   return {
-    name: "rules-pages",
+    name: "static-pages",
     /**
-     * Dev has no build to emit into, so the pages are rendered per request.
-     * Without this `/rugby-rules-u10` 404s on the dev server while working in
-     * preview and in production, and the drills pages link across to it in
+     * Dev has no build to emit into, so a page is rendered per request.
+     * Without this every generated URL 404s on the dev server while working in
+     * preview and in production, and the pages link across to each other in
      * body copy, so following one locally is a dead end. Rendering each time
-     * also means an edit to `guides.ts` shows up on reload.
+     * also means an edit to a drill shows up on reload.
      */
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const path = (req.url ?? "").split("?")[0].replace(/\/+$/, "");
-        if (!path.startsWith("/rugby-rules-")) return next();
-        void import("./src/seo/rulesPage.js").then(({ rulesPages }) => {
-          const match = rulesPages().find((emitted) => emitted.path === path);
+        if (path === "/sitemap.xml") {
+          void import("./src/seo/sitemap.js").then(({ sitemapXml }) => {
+            res.setHeader("Content-Type", "application/xml; charset=utf-8");
+            res.end(sitemapXml());
+          });
+          return;
+        }
+        if (!path.startsWith("/rugby-")) return next();
+        void pages().then((emitted) => {
+          const match = emitted.find((one) => one.path === path);
           if (!match) return next();
           res.setHeader("Content-Type", "text/html; charset=utf-8");
           res.end(match.html);
@@ -146,13 +167,7 @@ function rulesPagesPlugin(): Plugin {
       });
     },
     async generateBundle() {
-      // Imported here rather than at the top of the file. `oxlint` loads this
-      // config with plain Node, which cannot resolve a `.ts` behind the `.js`
-      // specifier the rest of the project uses, so a top level import of it
-      // takes out `pnpm lint`. Inside the hook it is only ever reached by Vite,
-      // which resolves it the same way it resolves the app.
-      const { rulesPages } = await import("./src/seo/rulesPage.js");
-      for (const { path, html } of rulesPages()) {
+      for (const { path, html } of await pages()) {
         this.emitFile({
           type: "asset",
           // A directory index, so the URL is `/rugby-rules-u10` with no suffix,
@@ -161,6 +176,9 @@ function rulesPagesPlugin(): Plugin {
           source: html,
         });
       }
+
+      const { sitemapXml } = await import("./src/seo/sitemap.js");
+      this.emitFile({ type: "asset", fileName: "sitemap.xml", source: sitemapXml() });
     },
   };
 }
@@ -191,5 +209,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [directoryIndex(), rulesPagesPlugin(), inlineCss()],
+  plugins: [directoryIndex(), staticPages(), inlineCss()],
 });

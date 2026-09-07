@@ -3,8 +3,7 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 4 September 2026, after the colour scheme, the view transitions and the
-grouped filters. See `docs/one-product.md` for the one-product change that preceded it
+Last updated 7 September 2026, after the drill catalogue went out to search. See `docs/one-product.md` for the one-product change that preceded it
 and which of its phases are built.
 
 ## Blocking: run `0004` before the next deploy
@@ -147,6 +146,18 @@ to reach the whole list.
 **The offline promise, said out loud.** The Account page says whether the app is
 saved on the device and offers the home screen install where a browser gives one.
 
+**The drills are indexed.** The catalogue was the best thing here and a search
+engine could not read a word of it: the hub is `noindex` and a hash route is one
+URL to a crawler however many drills sit behind it. So every drill is published
+as its own page at `/rugby-drill-<name>`, gathered by a page per theme per grade
+at `/rugby-tackling-drills-u9` and the like, 150 pages generated at build from
+`hub/content/` by `src/seo/drillPage.ts`. The whole drill goes out, the faults
+included, because what going wrong looks like is the part no competitor has and
+the part a coach searching a symptom will land on. The age gate travels with
+them: no theme page exists below the grade Regulation 15 allows that work at,
+which `drill-pages.test.ts` holds. The sitemap is generated now rather than kept
+by hand, since 171 URLs is past what anybody will maintain in a text file.
+
 **The rules guides are indexed.** Same words, two publications: the hub route a
 coach reads with no signal, plus a static page per grade emitted at build for
 search. `/rugby-rules-u7` through `u12` plus an index, in the sitemap, linked
@@ -231,12 +242,15 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **Your own drills.** Every club has three of its own. Without this the catalogue is
+1. **Ask Search Console to fetch the sitemap again.** The drill cluster is 150
+   new URLs plus the seven rules pages that went in on 27 August and were never
+   submitted. The drills cluster took months to get crawled the first time
+   because nobody told Google it existed, which is the mistake worth not
+   repeating. Deploy first: the sitemap is emitted at build, so the live one is
+   the old twenty until then.
+2. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.
-2. **Submit the rules pages to Search Console.** Seven new URLs went into the sitemap
-   on 27 August 2026. The drills cluster took months to get crawled because nobody
-   told Google it existed, which is a mistake worth not repeating.
 
 Instrumentation is live but has no data yet. `planner_to_app` and `register` are the
 two custom events, from `src/lib/track.ts`. A season of those answers whether the free
@@ -274,11 +288,6 @@ never things that would justify a price.
 - **Contact load and FITT modelling.** RFU guidance for that is written for U13 to U18, so
   it would be guesswork at minis level. Revisit if the hub ever goes above U12.
 - **WRU content.** Later phase. RFU first, because that is the grade being coached.
-- **A public indexed drill catalogue.** Still out. The separate work it named is now done:
-  `public/rugby-drills-by-age-group` plus a page per grade say what each age group may
-  practise and how many drills it has, without reproducing a word of a drill. The hub
-  itself stays `noindex`. Publishing the drill copy is a different decision with its own
-  copyright question and it has not been taken.
 - **Payments and tiers.** Free for good, decided 21 August 2026. See above.
 - **Competing on drill count.** 120 a coach can trust beats 3,000 they have to check.
 - **A headcount check on a session.** Shipped 4 September 2026, taken out the same
@@ -310,9 +319,6 @@ never things that would justify a price.
   the token getting its own row, which is not worth it yet.
 - The skip link leaves `#hub-view` in the URL, so a reload lands on Drills rather than the
   view you were on. Cosmetic.
-- The signed-out catalogue is readable by anyone, but the app is still `noindex`. Making
-  it indexable is most of the work of the public drill catalogue below, so it is its own
-  decision rather than a side effect.
 - `e2e/contrast.spec.ts` covers the homepage, the planner and the signed-out hub. The
   signed-in views need an auth stub before it can reach them. Present mode and the
   Account page's device panel are both signed in, so both are unmeasured. The one
@@ -333,6 +339,10 @@ Each of these was argued through once and the reasoning is in `CLAUDE.md`.
 
 - Drill content is static data in the bundle, not database rows, because offline is the
   requirement that matters most
+- The drill copy is published in full to search, faults included, decided 7 September
+  2026. Every word of it was written from scratch, so the copyright risk runs the other
+  way. `/hub` itself stays `noindex`: it is a hash router, so indexing it buys one thin
+  page rather than 120
 - The coach's profile lives in auth metadata rather than a `profiles` table, because
   nothing security sensitive keys off it
 - Separate Vite entries rather than one app, so `@supabase/supabase-js` never lands in the
