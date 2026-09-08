@@ -90,8 +90,10 @@ test("a rules page is a real page, not a redirect into the app", async ({ page }
   await expect(page.locator("h1")).toContainText("U10");
   await expect(page.locator("main")).toContainText("ruck");
 
-  // Straight into the app, and across to the drills for the same grade
-  await expect(page.locator('a[href="/hub#/guide/u10"]')).toHaveCount(1);
+  // Straight into the app, and across to the drills for the same grade. The
+  // call to action hands over the grade this page was written for, so the app
+  // does not open by asking a coach who arrived here something the page knew.
+  await expect(page.locator('a[href="/hub?age=u10#/guide/u10"]')).toHaveCount(1);
   await expect(page.locator('a[href="/rugby-drills-u10"]')).not.toHaveCount(0);
   await expect(page.locator('a.header-cta[href="/hub"]')).toBeVisible();
 });

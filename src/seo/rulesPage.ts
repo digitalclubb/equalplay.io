@@ -141,7 +141,7 @@ function guideBody(guide: Guide): string {
   return `        <h1>${esc(guide.title)}</h1>
         <p class="standfirst">${esc(guide.standfirst)}</p>
 
-        <p><a class="cta" href="/hub#/guide/${guide.ageGroup}">Read it in the app</a></p>
+        <p><a class="cta" href="/hub?age=${guide.ageGroup}#/guide/${guide.ageGroup}">Read it in the app</a></p>
         <p class="home-microcopy">
           Free to read with no account. It works at a pitch with no signal too.
         </p>

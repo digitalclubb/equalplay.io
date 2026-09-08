@@ -228,6 +228,18 @@ describe("every static page reaches the product", () => {
     }
   });
 
+  it("hands the app the grade a grade's page already knew", () => {
+    // The six drills pages are written for one grade each, so the app should
+    // not be asking a coach who arrived from one which grade they coach. The
+    // header keeps pointing at a plain `/hub`, because the chrome is the same
+    // everywhere and the test above holds it there.
+    for (const age of AGE_GROUPS) {
+      const html = page(`public/rugby-drills-${age}/index.html`);
+      expect(html, `${age}: cta`).toContain(`<a class="cta" href="/hub?age=${age}">`);
+      expect(html, `${age}: header`).toContain('<a class="header-cta" href="/hub">');
+    }
+  });
+
   it("keeps the two words of the logo in one flex item", () => {
     // `.brand` is a flex row, so a bare "Equal" next to <span>Play</span> is two
     // items with the whitespace between them trimmed away. The 0.6rem gap then
@@ -588,7 +600,11 @@ describe("the generated rules pages", () => {
   it("sends a reader on into the app and across to the drills", () => {
     for (const age of AGE_GROUPS) {
       const html = rulesPageHtml(age);
-      expect(html, `${age}: app`).toContain(`href="/hub#/guide/${age}"`);
+      // The grade rides along, because this page was written for one and the
+      // app used to ask the reader for it the moment they arrived. Only the
+      // call to action carries it. The chrome is the same on every page in the
+      // product and gets to stay that way.
+      expect(html, `${age}: app`).toContain(`href="/hub?age=${age}#/guide/${age}"`);
       expect(html, `${age}: drills`).toContain(`href="/rugby-drills-${age}"`);
     }
   });

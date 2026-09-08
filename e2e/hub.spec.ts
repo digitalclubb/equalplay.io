@@ -1329,6 +1329,40 @@ test("a preset above the coach's grade is refused, account or not", async ({ pag
   await expect(page.locator("#hub-view")).not.toContainText("Ruck");
 });
 
+/**
+ * A static page is written for one age grade and used to throw that away at the
+ * door, so a coach arriving from "U9 rugby tackling drills" was asked which age
+ * group they coach. These run against the real build rather than the module,
+ * because the whole point is what happens on the way in.
+ */
+test("a page that knew the grade does not ask for it again", async ({ page }) => {
+  await signedOut(page, null, "?age=u9");
+  await expect(page.locator(".drill-card").first()).toBeVisible();
+  await expect(page.locator("#f-age")).toHaveValue("u9");
+  // Taken back off, or a reload seeds again and a bookmark carries somebody
+  // else's grade about with it
+  expect(new URL(page.url()).search).toBe("");
+});
+
+test("a grade already picked beats a page that says otherwise", async ({ page }) => {
+  // Only ever a seed. A coach set to U12 reading a U7 page is reading ahead or
+  // behind on purpose, so moving them would be the app overruling them.
+  await signedOut(page, "u12", "?age=u7");
+  await expect(page.locator("#f-age")).toHaveValue("u12");
+});
+
+test("nothing else in the query is dropped on the way in", async ({ page }) => {
+  // Stands in for the PKCE `code` a confirmation link arrives with, which
+  // supabase-js has not read at the moment this runs. Losing that signs a coach
+  // out just as they finished confirming. A param of our own is used instead,
+  // because the client would try to exchange a real looking code and then tidy
+  // the address itself, which proves nothing either way.
+  await signedOut(page, null, "?age=u9&keep=me");
+  await expect(page.locator("#f-age")).toHaveValue("u9");
+  expect(new URL(page.url()).searchParams.get("keep")).toBe("me");
+  expect(new URL(page.url()).searchParams.get("age")).toBeNull();
+});
+
 test("the ready-made sessions are readable with no account", async ({ page }) => {
   await signedOut(page, "u10", "#/plans");
   // Every one of them a link rather than a button, because signed out there is

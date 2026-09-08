@@ -35,7 +35,8 @@ import { transition } from "../lib/motion.js";
 import { navHtml } from "../lib/nav.js";
 import { wireScheme } from "../lib/theme.js";
 import { manageServiceWorker } from "../lib/sw.js";
-import { chosenAge } from "./ageChoice.js";
+import { chooseAge, chosenAge } from "./ageChoice.js";
+import { isAgeGroup } from "./content/types.js";
 import { renderAgePicker } from "./views/agePicker.js";
 import { renderGuide } from "./views/guide.js";
 
@@ -81,7 +82,44 @@ if (!view || !nav) {
   start(view, nav);
 }
 
+/**
+ * What a page asked the URL to carry in, read once at boot then taken back off.
+ *
+ * Two things arrive this way. `age` comes off a static page that already knew
+ * the grade, since every theme page and every rules page is written for one.
+ * A coach landing on "U9 rugby tackling drills" out of a search used to be
+ * asked which age group they coach, which is the app forgetting something it
+ * had that moment been told, at the point in the funnel where it can least
+ * afford to. It is only ever a seed: a coach who has already answered keeps
+ * their answer, so reading a U9 page while coaching U12 does not quietly move
+ * them. Signed in the profile overwrites it the moment it lands. Match day
+ * reads the same storage for how many a side to start on, so the grade travels
+ * that far as well.
+ *
+ * It comes off the address afterwards, or a reload would seed again and a
+ * bookmark would carry somebody else's grade. Everything else in the query goes
+ * back untouched: a confirmation link arrives with a PKCE `code` in it that
+ * supabase-js has not read yet. Dropping that would sign a coach out at the
+ * moment they finished confirming.
+ */
+function takeUrlIntent(): void {
+  const params = new URLSearchParams(window.location.search);
+  const age = params.get("age");
+  if (age === null) return;
+
+  if (isAgeGroup(age) && !chosenAge()) chooseAge(age);
+
+  params.delete("age");
+  const query = params.toString();
+  history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+  );
+}
+
 function start(view: HTMLElement, nav: HTMLElement): void {
+  takeUrlIntent();
   const cached = cachedProfile();
   let profile: Profile | null = cached?.profile ?? null;
   let userId: string | null = cached?.userId ?? null;

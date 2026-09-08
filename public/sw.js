@@ -41,11 +41,21 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          // Only the plain address. A page can hand the app the grade it
+          // already knew as `?age=`, and a confirmation link comes back with a
+          // PKCE `code` that is different every time, so caching what was asked
+          // for would put a fresh entry in for every coach who ever confirms.
+          if (!new URL(request.url).search) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
           return response;
         })
-        .catch(() => caches.match(request)),
+        // `ignoreSearch`, for the same reason. The precache holds `/hub` with
+        // nothing on the end of it, so an exact match would hand a coach
+        // arriving from a static page with no signal the browser's own error
+        // page instead of the app.
+        .catch(() => caches.match(request, { ignoreSearch: true })),
     );
     return;
   }

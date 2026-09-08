@@ -342,7 +342,7 @@ export function themePageHtml(theme: Theme, age: AgeGroup, drills: Drill[]): str
           from the touchline when it is going wrong.
         </p>
 
-        <p><a class="cta" href="/hub">Open them in the app</a></p>
+        <p><a class="cta" href="/hub?age=${age}">Open them in the app</a></p>
         <p class="home-microcopy">
           Free to read with no account. They work at a pitch with no signal too.
         </p>

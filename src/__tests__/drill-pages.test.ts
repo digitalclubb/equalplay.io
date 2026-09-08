@@ -155,6 +155,37 @@ describe("one page per drill", () => {
   });
 });
 
+/**
+ * A page written for one grade tells the app which one.
+ *
+ * Every theme page is a grade's page. A coach landing on "U9 rugby tackling
+ * drills" out of a search and tapping through was asked which age group they
+ * coach, which is the app forgetting the one thing it had just been told, at
+ * the point in the funnel where it can least afford to.
+ *
+ * Only the call to action carries it. The chrome is identical on every page in
+ * the product and the tests above hold it that way, because a header that
+ * changed with the page would be the site's navigation arguing with itself.
+ * A drill page is deliberately not in here either: a drill spans grades, so
+ * seeding one off `minAge` would set a U12 coach to U7 for reading a warm-up.
+ */
+describe("a page that knows the grade hands it over", () => {
+  it("puts it on the theme page's call to action", () => {
+    for (const { theme, age } of themeGrades()) {
+      const html = themePageHtml(theme, age, drillsFor(theme, age));
+      expect(html, `${themePath(theme, age)}`).toContain(`href="/hub?age=${age}"`);
+    }
+  });
+
+  it("leaves a drill page pointing at the drill and nothing else", () => {
+    for (const drill of DRILLS) {
+      const html = drillPageHtml(drill);
+      expect(html, drillPath(drill)).toContain(`href="/hub#/catalogue/${drill.id}"`);
+      expect(html, `${drillPath(drill)} guesses a grade`).not.toContain("/hub?age=");
+    }
+  });
+});
+
 describe("nothing is published where it cannot be found", () => {
   it("links every drill from at least one theme page", () => {
     // The sitemap is a hint rather than a route. A page with no link into it is
