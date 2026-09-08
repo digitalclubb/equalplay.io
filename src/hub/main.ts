@@ -21,6 +21,7 @@ import { clearLocalFavourites, retryFavourites } from "./favourites.js";
 import { clearLocalRuns, retryRuns } from "./sessionLog.js";
 import { showToast } from "../components/toast.js";
 import {
+  GATE_KEY,
   cacheProfile,
   cachedProfile,
   clearCachedProfile,
@@ -63,6 +64,20 @@ const GATE_REASON: Record<string, string> = {
   favourites:
     "A starred drill needs somewhere to live beyond this browser, which is what the account is for.",
 };
+
+/**
+ * Whether a value names a gate this app knows how to land somebody on.
+ *
+ * Both callers read it out of a URL, one off the address bar and one off a
+ * confirmation email, so neither may be trusted to name a key. `in` would say
+ * yes to `toString`, because a plain object still has a prototype. Nothing bad
+ * follows from that here, since the worst it produces is `#/toString` and the
+ * router shows the catalogue for anything it does not recognise, but a check
+ * that answers yes to a method is not a check.
+ */
+function isGate(value: string | null | undefined): value is string {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(GATE_REASON, value);
+}
 
 const view = document.getElementById("hub-view");
 const nav = document.getElementById("hub-nav");
@@ -118,8 +133,43 @@ function takeUrlIntent(): void {
   );
 }
 
+/**
+ * Coming back from a confirmation link, at the gate the coach registered
+ * through rather than at the drill list.
+ *
+ * `auth.ts` writes what they were reaching for when they signed up. This is the
+ * only journey that needs it, because it is the only one that opens a fresh
+ * page with nothing of the tab that started it.
+ *
+ * Only on the way back from a link, which is what the code in the query says.
+ * Applying it on any load would send a coach who registered last night, closed
+ * the tab and opened the app this morning somewhere they did not ask to go.
+ *
+ * The fragment is left alone unless it is a route. An expired or already used
+ * link comes back with the reason in the fragment rather than the query.
+ * `reportLinkFailure` is the thing that reads it out to the coach. Overwriting
+ * it would put them on the sessions gate with nothing said about why they are
+ * not signed in, which is the failure that function exists to prevent.
+ */
+function landAfterConfirming(): void {
+  if (!new URLSearchParams(window.location.search).has("code")) return;
+
+  let gate: string | null = null;
+  try {
+    gate = localStorage.getItem(GATE_KEY);
+    localStorage.removeItem(GATE_KEY);
+  } catch {
+    return;
+  }
+
+  if (!isGate(gate)) return;
+  if (window.location.hash && !window.location.hash.startsWith("#/")) return;
+  history.replaceState(null, "", `${window.location.pathname}${window.location.search}#/${gate}`);
+}
+
 function start(view: HTMLElement, nav: HTMLElement): void {
   takeUrlIntent();
+  landAfterConfirming();
   const cached = cachedProfile();
   let profile: Profile | null = cached?.profile ?? null;
   let userId: string | null = cached?.userId ?? null;
@@ -194,7 +244,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       // is a coach who can no longer leave. Keyed off GATE_REASON so a third gate
       // cannot be added without a landing.
       case "join": {
-        const reaching = route.param && route.param in GATE_REASON ? route.param : "catalogue";
+        const reaching = isGate(route.param) ? route.param : "catalogue";
         history.replaceState(null, "", `#/${reaching}`);
         render();
         break;

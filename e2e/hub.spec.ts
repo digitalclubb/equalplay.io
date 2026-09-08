@@ -1363,6 +1363,66 @@ test("nothing else in the query is dropped on the way in", async ({ page }) => {
   expect(new URL(page.url()).searchParams.get("age")).toBeNull();
 });
 
+/** Sets up the browser as it is on the way back from a confirmation link. */
+async function confirming(page: Page, gate: string, hash = "") {
+  await page.addInitScript((g) => {
+    localStorage.clear();
+    localStorage.setItem("__seeded", "1");
+    localStorage.setItem("equalplay_age_group", "u10");
+    localStorage.setItem("equalplay_hub_welcomed", "1");
+    localStorage.setItem("equalplay_hub_gate", g);
+  }, gate);
+  // The code is spent, so supabase-js cannot exchange it and the coach stays
+  // signed out. Where they land is the same either way, which is the point.
+  await page.goto(`/hub/?code=spent-code${hash}`);
+}
+
+test("a confirmation link lands on what the coach was reaching for", async ({ page }) => {
+  // Without this a coach who registered to keep the session they were reading
+  // confirms their email and arrives at the drill list.
+  await confirming(page, "plans");
+  await expect(page).toHaveURL(/#\/plans$/);
+  await expect(page.locator("a.preset-card").first()).toBeVisible();
+});
+
+test("a gate nobody recognises lands nowhere in particular", async ({ page }) => {
+  // `toString` is in here because a plain object has a prototype, so `in` would
+  // have said yes to it. Storage is hand-editable, so this is checked rather
+  // than trusted.
+  for (const gate of ["https://example.com/", "toString", "constructor"]) {
+    await confirming(page, gate);
+    await expect(page.locator(".drill-card").first(), gate).toBeVisible();
+    expect(page.url(), gate).not.toContain("example.com");
+    expect(new URL(page.url()).hash, gate).not.toContain(gate);
+  }
+});
+
+test("an expired link keeps the reason instead of the gate", async ({ page }) => {
+  // Supabase puts why a link failed in the fragment rather than the query, and
+  // `reportLinkFailure` is what reads it out. Overwriting the fragment would
+  // drop the coach on the sessions gate with nothing said about why they are
+  // still signed out, which is the failure that function exists to prevent.
+  await confirming(page, "plans", "#error=access_denied&error_description=Email+link+has+expired");
+  await expect(page).not.toHaveURL(/#\/plans/);
+  await expect(page.locator("#toast")).toContainText("expired");
+});
+
+test("nothing is landed on without a link to have come from", async ({ page }) => {
+  // A coach who registered last night, closed the tab and opened the app this
+  // morning has not confirmed anything. Sending them to the sessions gate would
+  // be the app acting on something that did not happen.
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem("__seeded", "1");
+    localStorage.setItem("equalplay_age_group", "u10");
+    localStorage.setItem("equalplay_hub_welcomed", "1");
+    localStorage.setItem("equalplay_hub_gate", "plans");
+  });
+  await page.goto("/hub/");
+  await expect(page.locator(".drill-card").first()).toBeVisible();
+  expect(page.url()).not.toContain("/plans");
+});
+
 test("the ready-made sessions are readable with no account", async ({ page }) => {
   await signedOut(page, "u10", "#/plans");
   // Every one of them a link rather than a button, because signed out there is

@@ -3,9 +3,9 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 7 September 2026, after the drill catalogue went out to search,
-the session planner learned about carousels and the ready-made sessions came out
-from behind the register form. See `docs/one-product.md` for the one-product change that preceded it
+Last updated 8 September 2026, after the ready-made sessions came out from
+behind the register form and the way in from search stopped losing what the
+page it came from already knew. See `docs/one-product.md` for the one-product change that preceded it
 and which of its phases are built.
 
 ## Where the real project stands
@@ -85,6 +85,34 @@ up on a Tuesday to help is not going to register first. The token is the whole
 permission and clearing it takes every copy of that link out of service. Read through
 `shared_plan` in migration `0003` rather than through the table, because the reader is
 usually anonymous and RLS has nothing to match them against.
+
+**The grade travels in from the page that knew it.** Every theme page is
+written for one age grade. So is every rules page. So are the six
+hand-written drills pages. All of them used to hand a coach to a bare
+`/hub`, where the first
+thing the app did was ask which age group they coach. That is the app
+forgetting something it had just been told, at the point in the funnel it can
+least afford to. The call to action carries `?age=` now and `takeUrlIntent` in
+`hub/main.ts` reads it once at boot. Only ever a seed: a coach who has already
+answered keeps their answer, while signed in the profile overwrites it. The
+chrome still points at a plain `/hub` on every page, because it belongs to the
+product rather than to the page underneath it. A drill page carries nothing,
+since a drill spans grades and seeding off `minAge` would set a U12 coach to U7
+for reading a warm-up.
+
+**A confirmation email comes back to what the coach was reaching for.**
+Registering to keep the session you were reading, then confirming, used to land
+you on the drill list. `auth.ts` writes the gate to storage at sign-up and
+`landAfterConfirming` in `hub/main.ts` reads it back when a link returns with a
+code in it. Deliberately not on `emailRedirectTo`: Supabase matches that address
+against an allow list of whole URLs, so a query nobody had added would miss,
+fall back to the Site URL and drop the coach on the marketing homepage, which
+ships no JavaScript and can never exchange the code. Storage gives up nothing,
+because a PKCE code only exchanges in the browser that asked for it and that is
+the browser this was written in. An expired link puts its reason in the
+fragment, so a fragment that is not a route is left alone for
+`reportLinkFailure` to read out. The round trip still wants a throwaway account
+and a real inbox. No auth setting changes.
 
 **The ready-made sessions read with no account.** `#/plans` signed out lists the
 presets for the grade and `#/preset/<id>` opens one in full, meaning the running

@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-746 unit and integration tests across 23 files, 185 Playwright tests. Most are ordinary.
+753 unit and integration tests across 24 files, 192 Playwright tests. Most are ordinary.
 These twelve are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -105,7 +105,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 185 tests across four files: `matchday` (15), `home` (11), `hub` (129)
+`pnpm test:e2e` is 192 tests across four files: `matchday` (15), `home` (11), `hub` (136)
 and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -1047,6 +1047,40 @@ held in
 memory as well as in `equalplay_hub_plan_view`: read back out of storage on every
 render it is a dead control in private mode, where the write is swallowed and the
 next read hands back the default the coach just tapped away from.
+
+**A static page hands the app the grade it was written for.** `?age=` on the
+call to action, read once at boot by `takeUrlIntent` in `hub/main.ts`, so a
+coach arriving from "U9 rugby tackling drills" is not asked the one thing that
+page already knew. It is only a seed: an answer already given wins, while signed
+in the profile overwrites it. The key comes off the address afterwards while
+everything else in the query goes back untouched, because a confirmation link
+arrives carrying a PKCE `code` that supabase-js has not read yet.
+
+**Where a coach was headed when they registered is kept in storage, never on
+`emailRedirectTo`.** Supabase matches that address against an allow list of
+whole URLs. `supabase/README.md` has `https://equalplay.io/hub` on it and
+nothing else, so a query would miss, fall back to the Site URL and land the
+coach on the marketing homepage, which ships no JavaScript and can never
+exchange the code. That fails in production only. Storage costs nothing by
+comparison, since a PKCE code exchanges against a verifier held in the browser
+that asked for it, so the link only ever works in the browser this was written
+in. `landAfterConfirming` applies it only when a code is actually in the query,
+and only over a fragment that is a route: an expired link carries its reason in
+the fragment and `reportLinkFailure` is what reads that out. The gate is checked
+with `hasOwnProperty` rather than `in`, because storage is hand-editable and
+`in` says yes to `toString`.
+
+Only the in-body call to action carries the grade. The chrome stays a plain
+`/hub` on all 169 pages, because it belongs to the product rather than to
+whichever page a coach landed on. `landing-pages.test.ts` holds it there. A
+drill page carries nothing at all: a drill spans grades, so seeding off
+`minAge` would set a U12 coach to U7 for reading a warm-up.
+
+`sw.js` matches navigations with `ignoreSearch` for the same reason. The
+precache holds `/hub` with nothing on the end, so an exact match would hand a
+coach arriving from a static page with no signal the browser's error page. It
+also stops caching navigations that carry a query, or every confirmation would
+leave a fresh entry behind under its own one-time `code`.
 
 **A preset is age gated like any other route to a drill.** `renderPresetView`
 takes its id off the address bar, so it checks the grade itself rather than

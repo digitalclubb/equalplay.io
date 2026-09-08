@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase.js";
 import { isAgeGroup, type AgeGroup } from "./content/types.js";
 import { chooseAge } from "./ageChoice.js";
+import { currentRoute } from "./router.js";
 
 /**
  * The coach's own details. Stored in Supabase user metadata rather than a
@@ -129,10 +130,55 @@ export interface SignUpFields extends Profile {
   password: string;
 }
 
+/** Where the app puts what a coach was reaching for when they registered. */
+export const GATE_KEY = "equalplay_hub_gate";
+
+/**
+ * What the coach was reaching for when they registered, kept for the way back.
+ *
+ * The confirmation email opens a fresh page with nothing of the tab that sent
+ * it, so without this somebody who registered to keep the session they were
+ * reading confirms and lands on the drill list.
+ *
+ * Not carried on `emailRedirectTo`, which is the obvious place and the wrong
+ * one. Supabase matches that address against an allow list of whole URLs, so a
+ * query it has not been told about falls back to the Site URL, which is the
+ * marketing homepage. That page ships no JavaScript and no client, so the PKCE
+ * code would never be exchanged and a coach who confirmed would arrive signed
+ * out on a page that cannot sign them in. It would fail in production only,
+ * where nothing tests it.
+ *
+ * Storage loses nothing by comparison. The code exchanges against a verifier
+ * held in the browser that asked for it, so a confirmation link only ever
+ * works in this browser anyway, which is the same place this is written.
+ *
+ * More than the `join` routes, because the signed-out form is shown for a bare
+ * `#/favourites` and for a session route as well. A coach registering at one of
+ * those was reaching for something too.
+ */
+function rememberGate(): void {
+  const route = currentRoute();
+  const gate =
+    route.name === "join" && route.param
+      ? route.param
+      : route.name === "favourites" && !route.param
+        ? "favourites"
+        : route.name === "plan" || route.name === "plans"
+          ? "plans"
+          : "";
+  try {
+    if (gate) localStorage.setItem(GATE_KEY, gate);
+    else localStorage.removeItem(GATE_KEY);
+  } catch {
+    // Private mode. The coach lands on the app rather than on the gate
+  }
+}
+
 /** Resolves with `needsConfirmation` when Supabase has sent a confirmation email. */
 export async function signUp(
   fields: SignUpFields,
 ): Promise<{ needsConfirmation: boolean }> {
+  rememberGate();
   const { data, error } = await supabase.auth.signUp({
     email: fields.email.trim(),
     password: fields.password,
@@ -142,6 +188,8 @@ export async function signUp(
         club: fields.club.trim(),
         age_group: fields.ageGroup,
       },
+      // Exactly what `supabase/README.md` has on the allow list, nothing added.
+      // Where the coach was headed is in storage instead. See `rememberGate`.
       emailRedirectTo: `${window.location.origin}/hub`,
     },
   });
