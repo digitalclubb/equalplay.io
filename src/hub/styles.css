@@ -2555,6 +2555,10 @@ body {
     color: var(--color-text);
   }
 
+  a.coverage-row:hover {
+    border-color: var(--color-primary);
+  }
+
   /* The editor's own small controls, which are the outlined tier in miniature
      and were the same dead-under-a-mouse as Print it once was. The dashed adds
      and the station buttons paint no background of their own, so they take the
@@ -3200,12 +3204,46 @@ body {
 .coverage-row {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--sp-sm);
   padding: var(--sp-xs) var(--sp-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
+}
+
+/* The whole row goes to the session for that theme, so the whole row is the
+   target rather than the two words at the end of it. Read in a car park with
+   one thumb, which is also why it carries the 44px every other control here
+   carries. */
+a.coverage-row {
+  /* Centred rather than on the baseline the plain row uses. Padding plus one
+     line comes to about 37px, so the 44px floor adds slack. On a baseline all
+     of that slack lands under the text. */
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The theme takes the slack, so the state and the way in stay together on the
+   right rather than being spread across the row by `space-between`. */
+.coverage-theme {
+  margin-right: auto;
+}
+
+.coverage-go {
+  flex: 0 0 auto;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--color-primary);
+}
+
+/* On the warning row the link colour is navy on amber, which is the fixed
+   colour on a themed surface the contrast spec exists to catch. It takes the
+   row's own text colour instead, the way the state beside it already does. */
+.coverage-row-never .coverage-go {
+  color: inherit;
+  text-decoration: underline;
 }
 
 /* A theme never coached is the whole point of the list, so it is the one row
@@ -3220,6 +3258,7 @@ body {
 .coverage-theme {
   font-weight: var(--weight-semi);
 }
+
 
 .coverage-when {
   color: var(--color-muted);

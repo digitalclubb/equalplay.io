@@ -2133,6 +2133,32 @@ test("marking a night as run fills in what you have covered", async ({ page }) =
   await expect(page.locator("#plan-ran")).toBeVisible();
 });
 
+test("a gap in what you have covered is a way into a session on it", async ({ page }) => {
+  // Reading that you have never worked on evasion is the easy half. The row is
+  // the link, so the answer to it is one tap rather than a trip back through
+  // the ready-made sessions looking for the right theme.
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}`);
+  await page.locator("#plan-ran").click();
+  await expect(page.locator(".ran-it-done")).toContainText("Marked as run today");
+
+  await page.goto("/hub/#/plans");
+  const gap = page.locator(".coverage-row-never").first();
+  const theme = await gap.locator(".coverage-theme").innerText();
+  await expect(gap.locator(".coverage-go")).toHaveText("Plan one");
+
+  // What the card for that theme would have given them, which is what the row
+  // promises. Read off the page rather than hard coded, so a new preset or a
+  // renamed one does not quietly make this test about nothing.
+  const card = page.locator(".preset-card", { has: page.getByText(theme, { exact: true }) });
+  const expected = await card.first().locator(".preset-title").innerText();
+
+  await gap.click();
+  await expect(page).toHaveURL(/#\/plan\/.+\/edit$/);
+  await expect(page.locator("#plan-title")).toHaveValue(expected);
+  await expect(page.locator(".block-row")).not.toHaveCount(0);
+});
+
 test("a U8 coach is never told they have neglected rucking", async ({ page }) => {
   // Coverage lists themes to work on. Listing one Regulation 15 does not allow
   // at the grade would be the app telling a coach to break it.

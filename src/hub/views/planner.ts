@@ -45,6 +45,7 @@ import {
   planTotals,
   stationIds,
   themeCoverage,
+  type ThemeCoverage,
   withWaterBreak,
   type PlanBlock,
   type PlanTotals,
@@ -308,6 +309,7 @@ function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
 
   const coverage = themeCoverage(log, ctx.ageGroup, today());
   const nights = log.length === 1 ? "1 night" : `${log.length} nights`;
+  const presets = presetsForAge(ctx.ageGroup);
 
   return `
     <section class="hub-section coverage">
@@ -316,17 +318,38 @@ function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
         <span class="hub-count">${nights}</span>
       </div>
       <ul class="coverage-list">
-        ${coverage
-          .map(
-            (row) => `
-          <li class="coverage-row${row.runs === 0 ? " coverage-row-never" : ""}">
-            <span class="coverage-theme">${esc(THEME_SHORT[row.theme])}</span>
-            <span class="coverage-when">${coverageWhen(row.runs, row.weeksAgo)}</span>
-          </li>`,
-          )
-          .join("")}
+        ${coverage.map((row) => coverageRow(row, presets)).join("")}
       </ul>
     </section>`;
+}
+
+/**
+ * A row that is also a way to do something about it.
+ *
+ * The list said "Evasion, not yet" and then sat there. Reading that a coach
+ * has neglected something is the easy half. The hard half is the one this app
+ * exists for: what a night on it looks like. So the row is the link. The whole
+ * row rather than two words at the end of it, because that is a hit area a
+ * thumb can find in a car park. Behind it is the ready-made session for that
+ * theme, which is what the card above would have given them anyway.
+ *
+ * Every theme this list can name has a ready-made session behind it, since
+ * `themeCoverage` only lists what the grade may do and there is one preset per
+ * theme per grade. The row falls back to plain text anyway, or adding a theme
+ * before writing its session would turn a status line into a dead link.
+ */
+function coverageRow(row: ThemeCoverage, presets: Preset[]): string {
+  const never = row.runs === 0 ? " coverage-row-never" : "";
+  const body = `
+      <span class="coverage-theme">${esc(THEME_SHORT[row.theme])}</span>
+      <span class="coverage-when">${coverageWhen(row.runs, row.weeksAgo)}</span>`;
+  const preset = presets.find((p) => p.theme === row.theme);
+
+  return preset
+    ? `<li><a class="coverage-row${never}" href="#/preset/${esc(preset.id)}">${body}
+        <span class="coverage-go">Plan one</span>
+      </a></li>`
+    : `<li class="coverage-row${never}">${body}</li>`;
 }
 
 function coverageWhen(count: number, weeksAgo: number | null): string {
