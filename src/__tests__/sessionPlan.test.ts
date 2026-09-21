@@ -701,7 +701,7 @@ describe("planDrills. Carousels", () => {
       plan({ blocks: [{ drillId: "a", minutes: 8, alongside: ["b", "c"] }] }),
       [drill("a"), drill("b"), drill("c")],
     );
-    expect(resolved[0].stations.map((d) => d.id)).toEqual(["a", "b", "c"]);
+    expect(resolved[0].stations.map((s) => s.drill.id)).toEqual(["a", "b", "c"]);
     expect(resolved[0].drill.id).toBe("a");
   });
 
@@ -714,12 +714,38 @@ describe("planDrills. Carousels", () => {
     );
     expect(resolved).toHaveLength(1);
     expect(resolved[0].drill.id).toBe("b");
-    expect(resolved[0].stations.map((d) => d.id)).toEqual(["b", "c"]);
+    expect(resolved[0].stations.map((s) => s.drill.id)).toEqual(["b", "c"]);
+    // The rows are one and two. The stations are two and three, because the
+    // first one is the drill that has gone. Everything with a control on it
+    // has to use these rather than the row, or the ✕ beside "c" takes "b" out.
+    expect(resolved[0].stations.map((s) => s.at)).toEqual([1, 2]);
+  });
+
+  it("addresses the station a coach tapped, not the row it was drawn in", () => {
+    const session = plan({ blocks: [{ drillId: "gone", minutes: 8, alongside: ["b", "c"] }] });
+    const catalogue = [
+      drill("b", { themes: ["handling"] }),
+      drill("c", { themes: ["evasion"] }),
+      drill("spare-hands", { themes: ["handling"] }),
+      drill("spare-feet", { themes: ["evasion"] }),
+    ];
+    const [resolved] = planDrills(session, catalogue);
+
+    // Row two holds "c", which is station three, because the first station is
+    // the drill that has gone. Swapping it has to look at "c" and offer
+    // something like "c".
+    const second = resolved.stations[1];
+    expect(second.drill.id).toBe("c");
+    expect(anotherLike(session, catalogue, resolved.index, second.at)?.id).toBe("spare-feet");
+
+    // Reading the row it was drawn in instead lands on "b" and offers a
+    // handling drill for an evasion station.
+    expect(anotherLike(session, catalogue, resolved.index, 1)?.id).toBe("spare-hands");
   });
 
   it("gives a plain block one station", () => {
     const resolved = planDrills(plan({ blocks: [{ drillId: "a", minutes: 10 }] }), [drill("a")]);
-    expect(resolved[0].stations).toEqual([resolved[0].drill]);
+    expect(resolved[0].stations).toEqual([{ drill: resolved[0].drill, at: 0 }]);
   });
 });
 
@@ -775,12 +801,23 @@ describe("anotherLike. Swapping a drill for one of the same sort", () => {
 
   it("never offers a drill the age grade is not allowed", () => {
     const u8 = plan({ ageGroup: "u8", blocks: [{ drillId: "ruck-it", minutes: 10 }] });
-    // The block itself is illegal, which is what the plan is already warning
-    // about. Swapping it has to hand back something legal rather than nothing.
     expect(anotherLike(u8, catalogue, 0)).toBeNull();
 
     const u10 = plan({ ageGroup: "u10", blocks: [{ drillId: "ruck-it", minutes: 10 }] });
     expect(anotherLike(u10, catalogue, 0)).toBeNull();
+  });
+
+  it("hands back a legal drill when the block itself is not one", () => {
+    // The plan is already warning about this block. Answering the swap with
+    // nothing would leave the one control that could clear the warning doing
+    // nothing, so the drill on the block is not in the running and the first
+    // legal candidate is what comes back.
+    const late = [
+      drill("u11-only", { themes: ["handling"], minAge: "u11" }),
+      drill("fine-here", { themes: ["handling"] }),
+    ];
+    const u8 = plan({ ageGroup: "u8", blocks: [{ drillId: "u11-only", minutes: 10 }] });
+    expect(anotherLike(u8, late, 0)?.id).toBe("fine-here");
   });
 
   it("skips a drill the session already has", () => {

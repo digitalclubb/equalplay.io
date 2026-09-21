@@ -1717,6 +1717,12 @@ body {
   cursor: default;
 }
 
+/* Solid rather than dashed. The dash is the add language, worn by "+ water
+   break" and "+ station". A swap changes what is already in the session. */
+.block-swap {
+  border-style: solid;
+}
+
 /* ---- Add a drill ---- */
 
 /* ---- Units ---- */

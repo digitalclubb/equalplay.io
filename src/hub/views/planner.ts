@@ -1114,7 +1114,7 @@ export function renderPlanRun(
             // the board stays readable from arm's length.
             `<ol class="run-board">
               ${stations
-                .map((station, spot) => {
+                .map(({ drill: station }, spot) => {
                   const group = ((((spot - rotation) % turns) + turns) % turns) + 1;
                   const keep = `board:${index}:${spot}`;
                   return `
@@ -1646,7 +1646,9 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
 
   // Every station, not only the lead. A carousel is four drills that ran, so a
   // night of four themes must not be logged as one.
-  const themes = [...new Set(blocks.flatMap((resolved) => resolved.stations.flatMap((d) => d.themes)))];
+  const themes = [
+    ...new Set(blocks.flatMap((resolved) => resolved.stations.flatMap((s) => s.drill.themes))),
+  ];
   return `<section class="hub-panel ran-it">
     <p>Ran this tonight? It goes towards what you have covered, so the app can tell
     you what you have not.</p>
@@ -1746,7 +1748,7 @@ function runBlock(resolved: ResolvedBlock, position: number, planId?: string): s
       <ol class="run-stations">
         ${stations
           .map(
-            (station, at) => `
+            ({ drill: station }, at) => `
           <li class="run-station">
             <div class="run-station-head">
               <span class="station-number" aria-hidden="true">${at + 1}</span>
@@ -1996,28 +1998,31 @@ function warningList(totals: PlanTotals): string {
 }
 
 /**
- * `index` addresses `plan.blocks`, `position` is where it sits on screen. They only
- * match when every block resolves to a drill, so the controls use index and the
- * up/down disabling uses position.
- */
-/**
  * One station's own line inside a carousel row.
  *
  * The number is the station, which is what a coach shouts. Removing the first
  * station is allowed: the one below it becomes the first. A carousel worn down
  * to a single station is a plain block again, which is what it now is.
+ *
+ * Two numbers, for the same reason `blockRow` takes two. `at` is where the
+ * station sits in the block, which is what every control here has to address.
+ * `spot` is the row it was drawn in, which is what a coach counts. They differ
+ * only when a station points at a drill that no longer exists: that one is not
+ * drawn at all, so without the pair the ✕ on the row below it removed a
+ * different drill than the one named on it.
  */
 function stationLine(
   drill: Drill,
   blockIndex: number,
   at: number,
+  spot: number,
   plan: SessionPlan,
   removable: boolean,
 ): string {
   const keep = `safety:${blockIndex}:${at}`;
   return `
     <li class="station-line">
-      <span class="station-number" aria-hidden="true">${at + 1}</span>
+      <span class="station-number" aria-hidden="true">${spot + 1}</span>
       <div class="station-body">
         <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(plan.id)}">${esc(drill.title)}</a>
         <p class="block-meta">${kindPill(drill)} ${esc(drill.space)}</p>
@@ -2034,7 +2039,7 @@ function stationLine(
         ${swapButton(plan, blockIndex, at, drill, "station")}
         ${
           removable
-            ? `<button type="button" class="station-drop" data-dropstation="${blockIndex}:${at}" aria-label="Remove ${esc(drill.title)} from station ${at + 1}">✕</button>`
+            ? `<button type="button" class="station-drop" data-dropstation="${blockIndex}:${at}" aria-label="Remove ${esc(drill.title)} from station ${spot + 1}">✕</button>`
             : ""
         }
       </div>
@@ -2060,9 +2065,14 @@ function swapButton(
   const label = `Swap ${esc(drill.title)} for another like it`;
   return shape === "station"
     ? `<button type="button" class="station-swap" data-swap="${index}:${station}" aria-label="${label}">⇄</button>`
-    : `<button type="button" class="break-add" data-swap="${index}:${station}" aria-label="${label}">⇄ swap it</button>`;
+    : `<button type="button" class="break-add block-swap" data-swap="${index}:${station}" aria-label="${label}">⇄ swap it</button>`;
 }
 
+/**
+ * `index` addresses `plan.blocks`, `position` is where it sits on screen. They only
+ * match when every block resolves to a drill, so the controls use index and the
+ * up/down disabling uses position.
+ */
 function blockRow(
   resolved: ResolvedBlock,
   position: number,
@@ -2082,7 +2092,9 @@ function blockRow(
         </p>
         <ol class="station-list">
           ${stations
-            .map((station, at) => stationLine(station, index, at, plan, stations.length > 1))
+            .map(({ drill: station, at }, spot) =>
+              stationLine(station, index, at, spot, plan, stations.length > 1),
+            )
             .join("")}
         </ol>
         <button type="button" class="station-add" data-addstation="${index}">+ station</button>
@@ -2429,17 +2441,23 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
       // Rendered only where there is one, so this is the list having moved
       // under the render rather than something a coach can reach.
       if (!next) return;
-      change((plan) => ({
-        ...plan,
-        blocks: plan.blocks.map((b, i) => {
-          if (i !== index) return b;
-          if (station === 0) return { ...b, drillId: next.id };
-          return {
-            ...b,
-            alongside: (b.alongside ?? []).map((id, at) => (at === station - 1 ? next.id : id)),
-          };
+      change(
+        (plan) => ({
+          ...plan,
+          blocks: plan.blocks.map((b, i) => {
+            if (i !== index) return b;
+            if (station === 0) return { ...b, drillId: next.id };
+            return {
+              ...b,
+              alongside: (b.alongside ?? []).map((id, at) => (at === station - 1 ? next.id : id)),
+            };
+          }),
         }),
-      }));
+        // Walking the list is the point of it, so the control has to survive
+        // the redraw it causes. Without this a keyboard is back at the top of
+        // the editor after every tap.
+        `[data-swap="${index}:${station}"]`,
+      );
       showToast(`Swapped in ${next.title}.`);
     });
   }
@@ -2627,7 +2645,7 @@ function renderPrintable(
       </section>
       ${stations
         .map(
-          (station, at) => `
+          ({ drill: station }, at) => `
       <section class="print-block print-station">
         <h3>Station ${at + 1}. ${esc(station.title)}</h3>
         ${printDrill(station)}

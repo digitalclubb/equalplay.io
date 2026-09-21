@@ -266,6 +266,13 @@ export function hasBlockingProblem(totals: PlanTotals): boolean {
   return totals.warnings.some((w) => w.level === "error");
 }
 
+/** A station that resolved, with its place in the block it belongs to. */
+export interface ResolvedStation {
+  drill: Drill;
+  /** Position in `stationIds(block)`, which is not the position it renders at. */
+  at: number;
+}
+
 export interface ResolvedBlock {
   block: PlanBlock;
   /**
@@ -281,8 +288,11 @@ export interface ResolvedBlock {
    *
    * Stations pointing at a drill that no longer exists are dropped, the same as
    * the block itself would be, so this can be shorter than `stationIds(block)`.
+   * Each one carries where it really sits, for the same reason the block
+   * carries `index`: anything with a control on it has to address the station
+   * a coach tapped rather than the row it was drawn in.
    */
-  stations: Drill[];
+  stations: ResolvedStation[];
   /**
    * Position in `plan.blocks`, which is not the position in this array.
    *
@@ -299,12 +309,14 @@ export function planDrills(plan: SessionPlan, catalogue: Drill[]): ResolvedBlock
   const resolved: ResolvedBlock[] = [];
   plan.blocks.forEach((block, index) => {
     const stations = stationIds(block)
-      .map((id) => byId.get(id))
-      .filter((drill): drill is Drill => Boolean(drill));
+      .map((id, at) => ({ drill: byId.get(id), at }))
+      .filter((station): station is ResolvedStation => Boolean(station.drill));
     // A carousel whose first station has gone still has stations to run, so the
     // lead falls back to the first one that resolved rather than dropping the
     // whole block and taking three good drills with it.
-    if (stations.length > 0) resolved.push({ block, drill: stations[0], stations, index });
+    if (stations.length > 0) {
+      resolved.push({ block, drill: stations[0].drill, stations, index });
+    }
   });
   return resolved;
 }
