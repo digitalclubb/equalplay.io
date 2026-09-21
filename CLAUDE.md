@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-753 unit and integration tests across 24 files, 192 Playwright tests. Most are ordinary.
+836 unit and integration tests across 25 files, 197 Playwright tests. Most are ordinary.
 These twelve are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -105,7 +105,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 192 tests across four files: `matchday` (15), `home` (11), `hub` (136)
+`pnpm test:e2e` is 197 tests across four files: `matchday` (15), `home` (11), `hub` (141)
 and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -240,7 +240,8 @@ src/
       types.ts            # Drill/Preset/KitItem, age grades, THEME_MIN_AGE,
                           # THEME_SHORT, RULES_OF_PLAY
       drills.ts           # Pulls the catalogue together, plus filterDrills
-      presets.ts          # 32 ready-made sessions, one per theme per age grade
+      presets.ts          # 38 ready-made sessions, one per theme per age grade,
+                          # plus one carousel per grade
       guides.ts           # What each age grade may do, as data. Published twice
       diagram.ts          # Renders a drill's coordinates to SVG at load
       catalogue/          # 120 drills by theme: warmups, handling, evasion,
@@ -638,6 +639,15 @@ flight when present mode is left releases what it is handed rather than keeping
 it. Only that abandoned case asks again, because Chrome refuses outright
 under battery saver, so retrying on every settle spun rejected requests for the
 length of the session.
+
+**Every grade has a ready-made carousel.** A preset entry may be a list, which
+is a carousel. The first drill in it leads the block, so a group spends that
+drill's own minutes at each station. `presetBlocks` in `logic/sessionPlan.ts`
+does the mapping for all three callers. Each of the six is one theme at every
+station, so the badge stays honest and the theme tips hold wherever a coach is
+standing. A station has to be a drill a group of five can run in a corner of a
+pitch, which `content-age-gate.test.ts` holds by players and by the diagram's
+own space rather than by eye.
 
 **A carousel is one block, not four.** Twenty children and four parents helping
 is four groups of five rotating round four stations, which is what a Sunday
@@ -1099,6 +1109,46 @@ white card those measure about 1.1:1, which is a strip of nothing. Only the ends
 of the strip are rounded. Rounding every segment turned one bar into a row of
 dashes. It is `aria-hidden`, because the meta line beside it already gives the
 blocks and the minutes in words.
+
+**A drill swaps for another like it, in the session it is already in.** The
+planner's own search was the only way to change a ready-made session, which
+meant leaving the running order to find something and coming back. `anotherLike`
+in `logic/sessionPlan.ts` hands back the next drill of the same kind doing the
+same sort of work, legal at the grade and not already in the session. The block
+keeps its minutes, because the budget should not move over a change of game.
+Tapping again walks the list rather than rolling a dice. A warm-up is the one
+widening: three of them are the only one of their theme in the catalogue, so the
+scrum night could not have swapped its warm-up at all. The control is left out
+where there is nothing to swap to, which `sessionPlan.test.ts` holds against
+every block of every ready-made session.
+
+**A session fits itself to the time the coach has.** The ready-made ones come at
+45, 60 or 75 minutes, because those are the slots a club books. `fitToLength`
+scales every block to whatever is in the minutes box. It keeps the shape, so
+the game at the end stays the longest thing in the evening, then leaves the
+water breaks alone because three minutes is three minutes at any length. Floored
+rather than rounded, with the remainder handed back a minute at a time: rounding
+lands a plan a minute over its own length about half the time, which is a
+warning the coach did not cause. A carousel is charged by the station. The
+control renders only where it would change something, which is also how the one
+case it cannot fix stays quiet: blocks already down to a minute each would have
+to lose a drill, which is the coach's call.
+
+**A session can be built rather than picked.** What a preset adds to the
+catalogue is an order. That order is a rule rather than a judgement: something
+on arrival, then the work, then a game where they have to use it.
+`buildSession` writes it down once and is held to the bar the hand-picked
+sessions are held to, on every grade against every theme it may do, at three
+lengths, on four seeds each. The tile picks the theme the coach has gone longest
+without coaching, which is the one thing the app knows that they cannot see.
+With nothing logged there is no gap to name, so it takes a bit of everything
+rather than a theme out of a hat. Seeded off the clock, so tapping again is
+worth doing. How long it runs comes off that grade's own ready-made sessions.
+
+**What you have not covered is a way in, not a status line.** Each row of the
+coverage list is the link to the ready-made session for that theme. Reading that
+you have never worked on evasion is the easy half. The row rather than two words
+at the end of it, because that is a hit area a thumb finds in a car park.
 
 **Build one from scratch is a tile in the grid, not the primary button.** It was
 an outlined button under the presets, which put the only way to a blank session

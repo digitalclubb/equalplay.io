@@ -3,10 +3,11 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 8 September 2026, after the ready-made sessions came out from
-behind the register form and the way in from search stopped losing what the
-page it came from already knew. See `docs/one-product.md` for the one-product change that preceded it
-and which of its phases are built.
+Last updated 21 September 2026, after a session stopped being something a coach
+could only take or leave. It can be swapped drill by drill, fitted to the time
+they actually have, or built from nothing on the theme they have been avoiding.
+See `docs/one-product.md` for the one-product change that preceded it and which
+of its phases are built.
 
 ## Where the real project stands
 
@@ -167,6 +168,38 @@ Local-first like the stars, so the button works at a pitch. `0004` is applied
 against the live project, so a second device sees the log. Stores nothing about
 a child: a row is a date, a title and a list of themes.
 
+**A session is something to change, not only to take.** Every block carries a
+swap, which hands back the next drill of the same kind doing the same sort of
+work, legal at the grade and not already in the session. The block keeps its
+minutes. Tapping again walks the list. It turns 38 ready-made sessions into as
+many nights as a coach has Tuesdays. It is also the fine tuning for everything
+else here that hands them a session.
+
+**A session fits the time a coach actually has.** The ready-made ones come at
+45, 60 or 75 minutes, because those are the slots a club books. One tap scales
+the blocks to whatever is in the minutes box, keeping the shape and leaving the
+water breaks where they are. Under rather than over, always, because a plan a
+minute over its own length is a warning nobody caused.
+
+**A session can be built rather than picked.** What the presets add to 120
+drills is an order, which is a rule rather than a judgement. `buildSession`
+writes it down once: a warm-up, the work, a game where they have to use it, on
+any grade, any theme and any length. The tile picks the theme the coach has
+gone longest without coaching. With nothing logged yet it takes a bit of
+everything instead of a theme out of a hat. Held to the same bar as the
+hand-picked sessions, which is not one warning on any of them.
+
+**What you have not covered is a way in.** Each row of the coverage list is now
+the link to the ready-made session for that theme. It read the gap out and then
+sat there, which is the easy half of the problem it was built for.
+
+**Carousel presets.** One per grade, so a coach with helpers starts from the
+Sunday shape rather than building it from scratch every week. A preset entry
+may hold a list, which is a carousel. Each of the six is one theme at every
+station. A station has to be a drill a group of five can run in a corner of a
+pitch. U9 is three tackle stations with a grown-up on each, which is how a
+volunteer watches every tackle rather than a line of twenty.
+
 **Carousels.** A block can hold stations that run at the same time, one coach on
 each, with the groups moving round. That is the Sunday shape: twenty children
 and four parents helping is four groups of five rather than twenty children
@@ -314,13 +347,13 @@ Shipping is done, so this is no longer guesswork about whether the thing works. 
 still guesswork about what a coach wants next, until one who is not us has used it for
 a few weeks.
 
-1. **Carousel presets.** The 32 ready-made sessions are all one drill at a time.
-   A coach with four helpers has nothing to start from, so the first carousel is
-   built from scratch every time. One per grade would fix it and it is content
-   work rather than code.
-2. **Your own drills.** Every club has three of its own. Without this the catalogue is
+1. **Your own drills.** Every club has three of its own. Without this the catalogue is
    always somebody else's. The expensive part is not storage: a coach can tag a ruck
    drill U8 and the one safety promise is gone. Scope the gate before building it.
+2. **A session a coach can put their own aim on.** `Preset.aim` says what a
+   ready-made night is for. A session they wrote gets the theme tips instead,
+   because an aim would want a column on `session_plans`. Add it when somebody
+   asks rather than before.
 
 Instrumentation is live but has no data yet. `planner_to_app` and `register` are the
 two custom events, from `src/lib/track.ts`. A season of those answers whether the free
