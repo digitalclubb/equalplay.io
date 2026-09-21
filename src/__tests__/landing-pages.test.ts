@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { DRILLS, filterDrills } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
-import { rulesPageHtml, rulesIndexHtml, rulesPagePaths, rulesPath } from "../seo/rulesPage.js";
-import { themePath } from "../seo/drillPage.js";
+import { rulesPageHtml, rulesIndexHtml, rulesPagePaths, rulesPath, rulesPages } from "../seo/rulesPage.js";
+import { drillPages, themePath } from "../seo/drillPage.js";
+import { coachingPages } from "../seo/coachingPage.js";
 import { sitemapXml } from "../seo/sitemap.js";
 import { GUIDES } from "../hub/content/guides.js";
 import { esc } from "../lib/esc.js";
@@ -487,6 +488,58 @@ describe("structured data on the static pages", () => {
  * hub content: `guides.test.ts` holds what it says, and this holds that a
  * static page carries it, points at the product and can be found.
  */
+/**
+ * What a generated page puts in front of a search engine.
+ *
+ * 161 pages are written by a function, so a mistake in one template is a
+ * mistake on every page it emits and nobody reads them all. The coaching guides
+ * shipped with a title that never said rugby, which put "How to teach the scrum
+ * from scratch" against a software methodology, at 67 characters so the front
+ * of it was what got cut.
+ */
+describe("what a generated page tells a search engine", () => {
+  const generated = (): Array<{ path: string; html: string }> => [
+    ...rulesPages(),
+    ...coachingPages(),
+    ...drillPages(),
+  ];
+
+  const titleOf = (html: string): string =>
+    (html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "").replace(/&#39;/g, "'");
+
+  it("renders every one of them", () => {
+    expect(generated().length).toBeGreaterThan(150);
+  });
+
+  it("says rugby in every title", () => {
+    // The site is about one sport and a title tag is the whole of what most
+    // people see. A page of ours that does not say so is a page competing on a
+    // word somebody else owns.
+    for (const { path, html } of generated()) {
+      expect(titleOf(html).toLowerCase(), `${path}: "${titleOf(html)}"`).toContain("rugby");
+    }
+  });
+
+  it("gives every one of them a title and a description of its own", () => {
+    // Two pages sharing either is two pages asking to be treated as one.
+    const titles = new Map<string, string>();
+    const descriptions = new Map<string, string>();
+    for (const { path, html } of generated()) {
+      const title = titleOf(html);
+      const description = html.match(/name="description" content="([^"]*)"/)?.[1] ?? "";
+      expect(title.length, `${path} has no title`).toBeGreaterThan(10);
+      expect(description.length, `${path} has no description`).toBeGreaterThan(50);
+      expect(titles.get(title), `${path} shares a title with ${titles.get(title)}`).toBeUndefined();
+      expect(
+        descriptions.get(description),
+        `${path} shares a description with ${descriptions.get(description)}`,
+      ).toBeUndefined();
+      titles.set(title, path);
+      descriptions.set(description, path);
+    }
+  });
+});
+
 describe("the generated rules pages", () => {
   const pages = (): Array<{ path: string; html: string }> => [
     { path: "/rugby-rules-by-age-group", html: rulesIndexHtml() },

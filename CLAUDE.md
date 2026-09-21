@@ -138,6 +138,16 @@ against the 12 written by hand. All of them share `public/pages.css` with the
 homepage and point their chrome at `/hub`, because the chrome belongs to the
 product rather than to whichever half a coach landed on.
 
+**A generated title says rugby, or it is competing for somebody else's word.**
+161 pages are written by a function, so a mistake in one template is a mistake
+on every page it emits and nobody reads them all. The coaching guides shipped
+titled "How to teach the scrum from scratch", which never mentions the sport:
+that phrase belongs to a software methodology. At 67 characters Google cut it
+as well. A page title is built off the guide's slug, which is the word somebody
+types, plus the grade the phase starts at, so it lands near 50 characters and
+says both. `landing-pages.test.ts` holds every generated page to naming the
+sport, to a title of its own plus a description of its own.
+
 **The sitemap is built, not kept.** `src/seo/sitemap.ts` lists the hand-written
 pages with the dates they were last edited, then appends every generated path.
 It was a file under `public/` holding twenty URLs, which was fine while a human

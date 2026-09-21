@@ -17,6 +17,7 @@ import { themePageHtml, drillsFor, themePath } from "../seo/drillPage.js";
 import { sitemapPaths } from "../seo/sitemap.js";
 import {
   AGE_GROUPS,
+  AGE_GROUP_LABELS,
   THEMES,
   THEME_MIN_AGE,
   ageAtLeast,
@@ -422,6 +423,41 @@ describe("the coaching guides as static pages", () => {
       // picked no grade, so `#/catalogue/<id>` would ask them which age group
       // they coach before showing them the drill.
       expect(html.includes("#/catalogue/"), `${guide.slug} links a hub drill route`).toBe(false);
+    }
+  });
+
+  /**
+   * A title tag is most of what a coach sees before deciding to click, and it
+   * is cut from the right. These shipped at 65 to 77 characters saying
+   * "How to teach the scrum from scratch", which never mentions rugby: the
+   * search that phrase belongs to is about software.
+   */
+  it("gives each page a title that fits and says what sport this is", () => {
+    for (const guide of COACHING_GUIDES) {
+      const html = coachingPageHtml(guide);
+      const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+      expect(title, guide.slug).toContain("Rugby");
+      expect(title.toLowerCase(), guide.slug).toContain(guide.slug);
+      // Including " | Equal Play", because that is what a reader sees.
+      expect(title.length, `${guide.slug}: "${title}" is ${title.length} characters`).toBeLessThan(
+        61,
+      );
+      // And the grade it starts at, since "u10 scrum" is how the question gets
+      // typed. Off the same table the page runs on rather than written twice.
+      expect(title, guide.slug).toContain(AGE_GROUP_LABELS[THEME_MIN_AGE[guide.theme]]);
+    }
+  });
+
+  it("gives each page a description that survives being cut", () => {
+    for (const guide of COACHING_GUIDES) {
+      const html = coachingPageHtml(guide);
+      const description = html.match(/name="description" content="([^"]*)"/)?.[1] ?? "";
+      expect(description.length, `${guide.slug}: ${description.length} characters`).toBeLessThan(
+        161,
+      );
+      // The blurb leads, so what gets cut is the boilerplate rather than the
+      // sentence that says what the page is.
+      expect(description.startsWith(esc(guide.blurb)), guide.slug).toBe(true);
     }
   });
 

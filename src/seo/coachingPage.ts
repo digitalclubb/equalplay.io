@@ -127,10 +127,17 @@ export function coachingPageHtml(guide: CoachingGuide): string {
 
   return page({
     path: coachingPath(guide),
-    title: `${guide.title}, for Minis Coaches`,
+    // Not the heading. The heading is written for somebody already on the page,
+    // so "How to teach the scrum from scratch" reads right there. As a title tag
+    // it competes with a software methodology, because it never says rugby.
+    // At 67 characters Google cut the front of it off as well. The slug is the word somebody
+    // types, which is why it is the slug, so the title is built off it and the
+    // grade comes from the same table the rest of the page runs on.
+    title: `How to Teach Rugby ${guide.slug[0].toUpperCase()}${guide.slug.slice(1)}, ${AGE_GROUP_LABELS[from]} and Up`,
     // Raw. `page()` escapes it, so escaping here would put entities in the
     // meta tags the first time a blurb is written with an apostrophe in it.
-    description: `${guide.blurb} Written for a volunteer coaching ${AGE_GROUP_LABELS[from]} and up, from RFU Regulation 15 and the age grade coaching material behind it.`,
+    // The blurb leads, because a snippet is cut from the right.
+    description: `${guide.blurb} For a volunteer coaching ${AGE_GROUP_LABELS[from]} and up, from RFU Regulation 15.`,
     breadcrumb: [
       { name: "Rugby rules by age group", path: RULES_INDEX_PATH },
       { name: guide.title, path: coachingPath(guide) },
