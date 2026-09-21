@@ -527,3 +527,125 @@ export function fitToLength(plan: SessionPlan): SessionPlan {
     ? plan
     : { ...plan, blocks: plan.blocks.map((block, at) => ({ ...block, minutes: minutes[at] })) };
 }
+
+// ---- Building one ----
+//
+// 32 ready-made sessions is four nights for a U7 coach before they start
+// repeating themselves. The catalogue behind them holds 120 drills. What the
+// presets add to those is an order, which is not a secret: something to do on
+// arrival, then the work, then a game where they have to use it. A rule
+// rather than a judgement, so it can be written down once instead of typed
+// out 32 times.
+
+export interface SessionRecipe {
+  ageGroup: AgeGroup;
+  /** The work of the night. Left out for a session that takes a bit of everything. */
+  theme?: Theme;
+  minutes: number;
+}
+
+/**
+ * A running order built to the same four rules the ready-made sessions follow.
+ *
+ * It opens with a warm-up, it ends on a game, every drill is legal at the
+ * grade and it roughly fills the time before `fitToLength` makes that exact.
+ * `sessionPlan.test.ts` holds what comes out to the bar the presets are held
+ * to, which is not a single warning on any grade, theme or length.
+ *
+ * `seed` rotates the lists rather than shuffling them, so the same coach
+ * tapping twice gets a different session while nothing here holds a dice. Pass
+ * the clock for that. Pass anything fixed to get the same session back.
+ *
+ * With no theme it takes one drill from each theme the grade may do, in turn,
+ * which is the night a coach wants in September before anything has gone
+ * wrong yet. A hand-picked preset still beats this. What it beats is a blank
+ * session at nine o'clock the night before.
+ */
+export function buildSession(catalogue: Drill[], recipe: SessionRecipe, seed = 0): PlanBlock[] {
+  const legal = catalogue.filter((drill) => isAvailableAt(drill, recipe.ageGroup));
+  const used = new Set<string>();
+
+  /**
+   * The first drill nobody has had yet, taking each list in turn.
+   *
+   * Lists rather than one sorted pool, because the seed rotates inside
+   * whichever list it is working through. Sorting the theme's own drills to
+   * the front of a single pool and then rotating past them was no ordering at
+   * all: a U12 scrum session opened on two handling warm-ups while the one
+   * scrum warm-up sat there unused.
+   */
+  const take = (...pools: Drill[][]): Drill | undefined => {
+    for (const pool of pools) {
+      for (let i = 0; i < pool.length; i += 1) {
+        const drill = pool[(seed + i) % pool.length];
+        if (used.has(drill.id)) continue;
+        used.add(drill.id);
+        return drill;
+      }
+    }
+    return undefined;
+  };
+
+  /** The theme's own drills, then everything else, as two lists to try in order. */
+  const nearest = (drills: Drill[]): Drill[][] => {
+    const theme = recipe.theme;
+    if (!theme) return [drills];
+    return [
+      drills.filter((drill) => drill.themes.includes(theme)),
+      drills.filter((drill) => !drill.themes.includes(theme)),
+    ];
+  };
+
+  const exercises = legal.filter((drill) => drill.kind === "exercise");
+  // Two of them at a full length session, which is what every preset does: one
+  // to get them moving and one that sets up the work. One at a short session,
+  // where a second is a quarter of the evening.
+  const warmups = nearest(legal.filter((drill) => drill.kind === "warmup"));
+  const opening = [take(...warmups)];
+  if (recipe.minutes >= BREAK_EXPECTED_FROM_MINUTES) opening.push(take(...warmups));
+
+  // Picked before the work, so the best game on the theme finishes the night
+  // rather than turning up in the middle of it.
+  const finish = take(...nearest(exercises.filter((drill) => drill.themes.includes("gamesense"))));
+
+  const blocks = [...opening, finish].filter((drill): drill is Drill => Boolean(drill));
+  let spent = blocks.reduce((sum, drill) => sum + drill.minutes, 0);
+  if (recipe.minutes >= BREAK_EXPECTED_FROM_MINUTES) spent += 3;
+
+  const work: Drill[] = [];
+  for (const pool of workPools(exercises, recipe)) {
+    const drill = take(pool);
+    if (!drill) continue;
+    if (spent + drill.minutes > recipe.minutes) break;
+    spent += drill.minutes;
+    work.push(drill);
+  }
+
+  return [...opening, ...work, finish]
+    .filter((drill): drill is Drill => Boolean(drill))
+    .map((drill) => ({ drillId: drill.id, minutes: drill.minutes }));
+}
+
+/**
+ * Where each drill in the middle of the session comes from, in order.
+ *
+ * One pool per pick rather than one pool picked from repeatedly, because a
+ * session with no theme wants a different theme each time round. `take` keeps
+ * its own record of what it has handed out, so the same pool offered twice
+ * gives two different drills.
+ *
+ * Six goes at it is more than any session length here can spend. The loop
+ * stops the moment one will not fit.
+ */
+function workPools(exercises: Drill[], recipe: SessionRecipe): Drill[][] {
+  if (recipe.theme) {
+    const theme = recipe.theme;
+    const pool = exercises.filter((drill) => drill.themes.includes(theme));
+    return Array.from({ length: 6 }, () => pool);
+  }
+
+  const spread = THEMES.filter((theme) => ageAtLeast(recipe.ageGroup, THEME_MIN_AGE[theme])).map(
+    (theme) => exercises.filter((drill) => drill.themes.includes(theme)),
+  );
+  return [...spread, ...spread];
+}

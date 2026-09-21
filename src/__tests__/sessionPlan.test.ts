@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   anotherLike,
   blockMinutes,
+  buildSession,
   fitToLength,
   isCarousel,
   planTotals,
@@ -15,7 +16,16 @@ import {
 } from "../logic/sessionPlan.js";
 import { DRILLS } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
-import { kitLabel, type AgeGroup, type Drill } from "../hub/content/types.js";
+import {
+  AGE_GROUPS,
+  THEMES,
+  THEME_MIN_AGE,
+  ageAtLeast,
+  isAvailableAt,
+  kitLabel,
+  type AgeGroup,
+  type Drill,
+} from "../hub/content/types.js";
 
 function drill(id: string, over: Partial<Drill> = {}): Drill {
   return {
@@ -1002,5 +1012,111 @@ describe("fitToLength. The time a coach actually has", () => {
       }),
     );
     expect(fitted.blocks.map((b) => b.minutes)).toEqual([60, 0]);
+  });
+});
+
+describe("buildSession. One built rather than picked off a list", () => {
+  /** Every grade, every theme it may do, at each length the app offers. */
+  const recipes = AGE_GROUPS.flatMap((ageGroup) =>
+    [undefined, ...THEMES.filter((t) => ageAtLeast(ageGroup, THEME_MIN_AGE[t]))].flatMap((theme) =>
+      [45, 60, 75].map((minutes) => ({ ageGroup, theme, minutes })),
+    ),
+  );
+
+  const build = (recipe: (typeof recipes)[number], seed = 0): SessionPlan =>
+    fitToLength(
+      withWaterBreak({
+        id: "built",
+        title: "Built",
+        ageGroup: recipe.ageGroup,
+        theme: recipe.theme,
+        sessionMinutes: recipe.minutes,
+        blocks: buildSession(DRILLS, recipe, seed),
+      }),
+    );
+
+  const label = (recipe: (typeof recipes)[number]): string =>
+    `${recipe.ageGroup} ${recipe.theme ?? "mixed"} ${recipe.minutes}min`;
+
+  it("has something to build", () => {
+    expect(recipes.length).toBeGreaterThan(80);
+  });
+
+  it("opens without a single warning, whatever it is asked for", () => {
+    // The same bar the 32 hand-picked sessions are held to. A generated
+    // session that opens on "22 minutes still to fill" is worse than no
+    // button at all.
+    for (const recipe of recipes) {
+      for (const seed of [0, 1, 7, 23]) {
+        const totals = planTotals(build(recipe, seed), DRILLS);
+        expect(totals.warnings.map((w) => w.message), `${label(recipe)} seed ${seed}`).toEqual([]);
+      }
+    }
+  });
+
+  it("starts with a warm-up and ends on a game", () => {
+    for (const recipe of recipes) {
+      const blocks = planDrills(build(recipe), DRILLS);
+      expect(blocks[0]?.drill.kind, label(recipe)).toBe("warmup");
+      const last = blocks[blocks.length - 1]?.drill;
+      expect(last?.themes.includes("gamesense"), `${label(recipe)} ends on ${last?.title}`).toBe(
+        true,
+      );
+    }
+  });
+
+  it("never puts a drill in that the grade is not allowed", () => {
+    for (const recipe of recipes) {
+      for (const block of planDrills(build(recipe), DRILLS)) {
+        expect(
+          isAvailableAt(block.drill, recipe.ageGroup),
+          `${label(recipe)} got ${block.drill.title}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("puts the work asked for in the middle of it", () => {
+    for (const recipe of recipes.filter((r) => r.theme)) {
+      const blocks = planDrills(build(recipe), DRILLS);
+      // The warm-ups are chosen for the theme where one fits, never held to
+      // it. Nor is the game at the end: a grade with no game of its own on
+      // that theme still has to finish on one.
+      const work = blocks.filter((b) => b.drill.kind === "exercise").slice(0, -1);
+      expect(work.length, label(recipe)).toBeGreaterThan(0);
+      expect(
+        work.every((b) => b.drill.themes.includes(recipe.theme!)),
+        `${label(recipe)}: ${work.map((b) => b.drill.title).join(", ")}`,
+      ).toBe(true);
+    }
+  });
+
+  it("takes a bit of everything when no theme is asked for", () => {
+    for (const recipe of recipes.filter((r) => !r.theme && r.minutes === 60)) {
+      const middle = planDrills(build(recipe), DRILLS).slice(1, -1);
+      const themes = new Set(middle.flatMap((b) => b.drill.themes));
+      expect(themes.size, `${label(recipe)}`).toBeGreaterThan(1);
+    }
+  });
+
+  it("uses no drill twice", () => {
+    for (const recipe of recipes) {
+      const ids = buildSession(DRILLS, recipe).map((b) => b.drillId);
+      expect(new Set(ids).size, label(recipe)).toBe(ids.length);
+    }
+  });
+
+  it("gives a different session on a different seed", () => {
+    // Tapping it again has to be worth doing, or it is a button that shows the
+    // same session twice and looks broken.
+    const recipe = { ageGroup: "u10" as const, theme: "handling" as const, minutes: 60 };
+    const first = buildSession(DRILLS, recipe, 0).map((b) => b.drillId);
+    const second = buildSession(DRILLS, recipe, 3).map((b) => b.drillId);
+    expect(second).not.toEqual(first);
+  });
+
+  it("gives the same session back on the same seed", () => {
+    const recipe = { ageGroup: "u11" as const, theme: "tackle" as const, minutes: 60 };
+    expect(buildSession(DRILLS, recipe, 5)).toEqual(buildSession(DRILLS, recipe, 5));
   });
 });

@@ -39,6 +39,7 @@ import {
 import {
   anotherLike,
   blockMinutes,
+  buildSession,
   fitToLength,
   isCarousel,
   moveBlock,
@@ -184,6 +185,11 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
     const presets = presetsForAge(ctx.ageGroup);
     const age = AGE_GROUP_LABELS[ctx.ageGroup];
     const view = planView();
+    // What to build one on, which is whatever has gone longest without being
+    // coached. Nothing logged yet is not a gap, it is a coach who has just
+    // arrived, so that one gets a bit of everything instead of a theme picked
+    // out of a hat.
+    const gap = runs.length > 0 ? themeCoverage(runs, ctx.ageGroup, today())[0] : undefined;
 
     const start = `
       <section class="hub-section">
@@ -196,6 +202,15 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
         </p>
         <div class="preset-grid">
           ${presets.map((preset) => presetCard(preset)).join("")}
+          <button type="button" class="preset-card preset-new" id="new-built">
+            <span class="preset-new-mark" aria-hidden="true">✦</span>
+            <span class="preset-title">Build me one</span>
+            <span class="preset-meta">${
+              gap
+                ? `${esc(THEME_SHORT[gap.theme])} · ${coverageWhen(gap.runs, gap.weeksAgo)}`
+                : "A bit of everything"
+            }</span>
+          </button>
           <button type="button" class="preset-card preset-new" id="new-blank">
             <span class="preset-new-mark" aria-hidden="true">+</span>
             <span class="preset-title">Build one from scratch</span>
@@ -235,6 +250,10 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
 
     container.querySelector("#new-blank")?.addEventListener("click", () => {
       create(ctx, blankPlan(ctx.ageGroup));
+    });
+
+    container.querySelector("#new-built")?.addEventListener("click", () => {
+      create(ctx, builtPlan(ctx.ageGroup, gap?.theme));
     });
 
     for (const button of container.querySelectorAll<HTMLButtonElement>("[data-preset]")) {
@@ -604,6 +623,47 @@ function blankPlan(ageGroup: AgeGroup): SessionPlan {
     sessionMinutes: 60,
     blocks: [],
   };
+}
+
+/**
+ * A session built on the spot, on whatever the coach has been avoiding.
+ *
+ * Seeded off the clock, so a coach who does not fancy what came out can tap it
+ * again and get a different night rather than the same one back. Everything
+ * about the shape of it is `buildSession`, which is held to the bar the
+ * hand-picked sessions are held to.
+ *
+ * It lands in the editor like every other new session, where the swap on each
+ * block is the fine tuning. What this beats is not a preset. It is a blank
+ * session at nine o'clock the night before.
+ */
+function builtPlan(ageGroup: AgeGroup, theme?: Theme): SessionPlan {
+  const sessionMinutes = usualMinutes(ageGroup);
+  return fitToLength(
+    withWaterBreak({
+      ...blankPlan(ageGroup),
+      title: theme ? `A night on ${THEME_SHORT[theme].toLowerCase()}` : "A bit of everything",
+      theme,
+      sessionMinutes,
+      blocks: buildSession(DRILLS, { ageGroup, theme, minutes: sessionMinutes }, Date.now()),
+    }),
+  );
+}
+
+/**
+ * How long a session at this grade usually runs, taken off the ready-made ones
+ * rather than typed in here.
+ *
+ * U7 trains for three quarters of an hour and U12 for an hour, which the 32
+ * hand-written sessions already know. A number in this file would be a second
+ * opinion about the same thing, free to drift from the first.
+ */
+function usualMinutes(ageGroup: AgeGroup): number {
+  const seen = new Map<number, number>();
+  for (const preset of presetsForAge(ageGroup)) {
+    seen.set(preset.sessionMinutes, (seen.get(preset.sessionMinutes) ?? 0) + 1);
+  }
+  return [...seen].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 60;
 }
 
 function fromPreset(preset: Preset): SessionPlan {

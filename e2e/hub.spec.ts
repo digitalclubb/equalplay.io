@@ -2133,16 +2133,43 @@ test("marking a night as run fills in what you have covered", async ({ page }) =
   await expect(page.locator("#plan-ran")).toBeVisible();
 });
 
+test("a session can be built rather than picked off the list", async ({ page }) => {
+  // Six ready-made sessions is six nights. The catalogue behind them is 120
+  // drills, and what the presets add to those is an order that can be written
+  // down once rather than typed out 32 times.
+  await signedIn(page, "u10", "#/plans");
+
+  const build = page.locator("#new-built");
+  await expect(build).toContainText("Build me one");
+  // Nothing logged yet is a coach who has just arrived rather than a gap.
+  await expect(build).toContainText("A bit of everything");
+  await build.click();
+
+  await expect(page).toHaveURL(/#\/plan\/.+\/edit$/);
+  await expect(page.locator("#plan-title")).toHaveValue("A bit of everything");
+  // It arrives full, with a warm-up on the front and no warning on it.
+  await expect(page.locator(".block-row")).not.toHaveCount(0);
+  await expect(page.locator(".block-row").first()).toContainText("Warm-up");
+  await expect(page.locator(".plan-warning")).toHaveCount(0);
+  await expect(page.locator("#plan-fit")).toHaveCount(0);
+});
+
 test("a session fits itself to the time the coach actually has", async ({ page }) => {
   // The ready-made sessions come at 45, 60 or 75 minutes, because those are
   // the slots a club books. A coach with the pitch until half past had to open
   // every block and do the arithmetic themselves.
-  const planId = await runnableSession(page);
-  await page.goto(`/hub/#/plan/${planId}/edit`);
+  // Taken from the card, which lands in the editor, rather than by going to
+  // the address. Every other editor test here does the same: a route reached
+  // by the hash renders a task later, so typing straight after a `goto` can
+  // land on the input the next paint is about to replace.
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-rucking"]').click();
+  await expect(page.locator(".block-row")).toHaveCount(BLOCKS);
 
   const minutes = page.locator("#plan-minutes");
   await minutes.fill("50");
   await minutes.blur();
+  await expect(minutes).toHaveValue("50");
 
   const fit = page.locator("#plan-fit");
   await expect(fit).toHaveText("Fit to 50 min");
