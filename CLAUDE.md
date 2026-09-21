@@ -325,6 +325,29 @@ whoever has the ball or is doing the work, which in a pairs drill means the
 thrower rather than an opponent. `.claude/skills/drill-diagram/` has the rest,
 plus the authoring loop. Preview at card size before believing any of it.
 
+**A theme says what to repeat all night.** `THEME_TIPS` in
+`hub/content/types.ts` is three coaching points per theme, the things that hold
+for every drill in it. `drill.coachingPoints` covers the ten minutes one drill
+runs, then a volunteer has nothing until the next block, which is most of the
+evening. They sit in the head of any session on that theme, on the print sheet
+the helping parents get and at the top of each theme's static page. Not in
+present mode: the block's own points are what has to land at arm's length and a
+list over them pushes them off a phone. Written as fragments with no full stop,
+because they are read in the rain. Nothing in them may claim what the grade
+cannot do, so re-check them against Reg 15 with everything else. Note nobody
+pushes in a scrum at any grade here, which the first draft of the set piece
+tips got wrong.
+
+**A theme off storage is checked before it indexes anything.** `isTheme` in
+`hub/content/types.ts`. `isStoredPlan` does not validate `plan.theme` and
+rejecting a whole session over a bad badge would lose a coach their work, so
+the check sits at the point of use instead. `plan.theme ? TABLE[plan.theme] : x`
+is not that check: the `THEME_*` tables are object literals, so "constructor"
+and "toString" read back inherited functions rather than undefined, clear the
+truthy test, then throw on `.map` or inside `esc`. Same trap as `hasOwnProperty`
+over `in` on the confirmation gate. It had already shipped on the session card's
+badge.
+
 **Every drill says what going wrong looks like.** `drill.faults` is a pair per
 fault: `looks` is what a coach can see from the touchline, `say` is the one
 instruction to give. Coaching points tell a coach what should be happening,
@@ -1030,6 +1053,20 @@ of the six beside it, taking the whole last row from 640px so the seventh does
 not sit alone with two empty cells. It is deliberately not the filled tier: that
 would point a coach at the six tap route ahead of the one tap one. A ready-made
 session is what gets somebody to a pitch with a plan.
+
+**A ready-made session says what it is for.** `Preset.aim` is one sentence on
+what the squad should look like by the end, on the card where the choosing
+happens and at the top of the session when it opens. A title, a theme badge and
+a bar tell a coach who has watched a session go well what they are getting.
+They tell a parent who never played nothing. That is most of this audience.
+It is deliberately not on `SessionPlan`: that wants a column on `session_plans`,
+and a deploy landing ahead of the migration takes session sync down the way the
+share token nearly did. A preset is in the bundle, so its aim is read off the
+content. A session a coach wrote gets the theme tips instead, off the `theme`
+column that is already there. Add the column when a coach asks to write their
+own. `content-age-gate.test.ts` holds every preset to having one and to no two
+sharing it, because a sentence repeated on all six cards is the "U10 on every
+card" failure again.
 
 **The age grade comes off a card unless it is telling you something.**
 `presetsForAge` only ever returns the coach's own grade, so "U10" on all six
