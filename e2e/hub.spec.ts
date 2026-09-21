@@ -2133,6 +2133,19 @@ test("marking a night as run fills in what you have covered", async ({ page }) =
   await expect(page.locator("#plan-ran")).toBeVisible();
 });
 
+test("a ready-made session can arrive with a carousel already in it", async ({ page }) => {
+  // The Sunday shape, which every other ready-made session cannot hold: four
+  // parents helping is groups going round rather than one drill at a time.
+  await signedIn(page, "u10", "#/plans");
+  await page.locator('[data-preset="preset-u10-carousel"]').click();
+
+  await expect(page.locator(".block-row.is-carousel")).toHaveCount(1);
+  await expect(page.locator(".carousel-head")).toContainText("3 stations");
+  await expect(page.locator(".station-line")).toHaveCount(3);
+  // It fills the evening it claims, same as every other one.
+  await expect(page.locator(".plan-warning")).toHaveCount(0);
+});
+
 test("a session can be built rather than picked off the list", async ({ page }) => {
   // Six ready-made sessions is six nights. The catalogue behind them is 120
   // drills, and what the presets add to those is an order that can be written

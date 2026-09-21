@@ -537,6 +537,107 @@ export const PRESETS: Preset[] = [
       "drill-counter-from-the-catch",
     ],
   },
+
+  // ---- One carousel per grade. Stations running at once, groups going round ----
+  //
+  // Twenty children and four parents helping is four groups of five rather
+  // than twenty children queueing for a turn. Every session above this one
+  // runs one drill at a time, so a coach with helpers had nothing to start
+  // from and built the Sunday shape from scratch every week.
+  //
+  // Each of these is one theme at every station, so the badge stays honest and
+  // the three things worth saying all night hold at whichever station a coach
+  // is standing on. The stations are drills a group of five can run in a
+  // corner of a pitch, which is what `content-age-gate.test.ts` holds them to.
+  {
+    id: "preset-u7-carousel",
+    title: "Nobody queues",
+    aim: "Three groups with a grown-up each, so the ball is in every pair of hands all night rather than in a line.",
+    ageGroup: "u7",
+    theme: "handling",
+    sessionMinutes: 45,
+    drillIds: [
+      "warmup-name-and-pass",
+      "warmup-two-ball-square",
+      ["drill-catch-and-turn", "drill-two-hand-relay", "drill-pass-down-the-line"],
+      "drill-end-ball",
+    ],
+  },
+  {
+    id: "preset-u8-carousel",
+    title: "Three ways past",
+    aim: "The same job at three stations, so a child gets dozens of goes at beating somebody instead of two.",
+    ageGroup: "u8",
+    theme: "evasion",
+    sessionMinutes: 45,
+    drillIds: [
+      "warmup-tail-snatch",
+      "warmup-follow-the-leader",
+      ["drill-side-step-slalom", "drill-shadow-and-step", "drill-one-on-one-channel"],
+      "drill-drop-off-touch",
+    ],
+  },
+  {
+    id: "preset-u9-carousel",
+    title: "Tackling in threes",
+    aim: "Their first contact season run as small groups, which is how a volunteer watches every tackle rather than a line of twenty.",
+    ageGroup: "u9",
+    theme: "tackle",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-down-and-up",
+      "warmup-shoulder-to-shield",
+      ["drill-tackle-and-get-up", "drill-side-on-tackle", "drill-track-and-close"],
+      "drill-scoring-zones",
+    ],
+  },
+  {
+    id: "preset-u10-carousel",
+    title: "Three rucks at once",
+    aim: "Everything that happens on the floor, split three ways, so nobody is stood about waiting for a go at it.",
+    ageGroup: "u10",
+    theme: "breakdown",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-wrestle-for-the-ball",
+      "warmup-body-position-ladder",
+      ["drill-step-over-and-stay", "drill-turn-the-turtle", "drill-pick-and-go"],
+      "drill-three-phase-game",
+    ],
+  },
+  {
+    id: "preset-u11-carousel",
+    title: "Three balls in the air",
+    aim: "One ball between four beats one ball between twenty. Kicking and catching at three stations with a grown-up on each.",
+    ageGroup: "u11",
+    theme: "kicking",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-high-ball-hands",
+      "warmup-two-lap-and-in",
+      ["drill-take-the-high-ball", "drill-punt-to-your-partner", "drill-grubber-into-space"],
+      "drill-last-play",
+    ],
+  },
+  {
+    id: "preset-u12-carousel",
+    title: "Four stations of hands",
+    aim: "Four bits of passing running at the same time, which is four times the touches inside the same hour.",
+    ageGroup: "u12",
+    theme: "handling",
+    sessionMinutes: 60,
+    drillIds: [
+      "warmup-two-lap-and-in",
+      "warmup-partner-mirror",
+      [
+        "drill-spin-pass-build",
+        "drill-blind-pass-drill",
+        "drill-pop-pass-gates",
+        "drill-loop-and-go",
+      ],
+      "drill-last-play",
+    ],
+  },
 ];
 
 

@@ -58,7 +58,7 @@ Nothing leaves the device. No account, no team code, nothing to delete if a pare
 
 ## The coaching hub
 
-120 drills and 32 ready-made sessions covering U7 to U12, written from scratch.
+120 drills and 38 ready-made sessions covering U7 to U12, written from scratch.
 
 The point of it is the age gate. RFU Regulation 15 introduces contact in stages, so the
 catalogue only ever offers what your grade is allowed to do: tackling from U9, rucks,

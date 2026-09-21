@@ -8,6 +8,7 @@ import {
   type AgeGroup,
   type Drill,
   type KitItem,
+  type Preset,
   type Theme,
 } from "../hub/content/types.js";
 
@@ -259,6 +260,38 @@ export function withWaterBreak(plan: SessionPlan, minutes = 3): SessionPlan {
     ...plan,
     blocks: plan.blocks.map((block, i) => (i === at ? { ...block, breakAfter: minutes } : block)),
   };
+}
+
+/**
+ * A ready-made session as blocks, which is the only way it is ever read.
+ *
+ * Here rather than in the view because three callers need it and a preset is
+ * the one piece of content that turns into a plan. An entry holding a list is
+ * a carousel: those drills run at the same time with the groups going round,
+ * and the first of them leads the block, so a group spends that drill's own
+ * minutes at each station. Every other block takes its length off its drill
+ * in exactly the same way.
+ *
+ * A station whose drill has gone is dropped like any other missing drill. A
+ * block left with nothing in it goes with them.
+ */
+export function presetBlocks(preset: Preset, catalogue: Drill[]): PlanBlock[] {
+  const byId = new Map(catalogue.map((drill) => [drill.id, drill]));
+
+  return preset.drillIds.flatMap((entry) => {
+    const drills = (Array.isArray(entry) ? entry : [entry])
+      .map((id) => byId.get(id))
+      .filter((drill): drill is Drill => Boolean(drill));
+    if (drills.length === 0) return [];
+    const [lead, ...rest] = drills;
+    return [
+      {
+        drillId: lead.id,
+        minutes: lead.minutes,
+        ...(rest.length > 0 ? { alongside: rest.map((drill) => drill.id) } : {}),
+      },
+    ];
+  });
 }
 
 /** Blocks a coach can act on before they run the session. */
@@ -530,12 +563,12 @@ export function fitToLength(plan: SessionPlan): SessionPlan {
 
 // ---- Building one ----
 //
-// 32 ready-made sessions is four nights for a U7 coach before they start
+// Five ready-made sessions is five nights for a U7 coach before they start
 // repeating themselves. The catalogue behind them holds 120 drills. What the
 // presets add to those is an order, which is not a secret: something to do on
 // arrival, then the work, then a game where they have to use it. A rule
 // rather than a judgement, so it can be written down once instead of typed
-// out 32 times.
+// out for every grade.
 
 export interface SessionRecipe {
   ageGroup: AgeGroup;

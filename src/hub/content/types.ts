@@ -427,6 +427,25 @@ export interface Preset {
   ageGroup: AgeGroup;
   theme: Theme;
   sessionMinutes: number;
-  /** Curated order: arrival, activation, skill, conditioned game. */
-  drillIds: string[];
+  /**
+   * Curated order: arrival, activation, skill, conditioned game.
+   *
+   * An entry is one block. A list inside it is a carousel: those drills run at
+   * the same time, one grown-up on each, with the groups rotating round. The
+   * first of them is the block's own drill, so the minutes a group spends at
+   * each station are that drill's, the same as any other block takes its
+   * length from the drill on it.
+   */
+  drillIds: Array<string | string[]>;
+}
+
+/**
+ * Every drill in a preset, stations included, in the order they are met.
+ *
+ * Most callers want this rather than the blocks: the age gate, the copy
+ * checks and the count on a card are all about drills rather than about how
+ * many things happen at once.
+ */
+export function presetDrillIds(preset: Preset): string[] {
+  return preset.drillIds.flat();
 }

@@ -12,6 +12,7 @@ import {
   findDrill,
 } from "../hub/content/drills.js";
 import { PRESETS, presetsForAge } from "../hub/content/presets.js";
+import { blockMinutes, presetBlocks } from "../logic/sessionPlan.js";
 import {
   AGE_GROUPS,
   REGULATION_15_URL,
@@ -21,6 +22,7 @@ import {
   THEMES,
   isTheme,
   ageAtLeast,
+  presetDrillIds,
   type AgeGroup,
   type Drill,
 } from "../hub/content/types.js";
@@ -137,7 +139,7 @@ describe("content integrity", () => {
 describe("presets", () => {
   it("only contain drills their own age grade is allowed to do", () => {
     for (const preset of PRESETS) {
-      for (const id of preset.drillIds) {
+      for (const id of presetDrillIds(preset)) {
         const drill = findDrill(id);
         expect(drill, `preset "${preset.title}" points at missing drill ${id}`).toBeTruthy();
         if (!drill) continue;
@@ -151,10 +153,16 @@ describe("presets", () => {
 
   it("open with a warm-up and fit inside their own session length", () => {
     for (const preset of PRESETS) {
-      const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
+      const drills = presetDrillIds(preset).map(findDrill).filter(Boolean) as Drill[];
       expect(drills[0]?.kind, `preset "${preset.title}" does not start with a warm-up`).toBe("warmup");
 
-      const suggested = drills.reduce((sum, d) => sum + d.minutes, 0);
+      // By the block rather than by the drill, because a carousel runs its
+      // minutes once per station. Four stations of eight is half an hour of
+      // pitch time and counting it as eight is how an hour turns into two.
+      const suggested = presetBlocks(preset, DRILLS).reduce(
+        (sum, block) => sum + blockMinutes(block),
+        0,
+      );
       expect(
         suggested,
         `preset "${preset.title}" suggests ${suggested} min for a ${preset.sessionMinutes} min session`,
@@ -166,7 +174,7 @@ describe("presets", () => {
     // A session that ends on a drill ends on the coach talking. The drill was
     // only ever there so they could use it in the game.
     for (const preset of PRESETS) {
-      const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
+      const drills = presetDrillIds(preset).map(findDrill).filter(Boolean) as Drill[];
       const last = drills[drills.length - 1];
       expect(
         last?.themes.includes("gamesense"),
@@ -180,7 +188,7 @@ describe("presets", () => {
     expect(new Set(ids).size).toBe(ids.length);
 
     for (const preset of PRESETS) {
-      const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
+      const drills = presetDrillIds(preset).map(findDrill).filter(Boolean) as Drill[];
       expect(
         drills.some((d) => d.themes.includes(preset.theme)),
         `preset "${preset.title}" claims ${preset.theme} but no drill in it covers that`,
@@ -248,6 +256,48 @@ describe("presets", () => {
       expect(isTheme(key), key).toBe(false);
     }
     expect(isTheme(undefined)).toBe(false);
+  });
+
+  /**
+   * Twenty children and four parents helping is four groups of five rather
+   * than twenty children queueing for a turn. Every grade needs one of these
+   * to start from, or a coach with helpers builds the Sunday shape from
+   * scratch every single week.
+   */
+  it("give every grade a carousel to start from", () => {
+    for (const age of AGE_GROUPS) {
+      const carousels = presetsForAge(age).filter((preset) =>
+        preset.drillIds.some((entry) => Array.isArray(entry)),
+      );
+      expect(carousels.length, `${age} has no carousel session`).toBeGreaterThan(0);
+    }
+  });
+
+  /**
+   * A station is a fifth of the squad on a corner of the pitch with one
+   * grown-up. A drill wanting twelve players, or a full pitch, cannot be one
+   * however well it reads in the running order.
+   */
+  it("only puts a drill at a station that a small group can run in a corner", () => {
+    for (const preset of PRESETS) {
+      for (const entry of preset.drillIds) {
+        if (!Array.isArray(entry)) continue;
+        expect(entry.length, `${preset.title} has a carousel of one`).toBeGreaterThan(1);
+        for (const id of entry) {
+          const drill = findDrill(id);
+          expect(drill, `${preset.title} station ${id}`).toBeTruthy();
+          if (!drill) continue;
+          expect(
+            drill.players.min,
+            `${preset.title}: "${drill.title}" needs ${drill.players.min} at one station`,
+          ).toBeLessThanOrEqual(6);
+          expect(
+            fitsSmallSpace(drill),
+            `${preset.title}: "${drill.title}" wants ${drill.space} of its own`,
+          ).toBe(true);
+        }
+      }
+    }
   });
 
   it("are only offered to the age grade they were written for", () => {

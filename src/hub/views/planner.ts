@@ -11,6 +11,7 @@ import {
   THEMES,
   RULES_OF_PLAY,
   THEME_MIN_AGE,
+  presetDrillIds,
   THEME_SHORT,
   THEME_TIPS,
   ageAtLeast,
@@ -45,6 +46,7 @@ import {
   moveBlock,
   planDrills,
   planTotals,
+  presetBlocks,
   stationIds,
   themeCoverage,
   type ThemeCoverage,
@@ -531,7 +533,7 @@ function presetCard(preset: Preset, href?: string): string {
   // three minutes short of the plan the coach ends up with. The minutes are what
   // they check their pitch slot against and the shape is what they are picking.
   const plan = fromPreset(preset);
-  const drills = preset.drillIds.map(findDrill).filter(Boolean) as Drill[];
+  const drills = presetDrillIds(preset).map(findDrill).filter(Boolean) as Drill[];
   // No age on the card. `presetsForAge` only ever returns the coach's own grade,
   // so it was the one thing repeated identically on all six of them
   const body = `
@@ -673,10 +675,7 @@ function fromPreset(preset: Preset): SessionPlan {
     ageGroup: preset.ageGroup,
     theme: preset.theme,
     sessionMinutes: preset.sessionMinutes,
-    blocks: preset.drillIds.flatMap((drillId) => {
-      const drill = findDrill(drillId);
-      return drill ? [{ drillId, minutes: drill.minutes }] : [];
-    }),
+    blocks: presetBlocks(preset, DRILLS),
   });
 }
 
@@ -1617,8 +1616,8 @@ export function renderPresetView(
 /**
  * The ready-made sessions, signed out.
  *
- * The 32 presets used to sit behind the register form, so what a coach without
- * an account got was 120 drills and no help ordering them. That is the half of
+ * These used to sit behind the register form, so what a coach without an
+ * account got was 120 drills and no help ordering them. That is the half of
  * the job they cannot do. A parent who never played can pick a session off a
  * list and go. Assembling an hour out of a catalogue is another skill entirely.
  * The gate belongs on keeping a session rather than on reading one.

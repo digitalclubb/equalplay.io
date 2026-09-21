@@ -7,6 +7,7 @@ import {
   isCarousel,
   planTotals,
   planDrills,
+  presetBlocks,
   stationIds,
   moveBlock,
   hasBlockingProblem,
@@ -490,10 +491,7 @@ describe("presets as real sessions", () => {
       ageGroup: preset.ageGroup,
       theme: preset.theme,
       sessionMinutes: preset.sessionMinutes,
-      blocks: preset.drillIds.flatMap((drillId) => {
-        const found = DRILLS.find((d) => d.id === drillId);
-        return found ? [{ drillId, minutes: found.minutes }] : [];
-      }),
+      blocks: presetBlocks(preset, DRILLS),
     }),
   );
 
@@ -876,10 +874,7 @@ describe("anotherLike. Swapping a drill for one of the same sort", () => {
         title: preset.title,
         ageGroup: preset.ageGroup,
         sessionMinutes: preset.sessionMinutes,
-        blocks: preset.drillIds.flatMap((drillId) => {
-          const found = DRILLS.find((d) => d.id === drillId);
-          return found ? [{ drillId, minutes: found.minutes }] : [];
-        }),
+        blocks: presetBlocks(preset, DRILLS),
       };
       built.blocks.forEach((block, index) => {
         expect(
