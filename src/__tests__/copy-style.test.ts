@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 import { DRILLS } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
 import { GUIDES, GUIDE_BLURB, type Guide } from "../hub/content/guides.js";
+import { COACHING_GUIDES, type CoachingGuide } from "../hub/content/coaching.js";
 import { AGE_GROUP_LABELS, THEME_LABELS, THEME_TIPS } from "../hub/content/types.js";
 
 /**
@@ -37,6 +38,33 @@ function guideProse(guide: Guide): string[] {
   }
   for (const faq of guide.faqs) out.push(faq.answer);
   return out;
+}
+
+/** A guide's prose, with its tables, bullets and headings left out. */
+function coachingProse(guide: CoachingGuide): string[] {
+  const out = [guide.standfirst, guide.blurb];
+  for (const section of guide.sections) {
+    for (const block of section.blocks) if ("text" in block) out.push(block.text);
+  }
+  for (const faq of guide.faqs) out.push(faq.answer);
+  return out;
+}
+
+/**
+ * Every string anywhere in a lump of content, labelled by where it sits.
+ *
+ * A walk rather than a flattener written to the shape of a guide. The lexical
+ * rules below hold for every word a coach can read, whichever field it is in,
+ * so knowing the shape buys nothing except a second place to update when a
+ * field is added.
+ */
+function strings(value: unknown, at: string): Array<[string, string]> {
+  if (typeof value === "string") return [[at, value]];
+  if (Array.isArray(value)) return value.flatMap((item, i) => strings(item, `${at}[${i}]`));
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, item]) => strings(item, `${at}.${key}`));
+  }
+  return [];
 }
 
 /** Words and phrases that read as machine-written. Case insensitive. */
@@ -213,6 +241,48 @@ describe("drill copy", () => {
 });
 
 /**
+ * The coaching guides get the drills' lexical rules rather than the interface's
+ * file scan, because they are content: a body of prose somebody wrote, in the
+ * same voice, on the same tab as the rules guides.
+ */
+describe("coaching guide copy", () => {
+  const copy = COACHING_GUIDES.flatMap((guide) => strings(guide, guide.slug));
+
+  it("has something to check", () => {
+    expect(copy.length).toBeGreaterThan(200);
+  });
+
+  it("uses no em dashes", () => {
+    for (const [where, text] of copy) {
+      expect(text.includes(EM_DASH), `${where}: em dash`).toBe(false);
+    }
+  });
+
+  it("puts no comma before and", () => {
+    for (const [where, text] of copy) {
+      expect(/,\s+and\b/i.test(text), `${where}: comma before "and" in "${text}"`).toBe(false);
+    }
+  });
+
+  it("avoids phrasing that reads as machine-written", () => {
+    for (const [where, text] of copy) {
+      const lower = text.toLowerCase();
+      for (const banned of BANNED) {
+        expect(lower.includes(banned), `${where}: "${banned}"`).toBe(false);
+      }
+    }
+  });
+
+  it("is British English", () => {
+    for (const [where, text] of copy) {
+      for (const [pattern, better] of AMERICANISMS) {
+        expect(pattern.test(text), `${where}: use ${better} in "${text}"`).toBe(false);
+      }
+    }
+  });
+});
+
+/**
  * The same rules apply to the interface, but its copy is woven into template
  * literals, so scan the files rather than trying to pull the strings out. Em
  * dashes are banned in comments too. Nobody types those by hand.
@@ -315,6 +385,9 @@ describe("prose rhythm", () => {
       });
       guide.faqs.forEach((faq, f) => out.push([`${age} faqs[${f}]`, faq.answer]));
     }
+    for (const guide of COACHING_GUIDES) {
+      coachingProse(guide).forEach((text, i) => out.push([`${guide.slug} prose[${i}]`, text]));
+    }
     for (const path of PAGES) {
       const html = readFileSync(path, "utf8")
         .replace(/<!--[\s\S]*?-->/g, " ")
@@ -364,6 +437,7 @@ describe("prose rhythm", () => {
     const CONTRACTION = /\b[A-Za-z]+'(t|re|ve|ll|d|m)\b/g;
     const bodies: Array<[string, string]> = [
       ["guides.ts", Object.values(GUIDES).flatMap(guideProse).join(" ")],
+      ["coaching.ts", COACHING_GUIDES.flatMap(coachingProse).join(" ")],
       ...PAGES.map((path) => {
         const html = readFileSync(path, "utf8").replace(/<!--[\s\S]*?-->/g, " ");
         const text = [...html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)]

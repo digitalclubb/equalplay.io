@@ -124,14 +124,16 @@ rather than a stale process.
 Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `hub/index.html` → `/hub`. Keeping them separate is deliberate:
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
-homepage ships no JavaScript at all. Static SEO pages fall into three clusters:
+homepage ships no JavaScript at all. Static SEO pages fall into four clusters:
 match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
 `rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group`, one page
-per grade, one page per drill plus one per theme per grade) and the rules guides
-(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`).
+per grade, one page per drill plus one per theme per grade), the rules guides
+(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`) and
+the coaching guides (`how-to-teach-rugby-tackling`, `-rucking`, `-scrums`,
+`-kicking`).
 Match day and the six drill grade pages are hand-written in `public/` and copied
 verbatim. Everything else is generated at build out of `hub/content/` by
-`src/seo/`, so it never appears in `public/` at all. That is 157 generated pages
+`src/seo/`, so it never appears in `public/` at all. That is 161 generated pages
 against the 12 written by hand. All of them share `public/pages.css` with the
 homepage and point their chrome at `/hub`, because the chrome belongs to the
 product rather than to whichever half a coach landed on.
@@ -503,6 +505,24 @@ It shipped as seven static pages under `public/rugby-rules-*` for one commit,
 which made Guide the only tab that left the app shell and the only one that
 would not open with no signal, since `sw.js` precaches `/hub` rather than each
 page. As hub content it is in the bundle the catalogue is already in.
+
+**A rules guide says what they may do. A coaching guide says how to teach it.**
+`hub/content/coaching.ts`, rendered at `#/guide/<slug>` by the same view and the
+same blocks as the rules guides. Four of them: tackling, rucking, scrums,
+kicking. Which four is not a list somebody typed, it is every theme whose
+`THEME_MIN_AGE` is above U7, so the guides are exactly the phases of play
+Regulation 15 lets in part way through the minis game. Those are the ones nobody
+ever taught the volunteer running the age group. Handling needs no guide of this
+kind, since a parent who never played can still see what a pass should look
+like. A guide carries the order to teach it in, the cues to shout, a table of
+what going wrong looks like and what it turns into at the grade above. It points
+at drills by id, resolved against the catalogue so a rename follows, dropped
+silently on screen if one goes missing and failed loudly by `coaching.test.ts`.
+Published twice like everything else here, as `/how-to-teach-rugby-<slug>`,
+because "how to teach a scrum to under 10s" is a question a coach types into
+Google at ten at night. The footer is the one thing that differs from a rules
+page: the rules inside it are the RFU's, the order is ours, so it says so rather
+than wearing the note that credits Regulation 15.
 
 **The guide is set as an article, not as an app screen.** White to the edges via
 `#hub-view:has(.guide)`, one centred column, 18px body against the app's 16px,
@@ -1108,7 +1128,7 @@ with `hasOwnProperty` rather than `in`, because storage is hand-editable and
 `in` says yes to `toString`.
 
 Only the in-body call to action carries the grade. The chrome stays a plain
-`/hub` on all 169 pages, because it belongs to the product rather than to
+`/hub` on all 173 pages, because it belongs to the product rather than to
 whichever page a coach landed on. `landing-pages.test.ts` holds it there. A
 drill page carries nothing at all: a drill spans grades, so seeding off
 `minAge` would set a U12 coach to U7 for reading a warm-up.

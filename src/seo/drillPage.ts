@@ -26,6 +26,7 @@ import { esc } from "../lib/esc.js";
 import { DRILLS_INDEX_PATH, ORIGIN, page } from "./page.js";
 import { rulesPath } from "./rulesPage.js";
 import { DRILLS, drillPath, fitsHardGround, fitsSmallSpace } from "../hub/content/drills.js";
+import { coachingGuideForTheme, coachingPath } from "../hub/content/coaching.js";
 import { renderSequence } from "../hub/content/diagram.js";
 import {
   AGE_GROUPS,
@@ -332,6 +333,7 @@ export function themePageHtml(theme: Theme, age: AgeGroup, drills: Drill[]): str
   const siblings = THEMES.filter(
     (other) => other !== theme && ageAtLeast(age, THEME_MIN_AGE[other]) && drillsFor(other, age).length > 0,
   );
+  const teaching = coachingGuideForTheme(theme);
   const otherGrades = AGE_GROUPS.filter(
     (other) => other !== age && ageAtLeast(other, floor) && drillsFor(theme, other).length > 0,
   );
@@ -365,6 +367,14 @@ ${list(THEME_TIPS[theme].map((tip) => esc(tip)))}
           Nothing below that grade sees any of these, in the app or on this site.
           <a href="${rulesPath(age)}">What ${label} rugby allows</a> is the rest of it.
         </p>
+${
+    teaching
+      ? `        <p>
+          Never coached this before? <a href="${coachingPath(teaching)}">${esc(teaching.title)}</a>
+          is the order to teach it in, from the first session to a live one against one.
+        </p>\n`
+      : ""
+  }
 
         <h2>The drills</h2>
         <p>Under each one is what it looks like when that drill is going wrong.</p>

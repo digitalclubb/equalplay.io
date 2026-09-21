@@ -21,6 +21,9 @@
 
 import { esc } from "../lib/esc.js";
 import { RULES_INDEX_PATH, page } from "./page.js";
+import { DRILLS, drillPath } from "../hub/content/drills.js";
+import { COACHING_GUIDES, coachingPath } from "../hub/content/coaching.js";
+import type { Drill } from "../hub/content/types.js";
 import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
@@ -89,9 +92,34 @@ function block(b: GuideBlock): string {
   if ("subheading" in b) return `        <h3>${esc(b.subheading)}</h3>`;
   if ("text" in b) return `        <p>${esc(b.text)}</p>`;
   if ("table" in b) return table(b.table);
+  // The drill's own page rather than the hub route the guide links to. A reader
+  // here has no app open and may have no account, so `#/catalogue/<id>` would
+  // ask them which grade they coach before showing them the drill.
+  if ("drills" in b) {
+    const found = b.drills
+      .map((id) => DRILLS.find((drill) => drill.id === id))
+      .filter((drill): drill is Drill => Boolean(drill));
+    if (!found.length) return "";
+    return `        <ul>${found
+      .map(
+        (drill) =>
+          `<li><a href="${drillPath(drill)}">${esc(drill.title)}</a>, ${drill.minutes} minutes</li>`,
+      )
+      .join("")}</ul>`;
+  }
   return `        <ul>${b.items
     .map((item) => `<li>${item.lead ? `<strong>${esc(item.lead)}</strong> ` : ""}${esc(item.text)}</li>`)
     .join("")}</ul>`;
+}
+
+/**
+ * A guide's blocks as page markup, for the other generator that renders guide
+ * content. `coachingPage.ts` emits the same blocks under a different chrome, so
+ * this is exported rather than copied: two renderers for one block type is how
+ * a table ends up styled two ways.
+ */
+export function guideBlocks(blocks: GuideBlock[]): string {
+  return blocks.map(block).join("\n");
 }
 
 function rulesLink(text: string, href: string): string {
@@ -238,6 +266,19 @@ ${sourceNote("Regulation 15 in full", REGULATION_15_URL)}
           <a href="${AGE_GRADE_RESOURCES_URL}" rel="noopener">Everything the RFU publishes for
           age grade coaches</a>, including their concussion education.
         </p>
+
+        <h2>How to teach the hard parts</h2>
+        <p>
+          The pages above say what a grade may do. These say how to teach it, which is
+          the harder question if you never played. Each one is a progression from the
+          first session to a live one against one.
+        </p>
+        <ul>
+${COACHING_GUIDES.map(
+  (guide) =>
+    `          <li><a href="${coachingPath(guide)}"><strong>${esc(guide.title)}</strong></a> ${esc(guide.blurb)}</li>`,
+).join("\n")}
+        </ul>
 
         <h2>What each grade trains</h2>
         <p>

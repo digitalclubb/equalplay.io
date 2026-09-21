@@ -1578,7 +1578,9 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await page.goto("/hub/#/catalogue");
   await page.locator('.hub-tab[data-route="guide"]').click();
   await expect(page).toHaveURL(/#\/guide$/);
-  await expect(page.locator(".guide-card")).toHaveCount(6);
+  // One card per grade, plus the coaching guides in the grid under them.
+  await expect(page.locator(".guide-card:not(.is-coaching)")).toHaveCount(6);
+  await expect(page.locator(".guide-card.is-coaching")).toHaveCount(4);
   // Still inside the app, with the tab lit and the chrome unchanged.
   await expect(page.locator('.hub-tab[data-route="guide"]')).toHaveAttribute(
     "aria-current",
@@ -1590,7 +1592,7 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await page.goto("/planner");
   await page.locator('.hub-tab[data-route="guide"]').click();
   await expect(page).toHaveURL(/\/hub#\/guide$/);
-  await expect(page.locator(".guide-card")).toHaveCount(6);
+  await expect(page.locator(".guide-card:not(.is-coaching)")).toHaveCount(6);
 });
 
 test("a guide reads with no account and no grade picked", async ({ page }) => {
@@ -1603,6 +1605,20 @@ test("a guide reads with no account and no grade picked", async ({ page }) => {
   // And a coach can walk the grades from there.
   await page.locator('.guide-steps a[href="#/guide/u11"]').click();
   await expect(page.locator(".guide h2")).toHaveText("What changes at U11");
+});
+
+test("a coaching guide reads with no account either, and points at drills", async ({ page }) => {
+  // Same rule as a rules guide. Somebody working out how to teach a scrum in
+  // August has not necessarily registered, and being asked which grade they
+  // coach is no answer to the question either.
+  await page.goto("/hub/#/guide/scrums");
+  await expect(page.locator(".guide h2")).toHaveText("How to teach the scrum from scratch");
+  await expect(page.locator(".age-picker")).toHaveCount(0);
+
+  // A step of a progression hands over to the drill that runs it.
+  const drill = page.locator('.guide-drills a[href="#/catalogue/drill-three-player-scrum-shape"]');
+  await expect(drill).toBeVisible();
+  await expect(drill).toHaveText("Three player scrum shape");
 });
 
 test("the guide reads as an article rather than as one flat size", async ({ page }) => {

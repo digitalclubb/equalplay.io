@@ -52,6 +52,20 @@ in August 2026. Data in `hub/content/guides.ts`, so it ships in the bundle and
 opens with no signal. Not gated by the coach's own grade: reading what U10 allows
 is the point of it when you are coaching U9 in May.
 
+**Coaching guides for the phases nobody taught the volunteer.** `#/guide/tackling`,
+`rucking`, `scrums` and `kicking`, in `hub/content/coaching.ts`, rendered by the
+same view and the same blocks as the rules guides beside them. A rules guide answers
+"can we ruck yet". These answer "how do I teach eight children to scrummage when I
+never packed down myself", which is the question that actually turns up in October.
+Each one is a progression in steps, the cues to shout, a table of what going wrong
+looks like and what the phase turns into at the grade above, plus the drills that run
+each step. Which four exist comes off `THEME_MIN_AGE`: every theme the game lets in
+part way through, so handling and evasion get none. Published twice like the rest,
+at `/how-to-teach-rugby-<slug>`, since that is a search a coach makes at ten at
+night. Researched from the RFU's age grade material plus World Rugby's Tackle Ready,
+then written in our own words. The footer says the order to teach it in is ours
+rather than the RFU's, because it is.
+
 **Match-day planner.** Unchanged in behaviour. It now uses the shared shell in
 `src/base.css`, so it has the same navy bar on a phone, the same rail at 900px and the
 same five tabs as the app, while still shipping 13.9 kB gzipped with no Supabase in it.
@@ -214,7 +228,7 @@ included, because what going wrong looks like is the part no competitor has and
 the part a coach searching a symptom will land on. The age gate travels with
 them: no theme page exists below the grade Regulation 15 allows that work at,
 which `drill-pages.test.ts` holds. The sitemap is generated now rather than kept
-by hand, since 171 URLs is past what anybody will maintain in a text file.
+by hand, since 175 URLs is past what anybody will maintain in a text file.
 
 **The rules guides are indexed.** Same words, two publications: the hub route a
 coach reads with no signal, plus a static page per grade emitted at build for

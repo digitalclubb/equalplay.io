@@ -39,7 +39,17 @@ export type GuideBlock =
   | { subheading: string }
   | { text: string }
   | { items: GuideListItem[] }
-  | { table: GuideTable };
+  | { table: GuideTable }
+  /**
+   * Drills from the catalogue, by id. The coaching guides in `coaching.ts` use
+   * it to point a step of a progression at the drill that runs it, so the guide
+   * that says "start them on their knees" can hand over the ten minutes.
+   *
+   * Ids rather than titles, because the title belongs to the drill. Both
+   * renderers resolve them against `DRILLS`, so a renamed drill follows and a
+   * deleted one fails a test rather than shipping a dead link.
+   */
+  | { drills: string[] };
 
 export interface GuideSection {
   heading: string;

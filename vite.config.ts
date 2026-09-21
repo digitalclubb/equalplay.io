@@ -131,11 +131,12 @@ function staticPages(): Plugin {
   // takes out `pnpm lint`. Inside a hook it is only ever reached by Vite, which
   // resolves it the same way it resolves the app.
   const pages = async (): Promise<Array<{ path: string; html: string }>> => {
-    const [{ rulesPages }, { drillPages }] = await Promise.all([
+    const [{ rulesPages }, { coachingPages }, { drillPages }] = await Promise.all([
       import("./src/seo/rulesPage.js"),
+      import("./src/seo/coachingPage.js"),
       import("./src/seo/drillPage.js"),
     ]);
-    return [...rulesPages(), ...drillPages()];
+    return [...rulesPages(), ...coachingPages(), ...drillPages()];
   };
 
   return {
@@ -157,7 +158,9 @@ function staticPages(): Plugin {
           });
           return;
         }
-        if (!path.startsWith("/rugby-")) return next();
+        // Two prefixes rather than one, because the coaching guides are
+        // addressed by the question a coach asks rather than by the sport.
+        if (!path.startsWith("/rugby-") && !path.startsWith("/how-to-teach-")) return next();
         void pages().then((emitted) => {
           const match = emitted.find((one) => one.path === path);
           if (!match) return next();

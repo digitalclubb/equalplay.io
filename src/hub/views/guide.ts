@@ -8,8 +8,13 @@ import {
   REGULATION_15_URL,
   rulesCheckedPhrase,
   RULES_OF_PLAY,
+  CONTACT_GUIDANCE_URL,
+  HEADCASE_URL,
+  THEME_MIN_AGE,
+  THEME_SHORT,
   isAgeGroup,
   type AgeGroup,
+  type Drill,
 } from "../content/types.js";
 import {
   ARRIVALS,
@@ -20,6 +25,13 @@ import {
   type GuideBlock,
   type GuideTable,
 } from "../content/guides.js";
+import {
+  COACHING_GUIDES,
+  COACHING_SOURCE_NOTE,
+  coachingGuide,
+  type CoachingGuide,
+} from "../content/coaching.js";
+import { DRILLS } from "../content/drills.js";
 
 /**
  * The rules guides. What each age grade is allowed to do, in plain English.
@@ -67,10 +79,33 @@ function table(t: GuideTable): string {
     </div>`;
 }
 
+/**
+ * The drills behind a step of a progression.
+ *
+ * Resolved against the catalogue rather than written out, so a renamed drill
+ * follows on its own. An id with no drill behind it is dropped rather than
+ * rendered as a dead link. `coaching.test.ts` fails on it separately, which is
+ * the pair of behaviours a broken reference wants: quiet on screen, loud in the
+ * build.
+ */
+function drillLinks(ids: string[]): string {
+  const found = ids
+    .map((id) => DRILLS.find((drill) => drill.id === id))
+    .filter((drill): drill is Drill => Boolean(drill));
+  if (!found.length) return "";
+  return `<ul class="guide-list guide-drills">${found
+    .map(
+      (drill) =>
+        `<li><a href="#/catalogue/${esc(drill.id)}">${esc(drill.title)}</a>, ${drill.minutes} minutes</li>`,
+    )
+    .join("")}</ul>`;
+}
+
 function block(b: GuideBlock): string {
   if ("subheading" in b) return `<h4>${esc(b.subheading)}</h4>`;
   if ("text" in b) return `<p>${esc(b.text)}</p>`;
   if ("table" in b) return table(b.table);
+  if ("drills" in b) return drillLinks(b.drills);
   return `<ul class="guide-list">${b.items
     .map(
       (item) =>
@@ -151,6 +186,77 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
     </article>`;
 }
 
+/**
+ * A coaching guide. How to teach one phase of play, rather than what the rules
+ * allow at it.
+ *
+ * Same blocks, same renderer, same escaping as a rules guide, so the two cannot
+ * drift into two shapes. What differs is the footer: none of this is Regulation
+ * 15, so it must not wear the note that says it came from the RFU.
+ */
+function coachingPage(guide: CoachingGuide): string {
+  const from = THEME_MIN_AGE[guide.theme];
+  const sections = guide.sections
+    .map(
+      (section) => `
+      <section class="guide-section">
+        <h3>${esc(section.heading)}</h3>
+        ${section.blocks.map(block).join("\n        ")}
+      </section>`,
+    )
+    .join("");
+
+  const faqs = guide.faqs
+    .map(
+      (faq) => `
+        <div class="guide-faq">
+          <h4>${esc(faq.question)}</h4>
+          <p>${esc(faq.answer)}</p>
+        </div>`,
+    )
+    .join("");
+
+  return `
+    <article class="guide">
+      <header class="guide-header">
+        <p class="guide-back"><a href="#/guide">All guides</a></p>
+        <span class="guide-eyebrow">Coaching &middot; from ${AGE_GROUP_LABELS[from]}</span>
+        <h2 class="guide-title">${esc(guide.title)}</h2>
+        <p class="guide-lede">${esc(guide.standfirst)}</p>
+      </header>
+      ${sections}
+
+      <section class="guide-section">
+        <h3>Common questions</h3>
+        ${faqs}
+      </section>
+
+      <section class="guide-section">
+        <h3>Where to go next</h3>
+        <ul class="guide-list">
+          <li><a href="#/guide/${from}">What ${AGE_GROUP_LABELS[from]} is allowed to do</a>
+            is the rules side of this, which is where the numbers come from.</li>
+          <li><a href="#/catalogue">Every drill your grade can do</a>, then tap the
+            ${esc(THEME_SHORT[guide.theme])} chip for the ones on this page.</li>
+        </ul>
+      </section>
+
+      <footer class="guide-source">
+        <p>${esc(COACHING_SOURCE_NOTE)}</p>
+        <p>${rulesCheckedPhrase()}.</p>
+        <p>
+          ${ageRulesLink(AGE_GROUP_LABELS[from], RULES_OF_PLAY[from])}
+          &middot;
+          ${rulesLink("The RFU's own contact guidance", CONTACT_GUIDANCE_URL)}
+          &middot;
+          ${rulesLink("Headcase, on concussion", HEADCASE_URL)}
+          &middot;
+          <a class="rules-link-plain" href="mailto:hello@equalplay.io?subject=Equal%20Play%3A%20something%20is%20wrong">Tell us if this is wrong</a>
+        </p>
+      </footer>
+    </article>`;
+}
+
 function guideIndex(coachAge?: AgeGroup): string {
   const cards = AGE_GROUPS.map((age) => {
     const yours = age === coachAge;
@@ -164,6 +270,15 @@ function guideIndex(coachAge?: AgeGroup): string {
         <span class="guide-card-blurb">${esc(GUIDE_BLURB[age])}</span>
       </a>`;
   }).join("");
+
+  const coachingCards = COACHING_GUIDES.map(
+    (guide) => `
+      <a class="guide-card is-coaching" href="#/guide/${esc(guide.slug)}">
+        <span class="guide-card-grade">From ${AGE_GROUP_LABELS[THEME_MIN_AGE[guide.theme]]}</span>
+        <span class="guide-card-title">${esc(guide.title)}</span>
+        <span class="guide-card-blurb">${esc(guide.blurb)}</span>
+      </a>`,
+  ).join("");
 
   return `
     <article class="guide">
@@ -191,6 +306,16 @@ function guideIndex(coachAge?: AgeGroup): string {
       <section class="guide-section">
         <h3>Pick a grade</h3>
         <div class="guide-grid">${cards}</div>
+      </section>
+
+      <section class="guide-section">
+        <h3>How to teach it</h3>
+        <p>
+          The pages above say what your grade is allowed to do. These say how to
+          teach the parts of it nobody shows a volunteer, in the order a child can
+          take them.
+        </p>
+        <div class="guide-grid">${coachingCards}</div>
       </section>
 
       <section class="guide-section">
@@ -243,7 +368,14 @@ export function renderGuide(
   coachAge?: AgeGroup,
 ): void {
   const age = param && isAgeGroup(param) ? param : undefined;
-  container.innerHTML = age ? guidePage(GUIDES[age], coachAge) : guideIndex(coachAge);
+  // A coaching guide is addressed by its slug rather than by a grade, so it is
+  // checked first. Anything that is neither still falls back to the index.
+  const coaching = age ? undefined : coachingGuide(param);
+  container.innerHTML = age
+    ? guidePage(GUIDES[age], coachAge)
+    : coaching
+      ? coachingPage(coaching)
+      : guideIndex(coachAge);
   // The window is the scroller, not the container. Stepping from a long U10 page
   // to U11 used to drop you halfway down it.
   window.scrollTo(0, 0);

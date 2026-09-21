@@ -58,6 +58,18 @@ export const REGULATION_15_URL = RFU_BASE;
  */
 export const HEADCASE_URL = "https://www.englandrugby.com/run/player-welfare/headcase";
 
+/**
+ * The RFU's age grade contact training, match load plus recovery guidance.
+ *
+ * Linked from every coaching guide, because those are the pages that say how
+ * to teach a tackle and a scrum without saying how much of it a child should
+ * be doing in a week. That number is the RFU's to set rather than ours, it
+ * moves every few seasons, then getting it wrong is the kind of wrong that
+ * hurts somebody.
+ */
+export const CONTACT_GUIDANCE_URL =
+  "https://www.englandrugby.com/run/coaching/coach-resources/contact-guidance";
+
 /** Everything the RFU publishes for age grade coaches, from the guide index. */
 export const AGE_GRADE_RESOURCES_URL =
   "https://www.englandrugby.com/run/coaching/age-grade-rugby/resources";

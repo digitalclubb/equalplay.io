@@ -12,6 +12,7 @@ import {
 } from "../seo/drillPage.js";
 import { rulesPagePaths } from "../seo/rulesPage.js";
 import { sitemapPaths, sitemapXml } from "../seo/sitemap.js";
+import { coachingPagePaths } from "../seo/coachingPage.js";
 import { DRILLS } from "../hub/content/drills.js";
 import { esc } from "../lib/esc.js";
 import {
@@ -229,13 +230,15 @@ describe("the sitemap", () => {
   it("lists every page the build writes, and nothing it does not", () => {
     const listed = sitemapPaths();
     expect(new Set(listed).size, "duplicate url").toBe(listed.length);
-    for (const path of [...rulesPagePaths(), ...drillPagePaths()]) {
+    for (const path of [...rulesPagePaths(), ...coachingPagePaths(), ...drillPagePaths()]) {
       expect(listed, path).toContain(path);
     }
     // The other direction. A URL listed but never written is a 404 handed
     // straight to a crawler, which is worse than not listing it.
     for (const path of listed) {
-      const generated = [...rulesPagePaths(), ...drillPagePaths()].includes(path);
+      const generated = [...rulesPagePaths(), ...coachingPagePaths(), ...drillPagePaths()].includes(
+        path,
+      );
       if (generated || path === "/" || path === "/hub" || path === "/planner") continue;
       expect(existsSync(`public${path}/index.html`), `${path} is listed but not written`).toBe(true);
     }

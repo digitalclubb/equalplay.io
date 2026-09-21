@@ -44,7 +44,7 @@ function guideCopy(): Array<[string, string]> {
           for (const cell of [...block.table.head, ...block.table.rows.flat()]) {
             out.push([where, cell]);
           }
-        } else {
+        } else if ("items" in block) {
           for (const item of block.items) {
             if (item.lead) out.push([`${where} lead`, item.lead]);
             out.push([where, item.text]);
@@ -182,9 +182,11 @@ describe("the guide view", () => {
 
   it("lists every grade on the index", () => {
     renderGuide(container, undefined);
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".guide-card")].map(
-      (a) => a.getAttribute("href"),
-    );
+    // Not `.is-coaching`, which is the second grid on the same index: how to
+    // teach a phase of play rather than what a grade may do.
+    const links = [
+      ...container.querySelectorAll<HTMLAnchorElement>(".guide-card:not(.is-coaching)"),
+    ].map((a) => a.getAttribute("href"));
     expect(links).toEqual(AGE_GROUPS.map((age) => `#/guide/${age}`));
   });
 
@@ -234,7 +236,9 @@ describe("the guide view", () => {
 
   it("falls back to the index rather than breaking on a bad grade", () => {
     renderGuide(container, "u99");
-    expect(container.querySelectorAll(".guide-card")).toHaveLength(AGE_GROUPS.length);
+    expect(container.querySelectorAll(".guide-card:not(.is-coaching)")).toHaveLength(
+      AGE_GROUPS.length,
+    );
   });
 
   it("escapes what it renders", () => {
