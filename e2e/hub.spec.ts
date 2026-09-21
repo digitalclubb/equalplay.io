@@ -2133,6 +2133,30 @@ test("marking a night as run fills in what you have covered", async ({ page }) =
   await expect(page.locator("#plan-ran")).toBeVisible();
 });
 
+test("a session fits itself to the time the coach actually has", async ({ page }) => {
+  // The ready-made sessions come at 45, 60 or 75 minutes, because those are
+  // the slots a club books. A coach with the pitch until half past had to open
+  // every block and do the arithmetic themselves.
+  const planId = await runnableSession(page);
+  await page.goto(`/hub/#/plan/${planId}/edit`);
+
+  const minutes = page.locator("#plan-minutes");
+  await minutes.fill("50");
+  await minutes.blur();
+
+  const fit = page.locator("#plan-fit");
+  await expect(fit).toHaveText("Fit to 50 min");
+  await fit.click();
+
+  // Filled to the minute, or near enough that the planner stops saying there
+  // is time to fill. It never goes over.
+  await expect(page.locator(".budget-text")).not.toContainText("min over");
+  const left = Number((await page.locator(".budget-text").innerText()).match(/(\d+) min left/)?.[1]);
+  expect(left).toBeLessThanOrEqual(4);
+  // Spent, because there is nothing left for it to do.
+  await expect(fit).toHaveCount(0);
+});
+
 test("a gap in what you have covered is a way into a session on it", async ({ page }) => {
   // Reading that you have never worked on evasion is the easy half. The row is
   // the link, so the answer to it is one tap rather than a trip back through

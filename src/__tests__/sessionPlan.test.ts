@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   anotherLike,
   blockMinutes,
+  fitToLength,
   isCarousel,
   planTotals,
   planDrills,
@@ -877,5 +878,129 @@ describe("anotherLike. Swapping a drill for one of the same sort", () => {
         ).toBeTruthy();
       });
     }
+  });
+});
+
+describe("fitToLength. The time a coach actually has", () => {
+  it("stretches the blocks to fill the session", () => {
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 60,
+        blocks: [{ drillId: "a", minutes: 10 }, { drillId: "b", minutes: 20 }],
+      }),
+    );
+    expect(fitted.blocks.map((b) => b.minutes)).toEqual([20, 40]);
+  });
+
+  it("trims them when the session is shorter than the plan", () => {
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 30,
+        blocks: [{ drillId: "a", minutes: 20 }, { drillId: "b", minutes: 40 }],
+      }),
+    );
+    expect(fitted.blocks.map((b) => b.minutes)).toEqual([10, 20]);
+  });
+
+  it("keeps the shape, so the longest block stays the longest", () => {
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 50,
+        blocks: [
+          { drillId: "warm", minutes: 6 },
+          { drillId: "skill", minutes: 9 },
+          { drillId: "game", minutes: 12 },
+        ],
+      }),
+    );
+    const [warm, skill, game] = fitted.blocks.map((b) => b.minutes);
+    expect(warm).toBeLessThan(skill);
+    expect(skill).toBeLessThan(game);
+  });
+
+  it("never lands over the session length", () => {
+    // Rounding puts a plan a minute or two over about half the time, which is
+    // a warning the coach did not cause and cannot act on.
+    for (let minutes = 20; minutes <= 120; minutes += 1) {
+      const fitted = fitToLength(
+        plan({
+          sessionMinutes: minutes,
+          blocks: [
+            { drillId: "a", minutes: 6 },
+            { drillId: "b", minutes: 9 },
+            { drillId: "c", minutes: 11 },
+            { drillId: "d", minutes: 12 },
+          ],
+        }),
+      );
+      const total = fitted.blocks.reduce((sum, b) => sum + blockMinutes(b), 0);
+      expect(total, `${minutes} min`).toBeLessThanOrEqual(minutes);
+      // And close enough that the planner does not then say there is time left
+      expect(minutes - total, `${minutes} min`).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it("leaves the water breaks alone and counts them", () => {
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 60,
+        blocks: [
+          { drillId: "a", minutes: 10, breakAfter: 3 },
+          { drillId: "b", minutes: 10 },
+        ],
+      }),
+    );
+    expect(fitted.blocks[0].breakAfter).toBe(3);
+    const drills = fitted.blocks.reduce((sum, b) => sum + blockMinutes(b), 0);
+    expect(drills).toBe(57);
+  });
+
+  it("charges a carousel by the station", () => {
+    // Four stations of ten is forty minutes of pitch time, so a block that
+    // grows by a minute costs four.
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 60,
+        blocks: [
+          { drillId: "warm", minutes: 6 },
+          { drillId: "s1", minutes: 8, alongside: ["s2", "s3", "s4"] },
+        ],
+      }),
+    );
+    const total = fitted.blocks.reduce((sum, b) => sum + blockMinutes(b), 0);
+    expect(total).toBeLessThanOrEqual(60);
+    expect(fitted.blocks[1].minutes * 4).toBe(blockMinutes(fitted.blocks[1]));
+  });
+
+  it("hands back the same plan when there is nothing to change", () => {
+    const already = plan({
+      sessionMinutes: 60,
+      blocks: [{ drillId: "a", minutes: 30 }, { drillId: "b", minutes: 30 }],
+    });
+    expect(fitToLength(already)).toBe(already);
+    expect(fitToLength(plan({ sessionMinutes: 60, blocks: [] }))).toBeTruthy();
+    expect(fitToLength(plan({ sessionMinutes: 0, blocks: [{ drillId: "a", minutes: 10 }] })))
+      .toBeTruthy();
+  });
+
+  it("leaves a plan alone rather than cutting a block to nothing", () => {
+    // Twelve one minute blocks in a ten minute session. Every one of them is
+    // already at its last minute, so the only way to fit is to drop a drill,
+    // which is the coach's call rather than this function's.
+    const tiny = plan({
+      sessionMinutes: 10,
+      blocks: Array.from({ length: 12 }, (_, i) => ({ drillId: `d${i}`, minutes: 1 })),
+    });
+    expect(fitToLength(tiny)).toBe(tiny);
+  });
+
+  it("leaves a block the coach has not timed yet at nothing", () => {
+    const fitted = fitToLength(
+      plan({
+        sessionMinutes: 60,
+        blocks: [{ drillId: "a", minutes: 20 }, { drillId: "b", minutes: 0 }],
+      }),
+    );
+    expect(fitted.blocks.map((b) => b.minutes)).toEqual([60, 0]);
   });
 });

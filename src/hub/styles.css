@@ -1320,6 +1320,12 @@ body {
   color: var(--color-secondary);
 }
 
+/* Under the bar rather than inside it, so the generic top margin that follows
+   a paragraph is too much here. */
+.budget-fit {
+  margin-top: var(--sp-xs);
+}
+
 .is-over-text {
   color: var(--color-danger);
   font-weight: var(--weight-bold);

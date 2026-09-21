@@ -39,6 +39,7 @@ import {
 import {
   anotherLike,
   blockMinutes,
+  fitToLength,
   isCarousel,
   moveBlock,
   planDrills,
@@ -1880,6 +1881,15 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
         </p>
       </div>
 
+      ${
+        // Outside the bar rather than in it. `.budget` carries `role="img"`,
+        // which takes everything under it out of the accessibility tree, so a
+        // button in there is a button a screen reader never meets.
+        fitToLength(plan) === plan
+          ? ""
+          : `<button type="button" class="hub-btn hub-btn-quiet budget-fit" id="plan-fit">Fit to ${plan.sessionMinutes} min</button>`
+      }
+
       ${warningList(totals)}
       <div class="plan-status">
         <p class="save-state" id="save-state" role="status">${saveLabel()}</p>
@@ -2529,6 +2539,12 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
       next?.focus();
       next?.setSelectionRange(next.value.length, next.value.length);
     }, SEARCH_DEBOUNCE_MS);
+  });
+
+  // No toast. The bar fills to the end of the session and the control takes
+  // itself off the screen, which says it better than a line of text over it.
+  container.querySelector("#plan-fit")?.addEventListener("click", () => {
+    change((plan) => fitToLength(plan));
   });
 
   container.querySelector("#plan-print")?.addEventListener("click", () => window.print());

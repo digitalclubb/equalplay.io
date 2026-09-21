@@ -464,3 +464,66 @@ export function anotherLike(
   const next = pool[(at + 1) % pool.length];
   return next.id === current.id ? null : next;
 }
+
+// ---- Fitting the time you have ----
+//
+// A ready-made session arrives at 45, 60 or 75 minutes, because those are the
+// slots a club books. A coach with 50 minutes, or with the hall until half
+// past, had to open every block and do the arithmetic themselves.
+
+/**
+ * Stretches or trims every block so the session fills the length it claims.
+ *
+ * Proportional, so the shape of the evening survives: the long conditioned
+ * game at the end stays the longest thing in it. Water breaks are left where
+ * they are and at the length they were given, because three minutes is three
+ * minutes whether the session is 45 or 75.
+ *
+ * Floored rather than rounded, then the remainder is handed back a minute at a
+ * time to whatever will take one. Rounding lands a plan a minute or two over
+ * its own length about half the time, which is a warning a coach did not cause
+ * and cannot see the reason for. A carousel takes its minute once per station,
+ * so a four station block costs four minutes to lengthen and is skipped where
+ * only two are going spare.
+ *
+ * Returns the plan itself when there is nothing to do, so a caller can render
+ * the control only where it would change something. That covers the one case
+ * this cannot fix as well: blocks so short that holding them at a minute each
+ * already overruns, where trimming further would mean a block of nothing.
+ */
+export function fitToLength(plan: SessionPlan): SessionPlan {
+  const breaks = plan.blocks.reduce((sum, block) => sum + Math.max(0, block.breakAfter ?? 0), 0);
+  const target = plan.sessionMinutes - breaks;
+  const current = plan.blocks.reduce((sum, block) => sum + blockMinutes(block), 0);
+  if (target <= 0 || current <= 0) return plan;
+
+  const factor = target / current;
+  // A block already at nothing stays there. It is a coach saying they have not
+  // decided yet, which is not the same as a block a minute long.
+  const minutes = plan.blocks.map((block) =>
+    block.minutes <= 0 ? 0 : Math.max(1, Math.floor(block.minutes * factor)),
+  );
+  const stations = plan.blocks.map((block) => stationIds(block).length);
+  const total = (): number => minutes.reduce((sum, mins, at) => sum + mins * stations[at], 0);
+
+  // Every minute that will fit, given back to the blocks in the order they
+  // run. A pass that places nothing is the end of it.
+  for (let placed = true; placed && total() < target; ) {
+    placed = false;
+    minutes.forEach((mins, at) => {
+      if (mins > 0 && total() + stations[at] <= target) {
+        minutes[at] += 1;
+        placed = true;
+      }
+    });
+  }
+
+  // Only the floor above can overrun, by holding a block at its last minute.
+  // Trimming anything else to pay for it would be this deciding which drill a
+  // coach drops, so it hands the plan back untouched and the warning stands.
+  if (total() > target) return plan;
+
+  return plan.blocks.every((block, at) => block.minutes === minutes[at])
+    ? plan
+    : { ...plan, blocks: plan.blocks.map((block, at) => ({ ...block, minutes: minutes[at] })) };
+}
