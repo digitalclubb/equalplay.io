@@ -558,6 +558,17 @@ standfirst never smaller than its body copy, the measure between 45 and 78
 characters. That guard has already caught `.guide p` beating `.guide-lede` on
 specificity and silently dropping the standfirst back to body size.
 
+**A grade guide hands over to the guide that teaches it.** A coach finishes
+"What changes at U10", having just read that the ruck, the maul plus a three
+player scrum arrive. The page used to stop there. `coachingGuidesFor(age)`
+puts every coaching guide the grade may use at the foot of it, in both
+publications, with whatever arrives at that grade first: U10 leads on rucking
+and scrums, then last season's tackling, because a squad picks up new players in
+September. Everything the grade may do rather than only what is new, or a U12
+page would offer nothing at all. U7 and U8 get none, since nothing arrives there
+a volunteer has not seen. `coaching.test.ts` holds both directions, so a guide
+the grade may not do cannot appear either.
+
 **The guide is the one thing in the hub the age gate does not touch.** Every
 other route hides what the coach's grade may not do, because handing an U8 a
 ruck drill is a safety problem. A guide is the opposite: a coach going up to U10

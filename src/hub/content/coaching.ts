@@ -1,4 +1,4 @@
-import type { Theme } from "./types.js";
+import { THEME_MIN_AGE, ageAtLeast, type AgeGroup, type Theme } from "./types.js";
 import type { GuideFaq, GuideSection } from "./guides.js";
 
 /**
@@ -1000,6 +1000,22 @@ export const COACHING_GUIDES: CoachingGuide[] = [
  */
 export function coachingPath(guide: CoachingGuide): string {
   return `/how-to-teach-rugby-${guide.slug}`;
+}
+
+/**
+ * The coaching guides a grade may use, with whatever is new at that grade first.
+ *
+ * Every grade guide ends up somewhere: a coach who has just read that the ruck
+ * arrives at U10 is one tap from how to teach it. Everything the grade may do
+ * rather than only what arrives at it, because a U10 coach still has last
+ * year's tackling to teach to whoever joined in September. The sort is stable,
+ * so within each group the catalogue's own order holds.
+ */
+export function coachingGuidesFor(age: AgeGroup): CoachingGuide[] {
+  return COACHING_GUIDES.filter((guide) => ageAtLeast(age, THEME_MIN_AGE[guide.theme])).sort(
+    (a, b) =>
+      Number(THEME_MIN_AGE[b.theme] === age) - Number(THEME_MIN_AGE[a.theme] === age),
+  );
 }
 
 /** The guide that teaches a theme, for the drill pages that want to link it. */

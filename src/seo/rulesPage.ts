@@ -22,7 +22,7 @@
 import { esc } from "../lib/esc.js";
 import { RULES_INDEX_PATH, page } from "./page.js";
 import { DRILLS, drillPath } from "../hub/content/drills.js";
-import { COACHING_GUIDES, coachingPath } from "../hub/content/coaching.js";
+import { COACHING_GUIDES, coachingGuidesFor, coachingPath } from "../hub/content/coaching.js";
 import type { Drill } from "../hub/content/types.js";
 import {
   AGE_GROUPS,
@@ -165,6 +165,26 @@ ${others
 
 function guideBody(guide: Guide): string {
   const label = AGE_GROUP_LABELS[guide.ageGroup];
+  // The same hand-off the hub route makes, for the reader who landed here from
+  // a search instead. Newest at this grade first. See `coachingGuidesFor`.
+  const teaching = coachingGuidesFor(guide.ageGroup);
+  const teachingSection = teaching.length
+    ? `        <h2>How to teach it</h2>
+        <p>
+          Everything above is what ${label} is allowed to do. Here is how to teach
+          it, step by step, written for a coach who never played.
+        </p>
+        <ul>
+${teaching
+  .map(
+    (one) =>
+      `          <li><a href="${coachingPath(one)}">${esc(one.title)}</a> ${esc(one.blurb)}</li>`,
+  )
+  .join("\n")}
+        </ul>
+
+`
+    : "";
 
   return `        <h1>${esc(guide.title)}</h1>
         <p class="standfirst">${esc(guide.standfirst)}</p>
@@ -178,7 +198,7 @@ ${guide.sections
   .map((section) => `        <h2>${esc(section.heading)}</h2>\n${section.blocks.map(block).join("\n")}`)
   .join("\n\n")}
 
-        <h2>Common questions</h2>
+${teachingSection}        <h2>Common questions</h2>
 ${guide.faqs.map((faq) => `        <h3>${esc(faq.question)}</h3>\n        <p>${esc(faq.answer)}</p>`).join("\n")}
 
 ${sourceNote(`The RFU's own ${label} rules of play`, RULES_OF_PLAY[guide.ageGroup])}

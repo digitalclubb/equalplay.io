@@ -29,6 +29,7 @@ import {
   COACHING_GUIDES,
   COACHING_SOURCE_NOTE,
   coachingGuide,
+  coachingGuidesFor,
   type CoachingGuide,
 } from "../content/coaching.js";
 import { DRILLS } from "../content/drills.js";
@@ -148,6 +149,29 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
          </a>`
       : "";
 
+  // Everything this grade may teach, newest first. A grade guide that says the
+  // scrum arrives at U10 and then leaves a volunteer to work out what to do
+  // about it is the page stopping one step short of the thing they came for.
+  const teaching = coachingGuidesFor(guide.ageGroup);
+  const teachingSection = teaching.length
+    ? `
+      <section class="guide-section">
+        <h3>How to teach it</h3>
+        <p>
+          Everything above is what ${label} is allowed to do. Here is how to
+          teach it, step by step, written for a coach who never played.
+        </p>
+        <ul class="guide-list">
+          ${teaching
+            .map(
+              (one) =>
+                `<li><a href="#/guide/${esc(one.slug)}">${esc(one.title)}</a> ${esc(one.blurb)}</li>`,
+            )
+            .join("\n          ")}
+        </ul>
+      </section>`
+    : "";
+
   return `
     <article class="guide">
       <header class="guide-header">
@@ -158,6 +182,7 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
         ${coachAge === guide.ageGroup ? `<p class="guide-yours">The grade you coach</p>` : ""}
       </header>
       ${sections}
+      ${teachingSection}
 
       <section class="guide-section">
         <h3>Common questions</h3>

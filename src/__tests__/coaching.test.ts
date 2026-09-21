@@ -5,13 +5,14 @@ import {
   COACHING_SOURCE_NOTE,
   coachingGuide,
   coachingGuideForTheme,
+  coachingGuidesFor,
   coachingPath,
 } from "../hub/content/coaching.js";
 import { DRILLS } from "../hub/content/drills.js";
 import { esc } from "../lib/esc.js";
 import { renderGuide } from "../hub/views/guide.js";
 import { coachingPageHtml, coachingPagePaths, coachingPages } from "../seo/coachingPage.js";
-import { rulesIndexHtml } from "../seo/rulesPage.js";
+import { rulesIndexHtml, rulesPageHtml } from "../seo/rulesPage.js";
 import { themePageHtml, drillsFor, themePath } from "../seo/drillPage.js";
 import { sitemapPaths } from "../seo/sitemap.js";
 import {
@@ -245,6 +246,77 @@ describe("the drills a guide points at", () => {
           drill && grades.some((age) => isAvailableAt(drill, age)),
           `${guide.slug} points at ${id}, which no grade from ${floor} up may do`,
         ).toBe(true);
+      }
+    }
+  });
+});
+
+/**
+ * The hand-off. A grade guide says the scrum arrives at U10; the coaching guide
+ * says what to do about it on Tuesday. Before this the two sat side by side on
+ * the index with nothing between them, so a coach reading the U10 rules had to
+ * go back to the index and work out that the other list was related.
+ */
+describe("a grade guide hands over to the guides that teach it", () => {
+  it("offers every guide the grade may use, and none it may not", () => {
+    for (const age of AGE_GROUPS) {
+      const offered = coachingGuidesFor(age).map((guide) => guide.slug);
+      const expected = COACHING_GUIDES.filter((guide) =>
+        ageAtLeast(age, THEME_MIN_AGE[guide.theme]),
+      ).map((guide) => guide.slug);
+      expect([...offered].sort(), age).toEqual([...expected].sort());
+    }
+    // The shape of it, written out, because the rule is easy to state and easy
+    // to get subtly wrong. Tag grades get nothing: nothing arrives there that a
+    // volunteer has never seen.
+    expect(coachingGuidesFor("u7")).toHaveLength(0);
+    expect(coachingGuidesFor("u8")).toHaveLength(0);
+    expect(coachingGuidesFor("u9").map((g) => g.slug)).toEqual(["tackling"]);
+    expect(coachingGuidesFor("u12").map((g) => g.slug)).toHaveLength(4);
+  });
+
+  it("leads with whatever is new at that grade", () => {
+    // A U10 coach has just read that the ruck and the scrum arrive. Those come
+    // first; last season's tackling follows.
+    expect(coachingGuidesFor("u10").map((g) => g.slug)).toEqual([
+      "rucking",
+      "scrums",
+      "tackling",
+    ]);
+    expect(coachingGuidesFor("u11")[0].slug).toBe("kicking");
+  });
+
+  it("links them from the grade's page in the hub", () => {
+    const container = document.createElement("div");
+    document.body.replaceChildren(container);
+    for (const age of AGE_GROUPS) {
+      renderGuide(container, age);
+      const hrefs = [...container.querySelectorAll<HTMLAnchorElement>("a")].map((a) =>
+        a.getAttribute("href"),
+      );
+      for (const guide of coachingGuidesFor(age)) {
+        expect(hrefs, `${age} does not link ${guide.slug}`).toContain(`#/guide/${guide.slug}`);
+      }
+      // And never one the grade cannot do. A U8 guide offering a ruck guide is
+      // the age gate leaking through the one route it does not cover.
+      for (const guide of COACHING_GUIDES) {
+        if (coachingGuidesFor(age).includes(guide)) continue;
+        expect(hrefs, `${age} links ${guide.slug}`).not.toContain(`#/guide/${guide.slug}`);
+      }
+    }
+  });
+
+  it("links them from the grade's static page too", () => {
+    for (const age of AGE_GROUPS) {
+      const html = rulesPageHtml(age);
+      for (const guide of coachingGuidesFor(age)) {
+        expect(html, `${age} does not link ${guide.slug}`).toContain(
+          `href="${coachingPath(guide)}"`,
+        );
+      }
+      for (const guide of COACHING_GUIDES) {
+        if (coachingGuidesFor(age).includes(guide)) continue;
+        expect(html, `${age} links ${guide.slug}`).not.toContain(`href="${coachingPath(guide)}"`);
       }
     }
   });
