@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  anotherLike,
   blockMinutes,
   isCarousel,
   planTotals,
@@ -719,5 +720,125 @@ describe("planDrills. Carousels", () => {
   it("gives a plain block one station", () => {
     const resolved = planDrills(plan({ blocks: [{ drillId: "a", minutes: 10 }] }), [drill("a")]);
     expect(resolved[0].stations).toEqual([resolved[0].drill]);
+  });
+});
+
+describe("anotherLike. Swapping a drill for one of the same sort", () => {
+  const catalogue = [
+    drill("keep-ball", { themes: ["gamesense", "handling"] }),
+    drill("pass-line", { themes: ["handling"] }),
+    drill("corner-ball", { themes: ["handling"] }),
+    drill("ruck-it", { themes: ["breakdown"], minAge: "u10" }),
+    drill("warm-a", { kind: "warmup", themes: ["handling"] }),
+    drill("warm-b", { kind: "warmup", themes: ["handling"] }),
+  ];
+
+  const session = (blocks: { drillId: string; alongside?: string[] }[]): SessionPlan =>
+    plan({ blocks: blocks.map((b) => ({ ...b, minutes: 10 })) });
+
+  it("keeps the kind, so a warm-up can only become another warm-up", () => {
+    const next = anotherLike(session([{ drillId: "warm-a" }]), catalogue, 0);
+    expect(next?.id).toBe("warm-b");
+  });
+
+  it("offers any warm-up, nearest work first", () => {
+    // Three warm-ups in the whole catalogue are the only one of their theme, so
+    // a rule that holds the swap to a shared theme leaves the scrum session and
+    // the kicking one unable to change their warm-up at all.
+    const warmups = [
+      drill("warm-kick", { kind: "warmup", themes: ["kicking"], minAge: "u11" }),
+      drill("warm-any", { kind: "warmup", themes: ["handling"], minAge: "u11" }),
+      drill("warm-kick-two", { kind: "warmup", themes: ["kicking"], minAge: "u11" }),
+    ];
+    const u11 = plan({ ageGroup: "u11", blocks: [{ drillId: "warm-kick", minutes: 6 }] });
+    expect(anotherLike(u11, warmups, 0)?.id).toBe("warm-kick-two");
+    expect(
+      anotherLike(plan({ ageGroup: "u11", blocks: [{ drillId: "warm-kick-two", minutes: 6 }] }), warmups, 0)?.id,
+    ).toBe("warm-any");
+  });
+
+  it("holds an exercise to the same sort of work", () => {
+    // A warm-up is a warm-up. A ruck drill is not a tag game, so the widening
+    // above stops at the exercises.
+    const mixed = [
+      drill("ruck-a", { themes: ["breakdown"], minAge: "u10" }),
+      drill("tag-a", { themes: ["evasion"] }),
+    ];
+    const u10 = plan({ ageGroup: "u10", blocks: [{ drillId: "ruck-a", minutes: 10 }] });
+    expect(anotherLike(u10, mixed, 0)).toBeNull();
+  });
+
+  it("only offers a drill that shares the work", () => {
+    const next = anotherLike(session([{ drillId: "pass-line" }]), catalogue, 0);
+    expect(next?.themes).toContain("handling");
+  });
+
+  it("never offers a drill the age grade is not allowed", () => {
+    const u8 = plan({ ageGroup: "u8", blocks: [{ drillId: "ruck-it", minutes: 10 }] });
+    // The block itself is illegal, which is what the plan is already warning
+    // about. Swapping it has to hand back something legal rather than nothing.
+    expect(anotherLike(u8, catalogue, 0)).toBeNull();
+
+    const u10 = plan({ ageGroup: "u10", blocks: [{ drillId: "ruck-it", minutes: 10 }] });
+    expect(anotherLike(u10, catalogue, 0)).toBeNull();
+  });
+
+  it("skips a drill the session already has", () => {
+    const next = anotherLike(
+      session([{ drillId: "pass-line" }, { drillId: "corner-ball" }]),
+      catalogue,
+      0,
+    );
+    expect(next?.id).toBe("keep-ball");
+  });
+
+  it("walks the list on every tap and comes back round", () => {
+    const one = anotherLike(session([{ drillId: "keep-ball" }]), catalogue, 0);
+    expect(one?.id).toBe("pass-line");
+    const two = anotherLike(session([{ drillId: "pass-line" }]), catalogue, 0);
+    expect(two?.id).toBe("corner-ball");
+    const three = anotherLike(session([{ drillId: "corner-ball" }]), catalogue, 0);
+    expect(three?.id).toBe("keep-ball");
+  });
+
+  it("swaps the station asked for, not the block's own drill", () => {
+    const carousel = session([{ drillId: "warm-a", alongside: ["pass-line"] }]);
+    expect(anotherLike(carousel, catalogue, 0, 1)?.id).toBe("corner-ball");
+    expect(anotherLike(carousel, catalogue, 0, 0)?.id).toBe("warm-b");
+  });
+
+  it("says so when there is nothing else like it", () => {
+    const only = [drill("alone", { themes: ["kicking"] })];
+    expect(anotherLike(session([{ drillId: "alone" }]), only, 0)).toBeNull();
+  });
+
+  it("holds its nerve on a block or a station that is not there", () => {
+    expect(anotherLike(session([{ drillId: "pass-line" }]), catalogue, 4)).toBeNull();
+    expect(anotherLike(session([{ drillId: "pass-line" }]), catalogue, 0, 3)).toBeNull();
+    expect(anotherLike(session([{ drillId: "ghost" }]), catalogue, 0)).toBeNull();
+  });
+
+  it("offers a real swap for every block of every ready-made session", () => {
+    // The control is rendered per block, so a preset with nowhere to go on one
+    // of its blocks is a button that does nothing on the screen a coach is
+    // most likely to reach it from.
+    for (const preset of PRESETS) {
+      const built: SessionPlan = {
+        id: preset.id,
+        title: preset.title,
+        ageGroup: preset.ageGroup,
+        sessionMinutes: preset.sessionMinutes,
+        blocks: preset.drillIds.flatMap((drillId) => {
+          const found = DRILLS.find((d) => d.id === drillId);
+          return found ? [{ drillId, minutes: found.minutes }] : [];
+        }),
+      };
+      built.blocks.forEach((block, index) => {
+        expect(
+          anotherLike(built, DRILLS, index)?.id,
+          `"${preset.title}" has nothing to swap ${block.drillId} for`,
+        ).toBeTruthy();
+      });
+    }
   });
 });

@@ -2554,6 +2554,29 @@ body {
   .hub-seg:not(.is-active):hover {
     color: var(--color-text);
   }
+
+  /* The editor's own small controls, which are the outlined tier in miniature
+     and were the same dead-under-a-mouse as Print it once was. The dashed adds
+     and the station buttons paint no background of their own, so they take the
+     same wash the button tier takes. */
+  .break-add:hover,
+  .station-add:hover,
+  .station-drop:hover,
+  .station-swap:hover {
+    background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    border-color: var(--color-text);
+    color: var(--color-text);
+  }
+
+  /* The stepper and the arrows take the edge and the label only. Their press
+     paints a background and sits earlier in the file at the same specificity
+     as this, so a background here would win on order alone and the press would
+     stop showing under a mouse. The same trap the button tier's press is
+     written around, which is why that one is an inset shadow. */
+  .block-controls button:hover:not(:disabled) {
+    border-color: var(--color-text);
+    color: var(--color-text);
+  }
 }
 
 /* ---- Buttons, once there is room ---- */
@@ -3454,7 +3477,18 @@ body {
   min-width: 0;
 }
 
-.station-drop {
+/* Stacked rather than sat side by side. Two 44px targets in the row leave a
+   station title about 160px at 320px, which wraps a drill name onto four
+   lines. A column costs height nobody is short of. */
+.station-controls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2xs);
+}
+
+.station-drop,
+.station-swap {
   flex: 0 0 auto;
   min-width: 44px;
   min-height: 44px;

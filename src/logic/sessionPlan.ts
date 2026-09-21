@@ -385,3 +385,70 @@ function weeksBetween(from: string | null, to: string): number | null {
   if (!Number.isFinite(days)) return null;
   return Math.max(0, Math.floor(days / 7));
 }
+
+// ---- Another like it ----
+//
+// A ready-made session is a hand-picked running order, which is most of its
+// value and occasionally the one thing wrong with it. A coach who has run
+// "Beating a defender" three Tuesdays running wants the same session with a
+// different drill in the middle, not a trip to the catalogue to find one.
+
+/**
+ * Another drill for this station: same kind, same sort of work, legal at the
+ * grade and not already somewhere else in the session.
+ *
+ * The block keeps its own minutes. A coach set those, or a preset did. The
+ * budget is the one thing on the screen that should not move because they
+ * fancied a different game.
+ *
+ * Sharing a theme is what makes the swap safe rather than random. A session's
+ * shape survives it: the finisher is a game because every drill sharing
+ * `gamesense` is one. A ruck drill can never become a tag game. Tapping again
+ * walks the list rather than rolling a dice, so a coach can see what there is
+ * and stop where they like.
+ *
+ * A warm-up is the exception, because a warm-up is a warm-up. Its themes say
+ * what it sets up rather than what it is. Three of them are the only one of
+ * their theme in the whole catalogue, so the scrum session could not swap its
+ * warm-up and nor could the kicking one. Every warm-up is a candidate instead,
+ * with the ones sharing the work first, which is the order a coach would try
+ * them in anyway.
+ *
+ * Returns null when there is nothing else, which at a small grade on a thin
+ * theme is a real answer rather than an error.
+ */
+export function anotherLike(
+  plan: SessionPlan,
+  catalogue: Drill[],
+  index: number,
+  station = 0,
+): Drill | null {
+  const block = plan.blocks[index];
+  if (!block) return null;
+  const currentId = stationIds(block)[station];
+  const current = catalogue.find((drill) => drill.id === currentId);
+  if (!current) return null;
+
+  const shares = (drill: Drill): boolean =>
+    drill.themes.some((theme) => current.themes.includes(theme));
+  const inPlan = new Set(plan.blocks.flatMap(stationIds));
+  const pool = catalogue
+    .filter(
+      (drill) =>
+        isAvailableAt(drill, plan.ageGroup) &&
+        drill.kind === current.kind &&
+        (shares(drill) || current.kind === "warmup") &&
+        (drill.id === current.id || !inPlan.has(drill.id)),
+    )
+    // Stable, so the catalogue's own order holds inside each group.
+    .sort((a, b) => Number(shares(b)) - Number(shares(a)));
+  if (pool.length === 0) return null;
+
+  // The drill on the block is in the pool, so the next one along is the next
+  // one a coach has not got. A block their grade may not do is not, which puts
+  // `at` at -1 and hands back the first legal drill instead. That is the right
+  // answer to swapping the one block the plan is warning about.
+  const at = pool.findIndex((drill) => drill.id === current.id);
+  const next = pool[(at + 1) % pool.length];
+  return next.id === current.id ? null : next;
+}

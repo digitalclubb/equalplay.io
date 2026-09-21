@@ -37,6 +37,7 @@ import {
   type StoredPlan,
 } from "../plans.js";
 import {
+  anotherLike,
   blockMinutes,
   isCarousel,
   moveBlock,
@@ -1867,7 +1868,7 @@ function draw(container: HTMLElement, ctx: PlannerContext): void {
         blocks.length === 0
           ? '<p class="hub-fineprint">Empty so far. Add a drill below.</p>'
           : blocks
-              .map((resolved, position) => blockRow(resolved, position, blocks.length, plan.id))
+              .map((resolved, position) => blockRow(resolved, position, blocks.length, plan))
               .join("")
       }
       ${
@@ -1987,7 +1988,7 @@ function stationLine(
   drill: Drill,
   blockIndex: number,
   at: number,
-  planId: string,
+  plan: SessionPlan,
   removable: boolean,
 ): string {
   const keep = `safety:${blockIndex}:${at}`;
@@ -1995,7 +1996,7 @@ function stationLine(
     <li class="station-line">
       <span class="station-number" aria-hidden="true">${at + 1}</span>
       <div class="station-body">
-        <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>
+        <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(plan.id)}">${esc(drill.title)}</a>
         <p class="block-meta">${kindPill(drill)} ${esc(drill.space)}</p>
         ${
           drill.safety
@@ -2006,19 +2007,44 @@ function stationLine(
             : ""
         }
       </div>
-      ${
-        removable
-          ? `<button type="button" class="station-drop" data-dropstation="${blockIndex}:${at}" aria-label="Remove ${esc(drill.title)} from station ${at + 1}">✕</button>`
-          : ""
-      }
+      <div class="station-controls">
+        ${swapButton(plan, blockIndex, at, drill, "station")}
+        ${
+          removable
+            ? `<button type="button" class="station-drop" data-dropstation="${blockIndex}:${at}" aria-label="Remove ${esc(drill.title)} from station ${at + 1}">✕</button>`
+            : ""
+        }
+      </div>
     </li>`;
+}
+
+/**
+ * Swap this one for another like it, where there is another like it.
+ *
+ * Rendered per block and per station rather than once for the session, because
+ * the drill a coach wants rid of is a particular one in a running order they
+ * otherwise like. Left out entirely when `anotherLike` has nothing: a control
+ * that answers a tap with an apology is worse than no control.
+ */
+function swapButton(
+  plan: SessionPlan,
+  index: number,
+  station: number,
+  drill: Drill,
+  shape: "block" | "station",
+): string {
+  if (!anotherLike(plan, DRILLS, index, station)) return "";
+  const label = `Swap ${esc(drill.title)} for another like it`;
+  return shape === "station"
+    ? `<button type="button" class="station-swap" data-swap="${index}:${station}" aria-label="${label}">⇄</button>`
+    : `<button type="button" class="break-add" data-swap="${index}:${station}" aria-label="${label}">⇄ swap it</button>`;
 }
 
 function blockRow(
   resolved: ResolvedBlock,
   position: number,
   total: number,
-  planId: string,
+  plan: SessionPlan,
 ): string {
   const { block, drill, stations, index } = resolved;
   const pause = block.breakAfter ?? 0;
@@ -2033,13 +2059,13 @@ function blockRow(
         </p>
         <ol class="station-list">
           ${stations
-            .map((station, at) => stationLine(station, index, at, planId, stations.length > 1))
+            .map((station, at) => stationLine(station, index, at, plan, stations.length > 1))
             .join("")}
         </ol>
         <button type="button" class="station-add" data-addstation="${index}">+ station</button>
       </div>`
     : `<div class="block-main">
-        <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(planId)}">${esc(drill.title)}</a>
+        <a class="block-title" href="#/catalogue/${esc(drill.id)}/from/${esc(plan.id)}">${esc(drill.title)}</a>
         <p class="block-meta">
           ${kindPill(drill)} ${esc(drill.space)}
         </p>
@@ -2098,6 +2124,7 @@ function blockRow(
           ? ""
           : `<button type="button" class="break-add" data-addstation="${index}">+ station</button>`
       }
+      ${carousel ? "" : swapButton(plan, index, 0, drill, "block")}
     </div>`;
 }
 
@@ -2368,6 +2395,29 @@ function wire(container: HTMLElement, ctx: PlannerContext): void {
         }),
       }));
       showToast(`${drill.title} added as station ${station}.`);
+    });
+  }
+
+  for (const button of container.querySelectorAll<HTMLButtonElement>("[data-swap]")) {
+    button.addEventListener("click", () => {
+      if (!editing) return;
+      const [index, station] = (button.dataset.swap ?? "").split(":").map(Number);
+      const next = anotherLike(editing, DRILLS, index, station);
+      // Rendered only where there is one, so this is the list having moved
+      // under the render rather than something a coach can reach.
+      if (!next) return;
+      change((plan) => ({
+        ...plan,
+        blocks: plan.blocks.map((b, i) => {
+          if (i !== index) return b;
+          if (station === 0) return { ...b, drillId: next.id };
+          return {
+            ...b,
+            alongside: (b.alongside ?? []).map((id, at) => (at === station - 1 ? next.id : id)),
+          };
+        }),
+      }));
+      showToast(`Swapped in ${next.title}.`);
     });
   }
 
