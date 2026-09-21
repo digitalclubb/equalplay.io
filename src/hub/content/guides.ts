@@ -85,12 +85,12 @@ export const ARRIVALS: GuideTable = {
 
 /** One line per grade for the index, so a coach can pick without reading six pages. */
 export const GUIDE_BLURB: Record<AgeGroup, string> = {
-  u7: "Tag, four a side, on 20 metres by 12. No contact beyond taking a tag off a belt.",
+  u7: "Four a side tag on a pitch 20 metres by 12. No contact beyond taking a tag off a belt.",
   u8: "Six a side on a pitch four times the size, plus the six tag turnover.",
-  u9: "The tackle arrives. Still nobody competing for the ball once it is down.",
+  u9: "The tackle arrives. Still nobody competing for the ball once it's down.",
   u10: "Ruck, maul and a three player uncontested scrum. The contest is one against one.",
   u11: "Kicking from hand. The breakdown contest doubles to two against two.",
-  u12: "Twelve a side, a five player scrum, no cap left on the ruck.",
+  u12: "Twelve a side and a five player scrum, with no cap left on the ruck.",
 };
 
 /**
@@ -133,8 +133,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     title: "What U7 rugby actually is",
     standfirst:
       "Most of them have never held a rugby ball. U7 is tag, four a side, on a pitch 20 metres " +
-      "by 12. No tackling, no kicking, no scrum. Here is the whole of it in plain English " +
-      "before your first Sunday.",
+      "by 12, with no contact of any kind and nobody kicking it. Worth ten minutes before your " +
+      "first Sunday.",
     sections: [
       {
         heading: "The short version",
@@ -154,7 +154,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { lead: "No contact of any kind", text: "beyond taking a tag off a belt." },
               { lead: "Tagged means pass.", text: "Three seconds, about three strides." },
               {
-                lead: "A knock on is not an offence at U7.",
+                lead: "A knock on isn't an offence at U7.",
                 text: "Play carries on. This is the one that surprises people.",
               },
               {
@@ -198,14 +198,14 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Every player wears a belt with two tags on it, one over each hip, Velcroed on. " +
-              "Belts go outside the shirt and any spare belt gets tucked away so it cannot be " +
+              "Belts go outside the shirt and any spare belt gets tucked away so it can't be " +
               "grabbed. Tags sit on the hips rather than the front or the back. They have to " +
               "stand out against the kit as well, so no red tags on a red shirt.",
           },
           {
             text:
               "A tag is the removal of one or both tags from the carrier's belt. Only the " +
-              "carrier can be tagged. They may run and dodge but they cannot fend anybody off " +
+              "carrier can be tagged. They may run and dodge but they can't fend anybody off " +
               "with a hand or the ball, nor guard or shield their tags. Nobody may pull the " +
               "ball out of their hands at any point.",
           },
@@ -221,7 +221,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 text:
                   "Stop as soon as they can, within about three strides. The ball can go while " +
-                  "they are stopping",
+                  "they're stopping",
               },
               { text: "Go to the tagger, take the tag back, put it on the belt, then rejoin" },
               { text: "One step only to score once they have been tagged" },
@@ -279,7 +279,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "A free pass restarts everything at U7: the start of each half, after a try, the " +
               "ball going into touch, any infringement, the ball being pulled out of somebody's " +
-              "hands. The opposition stand 3 metres back and cannot move until the ball leaves " +
+              "hands. The opposition stand 3 metres back and can't move until the ball leaves " +
               "the passer's hands.",
           },
           {
@@ -292,7 +292,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
-        heading: "What is not allowed",
+        heading: "What isn't allowed",
         blocks: [
           {
             items: [
@@ -311,8 +311,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Offside only happens at the tag. The line runs through the middle of the ball, " +
-              "or a metre further back if you are the tagger. Everybody on the tagging side " +
-              "heads back towards their own line until they are behind the ball.",
+              "or a metre further back if you're the tagger. Everybody on the tagging side " +
+              "heads back towards their own line until they're behind the ball.",
           },
         ],
       },
@@ -327,17 +327,17 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             items: [
               {
                 lead: "Catching a size 3 ball.",
-                text: "Most of them cannot yet. Everything else waits on this",
+                text: "Most of them can't yet. Everything else waits on this",
               },
               {
                 lead: "Passing backwards through the air.",
                 text:
-                  "Handing it over is a free pass and it is the instinct every one of them " +
+                  "Handing it over is a free pass and it's the instinct every one of them " +
                   "arrives with",
               },
               {
                 lead: "Looking up while running.",
-                text: "Twenty metres is not far, so a head-down runner meets a tagger immediately",
+                text: "Twenty metres isn't far, so a head-down runner meets a tagger immediately",
               },
               {
                 lead: "Giving the tag back.",
@@ -348,7 +348,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 lead: "Stopping.",
                 text:
-                  "Three strides is a real skill at this age and it is what keeps the three " +
+                  "Three strides is a real skill at this age and it's what keeps the three " +
                   "second count honest",
               },
             ],
@@ -375,7 +375,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "What happens when a U7 player is tagged?",
         answer:
           "They have three seconds to pass and about three strides to stop in. The ball can go " +
-          "while they are stopping. Then they collect their tag from the tagger, put it back on " +
+          "while they're stopping. Then they collect their tag from the tagger, put it back on " +
           "the belt and rejoin play. Carrying on without it is a free pass against them.",
       },
       {
@@ -388,9 +388,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "How big is a U7 rugby pitch?",
         answer:
-          "20 metres by 12, plus 5 metres of in-goal at each end. That is the maximum rather " +
+          "20 metres by 12, plus 5 metres of in-goal at each end. That's the maximum rather " +
           "than a fixed size, so the referee and both coaches can agree something smaller if " +
-          "they think it is safer.",
+          "they think it's safer.",
       },
     ],
   },
@@ -398,9 +398,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     ageGroup: "u8",
     title: "What changes at U8",
     standfirst:
-      "Still tag, still no contact. What changes is the size of everything: six a side on a " +
-      "pitch more than four times the U7 one, with a turnover rule that makes them pass before " +
-      "they are made to. Here is the lot in plain English.",
+      "Still tag. Still nothing that counts as contact. What changes is the size of everything: " +
+      "six a side on a pitch more than four times the U7 one, plus a turnover rule that makes " +
+      "them pass before they're made to.",
     sections: [
       {
         heading: "The short version",
@@ -414,7 +414,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             items: [
               {
                 lead: "Six a side",
-                text: "rather than four, on 45 metres by 22 rather than 20 by 12.",
+                text: "up from four, on 45 metres by 22 instead of 20 by 12.",
               },
               {
                 lead: "The six tag turnover.",
@@ -439,7 +439,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             table: {
               caption:
-                "Maximums. A referee and both coaches can agree a smaller pitch if it is safer.",
+                "Maximums. A referee and both coaches can agree a smaller pitch if it's safer.",
               head: ["", "U7", "U8"],
               rows: [
                 ["Players a side", "4", "6"],
@@ -470,7 +470,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Both coaches can agree a lower number before kick off if they want to stretch a " +
-              "strong squad. If you cannot agree, it is seven.",
+              "strong squad. If you can't agree, it's seven.",
           },
           {
             text:
@@ -485,7 +485,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "45 metres by 22, plus 5 metres of in-goal at each end. That is more than four " +
+              "45 metres by 22, plus 5 metres of in-goal at each end. That's more than four " +
               "times the playing area they had at U7 with only two more players on it, so the " +
               "change your squad will feel is space. Support runners have to work harder to be " +
               "anywhere useful. A defence that all chases the ball gets picked apart on the " +
@@ -500,7 +500,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Belt outside the shirt, two tags on the hips, spare belt tucked away. Only the " +
-              "carrier can be tagged. They may run and dodge but cannot fend off with a hand or " +
+              "carrier can be tagged. They may run and dodge but can't fend off with a hand or " +
               "the ball, nor guard their tags. Nobody may pull the ball from their hands.",
           },
           {
@@ -533,19 +533,19 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "They are allowed to go to ground to score now, which is new. They still may not " +
+              "They're allowed to go to ground to score now, which is new. They still may not " +
               "dive on a loose ball anywhere else on the pitch.",
           },
           {
             text:
-              "Then there is the set of rules about a ball on the ground over a goal line, " +
+              "Then there's the set of rules about a ball on the ground over a goal line, " +
               "which comes up twice a season and stops everyone dead when it does:",
           },
           {
             items: [
               {
                 text:
-                  "Drop it over your own line and the opposition ground it, that is a try to " +
+                  "Drop it over your own line and the opposition ground it, that's a try to " +
                   "them",
               },
               {
@@ -558,18 +558,18 @@ export const GUIDES: Record<AgeGroup, Guide> = {
                   "Knock it forward over the line with no advantage to the other team, free " +
                   "pass to the defending side 7 metres out",
               },
-              { text: "Take it back over the line yourself and ground it, that is a try" },
+              { text: "Take it back over the line yourself and ground it, that's a try" },
             ],
           },
           {
             text:
-              "Nobody expects you to have that memorised. It is here so you can look it up on " +
+              "Nobody expects you to have that memorised. It's here so you can look it up on " +
               "the Sunday it happens.",
           },
         ],
       },
       {
-        heading: "What is not allowed",
+        heading: "What isn't allowed",
         blocks: [
           {
             items: [
@@ -588,7 +588,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Offside still only happens at the tag, on a line through the middle of the ball, " +
-              "or a metre further back if you are the tagger.",
+              "or a metre further back if you're the tagger.",
           },
         ],
       },
@@ -630,9 +630,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "What is different about U8 rugby compared to U7?",
         answer:
-          "Six a side rather than four, on a pitch more than four times the size. The six tag " +
-          "turnover comes in, a knock on becomes an offence and they are allowed to go to " +
-          "ground to score. The tag itself works exactly as it did.",
+          "Six a side now, on a pitch more than four times the size. The six tag turnover comes " +
+          "in, a knock on becomes an offence and they're allowed to go to ground to score. The " +
+          "tag itself works exactly as it did.",
       },
       {
         question: "How many tags can a U8 team take before losing the ball?",
@@ -644,13 +644,13 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "How big is a U8 rugby pitch?",
         answer:
-          "45 metres by 22, plus 5 metres of in-goal at each end. That is roughly four times " +
+          "45 metres by 22, plus 5 metres of in-goal at each end. That's roughly four times " +
           "the U7 pitch, which is the change your squad will feel most on the first Sunday.",
       },
       {
         question: "Can U8s tackle?",
         answer:
-          "No. U8 is the second year of tag and the tackle does not arrive until U9. The only " +
+          "No. U8 is the second year of tag and the tackle doesn't arrive until U9. The only " +
           "contact allowed between the teams is taking a tag off a belt.",
       },
       {
@@ -665,9 +665,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     ageGroup: "u9",
     title: "What changes at U9",
     standfirst:
-      "The belts come off and the tackle arrives. It is the biggest single step in minis rugby " +
-      "and the one most coaches turn up to wondering whether they are qualified for it. Here is " +
-      "exactly what U9 allows, in plain English.",
+      "The belts come off and the tackle arrives. It's the biggest single step in minis rugby. " +
+      "Most coaches turn up to it quietly wondering whether they're qualified for it, which is " +
+      "what this page is for.",
     sections: [
       {
         heading: "The short version",
@@ -691,7 +691,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 lead: "No ruck, no maul, no scrum, no lineout.",
-                text: "All of that is next year or later.",
+                text: "All of that's next year or later.",
               },
               {
                 lead: "Seven a side",
@@ -711,7 +711,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             table: {
               caption:
-                "Maximums. A referee and both coaches can agree a smaller pitch if it is safer.",
+                "Maximums. A referee and both coaches can agree a smaller pitch if it's safer.",
               head: ["", "U8", "U9"],
               rows: [
                 ["Players a side", "6", "7"],
@@ -734,7 +734,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "The carrier is held by one or more opponents and brought to ground. Arms have to " +
-              "be used. A carrier who is not held has not been tackled, whatever it looked " +
+              "be used. A carrier who isn't held hasn't been tackled, whatever it looked " +
               "like.",
           },
           {
@@ -748,14 +748,14 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           { subheading: "When the carrier stays on their feet" },
           {
             text:
-              "The referee allows roughly three seconds to see whether they are genuinely held, " +
+              "The referee allows roughly three seconds to see whether they're genuinely held, " +
               "then calls \"Tackle\". From that call the carrier has three seconds to pass to a " +
               "teammate, standing or off the ground. They can keep going forward while they do " +
               "it.",
           },
           {
             text:
-              "Once \"Tackle\" has been called they cannot score. Inside a metre of the line the " +
+              "Once \"Tackle\" has been called they can't score. Inside a metre of the line the " +
               "referee should let the three seconds run before calling, so a try that was there " +
               "is still there. If they were never held for three seconds and no call came, they " +
               "can score or place the ball over the line in one movement.",
@@ -764,7 +764,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "The referee calls \"Tackle-Release\". The tackler releases straight away, gets to " +
-              "their feet as soon as they can, does not touch the ball, does not block the pass " +
+              "their feet as soon as they can, doesn't touch the ball, doesn't block the pass " +
               "and gets back onside between their own goal line and the tackled player.",
           },
         ],
@@ -781,9 +781,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           },
           {
             text:
-              "So possession does not change hands in contact at U9 at all. It changes hands on " +
-              "a knock on, a forward pass or an infringement. That is the single biggest " +
-              "difference between this grade and the next one. It is also why a U9 tackle drill " +
+              "So possession doesn't change hands in contact at U9 at all. It changes hands on " +
+              "a knock on, a forward pass or an infringement. That's the single biggest " +
+              "difference between this grade and the next one. It's also why a U9 tackle drill " +
               "that carries on into a scramble on the floor has quietly become a U10 ruck " +
               "drill.",
           },
@@ -798,7 +798,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 text:
                   "A teammate may pick the ball up off a tackled player or off the ground, then " +
-                  "has to pass it immediately. That player cannot be tackled",
+                  "has to pass it immediately. That player can't be tackled",
               },
               { text: "Anyone passed the ball before, during or after contact may run with it" },
               { text: "Nobody may drive the carrier forward with a shoulder or by binding on" },
@@ -814,13 +814,13 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "At the tackle, opponents stay a metre behind the hindmost foot of the hindmost " +
               "player. They retreat and stay behind that line, or behind their own goal line if " +
-              "it is closer, until the pass is made. Away from the tackle, offside works as it " +
+              "it's closer, until the pass is made. Away from the tackle, offside works as it " +
               "did at U8.",
           },
         ],
       },
       {
-        heading: "What has not changed",
+        heading: "What hasn't changed",
         blocks: [
           {
             items: [
@@ -876,7 +876,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
                 lead: "Falling over safely.",
                 text:
                   "Before any of them tackle anybody. Getting to ground and back up is a skill " +
-                  "and it is week one",
+                  "and it's week one",
               },
               {
                 lead: "Where the shoulder goes.",
@@ -890,16 +890,16 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 lead: "Passing off the floor.",
-                text: "Three seconds is not long and most of them have never done it",
+                text: "Three seconds isn't long and most of them have never done it",
               },
               {
                 lead: "Getting up and rejoining.",
-                text: "The tackler's job is not finished when the tackle is",
+                text: "The tackler's job isn't finished when the tackle is",
               },
               {
                 lead: "Keep the handling going.",
                 text:
-                  "It is still a passing game. A squad that spends all winter on contact cannot " +
+                  "It's still a passing game. A squad that spends all winter on contact cannot " +
                   "move a ball in March",
               },
             ],
@@ -912,8 +912,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "What is different about U9 rugby compared to U8?",
         answer:
           "The tag belts go and the tackle arrives, which is the biggest single step in minis " +
-          "rugby. Seven a side rather than six, on a longer pitch, with 15 minute halves rather " +
-          "than 10. There is still no ruck, no maul, no scrum and no lineout.",
+          "rugby. Seven a side on a longer pitch, with halves of 15 minutes instead of 10. " +
+          "Nobody contests the ball once it's down, so there's still no ruck or maul. The " +
+          "scrum waits for U10.",
       },
       {
         question: "Can U9s ruck?",
@@ -933,9 +934,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "What happens when a U9 ball carrier stays on their feet?",
         answer:
-          "The referee allows about three seconds to see whether they are properly held, then " +
+          "The referee allows about three seconds to see whether they're properly held, then " +
           "calls \"Tackle\". From that call they have three seconds to pass. They can keep going " +
-          "forward while they do it, but they cannot score once the call has been made.",
+          "forward while they do it, but they can't score once the call has been made.",
       },
       {
         question: "Do U9s have the six tackle rule?",
@@ -951,8 +952,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     title: "What changes at U10",
     standfirst:
       "Your squad has had a season of tackling. U10 hands them the ruck, the maul and a three " +
-      "player scrum in one go, on a wider pitch with a bigger ball. Here is the lot in plain " +
-      "English before your first Tuesday.",
+      "player scrum all in the same September, on a wider pitch with a bigger ball. It's the " +
+      "busiest jump of the lot.",
     sections: [
       {
         heading: "The short version",
@@ -961,7 +962,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "At U9 nobody could compete for the ball. A defender who grabbed at it gave away " +
               "a free pass. Once the carrier was down the ball came back to their own side " +
-              "every time. That is the thing that goes at U10. The RFU's own summary of the " +
+              "every time. That's the thing that goes at U10. The RFU's own summary of the " +
               "grade puts it as a contest for the ball of one player against one player, which " +
               "is a small phrase for quite a large change.",
           },
@@ -1021,8 +1022,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "This is the part worth reading twice, because it is where your Sunday mornings " +
-              "will be won or lost and it is the part nobody explains properly at the start of " +
+              "This is the part worth reading twice, because it's where your Sunday mornings " +
+              "will be won or lost and it's the part nobody explains properly at the start of " +
               "the season.",
           },
           { subheading: "What a ruck is at U10" },
@@ -1036,7 +1037,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Once a team has clearly won the ball the referee calls \"Use it\" and you have " +
-              "five seconds to play it. Miss that and it is a free pass to the other side.",
+              "five seconds to play it. Miss that and it's a free pass to the other side.",
           },
           {
             text:
@@ -1060,7 +1061,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "A maul starts when the carrier is held up by one or two opponents and one of " +
-              "their own team binds onto them. That is three players minimum, all on their " +
+              "their own team binds onto them. That's three players minimum, all on their " +
               "feet, all moving towards a goal line. The same cap applies: no more than two " +
               "from either team, counting the carrier and the opponent. Five seconds once it is " +
               "formed, then the ball moves or the other side gets a free pass.",
@@ -1069,8 +1070,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "When the carrier is held but still upright and has stopped going forward, the " +
-              "ball has to be played away from the contact area. It is not a three second count " +
-              "and there is no shout to wait for. If the ball stays in there, it is a free pass " +
+              "ball has to be played away from the contact area. It's not a three second count " +
+              "and there's no shout to wait for. If the ball stays in there, it's a free pass " +
               "against you. Half a squad's first month at U10 is spent learning to move it " +
               "before somebody tells them to.",
           },
@@ -1081,11 +1082,11 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "Three players a side, a prop either side of the hooker. They are simply the " +
+              "Three players a side, a prop either side of the hooker. They're simply the " +
               "nearest three to the stoppage. The fourth nearest becomes the scrum half. The " +
               "RFU's phrase for it is \"all players trained, late specialisation\", which in " +
               "practice means everyone in your squad ends up in there at some point over a " +
-              "season. That is deliberate.",
+              "season. That's deliberate.",
           },
           {
             items: [
@@ -1128,7 +1129,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "Most of it is last season's work and the safety lines have not moved. Contact " +
+              "Most of it is last season's work and the safety lines haven't moved. Contact " +
               "stays below the base of the sternum, so tummy or below. The carrier still must " +
               "not go in with shoulders below the hips, dip down late and low, or put their " +
               "head into an opponent's head space. What is new is everything either side of the " +
@@ -1138,7 +1139,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             items: [
               {
                 text:
-                  "When the carrier has not been taken to ground, an opponent may grab the " +
+                  "When the carrier hasn't been taken to ground, an opponent may grab the " +
                   "ball. At U9 that was a free pass against them",
               },
               {
@@ -1154,7 +1155,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { text: "The team in possession supports from behind only" },
               {
                 text:
-                  "Support players still cannot stand either side of the carrier to keep " +
+                  "Support players still can't stand either side of the carrier to keep " +
                   "defenders off",
               },
               {
@@ -1167,14 +1168,14 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Offside is worth a mention too. At U9 it only really happened at the tackle. At " +
-              "U10 there is an offside line at the tackle, the ruck and the maul. It is the " +
+              "U10 there's an offside line at the tackle, the ruck and the maul. It's the " +
               "hindmost foot or hindmost point of the players involved. Defenders stay between " +
               "their own goal line and the tackled player until the pass is made.",
           },
         ],
       },
       {
-        heading: "What has not changed",
+        heading: "What hasn't changed",
         blocks: [
           {
             items: [
@@ -1233,7 +1234,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
                 lead: "Ball placement.",
                 text:
                   "Long arms, ball back towards your own side, then get up. This is the single " +
-                  "highest value thing you will teach all year",
+                  "highest value thing you'll teach all year",
               },
               {
                 lead: "Getting to your feet.",
@@ -1256,12 +1257,12 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 lead: "Scrum shape with nobody pushing.",
                 text:
-                  "Duller than they want it to be. It is also the bit that keeps necks safe, so " +
+                  "Duller than they want it to be. It's also the bit that keeps necks safe, so " +
                   "it gets its own slot",
               },
               {
                 lead: "Keep the handling going.",
-                text: "A squad that only rucks all winter cannot move a ball come March",
+                text: "A squad that only rucks all winter can't move a ball come March",
               },
             ],
           },
@@ -1272,7 +1273,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "Is the ruck contested at U10?",
         answer:
-          "Yes, but it is capped. The RFU describes U10 as a contest for the ball of one player " +
+          "Yes, but it's capped. The RFU describes U10 as a contest for the ball of one player " +
           "against one player. No more than two players from either team can be involved in a " +
           "ruck. That count includes the ball carrier and the opponent, so a third body piling " +
           "in gives away a free pass.",
@@ -1280,16 +1281,15 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "How many players are in an U10 scrum?",
         answer:
-          "Three a side. They are just the three nearest players to the stoppage rather than " +
-          "three specialists. The fourth nearest acts as scrum half. Nobody pushes and only the " +
-          "team throwing in may strike for the ball, so it is a way of restarting play rather " +
-          "than a contest.",
+          "Three a side, whoever happens to be nearest the stoppage. Nobody is a specialist " +
+          "yet. The fourth nearest acts as scrum half. Nobody pushes and only the team throwing " +
+          "in may strike for the ball, so it's there to restart play rather than to win it.",
       },
       {
         question: "Do U10s have a lineout?",
         answer:
           "No. Play restarts with a free pass 5 metres in from touch, level with where the ball " +
-          "went out, with the other side 7 metres back. There is none at U11 or U12 either. The " +
+          "went out, with the other side 7 metres back. There's none at U11 or U12 either. The " +
           "lineout arrives at U14.",
       },
       {
@@ -1318,9 +1318,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     ageGroup: "u11",
     title: "What changes at U11",
     standfirst:
-      "The boot arrives. After four seasons of no kicking whatsoever, U11 hands them tactical " +
-      "kicking from hand plus drop kick restarts, on a wider pitch with longer halves. The " +
-      "contest at the breakdown doubles too. Here is the lot in plain English.",
+      "The boot arrives. After four seasons where going near the ball with your foot was a " +
+      "penalty, U11 gives them kicking from hand plus drop kick restarts, on a wider pitch with " +
+      "longer halves. The contest at the breakdown doubles as well. Everything else is U10 again.",
     sections: [
       {
         heading: "The short version",
@@ -1335,8 +1335,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 lead: "Kicking from hand.",
                 text:
-                  "Tactical kicking is in, restarts are drop kicks. No conversions, no box " +
-                  "kicks, no drop goals.",
+                  "Tactical kicking is in and restarts are drop kicks. Conversions, box kicks " +
+                  "and drop goals are all still out.",
               },
               {
                 lead: "The ruck and maul go to three a side",
@@ -1344,7 +1344,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               },
               {
                 lead: "Both hookers may strike",
-                text: "at the scrum. It is still three players and still nobody pushing.",
+                text: "at the scrum. It's still three players and still nobody pushing.",
               },
               {
                 lead: "Nine a side",
@@ -1366,7 +1366,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             table: {
               caption:
-                "Maximums. A referee and both coaches can agree a smaller pitch if it is safer.",
+                "Maximums. A referee and both coaches can agree a smaller pitch if it's safer.",
               head: ["", "U10", "U11"],
               rows: [
                 ["Players a side", "8", "9"],
@@ -1391,7 +1391,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "This is the change that defines the grade. It is also the one that will take up " +
+              "This is the change that defines the grade. It's also the one that will take up " +
               "your September.",
           },
           {
@@ -1421,7 +1421,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "If a player is trying to catch a kick in open play and knocks it forward, that " +
-              "is not treated as a knock on. The team trying to catch it gets the scrum. Same " +
+              "isn't treated as a knock on. The team trying to catch it gets the scrum. Same " +
               "if they get a hand to it and it goes backwards with nobody gaining an advantage.",
           },
           {
@@ -1452,16 +1452,17 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "A maul is the same cap of three a side. Once the ball is won the referee calls " +
-              "\"Use it\" and there are five seconds to play it. Miss that and it is a scrum to " +
+              "\"Use it\" and there are five seconds to play it. Miss that and it's a scrum to " +
               "the other team now rather than a free pass, which is a meaningful upgrade in " +
               "what it costs you.",
           },
           {
             text:
-              "Everything else about the tackle is as it was at U10: below the base of the " +
-              "sternum, no shoulders below the hips, no dipping late and low, no head into an " +
-              "opponent's head space. An opponent may still grab the ball when the carrier has " +
-              "not been taken to ground. Ripped ball still has to be passed.",
+              "Everything else about the tackle is as it was at U10. Contact stays below the " +
+              "base of the sternum, the shoulders stay above the hips and nobody dips late and " +
+              "low or puts their head into an opponent's head space. An opponent may still grab " +
+              "the ball when the carrier hasn't been taken to ground. Ripped ball still has to " +
+              "be passed.",
           },
         ],
       },
@@ -1470,8 +1471,8 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "Still three players, still the nearest three to the stoppage, still nobody " +
-              "pushing. One thing changes and it changes the whole feel of it: both hookers may " +
+              "Still three players, taken from whoever is nearest the stoppage. Nobody pushes. " +
+              "One thing changes and it changes the whole feel of it: both hookers may " +
               "contest and strike for the ball.",
           },
           {
@@ -1487,7 +1488,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "So the scrum stops being purely a restart and becomes a small contest. It is " +
               "worth a session of its own, because a hooker who has never struck for a ball " +
-              "will not learn it on a Sunday.",
+              "won't learn it on a Sunday.",
           },
         ],
       },
@@ -1503,7 +1504,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "A free kick can be put into touch, but the free pass that follows always goes to " +
-              "the other team. Where it is taken depends on where you kicked from: at the point " +
+              "the other team. Where it's taken depends on where you kicked from: at the point " +
               "the ball crossed the line if it bounced out or if you kicked from inside your " +
               "own 15 metre area, in line with where you kicked it if it went straight out from " +
               "outside that area.",
@@ -1511,14 +1512,14 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
-        heading: "What has not changed",
+        heading: "What hasn't changed",
         blocks: [
           {
             items: [
               {
                 text:
                   "No lineout. Touch restarts with a free pass 5 metres in, or a quick throw if " +
-                  "the same ball has not been touched by anyone off the pitch",
+                  "the same ball hasn't been touched by anyone off the pitch",
               },
               { text: "No hand off, no fend" },
               { text: "The high tackle line is where it was, at the base of the sternum" },
@@ -1563,13 +1564,13 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 lead: "Kicking to space rather than to nobody.",
                 text:
-                  "They will all want to boot it as far as they can. That is how you give the " +
+                  "They will all want to boot it as far as they can. That's how you give the " +
                   "ball away",
               },
               { lead: "Chasing your own kick.", text: "A kick nobody chases is a gift" },
               {
                 lead: "The second man at the ruck.",
-                text: "The cap went up, so there is a job that did not exist last season",
+                text: "The cap went up, so there's a job that did not exist last season",
               },
               {
                 lead: "Hooker striking for the ball.",
@@ -1598,20 +1599,20 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "Can U11s kick the ball?",
         answer:
           "Yes. Tactical kicking from hand is in and restarts are drop kicks that have to " +
-          "travel 7 metres. There are no conversions, no box kicks and no drop goals. Fly " +
-          "hacking a loose ball along the ground is still out.",
+          "travel 7 metres. Conversions and drop goals are still out, as is the box kick. So " +
+          "is fly hacking a loose ball along the ground.",
       },
       {
         question: "How many players can be in a U11 ruck?",
         answer:
           "Three from each team, counting the ball carrier and the opponent, so it goes from " +
           "the one against one contest at U10 to two against two. Miss the five second call " +
-          "after \"Use it\" and it is a scrum to the other side rather than a free pass.",
+          "after \"Use it\" and it's a scrum to the other side rather than a free pass.",
       },
       {
         question: "Why did the referee give a scrum when my player knocked the ball on?",
         answer:
-          "If they were trying to catch a kick in open play, that is not treated as a knock on " +
+          "If they were trying to catch a kick in open play, that isn't treated as a knock on " +
           "at U11 and the catching team gets the scrum. It applies at U11 only, because it is " +
           "the first season of kicking and the RFU would rather they had a go at catching than " +
           "let it bounce.",
@@ -1620,7 +1621,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "Can U11s have a lineout?",
         answer:
           "No. Touch restarts with a free pass 5 metres in, or a quick throw if the same ball " +
-          "has not been touched by anyone off the pitch. The lineout arrives at U14.",
+          "hasn't been touched by anyone off the pitch. The lineout arrives at U14.",
       },
     ],
   },
@@ -1628,9 +1629,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     ageGroup: "u12",
     title: "What changes at U12",
     standfirst:
-      "The last year of minis. Twelve a side, a five player scrum, plus the caps coming off the " +
-      "ruck and the maul for the first time. The hand off arrives too. Here is the lot in plain " +
-      "English before your first Tuesday.",
+      "The last year of minis. Twelve a side now, with a five player scrum and the caps finally " +
+      "off the ruck and the maul. The hand off arrives too. More changes here than in any " +
+      "season since U9.",
     sections: [
       {
         heading: "The short version",
@@ -1664,7 +1665,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             table: {
               caption:
-                "Maximums. A referee and both coaches can agree a smaller pitch if it is safer.",
+                "Maximums. A referee and both coaches can agree a smaller pitch if it's safer.",
               head: ["", "U11", "U12"],
               rows: [
                 ["Players a side", "9", "12"],
@@ -1689,7 +1690,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "Five players a side now, set up in a 3-2. They are the nearest five to the " +
+              "Five players a side now, set up in a 3-2. They're the nearest five to the " +
               "stoppage rather than five specialists, which is the RFU keeping late " +
               "specialisation going right to the end of minis.",
           },
@@ -1699,7 +1700,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               { text: "Both hookers may strike for the ball" },
               {
                 text:
-                  "Nobody pushes. Pushing does not arrive until U13, where 1.5 metres is all of " +
+                  "Nobody pushes. Pushing doesn't arrive until U13, where 1.5 metres is all of " +
                   "it",
               },
               { text: "The scrum half puts it in straight, from the middle of the gap" },
@@ -1707,13 +1708,13 @@ export const GUIDES: Record<AgeGroup, Guide> = {
                 text: "The scrum half must pass it away. No picking it up and running, no kicking",
               },
               { text: "Both back lines stay 5 metres back" },
-              { text: "The defending scrum half cannot follow round. They stay in the middle" },
+              { text: "The defending scrum half can't follow round. They stay in the middle" },
             ],
           },
           {
             text:
-              "Two in the second row is the genuinely new bit. It is a session on its own, " +
-              "because the binding is different and there is nobody in your squad who has done " +
+              "Two in the second row is the genuinely new bit. It's a session on its own, " +
+              "because the binding is different and there's nobody in your squad who has done " +
               "it.",
           },
         ],
@@ -1736,7 +1737,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               {
                 text:
                   "The referee still calls \"Use it\" once the ball is won. Still five seconds. " +
-                  "Miss it and it is a scrum to the other team",
+                  "Miss it and it's a scrum to the other team",
               },
               { text: "The scrum half can pass or pick and go, though not box kick" },
               {
@@ -1794,14 +1795,14 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         ],
       },
       {
-        heading: "What has not changed",
+        heading: "What hasn't changed",
         blocks: [
           {
             items: [
               {
                 text:
                   "No lineout. Touch restarts with a free pass 5 metres in, or a quick throw if " +
-                  "the same ball has not been touched by anyone off the pitch",
+                  "the same ball hasn't been touched by anyone off the pitch",
               },
               { text: "Nobody pushes in the scrum" },
               {
@@ -1844,9 +1845,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "U11 was the last grade where boys and girls play together. From U12 they " +
               "move into separate bands, so girls who were in your squad last season are " +
-              "in girls' rugby this one. It is the only change at this grade that is " +
-              "about who is in front of you rather than about what they may do, which is " +
-              "why it catches clubs out in September rather than in June.",
+              "in girls' rugby this one. It's the only change at this grade about who is in " +
+              "front of you instead of what they may do, which is why it catches clubs out in " +
+              "September when it should have been sorted in June.",
           },
           {
             text:
@@ -1901,27 +1902,27 @@ export const GUIDES: Record<AgeGroup, Guide> = {
       {
         question: "What changes from U11 to U12?",
         answer:
-          "Twelve a side rather than nine. The scrum goes to five players in a 3-2 shape, the " +
-          "caps come off the ruck and maul numbers, the hand off arrives below the armpits. The " +
+          "Twelve a side now. The scrum goes to five players in a 3-2 shape and the caps come " +
+          "off the ruck and maul numbers. The hand off arrives too, below the armpits. The " +
           "pitch, the ball and the length of a half all stay as they were.",
       },
       {
         question: "How many players are in a U12 scrum?",
         answer:
-          "Five a side in a 3-2 shape. They are the nearest five to the stoppage rather than " +
-          "five specialists. Both hookers may strike. Nobody pushes, so it is shape and binding " +
-          "rather than shoving. Pushing does not arrive until U13.",
+          "Five a side in a 3-2 shape, still whoever is nearest the stoppage. Both hookers may " +
+          "strike. Nobody pushes, so the whole thing is about shape and binding. Pushing " +
+          "doesn't arrive until U13.",
       },
       {
         question: "Can U12s hand off?",
         answer:
           "Yes, below the armpit. U12 is the first grade that allows one at all. Anything " +
-          "higher than that is foul play, so expect to spend a few sessions bringing it down.",
+          "higher than that's foul play, so expect to spend a few sessions bringing it down.",
       },
       {
         question: "How many players can be in a U12 ruck?",
         answer:
-          "There is no limit. Normal ruck and maul laws apply for the first time, so a ruck is " +
+          "There's no limit. Normal ruck and maul laws apply for the first time, so a ruck is " +
           "at least one player from each side on their feet over the ball. A maul is three " +
           "players: the carrier plus one from each team.",
       },

@@ -157,10 +157,12 @@ describe("the drills by age group page", () => {
 
   it("says the same count in its cards as in its table", () => {
     // Two places on one page, so the table can be right while the cards below it
-    // have quietly gone stale.
+    // have quietly gone stale. The count is what has to match, not the sentence
+    // around it: six cards sharing one sentence is the thing that made them read
+    // as generated in the first place, so the wording is free to differ.
     const html = page(CLUSTER).replace(/\s+/g, " ");
     for (const age of AGE_GROUPS) {
-      expect(html, `${age} card`).toContain(`${drillsFor(age).length} drills ready for the grade`);
+      expect(html, `${age} card`).toContain(`${drillsFor(age).length} drills`);
     }
   });
 
