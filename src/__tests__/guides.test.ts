@@ -208,6 +208,37 @@ describe("the guide view", () => {
     expect(marked[0].getAttribute("href")).toBe("#/guide/u10");
   });
 
+  /**
+   * The index is a way in, not a document.
+   *
+   * It shipped with the arrivals table plus two paragraphs of notes above the
+   * cards, so a coach opening the tab read about 250 words of reference before
+   * meeting a single link. Both publications of this content say the same
+   * things; what differs is that one of them is the navigation for a tab a
+   * coach taps with cold hands. The reference material still belongs on the
+   * page. It belongs under the links.
+   */
+  it("puts the links above the reference material", () => {
+    renderGuide(container, undefined);
+    const landmarks = [...container.querySelectorAll(".guide-grid, .guide-table, .guide-list")];
+    expect(landmarks.length, "nothing to order").toBeGreaterThan(2);
+    expect(
+      landmarks.slice(0, 2).map((el) => el.className),
+      "a grid of cards is not the first thing on the index",
+    ).toEqual(["guide-grid", "guide-grid"]);
+  });
+
+  it("gets to its first link in under sixty words", () => {
+    renderGuide(container, undefined);
+    const html = container.innerHTML;
+    const before = html
+      .slice(0, html.indexOf("<a "))
+      .replace(/<[^>]*>/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+    expect(before.length, `${before.length} words before the first link`).toBeLessThan(60);
+  });
+
   it("says nothing about a coach with no grade yet", () => {
     renderGuide(container, undefined);
     expect(container.querySelectorAll(".guide-card.is-yours")).toHaveLength(0);

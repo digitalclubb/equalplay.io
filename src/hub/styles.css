@@ -2894,7 +2894,9 @@ body {
   letter-spacing: -0.01em;
 }
 
-.guide-card-yours {
+/* The small print beside the big line. "Your grade" on a grade card, the grade
+   a coaching guide starts at on that one. */
+.guide-card-meta {
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: var(--text-2xs);
   font-weight: var(--weight-semi);
@@ -2910,6 +2912,13 @@ body {
   font-size: 1.125rem;
   font-weight: var(--weight-bold);
   line-height: 1.3;
+}
+
+/* A grade card leads on "U10". A coaching guide has no such token, so its title
+   is the thing being picked and takes the size the grade takes next door. */
+.guide-card.is-coaching .guide-card-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
 }
 
 .guide-card-blurb {

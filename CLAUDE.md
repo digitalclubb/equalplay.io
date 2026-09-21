@@ -540,6 +540,19 @@ over-correction: it took the affordance out with the decoration, so nothing
 about the list said it went anywhere. The grade a coach takes is marked by its
 edge plus the words in it, never a bar down the side.
 
+**The index is a way in. Every link comes before any reference.** It shipped
+with the arrivals table plus the lineout note plus the mixed rugby paragraph
+sitting above the cards, so a coach tapping Guide read about 250 words before
+meeting a link. The other publication of these words is a page somebody landed
+on from a search, where that order is fine. This one is the navigation for a
+tab. So the grades and the coaching guides are the first two things under the
+standfirst, the table and the notes sit beneath them. `guides.test.ts` holds the
+index to two grids first plus under sixty words before its first anchor. A
+grade card leads on the grade, because "U10" is the token a coach is looking
+for. A coaching guide has no such token, so its title takes that job and the
+grade it starts at drops to the small print. It shipped the other way round,
+which put "From U10" at 1.5rem over the sentence saying what the card was.
+
 `e2e/hub.spec.ts` holds the scale: each level clear of the one under it, a
 standfirst never smaller than its body copy, the measure between 45 and 78
 characters. That guard has already caught `.guide p` beating `.guide-lede` on

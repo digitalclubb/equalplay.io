@@ -264,17 +264,22 @@ function guideIndex(coachAge?: AgeGroup): string {
       <a class="guide-card${yours ? " is-yours" : ""}" href="#/guide/${age}">
         <span class="guide-card-grade">
           ${AGE_GROUP_LABELS[age]}
-          ${yours ? `<span class="guide-card-yours">Your grade</span>` : ""}
+          ${yours ? `<span class="guide-card-meta">Your grade</span>` : ""}
         </span>
         <span class="guide-card-title">${esc(GUIDES[age].title)}</span>
         <span class="guide-card-blurb">${esc(GUIDE_BLURB[age])}</span>
       </a>`;
   }).join("");
 
+  // A grade card leads on the grade, because "U10" is what a coach is looking
+  // for. A coaching card has no such token: the title is the thing being picked,
+  // so it leads and the grade it starts at is the small print. Shipped the other
+  // way round first, which put "From U10" at 1.5rem over the sentence that says
+  // what the card is.
   const coachingCards = COACHING_GUIDES.map(
     (guide) => `
       <a class="guide-card is-coaching" href="#/guide/${esc(guide.slug)}">
-        <span class="guide-card-grade">From ${AGE_GROUP_LABELS[THEME_MIN_AGE[guide.theme]]}</span>
+        <span class="guide-card-meta">From ${AGE_GROUP_LABELS[THEME_MIN_AGE[guide.theme]]}</span>
         <span class="guide-card-title">${esc(guide.title)}</span>
         <span class="guide-card-blurb">${esc(guide.blurb)}</span>
       </a>`,
@@ -284,13 +289,23 @@ function guideIndex(coachAge?: AgeGroup): string {
     <article class="guide">
       <header class="guide-header">
         <span class="guide-eyebrow">RFU Regulation 15</span>
-        <h2 class="guide-title">What your grade plays</h2>
+        <h2 class="guide-title">What your grade plays and how to teach it</h2>
         <p class="guide-lede">
           Regulation 15 decides what a minis grade may do rather than a coach's
-          judgement. One page per grade, saying what arrives, what goes and what
-          to get in before the season starts.
+          judgement. Pick your grade for the rules, or a phase of play for how to
+          teach it.
         </p>
       </header>
+
+      <section class="guide-section">
+        <h3>Pick your grade</h3>
+        <div class="guide-grid">${cards}</div>
+      </section>
+
+      <section class="guide-section">
+        <h3>How to teach it</h3>
+        <div class="guide-grid">${coachingCards}</div>
+      </section>
 
       <section class="guide-section">
         <h3>When each part of the game arrives</h3>
@@ -301,21 +316,6 @@ function guideIndex(coachAge?: AgeGroup): string {
           practised at training.
         </p>
         <p>${esc(MIXED_RUGBY_NOTE)}</p>
-      </section>
-
-      <section class="guide-section">
-        <h3>Pick a grade</h3>
-        <div class="guide-grid">${cards}</div>
-      </section>
-
-      <section class="guide-section">
-        <h3>How to teach it</h3>
-        <p>
-          The pages above say what your grade is allowed to do. These say how to
-          teach the parts of it nobody shows a volunteer, in the order a child can
-          take them.
-        </p>
-        <div class="guide-grid">${coachingCards}</div>
       </section>
 
       <section class="guide-section">
