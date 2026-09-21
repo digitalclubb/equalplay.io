@@ -81,7 +81,26 @@ Drill copy carries on exactly as it is.
 
 `src/__tests__/copy-style.test.ts` enforces the mechanical half of the house style: em
 dashes, commas before "and", Americanisms and a ban list of phrasing that reads as
-machine-written. It cannot enforce rhythm or voice. That part is on you.
+machine-written.
+
+Its `prose rhythm` block now enforces three of the rules above as well, because the
+lexical half held for a year while the rhythm half rotted. By September 2026 "in plain
+English" closed five of the six guide standfirsts and appeared 24 times across the
+site, the guide ran to 7,000 words with no contraction in it. Every grade page
+carried a three-part list as well. None of that shows up one page at a time, which
+is exactly why it needed a test:
+
+- **Anaphora.** Three items in a row opening with the same word. Articles and
+  prepositions are exempt, since "the pitch, the halves, the distance" is an ordinary
+  list. So are bullets: a rule with three parts should read as three parts.
+- **Template closers.** No two guide standfirsts may end on the same three words.
+  Same for the six entries in `GUIDE_BLURB`.
+- **Contractions.** Any body of prose over 250 words carries at least two per thousand.
+  A low floor on purpose: it catches prose with none, not a paragraph that wants none.
+
+Sentence rhythm, the "X, not Y" habit and "rather than" doing the same job in more
+words are still on you. Watch the last of those in particular, because it is what "X,
+not Y" turns into once the obvious form is banned.
 
 ## What every drill needs
 
