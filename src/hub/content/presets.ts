@@ -24,6 +24,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u7-first-session",
     title: "First session of the season",
+    aim: "Nobody knows anybody yet. They get hands on a ball in the first five minutes then go home having run about with it.",
     ageGroup: "u7",
     theme: "handling",
     sessionMinutes: 45,
@@ -38,6 +39,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u7-hands-and-space",
     title: "Hands and space",
+    aim: "They catch it and stop dead. By the end they should be taking the ball while they are still moving.",
     ageGroup: "u7",
     theme: "handling",
     sessionMinutes: 45,
@@ -52,6 +54,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u7-tag-and-run",
     title: "Tag and run",
+    aim: "Everything here is about spotting a gap then going through it. Expect plenty of tags.",
     ageGroup: "u7",
     theme: "evasion",
     sessionMinutes: 45,
@@ -66,6 +69,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u7-games-night",
     title: "Games night",
+    aim: "A night with almost no queueing. They play, you stop it now and then to ask what they saw.",
     ageGroup: "u7",
     theme: "gamesense",
     sessionMinutes: 45,
@@ -82,6 +86,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u8-beating-a-defender",
     title: "Beating a defender",
+    aim: "One child with the ball against one defender, over and over, until changing direction stops being a surprise.",
     ageGroup: "u8",
     theme: "evasion",
     sessionMinutes: 45,
@@ -96,6 +101,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u8-catch-and-pass",
     title: "Catch it and pass it",
+    aim: "Catching and passing joined up. They can usually do each on its own, though not in the same second.",
     ageGroup: "u8",
     theme: "handling",
     sessionMinutes: 45,
@@ -110,6 +116,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u8-before-the-first-game",
     title: "Week before the first game",
+    aim: "Sunday is their first game of the year. Tonight is about it not coming as a shock, so most of this is played rather than drilled.",
     ageGroup: "u8",
     theme: "gamesense",
     sessionMinutes: 45,
@@ -124,6 +131,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u8-heads-up-rugby",
     title: "Heads up rugby",
+    aim: "They run with their eyes down. Every drill here makes them look up before they decide anything.",
     ageGroup: "u8",
     theme: "gamesense",
     sessionMinutes: 60,
@@ -141,6 +149,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u9-first-tackles",
     title: "First tackles",
+    aim: "Their first tackles ever, so it starts on the knees then stays low and slow. Nobody gets hurt learning this.",
     ageGroup: "u9",
     theme: "tackle",
     sessionMinutes: 60,
@@ -156,6 +165,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u9-looking-after-the-ball",
     title: "Looking after the ball",
+    aim: "Keeping hold of it in traffic. Most turnovers at this age are a dropped ball rather than anything the other lot did.",
     ageGroup: "u9",
     theme: "handling",
     sessionMinutes: 60,
@@ -171,6 +181,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u9-finding-space",
     title: "Finding the space",
+    aim: "The space is usually out wide or behind them. This is about seeing it before somebody closes it.",
     ageGroup: "u9",
     theme: "evasion",
     sessionMinutes: 60,
@@ -186,6 +197,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u9-playing-what-you-see",
     title: "Playing what you see",
+    aim: "Fewer instructions from you, more decisions from them. You will be quieter than usual by the end.",
     ageGroup: "u9",
     theme: "gamesense",
     sessionMinutes: 60,
@@ -203,6 +215,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-rucking",
     title: "Rucking",
+    aim: "Rucking arrives this season. Staying on your feet is the whole thing and everything else follows from it.",
     ageGroup: "u10",
     theme: "breakdown",
     sessionMinutes: 60,
@@ -218,6 +231,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-restarts",
     title: "Scrums and restarts",
+    aim: "The three player scrum plus the free pass. Dull to run, though it is most of what stops a game turning into a mess.",
     ageGroup: "u10",
     theme: "setpiece",
     sessionMinutes: 45,
@@ -232,6 +246,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-tackle-and-after",
     title: "The tackle and what comes next",
+    aim: "A tackle is not the end of anything now. They tackle, get up, then do the next thing.",
     ageGroup: "u10",
     theme: "tackle",
     sessionMinutes: 60,
@@ -246,6 +261,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-quick-hands",
     title: "Quick hands",
+    aim: "Getting the ball away before the tackler arrives. Everything is timed or pressured so nobody can dawdle.",
     ageGroup: "u10",
     theme: "handling",
     sessionMinutes: 60,
@@ -261,6 +277,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-first-defender",
     title: "Beating the first defender",
+    aim: "Beating the person in front of you with nobody coming to help. Support work comes later in the season.",
     ageGroup: "u10",
     theme: "evasion",
     sessionMinutes: 60,
@@ -276,6 +293,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-match-week",
     title: "Match week",
+    aim: "A sharpener for the Sunday. Nothing new goes in this week and most of it is played live.",
     ageGroup: "u10",
     theme: "gamesense",
     sessionMinutes: 60,
@@ -293,6 +311,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-quick-ball",
     title: "Quick ball",
+    aim: "Ball back fast off the floor. A slow ruck is what turns a promising attack into a queue.",
     ageGroup: "u11",
     theme: "breakdown",
     sessionMinutes: 60,
@@ -307,6 +326,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-using-the-width",
     title: "Using the width",
+    aim: "Nine a side means room out wide they have never had. This one is about actually using it.",
     ageGroup: "u11",
     theme: "evasion",
     sessionMinutes: 60,
@@ -322,6 +342,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-defence-night",
     title: "Defence night",
+    aim: "A whole night on defending. They will be tired, though tackling decides most games at this age.",
     ageGroup: "u11",
     theme: "tackle",
     sessionMinutes: 60,
@@ -337,6 +358,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-scrums-and-free-kicks",
     title: "Scrums and free kicks",
+    aim: "Restarts done properly so the game keeps moving. Worth the half hour it takes.",
     ageGroup: "u11",
     theme: "setpiece",
     sessionMinutes: 60,
@@ -352,6 +374,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-sharp-hands",
     title: "Sharp hands",
+    aim: "Passing under a bit of pressure. The pass they can do in a line goes to pieces the moment somebody chases them.",
     ageGroup: "u11",
     theme: "handling",
     sessionMinutes: 60,
@@ -367,6 +390,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-match-week",
     title: "Match week",
+    aim: "Sunday is close. Everything here is the game itself, stopped now and then when something is worth naming.",
     ageGroup: "u11",
     theme: "gamesense",
     sessionMinutes: 60,
@@ -384,6 +408,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-set-piece-day",
     title: "Scrums and restarts",
+    aim: "The five player scrum in its 3-2 shape plus the restarts around it. Nobody pushes at this grade, so the shape is the whole job.",
     ageGroup: "u12",
     theme: "setpiece",
     sessionMinutes: 75,
@@ -401,6 +426,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-match-week",
     title: "Match week",
+    aim: "The last session before a game. Keep it lively then finish early rather than grinding them into the ground.",
     ageGroup: "u12",
     theme: "gamesense",
     sessionMinutes: 75,
@@ -417,6 +443,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-defence-that-holds",
     title: "Defence that holds",
+    aim: "One tackler missing is a try at this age. Tonight is about the line staying joined up.",
     ageGroup: "u12",
     theme: "tackle",
     sessionMinutes: 60,
@@ -432,6 +459,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-winning-it-back",
     title: "Winning the ball back",
+    aim: "Getting the ball back once the other lot have it, on their feet and through the gate every time.",
     ageGroup: "u12",
     theme: "breakdown",
     sessionMinutes: 60,
@@ -447,6 +475,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-move-it-early",
     title: "Move it early",
+    aim: "They hang on too long. Every drill here rewards the pass made before the defender gets there.",
     ageGroup: "u12",
     theme: "handling",
     sessionMinutes: 60,
@@ -462,6 +491,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-getting-outside",
     title: "Getting outside them",
+    aim: "Beating them on the outside, which needs the pass and the run to arrive together.",
     ageGroup: "u12",
     theme: "evasion",
     sessionMinutes: 60,
@@ -478,6 +508,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-kicking-night",
     title: "The boot arrives",
+    aim: "The first season a boot is allowed near the ball. Most of it is catching, because a kick nobody gathers is a gift.",
     ageGroup: "u11",
     theme: "kicking",
     sessionMinutes: 60,
@@ -493,6 +524,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-kick-and-counter",
     title: "Kick and counter",
+    aim: "Kicking plus what happens when it comes back. A kick is a decision now rather than a way out of trouble.",
     ageGroup: "u12",
     theme: "kicking",
     sessionMinutes: 60,

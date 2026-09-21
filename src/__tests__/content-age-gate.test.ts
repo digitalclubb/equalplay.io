@@ -17,7 +17,9 @@ import {
   REGULATION_15_URL,
   RULES_OF_PLAY,
   THEME_MIN_AGE,
+  THEME_TIPS,
   THEMES,
+  isTheme,
   ageAtLeast,
   type AgeGroup,
   type Drill,
@@ -184,6 +186,68 @@ describe("presets", () => {
         `preset "${preset.title}" claims ${preset.theme} but no drill in it covers that`,
       ).toBe(true);
     }
+  });
+
+  /**
+   * The card used to be a theme badge, a title, a bar plus a count. A coach who
+   * has watched a session go well reads "Quick hands" and knows what they are
+   * getting. A parent who never played reads two words. The aim is what they
+   * actually pick on, so every preset has to carry one and no two may carry the
+   * same one: six identical sentences is the "U10 on all six cards" failure
+   * again, where the one thing repeated everywhere told nobody anything.
+   */
+  it("each say what the session is for, in their own words", () => {
+    const aims = new Set<string>();
+    for (const preset of PRESETS) {
+      expect(preset.aim.length, `preset "${preset.title}" has no aim`).toBeGreaterThan(20);
+      expect(
+        preset.aim.endsWith("."),
+        `preset "${preset.title}" aim is prose, so it takes a full stop`,
+      ).toBe(true);
+      expect(
+        preset.aim.toLowerCase() === preset.title.toLowerCase(),
+        `preset "${preset.title}" aim only repeats the title`,
+      ).toBe(false);
+      expect(aims.has(preset.aim), `preset "${preset.title}" reuses another preset's aim`).toBe(
+        false,
+      );
+      aims.add(preset.aim);
+    }
+  });
+
+  /**
+   * The layer above a drill's own coaching points. A volunteer has something to
+   * say for the ten minutes a drill runs, then nothing for the rest of the
+   * evening. These are read as coaching points, so they are held to the shape of
+   * one: a fragment, no full stop, short enough to take in at a glance.
+   */
+  it("give every theme something to say all night", () => {
+    for (const theme of THEMES) {
+      const tips = THEME_TIPS[theme];
+      expect(tips.length, `${theme} has no tips`).toBeGreaterThanOrEqual(3);
+      for (const tip of tips) {
+        expect(tip.length, `${theme}: "${tip}" is too long for a glance`).toBeLessThan(120);
+        expect(tip[0], `${theme}: "${tip}" should start with a capital`).toBe(tip[0].toUpperCase());
+        expect(tip.endsWith("."), `${theme}: "${tip}" is a fragment, so no full stop`).toBe(false);
+      }
+      expect(new Set(tips).size, `${theme} repeats a tip`).toBe(tips.length);
+    }
+  });
+
+  /**
+   * A theme off storage indexes a `THEME_*` table, and those are object
+   * literals. `plan.theme ? TABLE[plan.theme] : x` hands back an inherited
+   * function for "constructor" or "toString", which is truthy, so it gets
+   * rendered and throws inside `esc` or on `.map`. `isStoredPlan` does not
+   * check the theme, so this guard is the only thing standing between a
+   * hand-edited localStorage and a blank sessions page.
+   */
+  it("treats an inherited key as no theme at all", () => {
+    for (const theme of THEMES) expect(isTheme(theme), theme).toBe(true);
+    for (const key of ["constructor", "toString", "valueOf", "hasOwnProperty", "", "u10"]) {
+      expect(isTheme(key), key).toBe(false);
+    }
+    expect(isTheme(undefined)).toBe(false);
   });
 
   it("are only offered to the age grade they were written for", () => {
@@ -378,6 +442,26 @@ describe("a ready-made session is gated like everything else", () => {
       renderPresetView(container, preset.id, age);
       expect(container.textContent, preset.id).toContain(preset.title);
       expect(container.querySelectorAll(".run-block").length, preset.id).toBeGreaterThan(0);
+    }
+  });
+
+  /**
+   * The two things a coach who has never played needs before the drills: what
+   * tonight is for, then what to say all the way through it. Both are wired in
+   * a render rather than in the data, so a rename that drops either leaves the
+   * content in place with nothing showing it.
+   */
+  it("says what the session is for, plus what to say all night", () => {
+    for (const age of AGE_GROUPS) {
+      for (const preset of presetsForAge(age)) {
+        container.innerHTML = "";
+        renderPresetView(container, preset.id, age);
+        const text = container.textContent ?? "";
+        expect(text, `${preset.id} does not say what it is for`).toContain(preset.aim);
+        for (const tip of THEME_TIPS[preset.theme]) {
+          expect(text, `${preset.id} drops the ${preset.theme} tips`).toContain(tip);
+        }
+      }
     }
   });
 

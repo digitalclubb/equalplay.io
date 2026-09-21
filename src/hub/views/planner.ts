@@ -12,7 +12,9 @@ import {
   RULES_OF_PLAY,
   THEME_MIN_AGE,
   THEME_SHORT,
+  THEME_TIPS,
   ageAtLeast,
+  isTheme,
   kitLabel,
   type AgeGroup,
   type Drill,
@@ -491,12 +493,40 @@ function presetCard(preset: Preset, href?: string): string {
   const body = `
       <span class="preset-theme">${esc(THEME_SHORT[preset.theme])}</span>
       <span class="preset-title">${esc(preset.title)}</span>
+      <span class="preset-aim">${esc(preset.aim)}</span>
       ${planShape(plan.blocks)}
       <span class="preset-meta">${drills.length} drills · ${preset.sessionMinutes} min</span>`;
 
   return href
     ? `<a class="preset-card" href="${esc(href)}">${body}</a>`
     : `<button type="button" class="preset-card" data-preset="${esc(preset.id)}">${body}</button>`;
+}
+
+/**
+ * The things worth saying all night, in the head of a session on that theme.
+ *
+ * A block gives a coach ten minutes of coaching points. Between the blocks they
+ * have nothing, which for a volunteer is most of the evening. These sit above
+ * the running order so they get read once on the way in.
+ *
+ * The theme is checked rather than trusted, the same as the badge on a session
+ * card is. `isStoredPlan` does not check it, so a plan off the local mirror can
+ * carry whatever a hand-edited localStorage holds. "constructor" then indexes
+ * this table to an inherited function that would throw on `.map` and take the
+ * whole session down.
+ *
+ * Not in present mode. The block's own points are what has to land at arm's
+ * length and a list above them pushes them off a phone. On paper it is there:
+ * the sheet goes to the parents helping on Tuesday, who are the people least
+ * likely to know what to say.
+ */
+function themeTips(theme?: Theme): string {
+  if (!isTheme(theme)) return "";
+  return `
+      <div class="run-tips">
+        <h3>Whatever you run tonight</h3>
+        <ul>${THEME_TIPS[theme].map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>
+      </div>`;
 }
 
 function planRow(plan: StoredPlan, browsing: AgeGroup, view: PlanView): string {
@@ -522,11 +552,13 @@ function planRow(plan: StoredPlan, browsing: AgeGroup, view: PlanView): string {
         <span class="plan-line-meta">${meta}</span>
       </a>`;
   }
-  // Looked up rather than trusted. `isStoredPlan` does not check the theme. A
-  // plan off the local mirror is whatever localStorage holds, so a hand-edited
-  // one hands `THEME_SHORT` a key it has not got and `esc(undefined)` throws,
-  // which would take the whole sessions list down over a badge
-  const theme = plan.theme ? THEME_SHORT[plan.theme] : undefined;
+  // Checked rather than trusted. `isStoredPlan` does not check the theme. A plan
+  // off the local mirror is whatever localStorage holds, so a hand-edited one
+  // hands `THEME_SHORT` a key it has not got. An unknown key reads undefined and
+  // `esc(undefined)` throws. An inherited one such as "constructor" is worse: it
+  // reads back a function, clears the truthy test, then throws inside `esc`
+  // anyway. Either way the whole sessions list goes down over a badge
+  const theme = isTheme(plan.theme) ? THEME_SHORT[plan.theme] : undefined;
   return `
     <a class="drill-card plan-card" href="#/plan/${esc(plan.id)}">
       ${theme ? `<span class="preset-theme">${esc(theme)}</span>` : ""}
@@ -695,6 +727,7 @@ export function renderPlanView(
           ? `<p class="run-kit"><strong>Pack</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
           : ""
       }
+      ${themeTips(plan.theme)}
       <p class="hub-fineprint">${ageRulesLink(
         AGE_GROUP_LABELS[plan.ageGroup],
         RULES_OF_PLAY[plan.ageGroup],
@@ -1335,6 +1368,13 @@ function planDocument(
   readerAge: AgeGroup | undefined,
   intro: string,
   footer: string,
+  /**
+   * What the session is for, on a ready-made one. A plan a coach wrote has none:
+   * it is not on `SessionPlan`, so it is not in the row `session_plans` stores
+   * and there is no migration behind this. A preset lives in the bundle, so its
+   * aim is read straight off the content.
+   */
+  aim?: string,
 ): string {
   const totals = planTotals(plan, DRILLS);
   const blocks = planDrills(plan, DRILLS);
@@ -1363,6 +1403,7 @@ function planDocument(
              </p>`
           : ""
       }
+      ${aim ? `<p class="run-aim">${esc(aim)}</p>` : ""}
       <p class="run-meta">
         ${AGE_GROUP_LABELS[plan.ageGroup]} · ${totals.plannedMinutes} min${
           totals.breakMinutes > 0 ? ` including ${totals.breakMinutes} of breaks` : ""
@@ -1373,6 +1414,7 @@ function planDocument(
           ? `<p class="run-kit"><strong>Pack</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
           : ""
       }
+      ${themeTips(plan.theme)}
       <p class="hub-fineprint">${ageRulesLink(
         AGE_GROUP_LABELS[plan.ageGroup],
         RULES_OF_PLAY[plan.ageGroup],
@@ -1481,6 +1523,7 @@ export function renderPresetView(
       </p>
       <a class="hub-btn hub-btn-primary" href="#/join/plans">Set up an account</a>
     </section>`,
+    preset.aim,
   );
 
   keepDetailsOpen(container);
@@ -2492,6 +2535,11 @@ function renderPrintable(
     ${
       totals.equipment.length > 0
         ? `<p class="print-kit"><strong>Kit:</strong> ${esc(totals.equipment.map(kitLabel).join(", "))}</p>`
+        : ""
+    }
+    ${
+      isTheme(plan.theme)
+        ? `<p class="print-tips"><strong>Say all night:</strong> ${esc(THEME_TIPS[plan.theme].join(". "))}</p>`
         : ""
     }
     ${blocks

@@ -1045,6 +1045,20 @@ body {
   color: var(--color-text);
 }
 
+/* What the session is for, under the title. A parent who never played cannot
+   tell "Hands and space" from "Quick hands" by the title plus a bar, which is
+   the whole reason the sentence exists. It sits above the shape because it is
+   the thing being chosen on. `.preset-meta` keeps its `margin-top: auto`, so a
+   longer aim pushes the shape down rather than unpinning the meta line. */
+.preset-aim {
+  display: block;
+  margin-top: var(--sp-2xs);
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
 .preset-meta {
   display: block;
   margin-top: auto;
@@ -1325,6 +1339,17 @@ body {
   flex: 0 0 auto;
 }
 
+/* The standfirst on a ready-made session. Bigger than the body it sits over,
+   the way `.guide-lede` is, because it is the sentence the rest of the page
+   answers. Only a preset has one. */
+.run-aim {
+  margin-top: var(--sp-xs);
+  color: var(--color-secondary);
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
 .run-meta {
   margin-top: var(--sp-2xs);
   font-size: var(--text-sm);
@@ -1337,6 +1362,40 @@ body {
   background: var(--color-bg);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
+}
+
+/* The things worth saying all night, above the running order. It wears the same
+   tinted block as the kit line because both are read once on the way in, rather
+   than while a drill is running. The list is the coach's, so it keeps
+   `--color-text` while the heading over it stays quiet. */
+.run-tips {
+  margin-top: var(--sp-xs);
+  padding: var(--sp-xs) var(--sp-sm);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.run-tips h3 {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+  font-weight: var(--weight-heavy);
+}
+
+.run-tips ul {
+  margin: var(--sp-2xs) 0 0;
+  padding-left: 1.1rem;
+}
+
+.run-tips li {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text);
+  text-wrap: pretty;
+}
+
+.run-tips li + li {
+  margin-top: var(--sp-3xs);
 }
 
 /* ---- Sharing ---- */
@@ -1961,7 +2020,8 @@ body {
   }
 
   .print-sub,
-  .print-kit {
+  .print-kit,
+  .print-tips {
     font-size: 10pt;
     margin-bottom: 2mm;
   }

@@ -35,6 +35,7 @@ import {
   THEMES,
   THEME_LABELS,
   THEME_MIN_AGE,
+  THEME_TIPS,
   type AgeGroup,
   type Drill,
   type Theme,
@@ -346,6 +347,13 @@ export function themePageHtml(theme: Theme, age: AgeGroup, drills: Drill[]): str
         <p class="home-microcopy">
           Free to read with no account. They work at a pitch with no signal too.
         </p>
+
+        <h2>What to say, whatever the drill</h2>
+        <p>
+          These hold for every drill below, so they are worth knowing before you
+          pick one. Each drill then adds what to watch for while that one is running.
+        </p>
+${list(THEME_TIPS[theme].map((tip) => esc(tip)))}
 
         <h2>What ${label} is allowed here</h2>
         <p>

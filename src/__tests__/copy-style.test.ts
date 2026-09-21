@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { DRILLS } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
-import { AGE_GROUP_LABELS, THEME_LABELS } from "../hub/content/types.js";
+import { AGE_GROUP_LABELS, THEME_LABELS, THEME_TIPS } from "../hub/content/types.js";
 
 /**
  * House style, enforced rather than remembered.
@@ -107,7 +107,13 @@ function drillCopy(): Array<[string, string]> {
       out.push([at("diagram.after.caption"), drill.diagram.after.caption]);
     }
   }
-  for (const preset of PRESETS) out.push([`${preset.id} title`, preset.title]);
+  for (const preset of PRESETS) {
+    out.push([`${preset.id} title`, preset.title]);
+    out.push([`${preset.id} aim`, preset.aim]);
+  }
+  for (const [theme, tips] of Object.entries(THEME_TIPS)) {
+    tips.forEach((tip, i) => out.push([`${theme} tip[${i}]`, tip]));
+  }
   for (const label of Object.values(THEME_LABELS)) out.push(["theme label", label]);
   for (const label of Object.values(AGE_GROUP_LABELS)) out.push(["age label", label]);
   return out;

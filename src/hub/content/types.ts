@@ -100,6 +100,22 @@ export function isAgeGroup(value: unknown): value is AgeGroup {
   return typeof value === "string" && (AGE_GROUPS as readonly string[]).includes(value);
 }
 
+/**
+ * True for a real theme key, so a `THEME_*` table can be indexed by something
+ * that came out of storage.
+ *
+ * `isStoredPlan` does not check `plan.theme`. Rejecting a whole session over a
+ * bad badge would lose a coach their work, so the plan is kept and the theme is
+ * checked at the point it is used. A bare `plan.theme ? TABLE[plan.theme] : x`
+ * is not that check: these tables are object literals, so "constructor" and
+ * "toString" come back as inherited functions rather than undefined, sail past
+ * a truthy test, then throw on `.map` or inside `esc`. Same trap as the
+ * `hasOwnProperty` over `in` rule on the confirmation gate.
+ */
+export function isTheme(value: unknown): value is Theme {
+  return typeof value === "string" && (THEMES as readonly string[]).includes(value);
+}
+
 export const THEMES = [
   "handling",
   "evasion",
@@ -139,6 +155,63 @@ export const THEME_LABELS: Record<Theme, string> = {
   setpiece: "Scrum and restarts",
   kicking: "Kicking and catching",
   gamesense: "Game sense",
+};
+
+/**
+ * The handful of things worth saying all night, whatever drill is running.
+ *
+ * A drill's coaching points belong to that drill. They tell a coach what to
+ * watch for in the ten minutes it runs, then they are gone. What a volunteer
+ * is missing is the layer above: the thing that is true of every tackle in the
+ * session, so they have something to say while the squad is doing a drill they
+ * have never seen before. A coach holding three ideas coaches better than one
+ * trying to hold thirty.
+ *
+ * Written as coaching points rather than as prose, because that is what they
+ * are. Fragments, no full stop, short enough to read in the rain. They sit in
+ * the head of a session on that theme and at the top of the theme's own page.
+ *
+ * Nothing here may claim something the grade cannot do. `THEME_MIN_AGE` sets
+ * the floor, so a tip only has to hold from that grade up. Note that nobody
+ * pushes in a scrum at any grade the hub covers, so the set piece tips are
+ * about shape rather than about a shove.
+ */
+export const THEME_TIPS: Record<Theme, string[]> = {
+  handling: [
+    "Hands out early, fingers spread, before the ball gets near you",
+    "Pass in front of them so they run onto it",
+    "Eyes on where it is going, never on the ball in your hands",
+  ],
+  evasion: [
+    "Head up, pick the gap before you get to it",
+    "Take them on at the shoulder, never straight at the middle",
+    "One clear step then go, dancing about gets caught",
+  ],
+  tackle: [
+    "Go forward into it, never backwards or standing still",
+    "Head to the side of them, never across the front",
+    "Both arms wrapped then squeeze, a shove is not a tackle",
+  ],
+  breakdown: [
+    "Stay on your feet, going off them gives the ball away",
+    "Come in through the gate, from behind your own feet",
+    "Place it long with both hands, away from the other lot",
+  ],
+  setpiece: [
+    "Flat back and head up, even though nobody is pushing",
+    "Grip the shirt before it moves, never after",
+    "Free pass goes backwards off both hands, nobody moves until it has gone",
+  ],
+  kicking: [
+    "Head down over the ball, look up once it has gone",
+    "Laces through it, never the toe end",
+    "Watch it all the way into your hands before you start running",
+  ],
+  gamesense: [
+    "Look up before the ball arrives rather than after",
+    "Talk to each other, the quiet team loses the ball",
+    "Support means being somewhere they can actually pass to",
+  ],
 };
 
 /**
@@ -325,6 +398,20 @@ export function isAvailableAt(drill: Drill, age: AgeGroup): boolean {
 export interface Preset {
   id: string;
   title: string;
+  /**
+   * What tonight is for, in one sentence a parent who never played can act on.
+   *
+   * A title plus a running order tells somebody what they will be doing without
+   * telling them what they are trying to get out of it. "Hands and space" is
+   * five drills to a coach who has watched a session go well. To everybody else
+   * it is five drills. The aim is what they read on the card while picking, so
+   * it says what the squad should look like by the end rather than selling the
+   * session back to them.
+   *
+   * Prose, so it takes a full stop. `copy-style.test.ts` holds it to the same
+   * house style as everything else a coach reads.
+   */
+  aim: string;
   ageGroup: AgeGroup;
   theme: Theme;
   sessionMinutes: number;
