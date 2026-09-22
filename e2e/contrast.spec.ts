@@ -224,6 +224,31 @@ for (const scheme of ["light", "dark"] as const) {
 }
 
 /**
+ * The sessions page, which the sweep above cannot reach signed out.
+ *
+ * `signIn` was written for the non-text sweep below and the text sweep never
+ * used it, so every signed-in view went unmeasured. The weeks list is the
+ * reason to close that: it is the one panel on the page made of muted text at
+ * `--text-sm`, and a week marker at `--color-secondary` on a surface that flips
+ * is exactly the shape of mistake this file exists for.
+ */
+for (const scheme of ["light", "dark"] as const) {
+  test(`the sessions page meets AA contrast in ${scheme} mode`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1100, height: 900 });
+    await signIn(page, "#/plans", scheme);
+    await expect(page.locator(".coverage-list li").first()).toBeVisible();
+
+    const failures = (await samples(page))
+      .map((sample) => ({ ...sample, contrast: ratio(sample.fg, sample.bg) }))
+      .filter((sample) => sample.contrast < (sample.large ? 3 : 4.5))
+      .map((sample) => `${sample.where} "${sample.text}" at ${sample.contrast.toFixed(2)}:1`);
+
+    expect(failures, `${scheme} mode contrast failures`).toEqual([]);
+  });
+}
+
+/**
  * Non-text contrast, WCAG 1.4.11. A control needs a 3:1 boundary against what it
  * sits on unless it is identifiable some other way. Every secondary button in
  * the hub was --color-surface on a --color-surface panel with a --color-border

@@ -244,15 +244,23 @@ test("your own sessions come first once there are any", async ({ page }) => {
   await signedIn(page, "u10", "#/plans");
   const headings = () => page.locator(".hub-section h2").allInnerTexts();
   await expect(page.locator(".preset-card").first()).toBeVisible();
-  // Coverage is always last. It is a thing to notice on the way past rather
-  // than a thing a coach came to the page for.
-  expect(await headings()).toEqual(["Start a session", "Your sessions", "What you've covered"]);
+  // The weeks are always last. They are a thing to notice on the way past
+  // rather than a thing a coach came to the page for.
+  expect(await headings()).toEqual([
+    "Start a session",
+    "Your sessions",
+    "The next few weeks",
+  ]);
 
   await page.locator('[data-preset="preset-u10-rucking"]').click();
   await expect(page.locator("#plan-title")).toBeVisible();
   await page.goto("/hub/#/plans");
   await expect(page.locator(".plan-card")).toHaveCount(1);
-  expect(await headings()).toEqual(["Your sessions", "Start a session", "What you've covered"]);
+  expect(await headings()).toEqual([
+    "Your sessions",
+    "Start a session",
+    "The next few weeks",
+  ]);
 
   // The strip on the card is the session, so it carries a piece per block plus
   // the water break the preset comes with
@@ -2286,22 +2294,60 @@ test("a gap in what you have covered is a way into a session on it", async ({ pa
   await expect(page.locator(".block-row")).not.toHaveCount(0);
 });
 
-test("a U8 coach is never told they have neglected rucking", async ({ page }) => {
-  // Coverage lists themes to work on. Listing one Regulation 15 does not allow
-  // at the grade would be the app telling a coach to break it.
+test("a U8 coach is never offered rucking, logged or not", async ({ page }) => {
+  // The list names themes to work on. Naming one Regulation 15 does not allow
+  // at the grade would be the app telling a coach to break it. Checked with an
+  // empty log as well as a full one, because the weeks are laid out from the
+  // first visit now and that is a second route to the same screen.
   await signedIn(page, "u8", "#/plans");
   await expect(page.locator(".coverage")).toBeVisible();
-  await expect(page.locator(".coverage-list")).toHaveCount(0);
+
+  const banned = ["Ruck and maul", "Tackle", "Scrum and restarts", "Kicking"];
+  const listed = async () => await page.locator(".coverage-theme").allInnerTexts();
+  for (const theme of banned) expect(await listed()).not.toContain(theme);
 
   await page.locator(".preset-card").first().click();
   await page.getByRole("link", { name: "Done" }).click();
   await page.locator("#plan-ran").click();
   await page.goto("/hub/#/plans");
 
-  const themes = await page.locator(".coverage-theme").allInnerTexts();
-  expect(themes).not.toContain("Ruck and maul");
-  expect(themes).not.toContain("Tackle");
-  expect(themes).not.toContain("Scrum and restarts");
+  for (const theme of banned) expect(await listed()).not.toContain(theme);
+});
+
+test("a coach with nothing logged still gets the next few weeks", async ({ page }) => {
+  // This panel read backwards for its first month: what had been coached and
+  // how long ago, which said nothing at all until a night had been marked as
+  // run. A coach opening the app in September met an empty box at the one
+  // moment the whole term was still in front of them.
+  await signedIn(page, "u11", "#/plans");
+  const rows = page.locator(".coverage-list li");
+  await expect(rows).toHaveCount(6);
+  await expect(page.locator(".coverage").getByRole("heading")).toHaveText("The next few weeks");
+
+  // Numbered as weeks, in order, rather than as a status list
+  expect(await page.locator(".coverage-week").allInnerTexts()).toEqual([
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ]);
+
+  // The boot arrives at U11 and nobody has ever taught this coach to coach it,
+  // so it leads. Alphabetical handed them the ruck they have had since U10.
+  await expect(rows.first().locator(".coverage-theme")).toHaveText("Kicking");
+
+  // Nothing is marked as neglected yet, because with an empty log every row
+  // would be and a wall of warning colour says nothing. Same for the when: six
+  // rows each saying "Not yet" is the caption saying nothing.
+  await expect(page.locator(".coverage-when")).toHaveCount(0);
+  await expect(page.locator(".coverage-row-never")).toHaveCount(0);
+
+  // Every week is still a way in rather than a status line
+  await expect(rows.first().locator(".coverage-go")).toHaveText("Plan one");
+  await rows.first().click();
+  await expect(page).toHaveURL(/#\/plan\/.+\/edit$/);
 });
 
 test("a drill says what going wrong looks like, plus what to say", async ({ page }) => {

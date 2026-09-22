@@ -49,7 +49,8 @@ import {
   presetBlocks,
   stationIds,
   themeCoverage,
-  type ThemeCoverage,
+  termPlan,
+  type TermWeek,
   withWaterBreak,
   type PlanBlock,
   type PlanTotals,
@@ -307,40 +308,43 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
 let runs: SessionRun[] = [];
 
 /**
- * What has been coached lately, worst first.
+ * The themes to work through next, one a week, least covered first.
  *
- * Framed as coverage rather than as a diary. A list of dates is a diary and
- * nobody keeps one. What a volunteer needs is the sentence they cannot get to on
- * their own: handling four times and nothing on evasion since June.
+ * This read backwards for its first month: what had been coached and how long
+ * ago, which is a diary and nobody keeps one. Worse, it had nothing at all to
+ * say until a night had been marked as run, so a coach opening the app in
+ * September met an empty panel at the one moment the whole term was still in
+ * front of them. That is the moment the paid competition sells a season planner
+ * for.
  *
- * Only themes the grade may do, so a U8 coach is never told off for neglecting
- * rucking. Under both session lists, because it is a thing to notice rather than
- * a thing to tap.
+ * Turning it round costs nothing, because the order was already right. The same
+ * list the other way up is the answer to "what do I do for the next month",
+ * and `termPlan` cycles it so a grade with three themes gets six weeks rather
+ * than three and a gap.
+ *
+ * Only themes the grade may do, so a U8 coach is never offered rucking. Under
+ * both session lists, because a coach who came back for Tuesday's plan wants
+ * Tuesday's plan first.
  */
 function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
-  if (log.length === 0) {
-    return `
-      <section class="hub-section coverage">
-        <div class="section-head"><h2>What you've covered</h2></div>
-        <p class="hub-lede">
-          Mark a session as run and this fills in. It keeps track of what you have
-          been coaching so you can see what you have not.
-        </p>
-      </section>`;
-  }
+  const weeks = termPlan(log, ctx.ageGroup, today());
+  if (weeks.length === 0) return "";
 
-  const coverage = themeCoverage(log, ctx.ageGroup, today());
-  const nights = log.length === 1 ? "1 night" : `${log.length} nights`;
   const presets = presetsForAge(ctx.ageGroup);
+  const nights = log.length === 1 ? "1 night" : `${log.length} nights`;
 
   return `
     <section class="hub-section coverage">
       <div class="section-head">
-        <h2>What you've covered</h2>
-        <span class="hub-count">${nights}</span>
+        <h2>The next few weeks</h2>
+        ${log.length > 0 ? `<span class="hub-count">${nights}</span>` : ""}
       </div>
+      <p class="hub-lede">
+        Least covered first, so the thing you have been putting off comes round.
+        Mark a night as run and the rest moves up.
+      </p>
       <ul class="coverage-list">
-        ${coverage.map((row) => coverageRow(row, presets)).join("")}
+        ${weeks.map((week) => coverageRow(week, presets, log.length > 0)).join("")}
       </ul>
     </section>`;
 }
@@ -359,13 +363,25 @@ function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
  * `themeCoverage` only lists what the grade may do and there is one preset per
  * theme per grade. The row falls back to plain text anyway, or adding a theme
  * before writing its session would turn a status line into a dead link.
+ *
+ * `marked` is off until something has been logged. It takes both the warning
+ * colour and the when with it. The colour exists to single out the one theme
+ * nobody has touched, which on an empty log is every row, so the whole list
+ * came up yellow. The when is the same failure in words: six rows each saying
+ * "Not yet" is the caption saying nothing, the way "U10" on all six ready-made
+ * cards did. Until a night has been logged the week number is the only thing
+ * that distinguishes a row, which is the truth of it.
  */
-function coverageRow(row: ThemeCoverage, presets: Preset[]): string {
-  const never = row.runs === 0 ? " coverage-row-never" : "";
+function coverageRow(week: TermWeek, presets: Preset[], marked: boolean): string {
+  const never = marked && week.coverage.runs === 0 ? " coverage-row-never" : "";
+  const when = marked
+    ? `<span class="coverage-when">${coverageWhen(week.coverage.runs, week.coverage.weeksAgo)}</span>`
+    : "";
   const body = `
-      <span class="coverage-theme">${esc(THEME_SHORT[row.theme])}</span>
-      <span class="coverage-when">${coverageWhen(row.runs, row.weeksAgo)}</span>`;
-  const preset = presets.find((p) => p.theme === row.theme);
+      <span class="coverage-week" aria-hidden="true">${week.week}</span>
+      <span class="coverage-theme">${esc(THEME_SHORT[week.theme])}</span>
+      ${when}`;
+  const preset = presets.find((p) => p.theme === week.theme);
 
   return preset
     ? `<li><a class="coverage-row${never}" href="#/preset/${esc(preset.id)}">${body}

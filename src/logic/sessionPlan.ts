@@ -3,6 +3,7 @@ import {
   isAvailableAt,
   mergeKit,
   sumKit,
+  AGE_GROUPS,
   THEMES,
   THEME_MIN_AGE,
   type AgeGroup,
@@ -390,8 +391,18 @@ export interface ThemeCoverage {
  * what this app is for.
  *
  * Never run sorts above run-a-while-ago, which sorts above run-recently. A tie
- * goes to the theme with fewer nights, then alphabetically so the order is
- * stable between renders rather than jumping about as dates tick over.
+ * goes to the theme with fewer nights, then to whichever phase arrives latest
+ * at this grade.
+ *
+ * That last one matters most in September, when nothing has been logged and
+ * every theme ties at never. Alphabetical knows nothing about when a phase
+ * arrives, so it handed a U11 coach the ruck they have had for a year while
+ * the boot, which turns up that season and which none of them has ever been
+ * taught to coach, sat fifth. What a grade has just been given is what the
+ * squad cannot do yet, which is why `coachingGuidesFor` already orders its
+ * guides this way. Themes arriving at the same grade fall back to
+ * alphabetical, so the order is stable between renders rather than jumping
+ * about as dates tick over.
  */
 export function themeCoverage(
   runs: Array<{ themes: Theme[]; ranOn: string }>,
@@ -413,8 +424,61 @@ export function themeCoverage(
       (a, b) =>
         (b.weeksAgo ?? Number.MAX_SAFE_INTEGER) - (a.weeksAgo ?? Number.MAX_SAFE_INTEGER) ||
         a.runs - b.runs ||
+        arrivesAt(b.theme) - arrivesAt(a.theme) ||
         a.theme.localeCompare(b.theme),
     );
+}
+
+/** How far up the grades a phase turns up. Higher is newer to this coach. */
+function arrivesAt(theme: Theme): number {
+  return AGE_GROUPS.indexOf(THEME_MIN_AGE[theme]);
+}
+
+// ---- The next few weeks ----
+//
+// The coverage list reads backwards: what has been coached and how long ago.
+// A coach standing in a car park in September has logged nothing, so it had
+// nothing to say to them at the one moment the whole term is still in front of
+// them. Competitors sell a season planner for this. What it actually takes here
+// is the order the app already works out, laid out as weeks.
+
+export interface TermWeek {
+  /** 1 for the next session, counting up. */
+  week: number;
+  theme: Theme;
+  /** Why it sits where it sits: never coached, or how long since. */
+  coverage: ThemeCoverage;
+}
+
+/**
+ * The themes to work through next, one a week, worst covered first.
+ *
+ * No dates. A training night moves for a frozen pitch, half term and a fixture,
+ * so a plan pinned to real Tuesdays is wrong by October and a coach cannot fix
+ * it without the app growing a calendar. Week one is simply the next one.
+ *
+ * Shorter than `weeks` is impossible and longer is pointless: the list cycles
+ * once it runs out of themes, which at U7 means three of them twice. Coming
+ * back round to handling in week four is the right answer rather than a gap,
+ * since a squad that did it once in September has not finished with it.
+ *
+ * Recomputed every render rather than stored. A night marked as run reorders
+ * what is left, which is the whole point of it. A stored term plan would be a
+ * second thing to keep in step with the log.
+ */
+export function termPlan(
+  runs: Array<{ themes: Theme[]; ranOn: string }>,
+  ageGroup: AgeGroup,
+  todayIso: string,
+  weeks = 6,
+): TermWeek[] {
+  const order = themeCoverage(runs, ageGroup, todayIso);
+  if (order.length === 0 || weeks <= 0) return [];
+
+  return Array.from({ length: weeks }, (_, i) => {
+    const coverage = order[i % order.length];
+    return { week: i + 1, theme: coverage.theme, coverage };
+  });
 }
 
 /**

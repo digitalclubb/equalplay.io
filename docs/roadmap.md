@@ -212,9 +212,22 @@ gone longest without coaching. With nothing logged yet it takes a bit of
 everything instead of a theme out of a hat. Held to the same bar as the
 hand-picked sessions, which is not one warning on any of them.
 
-**What you have not covered is a way in.** Each row of the coverage list is now
+**What you have not covered is a way in.** Each row of the list is now
 the link to the ready-made session for that theme. It read the gap out and then
 sat there, which is the easy half of the problem it was built for.
+
+**The next few weeks.** The same list the other way up. It used to read
+backwards, as what had been coached and how long ago. It said nothing at all
+until a night had been marked as run. So the coach who most needed it, the one
+opening the app in September with a whole term ahead of them, got an empty
+panel. Six sessions now, numbered, least covered first, each row the way into
+the ready-made session for it. That is what the paid competition sells as a
+season planner. Here it is `termPlan` over an order the app already worked out.
+No dates: a training night moves for a frozen pitch, half term and a fixture, so
+weeks rather than Tuesdays.
+With nothing logged the order comes off `THEME_MIN_AGE`, newest phase to the
+grade first, which is the same rule the coaching guides use. Alphabetical handed
+a U11 coach the ruck they had had for a year while the boot sat fifth.
 
 **Carousel presets.** One per grade, so a coach with helpers starts from the
 Sunday shape rather than building it from scratch every week. A preset entry
@@ -419,6 +432,12 @@ held there by tests rather than by a content editor remembering.
 Volume is still the wrong race. Nobody browses 1,200 drills, which everyone's
 ready-made plans quietly admit.
 
+**A season planner is the feature everybody else charges for.** Sportplan,
+Rugby Coach Weekly and CoachEdge all sell one. What it actually takes here is
+the order `themeCoverage` already worked out, laid out as weeks, which shipped
+on 22 September. Ours is shorter than theirs and knows what this coach has
+actually run.
+
 **RugbyCoach.AI is the one to watch.** Free, grassroots, match day, England Rugby
 fixture import. What it does not do is substitutions or playing time. That is our
 `/planner` sitting in the middle of their gap. If they add it, the acquisition
@@ -500,11 +519,12 @@ never things that would justify a price.
   the token getting its own row, which is not worth it yet.
 - The skip link leaves `#hub-view` in the URL, so a reload lands on Drills rather than the
   view you were on. Cosmetic.
-- `e2e/contrast.spec.ts` covers the homepage, the planner and the signed-out hub. The
-  signed-in views need an auth stub before it can reach them. Present mode and the
-  Account page's device panel are both signed in, so both are unmeasured. The one
-  fixed colour either of them uses for text is `--color-danger` on `--color-bg` at
-  roughly 4.6:1, checked by hand rather than by machine.
+- `e2e/contrast.spec.ts` covers the homepage, the planner, the signed-out hub
+  and, since 22 September, the sessions page. The stub the non-text sweep uses
+  was always there; the text sweep simply never reached for it. Present mode and
+  the Account page's device panel are still unmeasured. The one fixed colour
+  either of them uses for text is `--color-danger` on `--color-bg` at roughly
+  4.6:1, checked by hand rather than by machine.
 - No way to add a drill to a session from present mode, which is where "eight turned
   up" will want one.
 - `e2e/hub.spec.ts:146` opens a drill by clicking `.drill-card` rather than the link

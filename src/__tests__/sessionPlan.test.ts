@@ -12,6 +12,7 @@ import {
   moveBlock,
   hasBlockingProblem,
   themeCoverage,
+  termPlan,
   withWaterBreak,
   type SessionPlan,
 } from "../logic/sessionPlan.js";
@@ -579,6 +580,38 @@ describe("Coverage. What you have not been coaching", () => {
     expect(rows.find((r) => r.theme === "handling")?.weeksAgo).toBe(2);
   });
 
+  it("leads a coach with nothing logged on what the grade has just been handed", () => {
+    // Every theme ties at never in September, so the tie-break is the whole
+    // answer. Alphabetical handed a U11 coach the ruck they have had since U10
+    // while kicking, which arrives that season, sat fifth.
+    expect(termPlan([], "u11", "2026-09-01")[0].theme).toBe("kicking");
+
+    // At U10 the ruck, the maul and the scrum are the new work. Tackling came
+    // last year and handling has always been there, so both sort below it.
+    const rows = themeCoverage([], "u10", "2026-09-01");
+    const at = (theme: string) => rows.findIndex((r) => r.theme === theme);
+    expect(at("breakdown"), "a U10 phase should sit above a U9 one").toBeLessThan(at("tackle"));
+    expect(at("setpiece")).toBeLessThan(at("tackle"));
+    expect(at("tackle"), "a U9 phase should sit above one that was always there").toBeLessThan(
+      at("handling"),
+    );
+  });
+
+  it("still puts what you have actually neglected above what is new", () => {
+    // The arrival order is only a tie-break. A U10 coach who has run rucking
+    // twice this month and never touched handling needs handling, whatever the
+    // regulations handed them in September.
+    const rows = themeCoverage(
+      [run(["breakdown"], "2026-09-01"), run(["breakdown", "setpiece"], "2026-09-08")],
+      "u10",
+      "2026-09-15",
+    );
+    expect(rows[rows.length - 1].theme).toBe("breakdown");
+    expect(rows.find((r) => r.theme === "handling")?.runs).toBe(0);
+    const at = (theme: string) => rows.findIndex((r) => r.theme === theme);
+    expect(at("handling")).toBeLessThan(at("setpiece"));
+  });
+
   it("never reports a night in the future as coached weeks ago", () => {
     // A phone with its clock set wrong would otherwise sort above a theme that
     // has genuinely never been coached.
@@ -1113,5 +1146,63 @@ describe("buildSession. One built rather than picked off a list", () => {
   it("gives the same session back on the same seed", () => {
     const recipe = { ageGroup: "u11" as const, theme: "tackle" as const, minutes: 60 };
     expect(buildSession(DRILLS, recipe, 5)).toEqual(buildSession(DRILLS, recipe, 5));
+  });
+});
+
+/**
+ * The next few weeks.
+ *
+ * The coverage list reads backwards and said nothing at all to a coach who had
+ * logged nothing, which is every coach in September. This is the same order
+ * laid out forwards, which is the thing the paid competition sells as a season
+ * planner.
+ */
+describe("The next few weeks", () => {
+  const run = (themes: string[], ranOn: string) => ({ themes: themes as never, ranOn });
+
+  it("gives a coach with an empty log a term to work through", () => {
+    const weeks = termPlan([], "u10", "2026-09-01");
+    expect(weeks.map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6]);
+    // U10 may do six themes, so six weeks covers each of them once
+    expect(new Set(weeks.map((w) => w.theme)).size).toBe(6);
+  });
+
+  it("cycles rather than running out at a grade with three themes", () => {
+    // U7 has handling, evasion and game sense. Coming back round in week four
+    // is the right answer. A four row list with two blanks is not.
+    const weeks = termPlan([], "u7", "2026-09-01");
+    expect(weeks).toHaveLength(6);
+    expect(weeks[3].theme).toBe(weeks[0].theme);
+    expect(weeks[5].theme).toBe(weeks[2].theme);
+  });
+
+  it("never offers a grade a theme Regulation 15 does not allow it", () => {
+    // Same promise the coverage list makes, through a new route to a screen.
+    for (const age of ["u7", "u8"] as const) {
+      const themes = termPlan([], age, "2026-09-01").map((w) => w.theme);
+      expect(themes).not.toContain("tackle");
+      expect(themes).not.toContain("breakdown");
+      expect(themes).not.toContain("setpiece");
+      expect(themes).not.toContain("kicking");
+    }
+  });
+
+  it("moves a theme down the list once a night on it has been marked as run", () => {
+    const before = termPlan([], "u10", "2026-09-01");
+    const after = termPlan([run([before[0].theme], "2026-09-01")], "u10", "2026-09-02");
+    expect(after[0].theme, "week one did not move on").not.toBe(before[0].theme);
+    expect(after[after.length - 1].theme).toBe(before[0].theme);
+  });
+
+  it("carries the reason a week sits where it does", () => {
+    const weeks = termPlan([run(["handling"], "2026-09-01")], "u10", "2026-09-29");
+    const handling = weeks.find((w) => w.theme === "handling");
+    expect(handling?.coverage.runs).toBe(1);
+    expect(handling?.coverage.weeksAgo).toBe(4);
+    expect(weeks[0].coverage.runs).toBe(0);
+  });
+
+  it("asks for no weeks and gets none", () => {
+    expect(termPlan([], "u10", "2026-09-01", 0)).toEqual([]);
   });
 });

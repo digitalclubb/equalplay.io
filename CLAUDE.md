@@ -82,7 +82,7 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-871 unit and integration tests across 26 files, 200 Playwright tests. Most are ordinary.
+884 unit and integration tests across 26 files, 204 Playwright tests. Most are ordinary.
 These thirteen are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
@@ -106,8 +106,8 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 200 tests across four files: `matchday` (15), `home` (11), `hub` (144)
-and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
+`pnpm test:e2e` is 204 tests across four files: `matchday` (16), `home` (11), `hub` (145)
+and `contrast` (32). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
 has shipped three times: 1.5:1 on a button border, 1.12:1 on the homepage, then 1:1
@@ -1233,9 +1233,32 @@ rather than a theme out of a hat. Seeded off the clock, so tapping again is
 worth doing. How long it runs comes off that grade's own ready-made sessions.
 
 **What you have not covered is a way in, not a status line.** Each row of the
-coverage list is the link to the ready-made session for that theme. Reading that
+list is the link to the ready-made session for that theme. Reading that
 you have never worked on evasion is the easy half. The row rather than two words
 at the end of it, because that is a hit area a thumb finds in a car park.
+
+**The list reads forwards, as weeks.** It was "What you've covered", which is a
+diary. It had nothing to say until a night had been marked as run, so a coach
+opening the app in September met an empty panel at the one moment the whole term
+was still in front of them. `termPlan` in `logic/sessionPlan.ts` lays the same
+order out as six sessions instead, cycling so a grade with three themes gets six
+weeks rather than three and a gap. No dates on it. A training night moves for a
+frozen pitch, half term and a fixture, so a plan pinned to real Tuesdays is
+wrong by October and the app would need a calendar to fix it. Week one is the
+next one. Recomputed every render rather than stored, because marking a night as
+run reordering what is left is the whole point of it.
+The never-coached warning colour is off until something has been logged, or
+every row wears it and a wall of yellow says nothing.
+
+**With nothing logged, the order is what the grade has just been handed.**
+`themeCoverage` ties every theme at never in September, so the tie-break decides
+the whole list. It was alphabetical, which knows nothing about when a phase
+arrives: a U11 coach was pointed at the ruck they have had since U10 while
+kicking, which turns up that season and which none of them has been taught to
+coach, sat fifth. It sorts on `THEME_MIN_AGE` first now, newest to the grade
+above oldest, which is the rule `coachingGuidesFor` already used. Themes
+arriving at the same grade fall back to alphabetical, so the order is stable
+between renders.
 
 **Build one from scratch is a tile in the grid, not the primary button.** It was
 an outlined button under the presets, which put the only way to a blank session
