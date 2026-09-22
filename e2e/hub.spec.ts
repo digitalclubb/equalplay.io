@@ -474,6 +474,19 @@ test("the small space filter narrows the list and survives a drill", async ({ pa
   expect(await count()).toBe(small);
 });
 
+test("the share icon is the size of the star beside it", async ({ page }) => {
+  await signedIn(page, "u10", "#/catalogue");
+  await page.locator(".drill-card-link").first().click();
+  await expect(page.locator(".drill-detail")).toBeVisible();
+
+  // An inline SVG with only a viewBox has no size of its own, so one left out
+  // of the star's rule falls back to 300x150 and swamps the title row
+  const share = await page.locator("#drill-share svg").boundingBox();
+  const star = await page.locator(".drill-detail .fav-btn .star").boundingBox();
+  expect(share?.width).toBeCloseTo(star?.width ?? 0, 1);
+  expect(share?.height).toBeCloseTo(star?.height ?? 0, 1);
+});
+
 test("the small space filter cannot get round the age gate", async ({ page }) => {
   await signedIn(page, "u8", "#/catalogue");
   await page.locator("#f-space").click();

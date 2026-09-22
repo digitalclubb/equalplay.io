@@ -595,7 +595,12 @@ body {
 
 /* ---- Stars ---- */
 
-.star {
+/* The share icon is sized off the same rule as the star it stands beside. An
+   inline SVG carrying only a `viewBox` has no intrinsic size, so left out of
+   here it fell back to the replaced element's 300x150 and swamped the title
+   row. Every other icon in the app is sized by whatever it sits in. */
+.star,
+.drill-share svg {
   width: 1.15rem;
   height: 1.15rem;
   flex-shrink: 0;
