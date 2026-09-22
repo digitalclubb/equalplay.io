@@ -299,9 +299,13 @@ describe("every static page reaches the product", () => {
       // A coach reads it one tap from the catalogue that contradicts it.
       "src/components/results.ts",
     ];
+    // Both phrasings, because the homepage used one of each and only the
+    // first was held: it said "120 drills" three times and "100 warm-ups and
+    // exercises" twice, contradicting itself on the same screen. A count is
+    // the number of drills whichever noun the sentence reached for.
     for (const path of TALKS_ABOUT_THE_WHOLE_CATALOGUE) {
       const html = page(path).replace(/\s+/g, " ");
-      const claims = html.match(/\b\d+ drills\b/g) ?? [];
+      const claims = html.match(/\b\d+ (?:drills|warm-ups and exercises)\b/g) ?? [];
       expect(claims.length, `${path} states no drill count at all`).toBeGreaterThan(0);
       for (const claim of claims) {
         expect(Number(claim.split(" ")[0]), `${path}: "${claim}"`).toBe(DRILLS.length);
