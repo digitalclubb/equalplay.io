@@ -68,7 +68,7 @@ night. Researched from the RFU's age grade material plus World Rugby's Tackle Re
 then written in our own words. The footer says the order to teach it in is ours
 rather than the RFU's, because it is.
 
-**The answers, on a tab.** `#/faqs`, from `hub/content/questions.ts`. 71 short
+**The answers, on a tab.** `#/answers`, from `hub/content/questions.ts`. 71 short
 answers to what just happened, grouped by what was going on rather than by
 grade, with a search box over the lot. A rules guide is the August read and a
 coaching guide is how to teach it. This is the car park at ten past eleven: the

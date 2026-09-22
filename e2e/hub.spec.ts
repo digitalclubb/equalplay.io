@@ -1595,15 +1595,15 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await expect(page.locator(".guide-card:not(.is-coaching)")).toHaveCount(6);
 });
 
-test("the FAQs tab answers a question with no account and no grade picked", async ({ page }) => {
+test("the Answers tab answers a question with no account and no grade picked", async ({ page }) => {
   // Same exception the guide makes. A coach asking what just happened is not
   // asking to be asked which grade they coach, and the answer they want may
   // belong to the grade above theirs.
-  await page.goto("/hub/#/faqs");
+  await page.goto("/hub/#/answers");
   await expect(page.locator(".age-picker")).toHaveCount(0);
   await expect(page.locator(".guide-card")).toHaveCount(10);
 
-  await page.locator('.guide-card[href="#/faqs/scrum"]').click();
+  await page.locator('.guide-card[href="#/answers/scrum"]').click();
   await expect(page.locator(".guide h2")).toHaveText("The scrum");
   await expect(page.locator(".guide-faq").first().locator("h4")).toContainText("wrong side");
   // The grades are said, because nothing here is gated. Once at the top on a
@@ -1613,20 +1613,20 @@ test("the FAQs tab answers a question with no account and no grade picked", asyn
 
   // A mixed topic says it on each answer instead, because there it is the
   // whole point: a head knock holds at every grade, a mouthguard from U9.
-  await page.goto("/hub/#/faqs/safety");
+  await page.goto("/hub/#/answers/safety");
   await expect(page.locator(".guide-faq .guide-card-meta").first()).toHaveText("Every grade");
 });
 
 test("the answers can be searched for what a coach saw", async ({ page }) => {
-  await page.goto("/hub/#/faqs");
+  await page.goto("/hub/#/answers");
   const before = await page.locator(".guide-card").count();
-  await page.locator("#faq-search").fill("sternum");
+  await page.locator("#answers-search").fill("sternum");
   // Filtered to the matches, with the box still focused so typing carries on.
   await expect(page.locator(".guide-faq").first()).toBeVisible();
   await expect(page.locator(".guide-card")).toHaveCount(0);
-  await expect(page.locator("#faq-search")).toBeFocused();
+  await expect(page.locator("#answers-search")).toBeFocused();
 
-  await page.locator("#faq-search").fill("");
+  await page.locator("#answers-search").fill("");
   await expect(page.locator(".guide-card")).toHaveCount(before);
 });
 

@@ -81,7 +81,7 @@ function topicCards(): string {
     const meta = TOPICS[topic];
     const count = questionsFor(topic).length;
     return `
-      <a class="guide-card is-coaching" href="#/faqs/${topic}">
+      <a class="guide-card is-coaching" href="#/answers/${topic}">
         <span class="guide-card-meta">${count} ${count === 1 ? "question" : "questions"}</span>
         <span class="guide-card-title">${esc(meta.label)}</span>
         <span class="guide-card-blurb">${esc(meta.blurb)}</span>
@@ -144,7 +144,7 @@ function results(term: string): string {
 
 function index(coachAge?: AgeGroup): string {
   return `
-    <article class="guide faqs">
+    <article class="guide answers">
       <header class="guide-header">
         <span class="guide-eyebrow">Answers &middot; RFU Regulation 15</span>
         <h2 class="guide-title">The questions that come up on a Sunday</h2>
@@ -154,10 +154,10 @@ function index(coachAge?: AgeGroup): string {
         </p>
       </header>
 
-      <div class="faq-search" role="search">
-        <label class="visually-hidden" for="faq-search">Search the answers</label>
+      <div class="answers-search" role="search">
+        <label class="visually-hidden" for="answers-search">Search the answers</label>
         <input
-          id="faq-search"
+          id="answers-search"
           type="search"
           autocomplete="off"
           value="${esc(term)}"
@@ -165,8 +165,8 @@ function index(coachAge?: AgeGroup): string {
         />
       </div>
 
-      <p class="visually-hidden" role="status" id="faq-count">${esc(count(term))}</p>
-      <div id="faq-results">${results(term)}</div>
+      <p class="visually-hidden" role="status" id="answers-count">${esc(count(term))}</p>
+      <div id="answers-results">${results(term)}</div>
 
       <footer class="guide-source">
         <p>
@@ -200,16 +200,16 @@ function topicPage(topic: QuestionTopic): string {
 
   const step = (other: QuestionTopic | undefined, dir: string, which: string): string =>
     other
-      ? `<a class="guide-step guide-step-${dir}" href="#/faqs/${other}">
+      ? `<a class="guide-step guide-step-${dir}" href="#/answers/${other}">
            <span class="guide-step-dir">${which}</span>
            <span class="guide-step-grade">${esc(TOPICS[other].label)}</span>
          </a>`
       : "";
 
   return `
-    <article class="guide faqs">
+    <article class="guide answers">
       <header class="guide-header">
-        <p class="guide-back"><a href="#/faqs">All the questions</a></p>
+        <p class="guide-back"><a href="#/answers">All the questions</a></p>
         <span class="guide-eyebrow">${
           shared ? esc(shared) : `${questions.length} questions`
         } &middot; RFU Regulation 15</span>
@@ -265,7 +265,7 @@ function topicPage(topic: QuestionTopic): string {
 }
 
 /**
- * `param` is the topic in `#/faqs/<topic>`, or absent for the index. Anything
+ * `param` is the topic in `#/answers/<topic>`, or absent for the index. Anything
  * that is not a topic falls back to the index rather than erroring, the same
  * way a mistyped guide route does: this is reference material, so a bad link
  * should land somewhere useful.
@@ -279,9 +279,9 @@ export function renderQuestions(
   container.innerHTML = topic ? topicPage(topic) : index(coachAge);
 
   if (!topic) {
-    const box = container.querySelector<HTMLInputElement>("#faq-search");
-    const shown = container.querySelector<HTMLElement>("#faq-results");
-    const said = container.querySelector<HTMLElement>("#faq-count");
+    const box = container.querySelector<HTMLInputElement>("#answers-search");
+    const shown = container.querySelector<HTMLElement>("#answers-results");
+    const said = container.querySelector<HTMLElement>("#answers-count");
     const draw = (): void => {
       if (!shown || !box) return;
       term = box.value;

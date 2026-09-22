@@ -2882,12 +2882,12 @@ body {
    gated, so a rule quoted with no grade on it is the one way this content could
    mislead a coach. It gets its own line so it cannot be missed. */
 
-.faq-search {
+.answers-search {
   max-width: var(--measure);
   margin-bottom: var(--sp-lg);
 }
 
-.faq-search input {
+.answers-search input {
   width: 100%;
   min-height: var(--touch-min);
   padding: 0 var(--sp-sm);
@@ -2901,7 +2901,7 @@ body {
   border-radius: var(--radius);
 }
 
-.faqs .guide-faq .guide-card-meta {
+.answers .guide-faq .guide-card-meta {
   display: block;
   margin-bottom: var(--sp-2xs);
 }

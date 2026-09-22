@@ -195,7 +195,7 @@ describe("the answers in the app", () => {
     const links = [...container.querySelectorAll<HTMLAnchorElement>(".guide-card")].map((a) =>
       a.getAttribute("href"),
     );
-    expect(links).toEqual(QUESTION_TOPICS.map((topic) => `#/faqs/${topic}`));
+    expect(links).toEqual(QUESTION_TOPICS.map((topic) => `#/answers/${topic}`));
   });
 
   it("falls back to the index rather than erroring on a bad topic", () => {
@@ -256,7 +256,7 @@ describe("the answers in the app", () => {
 
   it("filters as a coach types, without losing the box", () => {
     renderQuestions(container, undefined);
-    const box = container.querySelector<HTMLInputElement>("#faq-search");
+    const box = container.querySelector<HTMLInputElement>("#answers-search");
     expect(box).not.toBeNull();
 
     box!.value = "sternum";
@@ -266,11 +266,11 @@ describe("the answers in the app", () => {
     // The box is outside the part that is redrawn, which is what keeps the
     // caret where the coach left it. The catalogue has to restore one because
     // it replaces the whole view.
-    expect(container.querySelector("#faq-search")).toBe(box);
+    expect(container.querySelector("#answers-search")).toBe(box);
     // A list that changes silently is a list a screen reader never sees change.
     // Its own element, because a live region around the answers reads the
     // answers out on every keystroke.
-    const said = container.querySelector("#faq-count");
+    const said = container.querySelector("#answers-count");
     expect(said?.getAttribute("role")).toBe("status");
     expect(said?.textContent).toBe(`${found.length} ${found.length === 1 ? "answer" : "answers"}`);
   });
@@ -281,12 +281,12 @@ describe("the answers in the app", () => {
     // emptying itself at the moment the phone finds signal is the touchline
     // moment this tab is for.
     renderQuestions(container, undefined);
-    const box = container.querySelector<HTMLInputElement>("#faq-search")!;
+    const box = container.querySelector<HTMLInputElement>("#answers-search")!;
     box.value = "sternum";
     box.dispatchEvent(new Event("input"));
 
     renderQuestions(container, undefined);
-    expect(container.querySelector<HTMLInputElement>("#faq-search")?.value).toBe("sternum");
+    expect(container.querySelector<HTMLInputElement>("#answers-search")?.value).toBe("sternum");
     expect(container.querySelectorAll(".guide-faq")).toHaveLength(
       searchQuestions("sternum").length,
     );
@@ -294,13 +294,13 @@ describe("the answers in the app", () => {
     // Gone once a different coach picks the tablet up.
     resetQuestions();
     renderQuestions(container, undefined);
-    expect(container.querySelector<HTMLInputElement>("#faq-search")?.value).toBe("");
+    expect(container.querySelector<HTMLInputElement>("#answers-search")?.value).toBe("");
     expect(container.querySelectorAll(".guide-card")).toHaveLength(QUESTION_TOPICS.length);
   });
 
   it("offers a way back out of a search that found nothing", () => {
     renderQuestions(container, undefined);
-    const box = container.querySelector<HTMLInputElement>("#faq-search")!;
+    const box = container.querySelector<HTMLInputElement>("#answers-search")!;
     box.value = "zzzzz";
     box.dispatchEvent(new Event("input"));
     const clear = container.querySelector<HTMLButtonElement>("[data-clear-search]");
@@ -320,8 +320,8 @@ describe("the answers in the app", () => {
     };
     const first = QUESTION_TOPICS[0];
     const last = QUESTION_TOPICS[QUESTION_TOPICS.length - 1];
-    expect(steps(first)).toEqual([`#/faqs/${QUESTION_TOPICS[1]}`]);
-    expect(steps(last)).toEqual([`#/faqs/${QUESTION_TOPICS[QUESTION_TOPICS.length - 2]}`]);
+    expect(steps(first)).toEqual([`#/answers/${QUESTION_TOPICS[1]}`]);
+    expect(steps(last)).toEqual([`#/answers/${QUESTION_TOPICS[QUESTION_TOPICS.length - 2]}`]);
   });
 });
 
@@ -417,7 +417,7 @@ describe("the answers as static pages", () => {
     // carries nothing.
     for (const topic of QUESTION_TOPICS) {
       const html = at(questionsPath(topic));
-      expect(html, topic).toContain(`<a class="cta" href="/hub#/faqs/${topic}">`);
+      expect(html, topic).toContain(`<a class="cta" href="/hub#/answers/${topic}">`);
       expect(html, `${topic} seeds a grade it does not know`).not.toContain("/hub?age=");
     }
   });

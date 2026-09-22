@@ -43,7 +43,7 @@ const iconGuide = `<svg class="hub-tab-icon" ${ICON}><path d="M12 7.2C10.4 5.6 8
  * twenty pixels because that one is a small head high in the box with
  * shoulders under it, where this fills the square.
  */
-const iconFaqs = `<svg class="hub-tab-icon" ${ICON}><circle cx="12" cy="12" r="9"/><path d="M9.4 9.4a2.8 2.8 0 1 1 3.4 3.1c-.6.2-.9.7-.9 1.3v.4"/><path d="M12 17.4h.01"/></svg>`;
+const iconAnswers = `<svg class="hub-tab-icon" ${ICON}><circle cx="12" cy="12" r="9"/><path d="M9.4 9.4a2.8 2.8 0 1 1 3.4 3.1c-.6.2-.9.7-.9 1.3v.4"/><path d="M12 17.4h.01"/></svg>`;
 
 /** One person, because an account belongs to one coach. */
 const iconAccount = `<svg class="hub-tab-icon" ${ICON}><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.5c.6-3.8 3.7-5.8 7.2-5.8s6.6 2 7.2 5.8"/></svg>`;
@@ -59,19 +59,25 @@ export interface NavItem {
 /**
  * Order is the order a coach uses them. Drills to find something, Sessions to
  * build it, Match day on the Sunday. Then the reading, nearest need first:
- * FAQs is the car park at ten past eleven, Guide is an August read. Account
+ * Answers is the car park at ten past eleven, Guide is an August read. Account
  * goes last, pinned to the foot of the rail once there is a rail to pin it to.
  *
- * The label is "FAQs" rather than "Questions" because the phone bar shares its
- * width between the tabs. Six of them leave about 42px for a label at 320px.
- * "Match day" wraps onto two lines down there, which is why it fits at all.
- * "Questions" is one word, so it cannot wrap and would be cut instead.
+ * "Answers" rather than "FAQs", which is the label a website puts over how to
+ * reset your password. It reads as site admin rather than as anything a coach
+ * would reach for standing on grass. It is also what the rest of the code calls
+ * this content, down to the heading on every page of it.
+ *
+ * Not "Questions" either, though that was the first instinct. The phone bar
+ * shares its width between the tabs, which leaves a label 47.7px at 320px:
+ * "Questions" measures 49 and has no space in it to wrap at, where "Answers" is
+ * 41, the same as "Account" already sitting beside it. A coach wants the answer
+ * anyway rather than the chance to ask.
  */
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: "catalogue", label: "Drills", icon: iconDrills },
   { key: "plans", label: "Sessions", icon: iconSessions },
   { key: "planner", label: "Match day", icon: iconMatchDay },
-  { key: "faqs", label: "FAQs", icon: iconFaqs },
+  { key: "answers", label: "Answers", icon: iconAnswers },
   { key: "guide", label: "Guide", icon: iconGuide },
   { key: "account", label: "Account", icon: iconAccount },
 ];

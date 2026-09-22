@@ -2,7 +2,7 @@
  * The answers, rendered as static pages a search engine can read.
  *
  * Same argument as the rules pages and the coaching guides beside them. The
- * answers live in the bundle so the FAQs tab opens at a pitch with no signal.
+ * answers live in the bundle so the Answers tab opens at a pitch with no signal.
  * `/hub` is `noindex` though. "What happens if the ball comes out the wrong
  * side of the scrum" is a question somebody types into Google from a car park
  * before they have got the engine started.
@@ -169,7 +169,7 @@ function body(topic: QuestionTopic): string {
   return `        <h1>${esc(meta.label)}, the questions that come up</h1>
         <p class="standfirst">${esc(meta.blurb)}</p>
 ${shared ? `        <p class="calc-detail">${esc(shared)}</p>\n` : ""}
-        <p><a class="cta" href="/hub#/faqs/${topic}">Read these in the app</a></p>
+        <p><a class="cta" href="/hub#/answers/${topic}">Read these in the app</a></p>
         <p class="home-microcopy">
           Free to read with no account. They work at a pitch with no signal too.
         </p>
@@ -246,7 +246,7 @@ export function questionIndexHtml(): string {
           played.
         </p>
 
-        <p><a class="cta" href="/hub#/faqs">Search them in the app</a></p>
+        <p><a class="cta" href="/hub#/answers">Search them in the app</a></p>
         <p class="home-microcopy">
           Free to read with no account. They work at a pitch with no signal too.
         </p>

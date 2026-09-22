@@ -207,10 +207,10 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // yet". The grade you are moving up to in September is also the one you
     // want to read in August. Ahead of both checks for the same reason a shared
     // session is.
-    if (route.name === "guide" || route.name === "faqs") {
+    if (route.name === "guide" || route.name === "answers") {
       clearPrintable();
       const reading = profile?.ageGroup ?? chosenAge() ?? undefined;
-      if (route.name === "faqs") renderQuestions(view, route.param, reading);
+      if (route.name === "answers") renderQuestions(view, route.param, reading);
       else renderGuide(view, route.param, reading);
       return;
     }

@@ -504,7 +504,7 @@ shaped like a document with its facts alongside.
 
 **The nav is ordered by when a coach reaches for it.** Drills to find something,
 Sessions to build it, Match day on the Sunday. Then the two nobody opens the app
-to reach, nearest need first: FAQs is what just happened in front of you, Guide
+to reach, nearest need first: Answers is what just happened in front of you, Guide
 is an August read. Account goes last, pinned to the foot of the
 rail with `margin-top: auto`. Each tab carries an inline icon,
 written out in `lib/nav.ts` rather than imported so that module keeps pulling in
@@ -603,8 +603,8 @@ yours hides the thing they came for. It also needs no account and no grade at
 all, so `render()` takes it before both checks, the same way a shared session
 comes before the age picker.
 
-**FAQs is the third way round the same words, for the question asked in a car
-park.** `hub/content/questions.ts` is 71 short answers at `#/faqs`, grouped by
+**Answers is the third way round the same words, for the question asked in a car
+park.** `hub/content/questions.ts` is 71 short answers at `#/answers`, grouped by
 what was happening rather than by grade: the ball came out the wrong side of
 the scrum, the referee gave a scrum to the side that knocked it forward,
 somebody has taken a bang on the head. Those answers were always here. They
@@ -627,9 +627,14 @@ can never claim to apply at a grade Reg 15 has no scrum at. Tag answers carry an
 upper bound too, since an answer about the seventh tag with no end on it reads
 as current at U12.
 
-The tab says FAQs rather than Questions because the phone bar shares its width
-between the tabs and six of them leave about 42px for a label at 320px. "Match
-day" fits only because it wraps. "Questions" is one word, so it would be cut.
+The tab says Answers rather than FAQs, which is the label a website puts over
+how to reset your password: it reads as site admin rather than as something a
+coach reaches for standing on grass. It is also what the rest of the code calls
+this content, down to the heading on every page of it. Not Questions either,
+though that was the instinct. The phone bar shares its width between the tabs,
+leaving a label 47.7px at 320px: "Questions" measures 49 with no space in it to
+wrap at, where "Answers" is 41, the same as "Account" beside it. A coach wants
+the answer rather than the chance to ask, anyway.
 Published twice like everything else: `/rugby-questions` plus one page per
 topic, because "what happens if the ball comes out the wrong side of the scrum"
 is a phrase somebody types before they have started the car. One page per topic
