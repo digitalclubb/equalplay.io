@@ -16,6 +16,7 @@ import { ORIGIN } from "./page.js";
 import { drillPagePaths } from "./drillPage.js";
 import { rulesPagePaths } from "./rulesPage.js";
 import { coachingPagePaths } from "./coachingPage.js";
+import { questionPagePaths } from "./questionPage.js";
 
 /**
  * The pages written by hand under `public/`, plus the two app entries.
@@ -49,6 +50,7 @@ export function sitemapPaths(): string[] {
     ...HAND_WRITTEN.map(([path]) => path),
     ...rulesPagePaths(),
     ...coachingPagePaths(),
+    ...questionPagePaths(),
     ...drillPagePaths(),
   ];
 }

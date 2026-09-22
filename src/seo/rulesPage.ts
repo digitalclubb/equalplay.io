@@ -23,6 +23,7 @@ import { esc } from "../lib/esc.js";
 import { RULES_INDEX_PATH, page } from "./page.js";
 import { DRILLS, drillPath } from "../hub/content/drills.js";
 import { COACHING_GUIDES, coachingGuidesFor, coachingPath } from "../hub/content/coaching.js";
+import { QUESTIONS, QUESTIONS_INDEX_PATH } from "../hub/content/questions.js";
 import type { Drill } from "../hub/content/types.js";
 import {
   AGE_GROUPS,
@@ -299,6 +300,14 @@ ${COACHING_GUIDES.map(
     `          <li><a href="${coachingPath(guide)}"><strong>${esc(guide.title)}</strong></a> ${esc(guide.blurb)}</li>`,
 ).join("\n")}
         </ul>
+
+        <h2>The questions that come up on the day</h2>
+        <p>
+          A grade's page is what to read in August. <a href="${QUESTIONS_INDEX_PATH}">Rugby
+          questions answered</a> is the other half of it: ${QUESTIONS.length} short answers
+          to the things that happen in front of you on a Sunday, grouped by what was going
+          on at the time rather than by grade.
+        </p>
 
         <h2>What each grade trains</h2>
         <p>

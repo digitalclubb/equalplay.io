@@ -61,8 +61,8 @@ test("the app and the planner are the same product", async ({ page }) => {
   await page.goto("/planner");
   await expect(page.locator(".btn-generate")).toBeVisible();
 
-  // Same five tabs as the app, with this page marked as where you are
-  await expect(page.locator(".hub-tab")).toHaveCount(5);
+  // Same six tabs as the app, with this page marked as where you are
+  await expect(page.locator(".hub-tab")).toHaveCount(6);
   await expect(page.locator('.hub-tab[data-route="planner"]')).toHaveAttribute(
     "aria-current",
     "page",

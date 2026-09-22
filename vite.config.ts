@@ -131,12 +131,14 @@ function staticPages(): Plugin {
   // takes out `pnpm lint`. Inside a hook it is only ever reached by Vite, which
   // resolves it the same way it resolves the app.
   const pages = async (): Promise<Array<{ path: string; html: string }>> => {
-    const [{ rulesPages }, { coachingPages }, { drillPages }] = await Promise.all([
-      import("./src/seo/rulesPage.js"),
-      import("./src/seo/coachingPage.js"),
-      import("./src/seo/drillPage.js"),
-    ]);
-    return [...rulesPages(), ...coachingPages(), ...drillPages()];
+    const [{ rulesPages }, { coachingPages }, { questionPages }, { drillPages }] =
+      await Promise.all([
+        import("./src/seo/rulesPage.js"),
+        import("./src/seo/coachingPage.js"),
+        import("./src/seo/questionPage.js"),
+        import("./src/seo/drillPage.js"),
+      ]);
+    return [...rulesPages(), ...coachingPages(), ...questionPages(), ...drillPages()];
   };
 
   return {

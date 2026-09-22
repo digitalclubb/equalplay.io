@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-836 unit and integration tests across 25 files, 197 Playwright tests. Most are ordinary.
-These twelve are load bearing and a failure means the code is wrong, not the test:
+870 unit and integration tests across 26 files, 199 Playwright tests. Most are ordinary.
+These thirteen are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -98,6 +98,7 @@ These twelve are load bearing and a failure means the code is wrong, not the tes
 | `install.test.ts` | The offline promise is only made once the service worker is serving the page. The install offer is spent once shown, never on a prompt the browser refused to display. iPhone never fires the event, so the way in stays written down |
 | `playingTime.test.ts` | The Half Game Rule check, which is the only verdict the product gives against an RFU regulation. A late arrival measured against the rugby they were there for rather than the whole day, an absent player left out of it, a squad too big for any rotation to clear the floor |
 | `drill-pages.test.ts` | The age gate on the one surface nobody signs in for. No theme page below the grade Reg 15 allows it at, no drill on a grade's page the grade cannot do, no lineout claim. Plus the sitemap against what the build emits in both directions, with every generated page reachable by a link rather than only by the sitemap |
+| `questions.test.ts` | The one content in the hub with no age gate in front of it. Every answer names the grades it holds for, in the data, in the app and on the page. A themed topic held to `THEME_MIN_AGE`, tag answers held to U8, no lineout claim, plus the FAQ structured data matching the visible answer word for word |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -105,7 +106,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 197 tests across four files: `matchday` (15), `home` (11), `hub` (141)
+`pnpm test:e2e` is 199 tests across four files: `matchday` (15), `home` (11), `hub` (143)
 and `contrast` (30). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -124,22 +125,23 @@ rather than a stale process.
 Three Vite entries. `index.html` → `/`, `planner/index.html` → `/planner`,
 `hub/index.html` → `/hub`. Keeping them separate is deliberate:
 `@supabase/supabase-js` is ~220 kB and must never land in the planner's bundle. The
-homepage ships no JavaScript at all. Static SEO pages fall into four clusters:
+homepage ships no JavaScript at all. Static SEO pages fall into five clusters:
 match day (`rugby-substitution-app`, `equal-playing-time-calculator`,
 `rfu-regulation-15-playing-time`), drills (`rugby-drills-by-age-group`, one page
 per grade, one page per drill plus one per theme per grade), the rules guides
-(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`) and
+(`rugby-rules-by-age-group` plus `rugby-rules-u7` through `rugby-rules-u12`),
 the coaching guides (`how-to-teach-rugby-tackling`, `-rucking`, `-scrums`,
-`-kicking`).
+`-kicking`) plus the answers (`rugby-questions` plus one page per topic, such as
+`rugby-scrum-questions`).
 Match day and the six drill grade pages are hand-written in `public/` and copied
 verbatim. Everything else is generated at build out of `hub/content/` by
-`src/seo/`, so it never appears in `public/` at all. That is 161 generated pages
+`src/seo/`, so it never appears in `public/` at all. That is 172 generated pages
 against the 12 written by hand. All of them share `public/pages.css` with the
 homepage and point their chrome at `/hub`, because the chrome belongs to the
 product rather than to whichever half a coach landed on.
 
 **A generated title says rugby, or it is competing for somebody else's word.**
-161 pages are written by a function, so a mistake in one template is a mistake
+172 pages are written by a function, so a mistake in one template is a mistake
 on every page it emits and nobody reads them all. The coaching guides shipped
 titled "How to teach the scrum from scratch", which never mentions the sport:
 that phrase belongs to a software methodology. At 67 characters Google cut it
@@ -203,7 +205,7 @@ src/
   lib/
     esc.ts                # HTML and attribute escaping, used by both halves
     rulesLink.ts          # Links out to the RFU, one wording in one place
-    nav.ts                # The five tabs, shared by both entries. Imports nothing
+    nav.ts                # The six tabs, shared by both entries. Imports nothing
     theme.ts              # The colour switch. Two states, written into both chromes
     motion.ts             # Hands a DOM change to startViewTransition, or straight on
     squadSize.ts          # Players a side per grade, plus the grade this browser
@@ -222,6 +224,9 @@ src/
     page.ts               # The chrome every generated page wears. One head, one
                           # footer, so a second generator is not a copy of the first
     rulesPage.ts          # The rules guides as static pages, emitted at build
+    coachingPage.ts       # The coaching guides as static pages
+    questionPage.ts       # The answers as static pages. An index plus one per
+                          # topic, with the FAQ structured data on the topic
     drillPage.ts          # One page per drill, one per theme per grade. The
                           # addresses, the age gate on them and the copy
     sitemap.ts            # Every URL the site publishes, built rather than kept
@@ -243,6 +248,9 @@ src/
       presets.ts          # 38 ready-made sessions, one per theme per age grade,
                           # plus one carousel per grade
       guides.ts           # What each age grade may do, as data. Published twice
+      coaching.ts         # How to teach the four phases Reg 15 lets in part way
+      questions.ts        # 71 answers to what just happened, by topic. The one
+                          # content here with no age gate in front of it
       diagram.ts          # Renders a drill's coordinates to SVG at load
       catalogue/          # 120 drills by theme: warmups, handling, evasion,
                           # gamesense, tackle, breakdown, setpiece, kicking
@@ -252,6 +260,7 @@ src/
       account.ts          # Details, password, sign out, delete. Also the setup form
       catalogue.ts        # Drill list, filters, favourites, drill page
       guide.ts            # The rules guide, index plus one route per age grade
+      questions.ts        # The answers, searchable, index plus one per topic
       planner.ts          # Sessions list, reading view, editor, present mode, print sheet
   components/             # Rotation planner only
     form.ts, playerList.ts, results.ts, teamTabs.ts, toast.ts, logo.ts, icons.ts
@@ -495,16 +504,22 @@ shaped like a document with its facts alongside.
 
 **The nav is ordered by when a coach reaches for it.** Drills to find something,
 Sessions to build it, Match day on the Sunday. Then the two nobody opens the app
-to reach. Guide is an August read. Account goes last, pinned to the foot of the
+to reach, nearest need first: FAQs is what just happened in front of you, Guide
+is an August read. Account goes last, pinned to the foot of the
 rail with `margin-top: auto`. Each tab carries an inline icon,
 written out in `lib/nav.ts` rather than imported so that module keeps pulling in
 nothing. Icon over label on the phone bar: beside the label came to about 450px
 across four tabs. Dropping the labels would leave a coach guessing at a cone.
 
-**The phone bar shares its width between the tabs.** They used to size to their
-own labels, which fitted four and put five at 340px against a 320px phone. Even
-columns fit five with room for a sixth. "Match day" is the only label that ever
-needs two lines, so it wraps wherever it will not fit rather than truncating.
+**The phone bar shares its width between the tabs, then the type gives way.**
+They used to size to their own labels, which fitted four and put five at 340px
+against a 320px phone. Even columns fitted five. The sixth broke that: six of
+them at 320px leave 46px a tab, where "Sessions" wants 49 at 12px and "Account"
+48. Neither has a space in it to wrap at. So the label size is fluid below
+480px, about 10.5px at 320 rising to the app's 12 by 400, with the gap halved
+and the padding gone. Nothing above 400px moved. "Match day" is the only label
+that ever needs two lines, so it wraps wherever it will not fit rather than
+truncating.
 The first fix put a breakpoint at 360px for that and left 361px and 362px
 rendering "Match da...", so `e2e/hub.spec.ts` sweeps every width from 320 to 480
 on both entries rather than sampling one. A breakpoint that has to be right to
@@ -587,6 +602,50 @@ in September wants to read the U10 page in August, so hiding the grade above
 yours hides the thing they came for. It also needs no account and no grade at
 all, so `render()` takes it before both checks, the same way a shared session
 comes before the age picker.
+
+**FAQs is the third way round the same words, for the question asked in a car
+park.** `hub/content/questions.ts` is 71 short answers at `#/faqs`, grouped by
+what was happening rather than by grade: the ball came out the wrong side of
+the scrum, the referee gave a scrum to the side that knocked it forward,
+somebody has taken a bang on the head. Those answers were always here. They
+were at the foot of a grade page where nobody scrolls, so nothing could find
+them. A rules guide is what a coach reads in August, a coaching guide is how to
+teach it, this is what to do at ten past eleven on a Sunday.
+
+Deliberately written rather than generated at runtime. A chat box needs signal
+at a wet pitch, which is the one place the hub is used, cannot be held to
+Regulation 15 and cannot be read as a diff before it ships. It would also
+explain a contested scrum to an U9 coach who asked politely, which is the age
+gate failing on a surface nothing filters. Every answer here was written once
+and checked once, the same as a drill.
+
+Not age gated, for the reason the guide is not. What pays for that is the grade
+on every single answer: `questionGrades` runs on all of them and
+`questions.test.ts` fails if one renders without it. A themed topic is held to
+`THEME_MIN_AGE` as well, the same table the age gate runs on, so a scrum answer
+can never claim to apply at a grade Reg 15 has no scrum at. Tag answers carry an
+upper bound too, since an answer about the seventh tag with no end on it reads
+as current at U12.
+
+The tab says FAQs rather than Questions because the phone bar shares its width
+between the tabs and six of them leave about 42px for a label at 320px. "Match
+day" fits only because it wraps. "Questions" is one word, so it would be cut.
+Published twice like everything else: `/rugby-questions` plus one page per
+topic, because "what happens if the ball comes out the wrong side of the scrum"
+is a phrase somebody types before they have started the car. One page per topic
+rather than one per question, since a page holding a single answer is a thin
+page competing with sixty-odd of its own siblings.
+
+The grade is said once where a topic's answers all agree and on each answer
+where they do not. `topicGrades` decides that. Nine answers on the scrum page
+each captioned "U10 and up" is the caption saying nothing, which is the same
+failure as "U10" on all six ready-made session cards. Five of the ten topics
+are uniform.
+
+The grade sits above the question on a page rather than inside the answer, so
+the visible paragraph stays identical to the FAQ structured data. Google drops
+the rich result when those disagree. The index carries no `FAQPage` at all: one
+question answered at two URLs is two pages asking to be treated as one.
 
 **What you have covered, so you can see what you have not.** A volunteer runs
 the session they are comfortable with, which for most is handling, then arrives
@@ -1212,7 +1271,7 @@ with `hasOwnProperty` rather than `in`, because storage is hand-editable and
 `in` says yes to `toString`.
 
 Only the in-body call to action carries the grade. The chrome stays a plain
-`/hub` on all 173 pages, because it belongs to the product rather than to
+`/hub` on all 184 pages, because it belongs to the product rather than to
 whichever page a coach landed on. `landing-pages.test.ts` holds it there. A
 drill page carries nothing at all: a drill spans grades, so seeding off
 `minAge` would set a U12 coach to U7 for reading a warm-up.

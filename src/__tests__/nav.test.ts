@@ -86,17 +86,30 @@ describe("app navigation", () => {
     expect(navHref("guide", "/hub")).toBe("/hub#/guide");
   });
 
-  it("offers the same five places from anywhere, in the order a coach uses them", () => {
+  it("offers the same six places from anywhere, in the order a coach uses them", () => {
     // Drills to find something, Sessions to build it, Match day on the Sunday.
-    // Then the two nobody opens the app to reach: Guide, which is an August
-    // read, and Account, pinned to the foot of the rail once there is one.
+    // Then the reading, nearest need first: FAQs is the car park at ten past
+    // eleven, Guide is an August read. Account last, pinned to the foot of the
+    // rail once there is one.
     expect(NAV_ITEMS.map((item) => item.key)).toEqual([
       "catalogue",
       "plans",
       "planner",
+      "faqs",
       "guide",
       "account",
     ]);
+  });
+
+  it("keeps every label short enough for a sixth column", () => {
+    // The phone bar shares its width between the tabs. Six of them at 320px
+    // leave about 42px for a label, and only a label with a space in it can
+    // wrap to make that. "Questions" could not, which is why the tab says
+    // FAQs. `e2e/hub.spec.ts` measures the real thing from 320 to 480.
+    for (const item of NAV_ITEMS) {
+      const longest = Math.max(...item.label.split(" ").map((word) => word.length));
+      expect(longest, `"${item.label}" has an unwrappable word in it`).toBeLessThanOrEqual(8);
+    }
   });
 
   it("gives every tab an icon, hidden from a screen reader", () => {

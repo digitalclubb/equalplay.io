@@ -672,16 +672,34 @@ html[data-vt="tabs"]::view-transition-new(root) {
    right to the pixel. The first go put one at 360px and left 361px and 362px
    rendering "Match da...". Dropping the label instead would leave a coach
    guessing at a cone. Shortening it renames the product's own word for
-   Sunday. */
+   Sunday.
+
+   The sixth tab is what took the label size fluid. Six even columns at 320px
+   leave 46px a tab, where "Sessions" wants 49 at 12px and "Account" 48. Neither
+   has a space in it, so neither can wrap its way out the way Match day does.
+   The type scales with the viewport instead, from about 10.5px at 320 up to the
+   app's 12 by 400, which is the same trick as the gutter and for the same
+   reason: no breakpoint that has to be right to the pixel. Nothing above 400px
+   changes at all. The gap halves and the padding goes, because the even columns
+   already hold the tabs apart and every pixel spent on either is a pixel the
+   longest label has not got. `hub.spec.ts` sweeps 320 to 480 measuring that no
+   label is cut and that the bar never scrolls. */
 @media (max-width: 480px) {
+  .hub-nav {
+    gap: var(--sp-3xs);
+  }
+
   .hub-tab {
     flex: 1 1 0;
     min-width: 0;
-    padding: 0 var(--sp-3xs);
+    padding: 0;
   }
 
   .hub-tab-label {
     max-width: 100%;
+    /* 4.5px + 1.875vw is the line through 10.5px at 320 and 12px at 400. The
+       floor and the ceiling are what stop it past either end. */
+    font-size: clamp(0.656rem, 4.5px + 1.875vw, var(--text-xs));
     white-space: normal;
     text-align: center;
     line-height: 1.15;

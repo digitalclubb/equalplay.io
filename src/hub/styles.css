@@ -2872,6 +2872,40 @@ body {
   color: var(--color-secondary);
 }
 
+/* ---- The answers ----
+
+   The same article as the guides, because it is the same kind of reading: one
+   column, 18px body, nothing in a box. What it adds is a search box, because
+   seventy-odd answers grouped by phase of play is a list nobody scrolls.
+
+   The grade sits over every answer rather than beside it. This route is not age
+   gated, so a rule quoted with no grade on it is the one way this content could
+   mislead a coach. It gets its own line so it cannot be missed. */
+
+.faq-search {
+  max-width: var(--measure);
+  margin-bottom: var(--sp-lg);
+}
+
+.faq-search input {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-sm);
+  font-family: inherit;
+  /* 16px minimum or iOS Safari zooms the whole page on focus. The article runs
+     at 18px, which would otherwise be inherited into the control. */
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-control-edge);
+  border-radius: var(--radius);
+}
+
+.faqs .guide-faq .guide-card-meta {
+  display: block;
+  margin-bottom: var(--sp-2xs);
+}
+
 /* ---- The index ----
 
    Cards, because six grades laid out as a grid is how somebody picks one. A

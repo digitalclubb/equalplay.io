@@ -5,6 +5,7 @@ import { DRILLS } from "../hub/content/drills.js";
 import { PRESETS } from "../hub/content/presets.js";
 import { GUIDES, GUIDE_BLURB, type Guide } from "../hub/content/guides.js";
 import { COACHING_GUIDES, type CoachingGuide } from "../hub/content/coaching.js";
+import { QUESTIONS, TOPICS } from "../hub/content/questions.js";
 import { AGE_GROUP_LABELS, THEME_LABELS, THEME_TIPS } from "../hub/content/types.js";
 
 /**
@@ -283,6 +284,51 @@ describe("coaching guide copy", () => {
 });
 
 /**
+ * The answers get the same treatment as the coaching guides, for the same
+ * reason: they are a body of prose somebody wrote, in the same voice, sat on a
+ * tab of their own.
+ */
+describe("the answers", () => {
+  const copy = [
+    ...QUESTIONS.flatMap((question, i) => strings(question, `question[${i}]`)),
+    ...Object.entries(TOPICS).flatMap(([topic, meta]) => strings(meta, topic)),
+  ];
+
+  it("has something to check", () => {
+    expect(copy.length).toBeGreaterThan(150);
+  });
+
+  it("uses no em dashes", () => {
+    for (const [where, text] of copy) {
+      expect(text.includes(EM_DASH), `${where}: em dash`).toBe(false);
+    }
+  });
+
+  it("puts no comma before and", () => {
+    for (const [where, text] of copy) {
+      expect(/,\s+and\b/i.test(text), `${where}: comma before "and" in "${text}"`).toBe(false);
+    }
+  });
+
+  it("avoids phrasing that reads as machine-written", () => {
+    for (const [where, text] of copy) {
+      const lower = text.toLowerCase();
+      for (const banned of BANNED) {
+        expect(lower.includes(banned), `${where}: "${banned}"`).toBe(false);
+      }
+    }
+  });
+
+  it("is British English", () => {
+    for (const [where, text] of copy) {
+      for (const [pattern, better] of AMERICANISMS) {
+        expect(pattern.test(text), `${where}: use ${better} in "${text}"`).toBe(false);
+      }
+    }
+  });
+});
+
+/**
  * The same rules apply to the interface, but its copy is woven into template
  * literals, so scan the files rather than trying to pull the strings out. Em
  * dashes are banned in comments too. Nobody types those by hand.
@@ -388,6 +434,9 @@ describe("prose rhythm", () => {
     for (const guide of COACHING_GUIDES) {
       coachingProse(guide).forEach((text, i) => out.push([`${guide.slug} prose[${i}]`, text]));
     }
+    for (const [i, question] of QUESTIONS.entries()) {
+      out.push([`question[${i}] "${question.question}"`, question.answer]);
+    }
     for (const path of PAGES) {
       const html = readFileSync(path, "utf8")
         .replace(/<!--[\s\S]*?-->/g, " ")
@@ -438,6 +487,7 @@ describe("prose rhythm", () => {
     const bodies: Array<[string, string]> = [
       ["guides.ts", Object.values(GUIDES).flatMap(guideProse).join(" ")],
       ["coaching.ts", COACHING_GUIDES.flatMap(coachingProse).join(" ")],
+      ["questions.ts", QUESTIONS.map((question) => question.answer).join(" ")],
       ...PAGES.map((path) => {
         const html = readFileSync(path, "utf8").replace(/<!--[\s\S]*?-->/g, " ");
         const text = [...html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)]

@@ -380,9 +380,9 @@ test("an account with no age grade lands on the setup form", async ({ page }) =>
   await page.goto("/hub/");
   await expect(page.locator("#hub-view h2").first()).toHaveText("Finish setting up");
   await expect(page.locator("#acc-age")).toHaveValue("");
-  // The nav is the same five tabs whatever state you are in, because it is one
+  // The nav is the same six tabs whatever state you are in, because it is one
   // product. What changes is where a tab lands you, not whether it exists.
-  await expect(page.locator(".hub-tab")).toHaveCount(5);
+  await expect(page.locator(".hub-tab")).toHaveCount(6);
   await expect(page.locator("#sign-out")).toBeVisible();
 });
 
@@ -1545,7 +1545,7 @@ test("the bar fits the phone at every phone width, tabs and switch", async ({ pa
 
       const where = `${path} at ${width}px`;
       expect(bar.scroll, `${where}: the nav overflows its bar`).toBeLessThanOrEqual(bar.client);
-      expect(bar.tabs, `${where}: tab count`).toHaveLength(5);
+      expect(bar.tabs, `${where}: tab count`).toHaveLength(6);
       for (const tab of bar.tabs) {
         expect(tab.cut, `${where}: "${tab.text}" is truncated`).toBe(false);
         // Still a target a thumb can hit.
@@ -1593,6 +1593,41 @@ test("the Guide tab reaches the guides from either entry", async ({ page }) => {
   await page.locator('.hub-tab[data-route="guide"]').click();
   await expect(page).toHaveURL(/\/hub#\/guide$/);
   await expect(page.locator(".guide-card:not(.is-coaching)")).toHaveCount(6);
+});
+
+test("the FAQs tab answers a question with no account and no grade picked", async ({ page }) => {
+  // Same exception the guide makes. A coach asking what just happened is not
+  // asking to be asked which grade they coach, and the answer they want may
+  // belong to the grade above theirs.
+  await page.goto("/hub/#/faqs");
+  await expect(page.locator(".age-picker")).toHaveCount(0);
+  await expect(page.locator(".guide-card")).toHaveCount(10);
+
+  await page.locator('.guide-card[href="#/faqs/scrum"]').click();
+  await expect(page.locator(".guide h2")).toHaveText("The scrum");
+  await expect(page.locator(".guide-faq").first().locator("h4")).toContainText("wrong side");
+  // The grades are said, because nothing here is gated. Once at the top on a
+  // topic whose answers all agree, which the scrum is, rather than nine times.
+  await expect(page.locator(".guide-eyebrow")).toContainText("U10 and up");
+  await expect(page.locator(".guide-faq .guide-card-meta")).toHaveCount(0);
+
+  // A mixed topic says it on each answer instead, because there it is the
+  // whole point: a head knock holds at every grade, a mouthguard from U9.
+  await page.goto("/hub/#/faqs/safety");
+  await expect(page.locator(".guide-faq .guide-card-meta").first()).toHaveText("Every grade");
+});
+
+test("the answers can be searched for what a coach saw", async ({ page }) => {
+  await page.goto("/hub/#/faqs");
+  const before = await page.locator(".guide-card").count();
+  await page.locator("#faq-search").fill("sternum");
+  // Filtered to the matches, with the box still focused so typing carries on.
+  await expect(page.locator(".guide-faq").first()).toBeVisible();
+  await expect(page.locator(".guide-card")).toHaveCount(0);
+  await expect(page.locator("#faq-search")).toBeFocused();
+
+  await page.locator("#faq-search").fill("");
+  await expect(page.locator(".guide-card")).toHaveCount(before);
 });
 
 test("a guide reads with no account and no grade picked", async ({ page }) => {

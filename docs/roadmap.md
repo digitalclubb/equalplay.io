@@ -3,9 +3,10 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 21 September 2026, after a session stopped being something a coach
-could only take or leave. It can be swapped drill by drill, fitted to the time
-they actually have, or built from nothing on the theme they have been avoiding.
+Last updated 22 September 2026, after the answers got a tab of their own. Before
+that a session had stopped being something a coach could only take or leave: it
+can be swapped drill by drill, fitted to the time they actually have, or built
+from nothing on the theme they have been avoiding.
 See `docs/one-product.md` for the one-product change that preceded it and which
 of its phases are built.
 
@@ -67,9 +68,30 @@ night. Researched from the RFU's age grade material plus World Rugby's Tackle Re
 then written in our own words. The footer says the order to teach it in is ours
 rather than the RFU's, because it is.
 
+**The answers, on a tab.** `#/faqs`, from `hub/content/questions.ts`. 71 short
+answers to what just happened, grouped by what was going on rather than by
+grade, with a search box over the lot. A rules guide is the August read and a
+coaching guide is how to teach it. This is the car park at ten past eleven: the
+ball came out the wrong side of the scrum, the referee gave a scrum to the side
+that knocked it forward, somebody has taken a bang on the head. About fifty of
+these answers already existed at the foot of a grade page where nobody scrolls.
+They are findable now.
+
+Written rather than generated, which was the decision worth recording. An AI
+coach in the nav was the shape this started as. It fails three ways here: it
+needs signal at a wet pitch, which is the only place the hub gets used; nothing
+could hold it to Regulation 15, which is the one claim this product cannot get
+wrong; and a chat answer is invisible to the search that brings coaches in.
+Revisit only if the search box starts logging questions nobody has written an
+answer to. Then write the answers rather than the endpoint.
+
+Not age gated, for the reason the guide is not, so every answer states the
+grades it holds for and `questions.test.ts` fails if one does not. Published
+twice like everything else, at `/rugby-questions` plus one page per topic.
+
 **Match-day planner.** Unchanged in behaviour. It now uses the shared shell in
 `src/base.css`, so it has the same navy bar on a phone, the same rail at 900px and the
-same five tabs as the app, while still shipping 13.9 kB gzipped with no Supabase in it.
+same six tabs as the app, while still shipping 13.9 kB gzipped with no Supabase in it.
 Team switching moved out of the chrome into the planner's own view, above the squad
 inputs, because the chrome is navigation only.
 

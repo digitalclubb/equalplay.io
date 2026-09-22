@@ -40,6 +40,7 @@ import { chooseAge, chosenAge } from "./ageChoice.js";
 import { isAgeGroup } from "./content/types.js";
 import { renderAgePicker } from "./views/agePicker.js";
 import { renderGuide } from "./views/guide.js";
+import { renderQuestions, resetQuestions } from "./views/questions.js";
 
 /**
  * Routes that belong to a tab of another name. The plan editor lives under
@@ -200,14 +201,17 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // the guide and the signed-out paths below, has to give that back.
     if (!(route.name === "plan" && route.rest[0] === "run")) stopRunClock();
 
-    // The guide is what every grade is allowed to do, so it needs neither an
-    // account nor a grade of your own. Being asked which one you coach is no
-    // answer to "can we ruck yet". The grade you are moving up to in September
-    // is also the one you want to read in August. Ahead of both checks for the
-    // same reason a shared session is.
-    if (route.name === "guide") {
+    // The guide is what every grade is allowed to do and the answers are what
+    // to do when it has just happened, so neither needs an account nor a grade
+    // of your own. Being asked which one you coach is no answer to "can we ruck
+    // yet". The grade you are moving up to in September is also the one you
+    // want to read in August. Ahead of both checks for the same reason a shared
+    // session is.
+    if (route.name === "guide" || route.name === "faqs") {
       clearPrintable();
-      renderGuide(view, route.param, profile?.ageGroup ?? chosenAge() ?? undefined);
+      const reading = profile?.ageGroup ?? chosenAge() ?? undefined;
+      if (route.name === "faqs") renderQuestions(view, route.param, reading);
+      else renderGuide(view, route.param, reading);
       return;
     }
 
@@ -386,6 +390,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       clearLocalRuns();
       resetPlanner();
       resetCatalogue();
+      resetQuestions();
     } else {
       if (userId && userId !== user.id) {
         // A different coach on the same device. Drop everything belonging to the
@@ -395,6 +400,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         clearLocalRuns();
         resetPlanner();
         resetCatalogue();
+        resetQuestions();
       }
       const fresh = profileFromUser(user);
       if (fresh) {

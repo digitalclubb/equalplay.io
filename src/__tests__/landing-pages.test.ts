@@ -5,6 +5,7 @@ import { PRESETS } from "../hub/content/presets.js";
 import { rulesPageHtml, rulesIndexHtml, rulesPagePaths, rulesPath, rulesPages } from "../seo/rulesPage.js";
 import { drillPages, themePath } from "../seo/drillPage.js";
 import { coachingPages } from "../seo/coachingPage.js";
+import { questionPages } from "../seo/questionPage.js";
 import { sitemapXml } from "../seo/sitemap.js";
 import { GUIDES } from "../hub/content/guides.js";
 import { esc } from "../lib/esc.js";
@@ -501,6 +502,7 @@ describe("what a generated page tells a search engine", () => {
   const generated = (): Array<{ path: string; html: string }> => [
     ...rulesPages(),
     ...coachingPages(),
+    ...questionPages(),
     ...drillPages(),
   ];
 
