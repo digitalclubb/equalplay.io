@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import { nextScheme, schemeHtml, SCHEMES } from "../lib/theme.js";
 import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, navHref, navHtml } from "../lib/nav.js";
@@ -234,5 +234,55 @@ describe("the colour scheme switch", () => {
       if (!chrome) throw new Error(`${name} has no .app-chrome block`);
       expect(chrome[0], `${name} chrome`).toContain('class="scheme-toggle"');
     }
+  });
+});
+
+/**
+ * The reading tabs are written content, not code, and there is a lot of it.
+ *
+ * `guides.ts`, `coaching.ts` and `questions.ts` came to around 166 kB of source
+ * inside one 637 kB chunk, so a coach opening the drill list downloaded the
+ * whole rules guide first. They load on demand now and get warmed at idle, which
+ * took the entry chunk to 510 kB raw and 141 kB gzipped.
+ *
+ * Both halves are easy to undo by accident. One static import anywhere in the
+ * hub's boot path pulls the content back into the entry chunk, and rolldown says
+ * nothing about it. Dropping the warm keeps the chunk small while quietly
+ * ending the offline promise on two of the six tabs, since `sw.js` can only
+ * cache what something has asked for.
+ */
+describe("the hub's lazy content", () => {
+  const READING_CONTENT = ["content/guides.js", "content/coaching.js", "content/questions.js"];
+
+  it("reaches the reading views by dynamic import only", () => {
+    for (const view of ["views/guide.js", "views/questions.js"]) {
+      expect(mainSource, `main.ts imports ${view} statically`).not.toMatch(
+        new RegExp(`^import[^\\n]*"\\./${view.replace(".", "\\.")}"`, "m"),
+      );
+      expect(mainSource, `main.ts never imports ${view}`).toContain(`import("./${view}")`);
+    }
+  });
+
+  it("keeps the written content out of everything that boots", () => {
+    // Anything the entry reaches at module load drags the content back in. The
+    // two views are allowed it: they are the chunks.
+    const boots = globSync("src/hub/**/*.ts").filter(
+      (path) => !/views\/(guide|questions)\.ts$/.test(path),
+    );
+    expect(boots.length, "no hub sources found").toBeGreaterThan(5);
+    for (const path of boots) {
+      const source = readFileSync(path, "utf8");
+      for (const content of READING_CONTENT) {
+        expect(source, `${path} pulls ${content} into the entry chunk`).not.toContain(content);
+      }
+    }
+  });
+
+  it("warms both chunks once the drill list is up", () => {
+    // The guide moved into the bundle so it would open at a pitch with no
+    // signal. A chunk nobody has fetched is a chunk nobody has at the pitch.
+    const idle = mainSource.slice(mainSource.lastIndexOf("onIdle("));
+    expect(idle, "the guide is never warmed").toContain("guideView()");
+    expect(idle, "the answers are never warmed").toContain("questionsView()");
   });
 });

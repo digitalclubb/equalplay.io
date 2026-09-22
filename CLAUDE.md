@@ -192,6 +192,19 @@ a page may still say a grade has no lineout. `THEME_LABELS.setpiece` reads "Scru
 and restarts" for the same reason. Since September 2026 so does its filter chip:
 "Set piece" fits a phone better but says lineout to anybody who has played.
 
+**The reading tabs are their own chunks, warmed at idle.** `guides.ts`,
+`coaching.ts` and `questions.ts` are around 166 kB of written words, which was a
+quarter of one 637 kB chunk and none of what a coach opening the drill list came
+for. `main.ts` reaches both views by `import()` instead, taking the entry chunk
+to 510 kB raw and 141 kB gzipped. Then it warms both from `onIdle`, because the
+guide moved into the bundle so it would open at a pitch with no signal and
+`sw.js` can only cache what something has asked for. A lazy tab nobody warmed is
+a tab that stops working in the rain. Both halves undo by accident: one static
+import anywhere on the boot path pulls the content back and rolldown says
+nothing, while dropping the warm keeps the chunk small and quietly ends the
+offline promise on two tabs. `nav.test.ts` holds all three. The render path
+carries `stillOn` like every other async path here.
+
 One manifest for one product. `public/manifest.json` starts at `/hub` with no scope,
 so a home screen gets one Equal Play icon rather than one per half. `sw.js` pre-caches
 `/`, `/planner` and `/hub`. Static pages point their header at `/hub` while the logo

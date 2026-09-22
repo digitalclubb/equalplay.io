@@ -31,7 +31,7 @@ import {
   type Profile,
 } from "./auth.js";
 import { isConfigured } from "./supabase.js";
-import { currentRoute, go, onRoute, type Route } from "./router.js";
+import { currentRoute, go, onRoute, stillOn, type Route } from "./router.js";
 import { transition } from "../lib/motion.js";
 import { navHtml } from "../lib/nav.js";
 import { wireScheme } from "../lib/theme.js";
@@ -39,8 +39,27 @@ import { manageServiceWorker } from "../lib/sw.js";
 import { chooseAge, chosenAge } from "./ageChoice.js";
 import { isAgeGroup } from "./content/types.js";
 import { renderAgePicker } from "./views/agePicker.js";
-import { renderGuide } from "./views/guide.js";
-import { renderQuestions, resetQuestions } from "./views/questions.js";
+/*
+ * The guide, the coaching guides and the answers are around 166 kB of written
+ * words, which was about a quarter of the hub's 637 kB chunk and none of what
+ * a coach opening the app came for. They arrive on demand now, then get warmed
+ * at idle so the offline promise still covers all three tabs: `sw.js` caches
+ * whatever is fetched, so a chunk nobody had asked for was a chunk nobody had
+ * at the pitch. Static imports here would defeat both halves of that.
+ */
+const guideView = () => import("./views/guide.js");
+const questionsView = () => import("./views/questions.js");
+
+/**
+ * Only set once the answers have actually been opened. `resetQuestions` clears
+ * a search term held in that module. A module nobody has loaded has no term to
+ * clear, so signing out must not pull 33 kB in to reset a "".
+ */
+let questions: Awaited<ReturnType<typeof questionsView>> | null = null;
+
+function resetQuestions(): void {
+  questions?.resetQuestions();
+}
 
 /**
  * Routes that belong to a tab of another name. The plan editor lives under
@@ -210,8 +229,21 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     if (route.name === "guide" || route.name === "answers") {
       clearPrintable();
       const reading = profile?.ageGroup ?? chosenAge() ?? undefined;
-      if (route.name === "answers") renderQuestions(view, route.param, reading);
-      else renderGuide(view, route.param, reading);
+      // Both modules are lazy, so this paints a tick later than the rest of the
+      // switch. `stillOn` for the same reason every other async path here has
+      // it. Every view renders into the same node. On a wet pitch the coach can
+      // be two tabs away by the time a chunk lands.
+      const { name, param } = route;
+      if (name === "answers") {
+        void questionsView().then((module) => {
+          questions = module;
+          if (stillOn(name, param)) module.renderQuestions(view, param, reading);
+        });
+      } else {
+        void guideView().then((module) => {
+          if (stillOn(name, param)) module.renderGuide(view, param, reading);
+        });
+      }
       return;
     }
 
@@ -470,4 +502,12 @@ function onIdle(fn: () => void): void {
 onIdle(() => {
   manageServiceWorker();
   import("@vercel/analytics").then(({ inject }) => inject());
+  // Warm the two lazy tabs once the drill list is up. The point of splitting
+  // them was to keep 166 kB off the critical path, never to keep it off the
+  // device: the guide moved into the bundle in the first place so it would open
+  // at a pitch with no signal. `sw.js` can only cache what has been asked for.
+  // Failures are ignored on purpose, since a dead connection here costs nothing
+  // that the next tap would not cost anyway.
+  void guideView().catch(() => {});
+  void questionsView().catch(() => {});
 });

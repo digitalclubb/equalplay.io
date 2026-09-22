@@ -39,12 +39,16 @@ many HTML files the build emits. Those come apart cleanly, so keep them apart.
 
 | | raw | gzipped |
 | --- | --- | --- |
-| planner bundle | 52.24 kB | 15.08 kB |
-| hub bundle | 636.86 kB | 178.09 kB |
+| planner bundle | 52.31 kB | 15.10 kB |
+| hub entry chunk | 509.95 kB | 140.55 kB |
+| hub guide chunk, on demand | 91.63 kB | 26.71 kB |
+| hub answers chunk, on demand | 32.57 kB | 11.41 kB |
 
-Measured 22 September 2026. The hub has near enough doubled since this was
-written, almost all of it written content rather than code. That is a reason to
-split the hub, never a reason to fold the planner in.
+Measured 22 September 2026. The hub was one 637 kB chunk that morning, near
+enough double what this table first recorded, almost all of it written content
+rather than code. The reading tabs came out of the entry chunk the same day.
+That was a reason to split the hub. It was never a reason to fold the planner
+in: the entry chunk is still ten times the planner's.
 
 `src/hub/supabase.ts` calls `createClient` at module load and `src/hub/main.ts`
 imports the chain that reaches it, so anything served from the hub entry carries

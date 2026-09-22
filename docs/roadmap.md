@@ -472,22 +472,25 @@ never things that would justify a price.
   rather than four. None of that is a guarantee. Re-check in Search Console
   rather than assuming it worked.
 
-- **The hub is one chunk and it is 637 kB.** 178 kB gzipped, measured
-  22 September 2026. It was 473 kB when this note was written, so the shape of
-  the problem has changed: `@supabase/supabase-js` is about 220 kB of it and the
-  written content is now the bigger half, roughly 450 kB of source across
-  `guides.ts`, `coaching.ts`, `questions.ts` and the catalogue. Every word of it
-  ships to a coach who came to read one drill. Measured on a 4x throttled phone
-  at 473 kB: the chrome painted at 116ms because both entries write their nav and
+- **The hub is one chunk and it is 510 kB.** 141 kB gzipped, measured
+  22 September 2026, down from 637 kB the same day. The three reading tabs are
+  their own chunks now: the guide plus the coaching guides at 92 kB, the answers
+  at 33 kB. Both are warmed at idle once the drill list is up, so `sw.js` still
+  has them for a pitch with no signal, which is why the guide moved into the
+  bundle in the first place. `nav.test.ts` holds all of it: dynamic import only,
+  nothing on the boot path touching the content, the warm still there.
+  What is left is `@supabase/supabase-js` at about 220 kB, imported statically,
+  so a signed-out first visit still downloads the sign-in machinery before a
+  drill renders. Making that client lazy means a fast path deciding signed in or
+  out without it, which is a change to the one part that must not break, so it
+  wants verifying against a real account rather than a stub. The catalogue is
+  most of the rest and cannot go anywhere: the drill list is the route a coach
+  lands on.
+  Measured on a 4x throttled phone at 473 kB, so these numbers want re-taking:
+  the chrome painted at 116ms because both entries write their nav and
   stylesheet into the document, while the drill list arrived at 514ms on 4G and
-  4.5s on slow 3G. Those numbers want re-taking. The service worker means only
-  the first visit pays. Two fixes and they are not the same job. Making the
-  Supabase client lazy means a fast path that decides signed in or out without
-  it, which is a change to the one part that must not break, so it wants
-  verifying against a real account rather than a stub. Splitting the content
-  means the guide, the coaching guides and the answers arriving as their own
-  chunks, which is an ordinary dynamic import except that `sw.js` has to
-  pre-cache them or the offline promise quietly stops covering three tabs.
+  4.5s on slow 3G. The service worker means only the first visit pays.
+
 - **A shared link needs signal the first time.** It was never the reader's plan to hold
   on their device, so there is nothing to cache. The view says so rather than looking
   broken.
