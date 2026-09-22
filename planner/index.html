@@ -129,6 +129,21 @@
         <button type="button" class="scheme-toggle" data-scheme="light" title="Colours: Light" aria-label="Colours: Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2"/><path d="M12 19.5v2"/><path d="M2.5 12h2"/><path d="M19.5 12h2"/><path d="m5.28 5.28 1.42 1.42"/><path d="m17.3 17.3 1.42 1.42"/><path d="m18.72 5.28-1.42 1.42"/><path d="m6.7 17.3-1.42 1.42"/></svg><span class="scheme-name">Light</span></button>
       </div>
       <main id="app" class="app-view">
+        <!-- The view's own heading, the way every hub route has one. The
+             catalogue hides its heading because the count under it says what
+             the list is in words. Nothing here did that: a coach arriving from
+             a search landed on a form asking for player names with no sentence
+             saying what the page was going to do with them. Static. It sits
+             above `#main-content` rather than in it, because `rebuildForm`
+             empties that node on every team switch. -->
+        <div class="planner-head">
+          <h2>Match day</h2>
+          <p>
+            Tell it who turned up and how many go on at once. It works out who plays
+            when, then works the rest of the morning out again when somebody arrives
+            late or goes off. Nothing about a child ever leaves this phone.
+          </p>
+        </div>
         <!-- Teams are the planner's own control, not navigation, so they sit at
              the top of its view rather than in the shared chrome. -->
         <nav id="tabs-container" aria-label="Teams"></nav>

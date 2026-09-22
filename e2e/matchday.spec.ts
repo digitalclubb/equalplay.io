@@ -670,3 +670,29 @@ test("a new squad starts on the grade the hub is set to", async ({ page }) => {
   await page.reload();
   await expect(page.locator("#players-per-team")).toHaveValue("6");
 });
+
+test("the planner names itself, and keeps the name through a team switch", async ({ page }) => {
+  // Every route in the hub has a heading. This entry had none: the only h1 on
+  // the page is the logo and the first thing under the chrome was a form
+  // asking for player names. A coach arriving from `/rugby-substitution-app`
+  // got no sentence saying what the page was going to do with them.
+  await freshStart(page);
+
+  const head = page.locator(".planner-head");
+  await expect(head.locator("h2")).toHaveText("Match day");
+  await expect(head.locator("p")).toContainText("ever leaves this phone");
+
+  // Above the squad rather than inside `#main-content`, which `rebuildForm`
+  // empties every time a coach switches team. Static content put in there
+  // would survive exactly until the first tap.
+  await expect(page.locator("#main-content .planner-head")).toHaveCount(0);
+  await page.locator(".team-tab-add").click();
+  await expect(page.locator(".team-tab:not(.team-tab-add)")).toHaveCount(2);
+  await expect(head.locator("h2")).toHaveText("Match day");
+
+  const order = await page.evaluate(() => {
+    const box = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+    return box(".planner-head").bottom <= box(".team-tabs").top;
+  });
+  expect(order, "the heading sits above the team tabs").toBe(true);
+});

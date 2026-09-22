@@ -1970,3 +1970,28 @@ body {
   transition-duration: var(--duration-fast);
   transition-timing-function: var(--ease-out);
 }
+
+/* ---- The view's own heading ---- */
+
+/* Every route in the hub names itself. This entry did not: a coach arriving
+   from `/rugby-substitution-app` met a form asking for player names with
+   nothing saying what it was for. Static in `planner/index.html` so it paints
+   with the chrome. It sits above `#main-content` because `rebuildForm`
+   empties that node on every team switch. */
+.planner-head {
+  margin-bottom: var(--sp-lg);
+}
+
+.planner-head h2 {
+  margin: 0 0 var(--sp-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heavy);
+}
+
+.planner-head p {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
