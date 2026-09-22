@@ -8,6 +8,8 @@ import { coachingPages } from "../seo/coachingPage.js";
 import { questionPages } from "../seo/questionPage.js";
 import { sitemapXml } from "../seo/sitemap.js";
 import { GUIDES } from "../hub/content/guides.js";
+import { COACHING_GUIDES, coachingPath } from "../hub/content/coaching.js";
+import { QUESTIONS, QUESTIONS_INDEX_PATH } from "../hub/content/questions.js";
 import { esc } from "../lib/esc.js";
 import {
   AGE_GROUPS,
@@ -61,6 +63,51 @@ describe("age group landing pages", () => {
       expect(html, `${age} total`).toContain(`${drills.length} drills`);
       expect(html, `${age} warm-ups`).toContain(`${warmups} warm-ups`);
       expect(html, `${age} exercises`).toContain(`${drills.length - warmups} exercises`);
+    }
+  });
+
+  it("puts every cluster the site publishes one hop from the homepage", () => {
+    /*
+     * Search Console, 22 September 2026: 17 of 186 URLs had ever had an
+     * impression and every one of them was hand-written. The generated cluster
+     * came back "URL is unknown to Google", which is not crawled rather than
+     * crawled and turned down. A sitemap gets a URL discovered. It does not get
+     * it crawled, and depth is what a new domain is judged on.
+     *
+     * The homepage linked three of the six grade pages and neither the answers
+     * nor the coaching guides at all, so two whole clusters hung off a page
+     * that was itself three hops down. This holds the front door open. It is
+     * not a promise that Google will walk through it.
+     */
+    const html = page("index.html");
+    const links = new Set(html.match(/href="(\/[a-z0-9-]*)"/g)?.map((m) => m.slice(6, -1)) ?? []);
+
+    for (const age of AGE_GROUPS) {
+      expect(links.has(`/rugby-drills-${age}`), `the homepage does not link ${age} drills`).toBe(
+        true,
+      );
+      expect(links.has(rulesPath(age)) || links.has("/rugby-rules-by-age-group")).toBe(true);
+    }
+
+    for (const guide of COACHING_GUIDES) {
+      expect(
+        links.has(coachingPath(guide)),
+        `the homepage does not link how to teach ${guide.slug}`,
+      ).toBe(true);
+    }
+
+    expect(links.has(QUESTIONS_INDEX_PATH), "the homepage does not link the answers").toBe(true);
+  });
+
+  it("states the number of answers there are", () => {
+    // Same trap as the drill count. A number on the homepage with nothing
+    // holding it is a number that goes stale the next time somebody writes an
+    // answer, and this one is in the sentence a coach decides on.
+    const html = page("index.html").replace(/\s+/g, " ");
+    const claims = html.match(/\b\d+ rugby questions\b/g) ?? [];
+    expect(claims.length, "the homepage states no answer count").toBeGreaterThan(0);
+    for (const claim of claims) {
+      expect(Number(claim.split(" ")[0]), `index.html: "${claim}"`).toBe(QUESTIONS.length);
     }
   });
 
