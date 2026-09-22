@@ -173,7 +173,7 @@ export const KICKING: Drill[] = [
     setup:
       "A halfway line of cones with a second line seven metres beyond it. Two receivers wait past that.",
     howItRuns:
-      "Drop kick from halfway. It has to cross the seven metre line or the other side gets the choice of a re-kick or a scrum on halfway, which is worth saying out loud once so they know why the line is there. The chaser goes the moment the foot connects. Receivers catch it and run it back. Everybody kicks at least twice, because on a Sunday the one child who can do it will not always be on the pitch.",
+      "Drop kick from halfway. It has to cross the seven metre line or the other side gets the choice of a re-kick or a scrum on halfway, which is worth saying out loud once so they know why the line is there. The chaser goes the moment the foot connects. Receivers catch it and run it back. Everybody kicks at least twice, because in a match the one child who can do it will not always be on the pitch.",
     coachingPoints: [
       "Drop it on its point and hit it as it touches the grass",
       "Aim for the space, not for a player",

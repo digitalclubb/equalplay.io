@@ -77,7 +77,7 @@ export const SETPIECE: Drill[] = [
     equipment: [{ item: "ball", qty: 2 }],
     setup: "One three-player front row, set and holding. A scrum half with two balls.",
     howItRuns:
-      "The feed goes in straight along the tunnel and the hooker strikes it back with the near foot. Twelve goes then change hookers. Every child in the squad has a go at hooking, because on a Sunday whoever turns up is who you have got.",
+      "The feed goes in straight along the tunnel and the hooker strikes it back with the near foot. Twelve goes then change hookers. Every child in the squad has a go at hooking, because on match day whoever turns up is who you have got.",
     coachingPoints: [
       "Feed it straight and along the ground, not up in the air",
       "Hooker keeps their bind while they strike",
@@ -214,7 +214,7 @@ export const SETPIECE: Drill[] = [
     equipment: [{ item: "ball", qty: 1 }],
     setup: "Two threes. A referee calling the sequence at a proper pace.",
     howItRuns:
-      "Now the strike is contested, so both hookers are going for it, still with no push from anybody. Referee calls crouch, bind, set at match tempo and penalises anything early. Ten goes. Getting used to a referee's rhythm is half of not conceding free kicks on a Sunday.",
+      "Now the strike is contested, so both hookers are going for it, still with no push from anybody. Referee calls crouch, bind, set at match tempo and penalises anything early. Ten goes. Getting used to a referee's rhythm is half of not conceding free kicks in a match.",
     coachingPoints: [
       "Listen for set. Moving on bind is a free kick",
       "Both hookers may strike now. Be ready for it",

@@ -147,7 +147,7 @@ function index(coachAge?: AgeGroup): string {
     <article class="guide answers">
       <header class="guide-header">
         <span class="guide-eyebrow">Answers &middot; RFU Regulation 15</span>
-        <h2 class="guide-title">The questions that come up on a Sunday</h2>
+        <h2 class="guide-title">The questions that come up on the day</h2>
         <p class="guide-lede">
           ${QUESTIONS.length} short answers for the things that happen in front of
           you. Search for what you saw, or pick where it happened.
@@ -172,7 +172,7 @@ function index(coachAge?: AgeGroup): string {
         <p>
           These are our words rather than the RFU's. Regulation 15 is theirs and it
           is reissued every summer, so read this season's there rather than trusting
-          a summary on somebody else's website. Ours included. If a referee on Sunday
+          a summary on somebody else's website. Ours included. If a referee on match day
           says something different to this page, they're right.
         </p>
         <p>${rulesCheckedPhrase()}.</p>
@@ -240,7 +240,7 @@ function topicPage(topic: QuestionTopic): string {
       <footer class="guide-source">
         <p>
           Our words rather than the RFU's. Regulation 15 is theirs and it's reissued
-          every summer. If a referee on Sunday says something different to this page,
+          every summer. If a referee on match day says something different to this page,
           they're right.
         </p>
         <p>${rulesCheckedPhrase()}.</p>

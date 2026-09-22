@@ -50,7 +50,7 @@ export interface CoachingGuide {
 export const COACHING_SOURCE_NOTE =
   "The rules on this page are Regulation 15 and they are the RFU's. How to teach it is " +
   "ours, written from the RFU's age grade coaching material and World Rugby's Tackle " +
-  "Ready, then tried on a Tuesday night. A club coach who has done this for ten years " +
+  "Ready, then tried at training. A club coach who has done this for ten years " +
   "will have a better order than ours for some of it. Take theirs.";
 
 export const COACHING_GUIDES: CoachingGuide[] = [
@@ -170,7 +170,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
           {
             table: {
               caption: "The five stages, in the order they happen.",
-              head: ["Stage", "What it means on a Tuesday"],
+              head: ["Stage", "What it means at training"],
               rows: [
                 ["Tracking", "Running at the carrier's inside shoulder rather than at where they are now"],
                 ["Preparation", "Knees bent, chin off the chest, eyes on the target, feet still moving"],
@@ -281,7 +281,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
         question: "Can we use tackle bags and shields?",
         answer:
           "For shape, yes. Keep it brief. A bag doesn't move, doesn't step and doesn't fall " +
-          "over, so a squad that only ever tackles bags gets a shock on Sunday. Use one to " +
+          "over, so a squad that only ever tackles bags gets a shock in a match. Use one to " +
           "practise the shoulder and the wrap, then get back to a person walking.",
       },
       {
@@ -339,7 +339,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
           {
             text:
               "The U10 rules guide has the whole thing. Read it before the first contact session " +
-              "of the season rather than after the first Sunday, because this is the part " +
+              "of the season rather than after the first match, because this is the part " +
               "referees will actually stop the game for.",
           },
         ],
@@ -517,7 +517,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
     slug: "scrums",
     theme: "setpiece",
     title: "How to teach the scrum from scratch",
-    blurb: "Kneeling one against one, then three, then the calls the referee will make on Sunday.",
+    blurb: "Kneeling one against one, then three, then the calls the referee will make on match day.",
     standfirst:
       "Nobody pushes at any minis grade and the scrum is only there to restart the game, which " +
       "is the first thing to know if you never packed down yourself. Here's the order, from " +
@@ -656,12 +656,12 @@ export const COACHING_GUIDES: CoachingGuide[] = [
         ],
       },
       {
-        heading: "The calls, so Sunday isn't a surprise",
+        heading: "The calls, so match day isn't a surprise",
         blocks: [
           {
             text:
               "Use the referee's words at training from day one. A child who's only ever heard " +
-              "you say \"ready then\" will stand there on Sunday waiting for it.",
+              "you say \"ready then\" will stand there on match day waiting for it.",
           },
           {
             table: {

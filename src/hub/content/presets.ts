@@ -116,7 +116,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u8-before-the-first-game",
     title: "Week before the first game",
-    aim: "Sunday is their first game of the year. Tonight is about it not coming as a shock, so most of this is played rather than drilled.",
+    aim: "Their first game of the year is close. This one is about it not coming as a shock, so most of it is played rather than drilled.",
     ageGroup: "u8",
     theme: "gamesense",
     sessionMinutes: 45,
@@ -293,7 +293,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u10-match-week",
     title: "Match week",
-    aim: "A sharpener for the Sunday. Nothing new goes in this week and most of it is played live.",
+    aim: "A sharpener for match day. Nothing new goes in this week and most of it is played live.",
     ageGroup: "u10",
     theme: "gamesense",
     sessionMinutes: 60,
@@ -390,7 +390,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u11-match-week",
     title: "Match week",
-    aim: "Sunday is close. Everything here is the game itself, stopped now and then when something is worth naming.",
+    aim: "Match day is close. Everything here is the game itself, stopped now and then when something is worth naming.",
     ageGroup: "u11",
     theme: "gamesense",
     sessionMinutes: 60,

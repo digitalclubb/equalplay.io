@@ -135,7 +135,7 @@ function sourceNote(label: string, href: string): string {
             puts it in our own words, so it is a summary rather than the thing itself. It
             is reissued every summer as well, so read this season's there rather than
             trusting a copy on somebody else's website. Ours included. If a referee on
-            Sunday says something different to this page, they are right.
+            match day says something different to this page, they are right.
           </p>
           <p>${rulesCheckedPhrase()}.</p>
           <p>
@@ -219,7 +219,7 @@ export function rulesPageHtml(age: AgeGroup): string {
     // Raw, like every other field here. `page()` escapes it. Escaping it twice
     // would put &amp;#39; into three meta tags the first time a blurb is written
     // with an apostrophe in it.
-    description: `${GUIDE_BLURB[age]} What an ${label} grade may and may not do at training and on a Sunday, written from RFU Regulation 15.`,
+    description: `${GUIDE_BLURB[age]} What an ${label} grade may and may not do at training and in a match, written from RFU Regulation 15.`,
     breadcrumb: [
       { name: "Rugby rules by age group", path: RULES_INDEX_PATH },
       { name: `${label} rugby rules`, path: rulesPath(age) },
@@ -305,7 +305,7 @@ ${COACHING_GUIDES.map(
         <p>
           A grade's page is what to read in August. <a href="${QUESTIONS_INDEX_PATH}">Rugby
           questions answered</a> is the other half of it: ${QUESTIONS.length} short answers
-          to the things that happen in front of you on a Sunday, grouped by what was going
+          to the things that happen in front of you on match day, grouped by what was going
           on at the time rather than by grade.
         </p>
 

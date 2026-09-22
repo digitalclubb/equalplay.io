@@ -804,7 +804,7 @@ export const WARMUPS: Drill[] = [
     equipment: [{ item: "ball", qty: 1, per: "pair" }],
     setup: "Pairs, six metres apart, one ball each.",
     howItRuns:
-      "Deliberately throw each other bad passes. Too high, too low, behind them, at their feet. Twenty each. They will laugh at it and they will also get much better at taking a scruffy pass, which is most of the passes they will get on a Sunday.",
+      "Deliberately throw each other bad passes. Too high, too low, behind them, at their feet. Twenty each. They will laugh at it and they will also get much better at taking a scruffy pass, which is most of the passes they will get in a match.",
     coachingPoints: [
       "Get your feet to it. Do not just reach",
       "Low ball, get your hands under it with little fingers together",
@@ -1188,7 +1188,7 @@ export const WARMUPS: Drill[] = [
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 1, per: "pair" }],
     setup: "Pairs four metres apart, one ball each. Four cones marking the area so they stay spread out.",
     howItRuns:
-      "Throw it high above your partner's head so they have to reach up for it. Ten each, calling for it every time. Then the same again with a step in to take it at the top rather than waiting for it to drop. Hands above the eyes is not how anybody catches naturally, so it wants doing cold every week rather than discovering it on a Sunday under a kick.",
+      "Throw it high above your partner's head so they have to reach up for it. Ten each, calling for it every time. Then the same again with a step in to take it at the top rather than waiting for it to drop. Hands above the eyes is not how anybody catches naturally, so it wants doing cold every week rather than discovering it in a match under a kick.",
     coachingPoints: [
       "Call it before it comes down. Mine, out loud",
       "Hands up early with the thumbs nearly touching",

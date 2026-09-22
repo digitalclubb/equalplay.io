@@ -487,7 +487,7 @@ export const GAMESENSE: Drill[] = [
     progressions: ["Two phases only", "Narrower pitch"],
     regressions: ["Five phases", "Touch rules instead of contact"],
     safety:
-      "Age grade contact rules apply exactly as they do on a Sunday. Nobody off their feet at the ruck, nobody joining from the side and stop it if heads start dropping through tiredness.",
+      "Age grade contact rules apply exactly as they do in a match. Nobody off their feet at the ruck, nobody joining from the side and stop it if heads start dropping through tiredness.",
     faults: [
       {
         looks: "Every player piling into the first ruck",
@@ -640,7 +640,7 @@ export const GAMESENSE: Drill[] = [
   },
   {
     id: "drill-full-game-conditions",
-    title: "Sunday conditions",
+    title: "Match day conditions",
     kind: "exercise",
     themes: ["gamesense"],
     minAge: "u12",
@@ -672,7 +672,7 @@ export const GAMESENSE: Drill[] = [
     equipment: [{ item: "cone", qty: 12 }, { item: "ball", qty: 2 }],
     setup: "Full age grade pitch, full age grade rules, proper teams. A referee who blows for everything.",
     howItRuns:
-      "Just play. Fifteen minutes with the actual rules of play for your age grade, including the scrum, refereed properly. Nothing conditioned. Stop it twice, no more and only for something that will happen again on Sunday. The last thing they should do most weeks is play rugby.",
+      "Just play. Fifteen minutes with the actual rules of play for your age grade, including the scrum, refereed properly. Nothing conditioned. Stop it twice, no more and only for something that will happen again in a match. The last thing they should do most weeks is play rugby.",
     coachingPoints: [
       "Play what is in front of you",
       "Keep talking through the stoppages, not just in open play",

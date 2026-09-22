@@ -193,7 +193,7 @@ function guidePage(guide: Guide, coachAge?: AgeGroup): string {
         <p>
           Everything here is written from the RFU's own rules of play for the grade.
           They are reissued every summer, so read this season's there rather than
-          trusting a summary. Ours included. If a referee on Sunday says something
+          trusting a summary. Ours included. If a referee on match day says something
           different to this page, they are right.
         </p>
         <p>${rulesCheckedPhrase()}.</p>

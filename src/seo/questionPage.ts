@@ -148,7 +148,7 @@ function sourceNote(): string {
             answers put it in our own words, so they are a summary rather than the thing
             itself. It is reissued every summer as well, so read this season's there
             rather than trusting a copy on somebody else's website. Ours included. If a
-            referee on Sunday says something different to this page, they are right.
+            referee on match day says something different to this page, they are right.
           </p>
           <p>${rulesCheckedPhrase()}.</p>
           <p>
@@ -240,8 +240,8 @@ export function questionIndexHtml(): string {
 
   const body = `        <h1>Rugby questions a minis coach actually asks</h1>
         <p class="standfirst">
-          ${QUESTIONS.length} short answers for the things that happen in front of you on a
-          Sunday. What the referee just gave, what your grade is allowed to do about it
+          ${QUESTIONS.length} short answers for the things that happen in front of you on match
+          day. What the referee just gave, what your grade is allowed to do about it
           plus what to do next. Written for a volunteer rather than for somebody who
           played.
         </p>
@@ -280,7 +280,7 @@ ${sourceNote()}
     path: QUESTIONS_INDEX_PATH,
     title: "Rugby Questions Answered, U7 to U12 Minis Coaching",
     description:
-      "Short answers to the questions a minis rugby coach asks on a Sunday. Scrums, tackles, rucks, tag, playing time plus the referee, written from RFU Regulation 15.",
+      "Short answers to the questions a minis rugby coach asks on match day. Scrums, tackles, rucks, tag, playing time plus the referee, written from RFU Regulation 15.",
     breadcrumb: [{ name: "Rugby questions answered", path: QUESTIONS_INDEX_PATH }],
     faqs: [],
     body,

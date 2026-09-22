@@ -144,7 +144,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
     standfirst:
       "Most of them have never held a rugby ball. U7 is tag, four a side, on a pitch 20 metres " +
       "by 12, with no contact of any kind and nobody kicking it. Worth ten minutes before your " +
-      "first Sunday.",
+      "first game.",
     sections: [
       {
         heading: "The short version",
@@ -574,7 +574,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
           {
             text:
               "Nobody expects you to have that memorised. It's here so you can look it up on " +
-              "the Sunday it happens.",
+              "the day it happens.",
           },
         ],
       },
@@ -655,7 +655,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "How big is a U8 rugby pitch?",
         answer:
           "45 metres by 22, plus 5 metres of in-goal at each end. That's roughly four times " +
-          "the U7 pitch, which is the change your squad will feel most on the first Sunday.",
+          "the U7 pitch, which is the change your squad will feel most in their first game.",
       },
       {
         question: "Can U8s tackle?",
@@ -1032,7 +1032,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         blocks: [
           {
             text:
-              "This is the part worth reading twice, because it's where your Sunday mornings " +
+              "This is the part worth reading twice, because it's where your matches " +
               "will be won or lost and it's the part nobody explains properly at the start of " +
               "the season.",
           },
@@ -1498,7 +1498,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
             text:
               "So the scrum stops being purely a restart and becomes a small contest. It is " +
               "worth a session of its own, because a hooker who has never struck for a ball " +
-              "won't learn it on a Sunday.",
+              "won't learn it in a match.",
           },
         ],
       },
@@ -1778,7 +1778,7 @@ export const GUIDES: Record<AgeGroup, Guide> = {
               "Every one of your players has spent four seasons being told a fend is a free " +
               "pass against them, so expect it to take a while to arrive. Expect it to arrive " +
               "too high at first, as well, which is worth heading off in training rather than " +
-              "on a Sunday.",
+              "in a match.",
           },
         ],
       },

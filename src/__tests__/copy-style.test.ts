@@ -328,34 +328,37 @@ describe("the answers", () => {
   });
 });
 
+function walk(dir: string, match: RegExp): string[] {
+  const found: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) found.push(...walk(path, match));
+    else if (match.test(entry)) found.push(path);
+  }
+  return found;
+}
+
+/** Every file with copy in it, plus the notes we write to ourselves. */
+const SOURCES = [
+  ...walk("src", /\.(ts|css)$/),
+  ...walk("public", /\.html$/),
+  ...walk("hub", /\.html$/),
+  ...walk("planner", /\.html$/),
+  ...walk("api", /\.ts$/),
+  ...walk("docs", /\.md$/),
+  ...walk("supabase", /\.(sql|md)$/),
+  "index.html",
+  ".env.example",
+  "CLAUDE.md",
+].filter((path) => !path.includes("__tests__"));
+
 /**
  * The same rules apply to the interface, but its copy is woven into template
  * literals, so scan the files rather than trying to pull the strings out. Em
  * dashes are banned in comments too. Nobody types those by hand.
  */
 describe("interface and page copy", () => {
-  function walk(dir: string, match: RegExp): string[] {
-    const found: string[] = [];
-    for (const entry of readdirSync(dir)) {
-      const path = join(dir, entry);
-      if (statSync(path).isDirectory()) found.push(...walk(path, match));
-      else if (match.test(entry)) found.push(path);
-    }
-    return found;
-  }
-
-  const sources = [
-    ...walk("src", /\.(ts|css)$/),
-    ...walk("public", /\.html$/),
-    ...walk("hub", /\.html$/),
-    ...walk("planner", /\.html$/),
-    ...walk("api", /\.ts$/),
-    ...walk("docs", /\.md$/),
-    ...walk("supabase", /\.(sql|md)$/),
-    "index.html",
-    ".env.example",
-    "CLAUDE.md",
-  ].filter((path) => !path.includes("__tests__"));
+  const sources = SOURCES;
 
   it("finds the source files", () => {
     expect(sources.length).toBeGreaterThan(20);
@@ -502,5 +505,41 @@ describe("prose rhythm", () => {
       const rate = ((text.match(CONTRACTION) ?? []).length / words) * 1000;
       expect(rate, `${where}: ${rate.toFixed(1)} contractions per 1000 words`).toBeGreaterThan(2);
     }
+  });
+});
+
+/**
+ * Nobody's week looks the same. One club trains on a Tuesday, the next on a
+ * Thursday, and plenty of minis play their rugby on a Saturday morning rather
+ * than a Sunday. Copy naming the day is copy that is wrong for whoever is
+ * reading it, so it says training or match day instead.
+ *
+ * Comments are exempt, so the files are read with theirs blanked out. A note to
+ * ourselves about a coach's week is not something a coach reads, which is also
+ * why `docs/`, `supabase/` and `CLAUDE.md` are left out of this one: they are
+ * nothing but notes to ourselves.
+ */
+describe("no day of the week", () => {
+  const DAY = /\b(mon|tues|wednes|thurs|fri|satur|sun)day/i;
+  const NOTES = /^(docs|supabase)\/|^CLAUDE\.md$/;
+
+  /** Source with its comments blanked, newlines kept so line numbers hold. */
+  function copyOnly(path: string): string[] {
+    const blank = (match: string): string => match.replace(/[^\n]/g, " ");
+    return readFileSync(path, "utf8")
+      .replace(/<!--[\s\S]*?-->/g, blank)
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/^\s*\/\/.*$/gm, blank)
+      .split("\n");
+  }
+
+  it("names no day of the week", () => {
+    const named: string[] = [];
+    for (const path of SOURCES.filter((path) => !NOTES.test(path))) {
+      copyOnly(path).forEach((line, i) => {
+        if (DAY.test(line)) named.push(`${path}:${i + 1}: ${line.trim()}`);
+      });
+    }
+    expect(named, `say training or match day instead:\n${named.join("\n")}`).toEqual([]);
   });
 });

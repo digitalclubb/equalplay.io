@@ -683,7 +683,7 @@ export const HANDLING: Drill[] = [
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
     setup: "A ball on the ground. A passer beside it, a receiver eight metres away.",
     howItRuns:
-      "Pick the ball up off the floor and pass it in one movement. No standing up first. Ten each side, then swap. Every child in the squad does this, not just whoever fancies themselves at nine, because on a Sunday somebody else will be doing it.",
+      "Pick the ball up off the floor and pass it in one movement. No standing up first. Ten each side, then swap. Every child in the squad does this, not just whoever fancies themselves at nine, because in a match somebody else will be doing it.",
     coachingPoints: [
       "Get your feet to the ball before your hands",
       "Sweep it away in one movement, do not lift then pass",
@@ -727,7 +727,7 @@ export const HANDLING: Drill[] = [
     setup:
       "A line of cones seven metres in front of the player taking the pass, with the defenders standing on it.",
     howItRuns:
-      "Every game below U11 restarts with one of these. Even once free kicks arrive at U11 the free pass is still what follows a kick into touch, so it is worth ten minutes rather than being discovered on a Sunday. The passer holds the ball out, calls play, then passes it backwards to somebody arriving. The defenders cannot move until the ball has left their hands. Everybody takes a turn at passing it, because the child who does it in a match will not be the one you expect.",
+      "Every game below U11 restarts with one of these. Even once free kicks arrive at U11 the free pass is still what follows a kick into touch, so it is worth ten minutes rather than being discovered on match day. The passer holds the ball out, calls play, then passes it backwards to somebody arriving. The defenders cannot move until the ball has left their hands. Everybody takes a turn at passing it, because the child who does it in a match will not be the one you expect.",
     coachingPoints: [
       "Hold the ball out where everybody can see it, then shout play",
       "The catcher runs onto it. Nobody stands still waiting",

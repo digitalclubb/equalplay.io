@@ -439,7 +439,7 @@ export const QUESTIONS: Question[] = [
     answer:
       "At U10 only the team throwing in. From U11 both hookers may contest it, which turns " +
       "the scrum from a pure restart into a small contest. A hooker who has never struck for " +
-      "a ball won't work it out on a Sunday, so give more than one of them a go in training.",
+      "a ball won't work it out in a match, so give more than one of them a go in training.",
   },
   {
     topic: "scrum",
@@ -498,7 +498,7 @@ export const QUESTIONS: Question[] = [
     question: "How far back does the other team stand?",
     answer:
       "Three metres at U7 and seven from U8 upwards. It's the referee's job to walk them " +
-      "back, though on a busy Sunday it's worth your touchline knowing the number so nobody " +
+      "back, though on a busy match day it's worth your touchline knowing the number so nobody " +
       "argues about it.",
   },
   {
@@ -587,7 +587,7 @@ export const QUESTIONS: Question[] = [
     answer:
       "Anybody in front of the kicker. They stay still, or retire if they're within 7 metres " +
       "of where the ball lands. A kick that nobody is allowed to chase is a kick you've given " +
-      "away, which is worth a session of its own before it costs you a Sunday.",
+      "away, which is worth a session of its own before it costs you a match.",
   },
 
   // ---- Match day ----
@@ -674,7 +674,7 @@ export const QUESTIONS: Question[] = [
     answer:
       "No. Coaches stay off while the ball is in play at every minis grade. The referee is " +
       "expected to talk the players through it instead, which is a different job to the one " +
-      "they do on a Saturday afternoon and takes some getting used to on both sides.",
+      "they do in the adult game and takes some getting used to on both sides.",
   },
   {
     topic: "referee",
@@ -812,7 +812,7 @@ export const QUESTIONS: Question[] = [
     answer:
       "One adult per group of about five or six once you're running stations. Twenty children " +
       "and four parents is four groups rotating round four corners of a pitch, which is what " +
-      "a Sunday actually looks like. The carousel sessions here are built for exactly that.",
+      "most sessions actually look like. The carousel sessions here are built for exactly that.",
   },
   {
     topic: "coaching",
@@ -842,7 +842,7 @@ export const QUESTIONS: Question[] = [
       "Handling, plus whatever arrives at your grade this year. Every squad picks up new " +
       "players in September who have never done last year's work either, so the new thing " +
       "isn't the only thing to cover. Each grade's rules guide here ends with what to get in " +
-      "before the first Sunday.",
+      "before the first game.",
   },
   {
     topic: "coaching",

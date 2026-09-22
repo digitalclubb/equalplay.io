@@ -385,7 +385,7 @@ export const BREAKDOWN: Drill[] = [
     equipment: [{ item: "cone", qty: 8 }, { item: "ball", qty: 1 }],
     setup: "Two teams playing live contact. Three defenders only so the attack usually gets through.",
     howItRuns:
-      "Four rucks in a row without losing the ball. Reset if you drop it. Then swap over. It is about the bit between rucks rather than the rucks themselves, which is where most minis lose the ball on a Sunday.",
+      "Four rucks in a row without losing the ball. Reset if you drop it. Then swap over. It is about the bit between rucks rather than the rucks themselves, which is where most minis lose the ball in a match.",
     coachingPoints: [
       "Look for the next ruck while this one is still happening",
       "Do not carry into the same place twice",
