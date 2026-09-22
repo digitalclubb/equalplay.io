@@ -641,6 +641,16 @@ is a phrase somebody types before they have started the car. One page per topic
 rather than one per question, since a page holding a single answer is a thin
 page competing with sixty-odd of its own siblings.
 
+The search box wears `.hub-field`, the wrapper the catalogue's search already
+sits in, so one input rule covers both. It shipped as a copy of that rule under
+`.answers-search`, which is two places to make the next change to the shape of a
+text field. It also shipped sitting straight on the masthead rule, which is 2px
+of `--color-text` and the heaviest line on the page: everything under that rule
+takes its space from the 3rem an `h3` carries, so the one control on the screen
+was the only thing with none. It takes that 3rem now, which puts the first thing
+below the masthead at the same height here as on the guide, since both tabs wear
+the same rule. `hub.spec.ts` measures the two against each other.
+
 The grade is said once where a topic's answers all agree and on each answer
 where they do not. `topicGrades` decides that. Nine answers on the scrum page
 each captioned "U10 and up" is the caption saying nothing, which is the same

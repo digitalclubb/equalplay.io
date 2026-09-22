@@ -154,7 +154,7 @@ function index(coachAge?: AgeGroup): string {
         </p>
       </header>
 
-      <div class="answers-search" role="search">
+      <div class="answers-search hub-field" role="search">
         <label class="visually-hidden" for="answers-search">Search the answers</label>
         <input
           id="answers-search"

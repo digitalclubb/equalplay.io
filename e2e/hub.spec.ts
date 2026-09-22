@@ -1617,6 +1617,34 @@ test("the Answers tab answers a question with no account and no grade picked", a
   await expect(page.locator(".guide-faq .guide-card-meta").first()).toHaveText("Every grade");
 });
 
+test("the search box clears the masthead rule the way the guide does", async ({ page }) => {
+  // It shipped sitting straight on a 2px rule of `--color-text`, the heaviest
+  // line on the page, because every other block under that rule takes its space
+  // from the 3rem an `h3` carries and a control carries none of its own. Both
+  // tabs wear the same masthead, so the first thing below it sits at the same
+  // height on each.
+  const below = async (hash: string, selector: string): Promise<number> => {
+    await page.goto(`/hub/${hash}`);
+    // A hash change on the page already open is a route transition, and
+    // `startViewTransition` holds both snapshots while it runs, so measuring
+    // straight after the goto measures the page mid-animation.
+    await settled(page);
+    await page.waitForSelector(selector);
+    return page.evaluate((sel) => {
+      const rule = document.querySelector(".guide-header")!.getBoundingClientRect();
+      return Math.round(document.querySelector(sel)!.getBoundingClientRect().top - rule.bottom);
+    }, selector);
+  };
+
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const search = await below("#/answers", ".answers-search");
+    const guide = await below("#/guide", ".guide-section h3");
+    expect(search, `${width}px: the search box is against the rule`).toBeGreaterThanOrEqual(40);
+    expect(search, `${width}px: search ${search} against the guide's ${guide}`).toBe(guide);
+  }
+});
+
 test("the answers can be searched for what a coach saw", async ({ page }) => {
   await page.goto("/hub/#/answers");
   const before = await page.locator(".guide-card").count();

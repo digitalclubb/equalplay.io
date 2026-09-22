@@ -2882,23 +2882,33 @@ body {
    gated, so a rule quoted with no grade on it is the one way this content could
    mislead a coach. It gets its own line so it cannot be missed. */
 
+/* The box itself is `.hub-field`, the same wrapper the catalogue's search sits
+   in, so the one input rule in this stylesheet covers both. It began as a copy
+   of that rule down here, which is two places for the next change to the shape
+   of a text field to be made in. This only owns where it sits.
+
+   The masthead's rule above it is 2px of `--color-text`, the heaviest line on
+   the page. The box was sitting straight on it: everything under that rule
+   gets the 3rem an `h3` carries, so the one control on the screen was the only
+   thing that got none. It takes the same 3rem now, which puts the first thing
+   below the masthead at the same height here as on the guide. Both tabs wear
+   that rule and a coach moves between them.
+
+   Underneath is deliberately not 3rem. What follows is the browse alternative
+   to searching rather than a new subject, so it comes up closer instead of
+   leaving the box floating between two equal gaps. */
 .answers-search {
   max-width: var(--measure);
-  margin-bottom: var(--sp-lg);
+  /* Explicit on all three, because `.hub-field` sets a bottom margin of its own
+     and equal specificity would otherwise leave this to source order. */
+  margin: 3rem 0 0;
 }
 
-.answers-search input {
-  width: 100%;
-  min-height: var(--touch-min);
-  padding: 0 var(--sp-sm);
-  font-family: inherit;
-  /* 16px minimum or iOS Safari zooms the whole page on focus. The article runs
-     at 18px, which would otherwise be inherited into the control. */
-  font-size: 1rem;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-control-edge);
-  border-radius: var(--radius);
+/* Whatever the search put there, held nearer the box than a section heading
+   normally sits. Both states go through it: the topics when nothing is typed,
+   the count plus the matches when something is. */
+#answers-results .guide-section:first-child h3 {
+  margin-top: var(--sp-lg);
 }
 
 .answers .guide-faq .guide-card-meta {
