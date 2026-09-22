@@ -3,7 +3,8 @@
 Written down so a new session does not have to reconstruct it. Update it when the answer
 changes rather than letting it rot.
 
-Last updated 22 September 2026, after the answers got a tab of their own. Before
+Last updated 22 September 2026, after an audit against Search Console. The
+answers got a tab of their own the same day. Before
 that a session had stopped being something a coach could only take or leave: it
 can be swapped drill by drill, fitted to the time they actually have, or built
 from nothing on the theme they have been avoiding.
@@ -283,7 +284,7 @@ included, because what going wrong looks like is the part no competitor has and
 the part a coach searching a symptom will land on. The age gate travels with
 them: no theme page exists below the grade Regulation 15 allows that work at,
 which `drill-pages.test.ts` holds. The sitemap is generated now rather than kept
-by hand, since 175 URLs is past what anybody will maintain in a text file.
+by hand, since 186 URLs is past what anybody will maintain in a text file.
 
 **The rules guides are indexed.** Same words, two publications: the hub route a
 coach reads with no signal, plus a static page per grade emitted at build for
@@ -384,20 +385,45 @@ whole shape of the product turns on.
 
 ## The competition
 
+Re-read 22 September 2026. Three of these moved since the last look and two
+names are new, so the old table was describing a field that had changed.
+
 | | Price | What they have that we do not |
 | --- | --- | --- |
-| Rugby Coach Weekly | £9.95 to £12/mo, £108/yr | 3,000 drills, 350 ready-made plans |
-| Sportplan | Free tier plus paid | Diagrams, animator, present mode, sharing, season planner |
+| Rugby Coach Weekly | 97p first month, then £9.95/mo | 1,200 drills, video, a Session Builder with a free tier, a U8 to U16 curriculum on the club tier, coach allocation |
+| Sportplan | Free tier plus paid | 1,100+ drills, an animator, a season planner, present mode |
+| CoachEdge Rugby | Free plans, £5 to £14.99 a pack, £79 club | Season programmes, festival plans, certificates, a parent letter, U6 to U18 plus women's and wheelchair |
+| RugbyCoach.AI | Free | Live match tracking, yellow card timers, score sharing, England Rugby fixture import |
 | RugbyCoaching.tv | Not published | Video |
-| RugbyCoachingDiary | App store | Roster, attendance, calendar |
 
-Volume is the wrong race. Nobody browses 3,000 drills, which their own 350 pre-made plans
-quietly admit. **Not one of them gates content by what an age grade is legally allowed to
-do**. That gap widens the more they add.
+Two things changed and both are worth saying plainly.
 
-Rugby Coach Weekly organises by skill rather than by grade, which is what breadth costs
-them: covering U6 to U17+ from one library means no page can know who is reading it. Our
-gap widens the more they add.
+**Rugby Coach Weekly built a session builder.** Browse, build, share, deliver on
+a phone, filtered to an age group, free for three sessions. That is the shape of
+our session planner with a bigger library behind it. What it does not do is
+refuse to show an U8 coach a ruck drill. Its own marketing does not mention
+Regulation 15 anywhere either.
+
+**CoachEdge Rugby says "RFU Kids First & England Rugby 2026 regs" on the tin.**
+That is the nearest anybody has come to the claim this product is built on. It
+is a shop selling PDF packs rather than an app, so the regulations are a
+provenance note on a download rather than a gate in software: nothing stops a
+coach opening the U14 pack. Still, the line "not one of them is age grade aware"
+has stopped being true and should not be said again.
+
+What survives is narrower and still true. Nobody else **enforces** the age grade
+in the product, as opposed to filtering by it or citing it on a cover page. Ours
+is the only one where a ruck drill cannot reach an U8 coach through any route,
+held there by tests rather than by a content editor remembering.
+
+Volume is still the wrong race. Nobody browses 1,200 drills, which everyone's
+ready-made plans quietly admit.
+
+**RugbyCoach.AI is the one to watch.** Free, grassroots, match day, England Rugby
+fixture import. What it does not do is substitutions or playing time. That is our
+`/planner` sitting in the middle of their gap. If they add it, the acquisition
+engine this whole shape depends on has a free competitor with fixture data we do
+not have.
 
 **Decided 21 August 2026: free, for good.** This is for volunteers giving up their
 Sundays, so there is no paid tier to design around and the earlier £24 to £36/yr note is
@@ -426,15 +452,42 @@ never things that would justify a price.
 
 ## Known issues
 
-- **The hub is one chunk and Supabase is in it.** 473 kB raw. Roughly half of
-  that is `@supabase/supabase-js`, imported statically, so a
-  signed-out first visit downloads the sign-in machinery before a drill renders.
-  Measured on a 4x throttled phone: the chrome paints at 116ms because both
-  entries write their nav and stylesheet into the document, but the drill list
-  arrives at 514ms on 4G and 4.5s on slow 3G. The service worker means only the
-  first visit pays. Making the client lazy means a fast path that decides signed
-  in or out without it, which is a change to the one part that must not break,
-  so it wants verifying against a real account rather than a stub.
+- **The 172 generated pages are not in the index.** Checked against Search
+  Console on 22 September 2026. 186 URLs are in the sitemap, which Google last
+  downloaded on 21 September. 17 pages have ever had an impression and every one
+  of them is hand-written. A sample of the generated cluster comes back "URL is
+  unknown to Google", meaning not crawled rather than crawled and rejected. The
+  one exception, `/rugby-passing-drills-u10`, is "Discovered, currently not
+  indexed". `/planner` is unknown as well, which is the free tool the funnel
+  turns on.
+  The cause is almost certainly depth plus authority, not a bug: the homepage
+  links three of the six grade pages, a grade page links its theme pages and a
+  theme page links its drills, so a drill page is four hops from the front
+  door on a domain with 29 clicks a month behind it. A sitemap gets a URL
+  discovered. It does not get it crawled.
+  What is worth trying, cheapest first: link the answers index and the four
+  coaching guides from the homepage, since neither is reachable from it at all
+  today; link every grade from the homepage rather than three; then give the
+  drills index real links to all 120 drill pages so the deepest page is two hops
+  rather than four. None of that is a guarantee. Re-check in Search Console
+  rather than assuming it worked.
+
+- **The hub is one chunk and it is 637 kB.** 178 kB gzipped, measured
+  22 September 2026. It was 473 kB when this note was written, so the shape of
+  the problem has changed: `@supabase/supabase-js` is about 220 kB of it and the
+  written content is now the bigger half, roughly 450 kB of source across
+  `guides.ts`, `coaching.ts`, `questions.ts` and the catalogue. Every word of it
+  ships to a coach who came to read one drill. Measured on a 4x throttled phone
+  at 473 kB: the chrome painted at 116ms because both entries write their nav and
+  stylesheet into the document, while the drill list arrived at 514ms on 4G and
+  4.5s on slow 3G. Those numbers want re-taking. The service worker means only
+  the first visit pays. Two fixes and they are not the same job. Making the
+  Supabase client lazy means a fast path that decides signed in or out without
+  it, which is a change to the one part that must not break, so it wants
+  verifying against a real account rather than a stub. Splitting the content
+  means the guide, the coaching guides and the answers arriving as their own
+  chunks, which is an ordinary dynamic import except that `sw.js` has to
+  pre-cache them or the offline promise quietly stops covering three tabs.
 - **A shared link needs signal the first time.** It was never the reader's plan to hold
   on their device, so there is nothing to cache. The view says so rather than looking
   broken.

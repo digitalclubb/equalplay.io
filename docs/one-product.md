@@ -8,12 +8,14 @@ Decided 18 August 2026. Phases 1 to 3 are built. Phase 4 is not.
 | --- | --- |
 | Phase 1, one shell | Done. `src/lib/nav.ts`, one manifest, two analytics events |
 | Phase 2, signed out is a real state | Done. Age picker, free catalogue, sync guarded |
-| Phase 3, the upsell moments | Done bar one, see below |
+| Phase 3, the upsell moments | Done |
 | Phase 4, build before registering | Not started. Deliberate, see the phase |
 
-The fourth upsell moment, adding a drill to a session from the drill page, is not
-built. It was already ruled out in `docs/roadmap.md` known issues as a deliberate
-choice, so it stays ruled out rather than being reopened here.
+The fourth upsell moment, adding a drill to a session from the drill page, was
+ruled out here and then built anyway, in `addDrillToPlan`. Reading a drill and
+having to remember its title, go to Sessions and find it again was the sort of
+thing a coach only does once. The gate travels with it rather than living in the
+render. Sessions the drill's grade may not do are left out of the picker.
 
 Marketing copy landed after phase 2 rather than during phase 1, because writing
 "free to browse without an account" before that was true would have been a lie.
@@ -37,8 +39,12 @@ many HTML files the build emits. Those come apart cleanly, so keep them apart.
 
 | | raw | gzipped |
 | --- | --- | --- |
-| planner bundle | 48.17 kB | 13.60 kB |
-| hub bundle | 363.53 kB | 98.04 kB |
+| planner bundle | 52.24 kB | 15.08 kB |
+| hub bundle | 636.86 kB | 178.09 kB |
+
+Measured 22 September 2026. The hub has near enough doubled since this was
+written, almost all of it written content rather than code. That is a reason to
+split the hub, never a reason to fold the planner in.
 
 `src/hub/supabase.ts` calls `createClient` at module load and `src/hub/main.ts`
 imports the chain that reaches it, so anything served from the hub entry carries
