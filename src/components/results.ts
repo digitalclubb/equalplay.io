@@ -1237,9 +1237,15 @@ function renderFairnessSummary(
   // The same test `checkHalfGame` uses, so the column and the notice can never
   // disagree about whether minutes are known.
   const minutes = isMatchLength(minutesPerMatch) ? minutesPerMatch : null;
+  // The last column used to go out as a bare "-0.85" beside "10 min", with the
+  // legend naming the first number and nothing naming the second. It is the
+  // one figure on this screen a volunteer cannot read off the rotation
+  // themselves. It was also the one figure with no label: a screen reader got
+  // "Leo, 10 min, minus nought point eight five". The legend names it and
+  // every row says it in words underneath.
   const legend = minutes === null
-    ? "Games played \u00b7 a sub on or off counts as &frac12;"
-    : "Minutes played \u00b7 a sub on or off counts as half a match \u00b7 estimated from the rotation";
+    ? "Games played, then how that compares with an even share \u00b7 a sub on or off counts as &frac12;"
+    : "Minutes played, then games above or below an even share \u00b7 a sub on or off counts as half a match \u00b7 estimated from the rotation";
 
   const titleClass = isBalanced ? "fairness-title fairness-title-balanced" : "fairness-title";
   section.innerHTML = `
@@ -1273,6 +1279,19 @@ function renderFairnessSummary(
       ? `+${stat.fairnessScore}`
       : String(stat.fairnessScore);
 
+    // Said rather than shown. `fairnessScore` is games against an even share,
+    // so the sign is the whole meaning of it and a bare number carries none.
+    // `fairnessScore` is not bounded to under a game: a big squad over six
+    // games puts a player two and a half games short, where "2.5 of a game
+    // below" is not English.
+    const off = Math.abs(stat.fairnessScore);
+    const scoreSaid =
+      stat.fairnessScore === 0
+        ? "an even share"
+        : `${off} ${off < 1 ? "of a game" : "games"} ${
+            stat.fairnessScore < 0 ? "below" : "above"
+          } an even share`;
+
     const row = document.createElement("div");
     row.className = "fairness-row";
     row.innerHTML = `
@@ -1281,7 +1300,8 @@ function renderFairnessSummary(
         <span class="fairness-bar-fill" style="width: ${pct}%"></span>
       </span>
       <span class="fairness-count${minutes !== null ? " fairness-count-minutes" : ""}">${timeLabel}</span>
-      <span class="fairness-score ${stat.fairnessScore < -0.5 ? "fairness-under" : stat.fairnessScore > 0.5 ? "fairness-over" : ""}">${scoreLabel}</span>
+      <span class="fairness-score ${stat.fairnessScore < -0.5 ? "fairness-under" : stat.fairnessScore > 0.5 ? "fairness-over" : ""}" aria-hidden="true">${scoreLabel}</span>
+      <span class="visually-hidden">${esc(scoreSaid)}</span>
     `;
     list.appendChild(row);
   }

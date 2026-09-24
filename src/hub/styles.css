@@ -1009,16 +1009,6 @@ body {
 
 /* ---- Session planner ---- */
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* A ready-made session, shaped like a drill card because it is the same kind of
    thing being picked off the same kind of list. It sits on the page rather than
    inside a panel: wrapped in one, a card is a white box on a white box, so the

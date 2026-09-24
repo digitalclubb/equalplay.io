@@ -9,6 +9,19 @@
   padding: 0;
 }
 
+/* Said to a screen reader, never drawn. In here rather than in `hub/styles.css`
+   because match day needs it too and may import nothing from the hub. It sat in
+   the hub's sheet while the planner had no way to label anything it drew. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .skip-link {
   position: absolute;
   left: -9999px;
