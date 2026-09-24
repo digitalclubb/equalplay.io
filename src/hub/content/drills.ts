@@ -1,4 +1,11 @@
-import { isAvailableAt, type AgeGroup, type Drill, type DrillKind, type Theme } from "./types.js";
+import {
+  isAvailableAt,
+  searchWords,
+  type AgeGroup,
+  type Drill,
+  type DrillKind,
+  type Theme,
+} from "./types.js";
 import { WARMUPS } from "./catalogue/warmups.js";
 import { HANDLING } from "./catalogue/handling.js";
 import { EVASION } from "./catalogue/evasion.js";
@@ -122,14 +129,14 @@ export interface DrillFilter {
  * it groups by theme and that is worth more than anything alphabetical.
  */
 export function filterDrills(drills: Drill[], filter: DrillFilter): Drill[] {
-  const search = filter.search?.trim().toLowerCase();
+  const search = filter.search ? searchWords(filter.search) : [];
 
   return matching(drills, filter, search).sort((a, b) => rank(a) - rank(b));
 }
 
 const rank = (drill: Drill): number => (drill.kind === "exercise" ? 0 : 1);
 
-function matching(drills: Drill[], filter: DrillFilter, search: string | undefined): Drill[] {
+function matching(drills: Drill[], filter: DrillFilter, search: string[]): Drill[] {
   return drills.filter((drill) => {
     // Age first, always. A starred drill the age grade cannot do stays hidden.
     if (!isAvailableAt(drill, filter.ageGroup)) return false;
@@ -138,7 +145,7 @@ function matching(drills: Drill[], filter: DrillFilter, search: string | undefin
     if (filter.hardGround && !fitsHardGround(drill)) return false;
     if (filter.kind && drill.kind !== filter.kind) return false;
     if (filter.theme && !drill.themes.includes(filter.theme)) return false;
-    if (!search) return true;
+    if (search.length === 0) return true;
 
     const haystack = [
       drill.title,
@@ -156,7 +163,7 @@ function matching(drills: Drill[], filter: DrillFilter, search: string | undefin
     ]
       .join(" ")
       .toLowerCase();
-    return search.split(/\s+/).every((word) => haystack.includes(word));
+    return search.every((word) => haystack.includes(word));
   });
 }
 

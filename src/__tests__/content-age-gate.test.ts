@@ -326,6 +326,24 @@ describe("filterDrills", () => {
     expect(filterDrills(DRILLS, { ageGroup: "u12", search: "scrum unicycle" })).toHaveLength(0);
   });
 
+  it("does not let punctuation hide a drill", () => {
+    // The box's own placeholder reads "Search ruck, passing, tag", so a comma
+    // is the thing it invites. Split on whitespace alone, "ruck," kept its
+    // comma, nothing in the catalogue holds that string, so the six ruck
+    // drills came back as nothing at all.
+    const plain = filterDrills(DRILLS, { ageGroup: "u12", search: "ruck" });
+    expect(plain.length).toBeGreaterThan(0);
+    for (const term of ["ruck,", "ruck.", "ruck?", " ruck ", "ruck!"]) {
+      expect(filterDrills(DRILLS, { ageGroup: "u12", search: term }), term).toHaveLength(
+        plain.length,
+      );
+    }
+    // Punctuation on its own asks for nothing, so it hides nothing either.
+    expect(filterDrills(DRILLS, { ageGroup: "u12", search: "?!" }).length).toBe(
+      filterDrills(DRILLS, { ageGroup: "u12" }).length,
+    );
+  });
+
   /**
    * A coach does not search for the drill, they search for what is happening in
    * front of them. "dropping", "flat", "standing about" live in the faults and

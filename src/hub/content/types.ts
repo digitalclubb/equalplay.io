@@ -407,6 +407,29 @@ export function isAvailableAt(drill: Drill, age: AgeGroup): boolean {
   return !drill.maxAge || AGE_GROUPS.indexOf(age) <= AGE_GROUPS.indexOf(drill.maxAge);
 }
 
+/**
+ * A search term cut into the words that all have to turn up.
+ *
+ * Split on anything that is not a letter or a number rather than on
+ * whitespace, so punctuation a coach typed cannot hide an answer. Both boxes
+ * suggest a comma in their own placeholder, "Search ruck, passing, tag" on one
+ * and "wrong side, high tackle, half game" on the other, so the app was asking
+ * for the one query it could not serve: "ruck," kept its comma, nothing in the
+ * catalogue holds that string, so six ruck drills stayed hidden. A question
+ * mark on the end of "wrong side?" did the same to the answers. Nobody types
+ * punctuation meaning it.
+ *
+ * In here because both searches need it. They held one rule each for a while
+ * and that is what put a phrase match in front of the answers while the drills
+ * matched every word.
+ */
+export function searchWords(term: string): string[] {
+  return term
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
 export interface Preset {
   id: string;
   title: string;

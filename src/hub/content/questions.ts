@@ -2,6 +2,7 @@ import {
   AGE_GROUPS,
   AGE_GROUP_LABELS,
   THEME_MIN_AGE,
+  searchWords,
   type AgeGroup,
   type Theme,
 } from "./types.js";
@@ -895,13 +896,22 @@ export const QUESTIONS_INDEX_PATH = "/rugby-questions";
  * The answer matters as much as the question: a coach searching "wrong side"
  * is repeating what they saw rather than the heading somebody filed it under.
  * Same reason `filterDrills` puts a drill's faults in the haystack.
+ *
+ * Every word has to appear, rather than the whole phrase in that order. This
+ * matched the phrase for one release, which is the same box `filterDrills`
+ * offers holding a different rule. A coach types what happened rather than a
+ * heading, so "scrum wrong side", "ball out scrum" plus "ruck offside" all
+ * found nothing while the answer sat first on the topic page. Word order is
+ * the one thing somebody repeating what they just saw has no reason to get
+ * right.
  */
 export function searchQuestions(term: string, within: Question[] = QUESTIONS): Question[] {
-  const needle = term.trim().toLowerCase();
-  if (!needle) return within;
-  return within.filter((question) =>
-    `${question.question} ${question.answer}`.toLowerCase().includes(needle),
-  );
+  const words = searchWords(term);
+  if (words.length === 0) return within;
+  return within.filter((question) => {
+    const haystack = `${question.question} ${question.answer}`.toLowerCase();
+    return words.every((word) => haystack.includes(word));
+  });
 }
 
 /** The floor a topic's questions may not claim to apply below, where it has one. */

@@ -176,6 +176,37 @@ describe("the answers", () => {
     expect(searchQuestions("   ")).toEqual(QUESTIONS);
     expect(searchQuestions("zzzzz")).toEqual([]);
   });
+
+  it("matches every word rather than the whole phrase", () => {
+    // A coach types what happened in front of them, which puts the words in
+    // the order they saw them rather than the order somebody filed them in.
+    // Each of these found nothing while the box matched the phrase, with the
+    // answer sitting first on its own topic page the whole time. The drill
+    // search has always worked this way, so this is one box catching the
+    // other up rather than a rule of its own.
+    for (const term of ["scrum wrong side", "ball out scrum", "ruck offside"]) {
+      expect(searchQuestions(term).length).toBeGreaterThan(0);
+    }
+
+    // Every word, not any word. A term nobody wrote still finds nothing, even
+    // beside one that plenty of answers carry.
+    expect(searchQuestions("scrum zzzzz")).toEqual([]);
+
+    // Word order cannot change the answer.
+    expect(searchQuestions("wrong side scrum").length).toBe(
+      searchQuestions("scrum wrong side").length,
+    );
+
+    // Punctuation a coach typed cannot hide an answer either. This box
+    // suggests "wrong side, high tackle, half game" in its own placeholder, so
+    // a comma is exactly what it invites.
+    const plain = searchQuestions("wrong side");
+    expect(plain.length).toBeGreaterThan(0);
+    for (const term of ["wrong side?", "wrong side.", "wrong, side"]) {
+      expect(searchQuestions(term).length, term).toBe(plain.length);
+    }
+    expect(searchQuestions("???")).toEqual(QUESTIONS);
+  });
 });
 
 describe("the answers in the app", () => {
