@@ -149,7 +149,7 @@ export const WARMUPS: Drill[] = [
     equipment: [{ item: "cone", qty: 4 }],
     setup: "A square. Everyone inside it, jogging.",
     howItRuns:
-      "Green means jog, amber means walk, red means freeze. Then add your own calls. Down means on the floor and up again, turn means change direction, sprint means five hard steps. Build the calls up so by the end they are reacting without thinking. Good for a cold morning because it gets warm quickly and needs no kit.",
+      "Green means jog, amber means walk, red means freeze. Then add your own calls. Down means on the floor and up again, turn means change direction, sprint means five hard steps. Build the calls up so by the end they are reacting without thinking. Good on a cold day because it gets warm quickly and needs no kit.",
     coachingPoints: [
       "Freeze means still. Wobbling is not still",
       "Land soft on the change of direction, do not skid",
@@ -1062,7 +1062,7 @@ export const WARMUPS: Drill[] = [
     equipment: [{ item: "cone", qty: 8 }],
     setup: "Four short lines with a cone ten metres in front of each one. No balls.",
     howItRuns:
-      "Bear crawl down on hands and feet, jog back. Then crab walk down on your hands and heels with your tummy up. Then frog jumps, landing on two feet and holding it still for a second. Two lengths of each. It looks like messing about and it is the only part of the night where they load their shoulders, their hips and their landing, which is the whole point of the RFU's Activate work at this age.",
+      "Bear crawl down on hands and feet, jog back. Then crab walk down on your hands and heels with your tummy up. Then frog jumps, landing on two feet and holding it still for a second. Two lengths of each. It looks like messing about and it is the only part of the session where they load their shoulders, their hips and their landing, which is the whole point of the RFU's Activate work at this age.",
     coachingPoints: [
       "Bear crawl with your bottom down, not sticking up in the air",
       "Crab walk with your hips lifted off the grass",

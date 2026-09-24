@@ -68,8 +68,8 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "preset-u7-games-night",
-    title: "Games night",
-    aim: "A night with almost no queueing. They play, you stop it now and then to ask what they saw.",
+    title: "Nothing but games",
+    aim: "A session with almost no queueing. They play, you stop it now and then to ask what they saw.",
     ageGroup: "u7",
     theme: "gamesense",
     sessionMinutes: 45,
@@ -341,8 +341,8 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "preset-u11-defence-night",
-    title: "Defence night",
-    aim: "A whole night on defending. They will be tired, though tackling decides most games at this age.",
+    title: "All on defending",
+    aim: "A whole session on defending. They will be tired, though tackling decides most games at this age.",
     ageGroup: "u11",
     theme: "tackle",
     sessionMinutes: 60,
@@ -443,7 +443,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u12-defence-that-holds",
     title: "Defence that holds",
-    aim: "One tackler missing is a try at this age. Tonight is about the line staying joined up.",
+    aim: "One tackler missing is a try at this age. This session is about the line staying joined up.",
     ageGroup: "u12",
     theme: "tackle",
     sessionMinutes: 60,
@@ -552,7 +552,7 @@ export const PRESETS: Preset[] = [
   {
     id: "preset-u7-carousel",
     title: "Nobody queues",
-    aim: "Three groups with a grown-up each, so the ball is in every pair of hands all night rather than in a line.",
+    aim: "Three groups with a grown-up each, so the ball is in every pair of hands all session rather than in a line.",
     ageGroup: "u7",
     theme: "handling",
     sessionMinutes: 45,

@@ -159,7 +159,7 @@ function welcome(age: string): string {
       <h2>Welcome along</h2>
       <p class="hub-lede">
         Everything here is set to ${esc(age)}. <a href="#/plans">Sessions</a> has
-        ready-made training nights. It all keeps working at a pitch with no signal.
+        hours already built for you. It all keeps working at a pitch with no signal.
       </p>
       <p class="hub-fineprint">
         Not official RFU guidance. Every grade links out to

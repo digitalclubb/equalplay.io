@@ -469,7 +469,7 @@ export const QUESTIONS: Question[] = [
     answer:
       "No, at any grade from U7 to U12. Touch restarts with a free pass and Regulation 15 " +
       "keeps it that way all the way through U13. The uncontested lineout arrives at U14 and " +
-      "lifting waits until U15, so a night spent on throwing is a night spent on something " +
+      "lifting waits until U15, so a session spent on throwing is a session spent on something " +
       "the referee will never ask for.",
   },
   {

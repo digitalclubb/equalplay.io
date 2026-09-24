@@ -80,7 +80,7 @@ const TAB_FOR_ROUTE: Record<string, string> = {
  */
 const GATE_REASON: Record<string, string> = {
   plans:
-    "Sessions live in your account, so the one you build tonight is still there next week on whatever phone you have with you.",
+    "Sessions live in your account, so the one you build today is still there next week on whatever phone you have with you.",
   favourites:
     "A starred drill needs somewhere to live beyond this browser, which is what the account is for.",
 };

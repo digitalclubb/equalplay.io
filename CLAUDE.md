@@ -1384,10 +1384,12 @@ Read `docs/content-sourcing.md` before writing any copy. Enforced mechanically b
 - British English. Practise is the verb, practice is the noun
 - **No em dashes. No Oxford commas. No comma before "and"**
 - No phrasing that reads as machine-written. The test holds the ban list
-- **No day of the week.** One club trains on a Tuesday, the next on a Thursday.
-  Plenty of minis play on a Saturday morning rather than a Sunday. Copy says
-  training or match day instead. Comments and these docs are exempt, which is
-  what the test skips
+- **No day of the week and no night.** One club trains on a Tuesday, the next
+  on a Thursday. Plenty of minis play on a Saturday morning rather than a
+  Sunday. A squad that trains at ten reads "I ran this tonight" as somebody
+  else's week. Copy says training, a session or match day instead. Morning is
+  the exception, because a festival genuinely is one. Comments, ids and these
+  docs are exempt, which is what the test skips
 - Voice is a local dad passing on what he has learned. Second person, concrete over
   abstract and no selling the drill to the reader
 - Coaching points are fragments under 120 characters with no full stop

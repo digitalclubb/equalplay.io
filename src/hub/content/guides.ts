@@ -1940,8 +1940,9 @@ export const GUIDES: Record<AgeGroup, Guide> = {
         question: "Do U12s have a lineout?",
         answer:
           "No. Regulation 15 keeps touch restarting with a free pass all the way through U13. " +
-          "The uncontested lineout arrives at U14 and lifting waits until U15, so an U12 night " +
-          "spent on throwing is a night spent on something the referee will never ask for.",
+          "The uncontested lineout arrives at U14 and lifting waits until U15, so an U12 " +
+          "session spent on throwing is a session spent on something the referee will never " +
+          "ask for.",
       },
     ],
   },

@@ -331,17 +331,17 @@ function coverageSection(ctx: PlannerContext, log: SessionRun[]): string {
   if (weeks.length === 0) return "";
 
   const presets = presetsForAge(ctx.ageGroup);
-  const nights = log.length === 1 ? "1 night" : `${log.length} nights`;
+  const ran = log.length === 1 ? "1 session" : `${log.length} sessions`;
 
   return `
     <section class="hub-section coverage">
       <div class="section-head">
         <h2>The next few weeks</h2>
-        ${log.length > 0 ? `<span class="hub-count">${nights}</span>` : ""}
+        ${log.length > 0 ? `<span class="hub-count">${ran}</span>` : ""}
       </div>
       <p class="hub-lede">
         Least covered first, so the thing you have been putting off comes round.
-        Mark a night as run and the rest moves up.
+        Mark a session as run and the rest moves up.
       </p>
       <ul class="coverage-list">
         ${weeks.map((week) => coverageRow(week, presets, log.length > 0)).join("")}
@@ -586,7 +586,7 @@ function themeTips(theme?: Theme): string {
   if (!isTheme(theme)) return "";
   return `
       <div class="run-tips">
-        <h3>Whatever you run tonight</h3>
+        <h3>Whatever you run</h3>
         <ul>${THEME_TIPS[theme].map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>
       </div>`;
 }
@@ -660,7 +660,7 @@ function builtPlan(ageGroup: AgeGroup, theme?: Theme): SessionPlan {
   return fitToLength(
     withWaterBreak({
       ...blankPlan(ageGroup),
-      title: theme ? `A night on ${THEME_SHORT[theme].toLowerCase()}` : "A bit of everything",
+      title: theme ? `A session on ${THEME_SHORT[theme].toLowerCase()}` : "A bit of everything",
       theme,
       sessionMinutes,
       blocks: buildSession(DRILLS, { ageGroup, theme, minutes: sessionMinutes }, Date.now()),
@@ -1651,7 +1651,7 @@ export function renderPresetList(container: HTMLElement, ageGroup: AgeGroup): vo
         <h2>Start a session</h2>
       </div>
       <p class="hub-lede">
-        Ready-made ${esc(age)} training nights, laid out in the order they run. Open
+        Ready-made ${esc(age)} sessions, laid out in the order they run. Open
         one and you get the drills, the diagrams and what to say when it goes wrong.
       </p>
       <div class="preset-grid">
@@ -1665,8 +1665,8 @@ export function renderPresetList(container: HTMLElement, ageGroup: AgeGroup): vo
       </div>
       <p class="hub-lede">
         Take any of these and change whatever you like, or build one from an empty
-        session. Keeping it needs an account, so that the night you plan tonight is
-        still there next week on whatever phone you have with you.
+        session. Keeping it needs an account, so the one you plan today is still
+        there next week on whatever phone you have with you.
       </p>
       <a class="hub-btn hub-btn-primary" href="#/join/plans">Set up an account</a>
     </section>`;
@@ -1726,10 +1726,10 @@ function ranItPanel(plan: SessionPlan, blocks: ResolvedBlock[]): string {
     ...new Set(blocks.flatMap((resolved) => resolved.stations.flatMap((s) => s.drill.themes))),
   ];
   return `<section class="hub-panel ran-it">
-    <p>Ran this tonight? It goes towards what you have covered, so the app can tell
+    <p>Ran this session? It goes towards what you have covered, so the app can tell
     you what you have not.</p>
     <button type="button" class="hub-btn" id="plan-ran" data-themes="${esc(themes.join(","))}">
-      I ran this tonight
+      I ran this session
     </button>
   </section>`;
 }
@@ -2721,7 +2721,7 @@ function renderPrintable(
     }
     ${
       isTheme(plan.theme)
-        ? `<p class="print-tips"><strong>Say all night:</strong> ${esc(THEME_TIPS[plan.theme].join(". "))}</p>`
+        ? `<p class="print-tips"><strong>Say all session:</strong> ${esc(THEME_TIPS[plan.theme].join(". "))}</p>`
         : ""
     }
     ${blocks

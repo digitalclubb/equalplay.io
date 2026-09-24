@@ -2195,7 +2195,7 @@ test("two blocks holding the same drill open one at a time", async ({ page }) =>
   expect(new Set(keys).size).toBe(keys.length);
 });
 
-test("marking a night as run fills in what you have covered", async ({ page }) => {
+test("marking a session as run fills in what you have covered", async ({ page }) => {
   const planId = await runnableSession(page);
   await page.goto(`/hub/#/plan/${planId}`);
 
@@ -2209,9 +2209,9 @@ test("marking a night as run fills in what you have covered", async ({ page }) =
   // The rucking session covers ruck and maul, evasion and game sense, so the
   // three it does not touch are the ones a coach needs pointing out.
   await expect(covered).toHaveCount(3);
-  await expect(page.locator(".coverage")).toContainText("1 night");
+  await expect(page.locator(".coverage")).toContainText("1 session");
 
-  // Undoing it takes the night back out.
+  // Undoing it takes the session back out.
   await page.goto(`/hub/#/plan/${planId}`);
   await page.locator("[data-unrun]").click();
   await expect(page.locator("#plan-ran")).toBeVisible();

@@ -82,7 +82,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
               },
               {
                 lead: "Soft grass only.",
-                text: "If the pitch is frozen or baked hard, do something else that night",
+                text: "If the pitch is frozen or baked hard, do something else that day",
               },
               {
                 lead: "Contact below the base of the sternum.",
@@ -193,7 +193,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
         blocks: [
           {
             text:
-              "Pick three of these and use the same three all night. A child who hears seven " +
+              "Pick three of these and use the same three all session. A child who hears seven " +
               "cues hears none of them.",
           },
           {
@@ -783,7 +783,7 @@ export const COACHING_GUIDES: CoachingGuide[] = [
         question: "How long should we spend on scrums in a session?",
         answer:
           "Ten minutes, early on while they're fresh, once a fortnight is plenty at U10. It's a " +
-          "restart, so the rest of the evening is better spent on what happens once the ball " +
+          "restart, so the rest of the session is better spent on what happens once the ball " +
           "comes out of it.",
       },
     ],

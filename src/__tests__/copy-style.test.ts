@@ -510,9 +510,18 @@ describe("prose rhythm", () => {
 
 /**
  * Nobody's week looks the same. One club trains on a Tuesday, the next on a
- * Thursday, and plenty of minis play their rugby on a Saturday morning rather
- * than a Sunday. Copy naming the day is copy that is wrong for whoever is
- * reading it, so it says training or match day instead.
+ * Thursday. Plenty of minis play their rugby on a Saturday morning rather than
+ * a Sunday, and a squad that trains at ten reads "I ran this tonight" or "a
+ * night on rucking" as somebody else's week. So copy names no day and no
+ * night: it says training, a session or match day instead.
+ *
+ * Morning is the exception, because a festival genuinely is one and that is how
+ * Regulation 15 gets explained. It describes a match rather than assuming when
+ * this particular club trains.
+ *
+ * An id is not copy. `preset-u7-games-night` is a route a coach may have
+ * bookmarked, so the words in it are held still rather than tidied, which is
+ * what the hyphen in the lookbehind is for.
  *
  * Comments are exempt, so the files are read with theirs blanked out. A note to
  * ourselves about a coach's week is not something a coach reads, which is also
@@ -520,7 +529,7 @@ describe("prose rhythm", () => {
  * nothing but notes to ourselves.
  */
 describe("no day of the week", () => {
-  const DAY = /\b(mon|tues|wednes|thurs|fri|satur|sun)day/i;
+  const WHEN = /(?<![-\w])((mon|tues|wednes|thurs|fri|satur|sun)day|tonight|nights?|evenings?)\b/i;
   const NOTES = /^(docs|supabase)\/|^CLAUDE\.md$/;
 
   /** Source with its comments blanked, newlines kept so line numbers hold. */
@@ -533,13 +542,13 @@ describe("no day of the week", () => {
       .split("\n");
   }
 
-  it("names no day of the week", () => {
+  it("names no day of the week and no night", () => {
     const named: string[] = [];
     for (const path of SOURCES.filter((path) => !NOTES.test(path))) {
       copyOnly(path).forEach((line, i) => {
-        if (DAY.test(line)) named.push(`${path}:${i + 1}: ${line.trim()}`);
+        if (WHEN.test(line)) named.push(`${path}:${i + 1}: ${line.trim()}`);
       });
     }
-    expect(named, `say training or match day instead:\n${named.join("\n")}`).toEqual([]);
+    expect(named, `say training, a session or match day instead:\n${named.join("\n")}`).toEqual([]);
   });
 });

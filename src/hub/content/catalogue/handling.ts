@@ -816,7 +816,7 @@ export const HANDLING: Drill[] = [
     equipment: [{ item: "cone", qty: 4 }, { item: "ball", qty: 2 }],
     setup: "A ball lying still on the grass five metres in front of a short queue.",
     howItRuns:
-      "Run onto the ball, pick it up without stopping, score at the far cones. Then the same with the ball rolling. More minis games are decided by a loose ball than by anything anybody passes, yet nobody ever puts a ball on the floor at training on purpose. Eight goes each. The word all night is early: get low two strides out rather than bending at the last second.",
+      "Run onto the ball, pick it up without stopping, score at the far cones. Then the same with the ball rolling. More minis games are decided by a loose ball than by anything anybody passes, yet nobody ever puts a ball on the floor at training on purpose. Eight goes each. The word all session is early: get low two strides out rather than bending at the last second.",
     coachingPoints: [
       "Get low early. Bend your knees, not just your back",
       "Little fingers together underneath it, scoop it up into your chest",
