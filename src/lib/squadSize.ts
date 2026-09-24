@@ -13,6 +13,20 @@
  */
 const KEY = "equalplay_age_group";
 
+/**
+ * The grades a coach says they take, as against the one they are looking at.
+ *
+ * A volunteer with two children often has two teams. Before this the app
+ * held one grade in the catalogue's filter and another everywhere else without
+ * ever saying so. One list here, one active grade in `KEY` above, so every
+ * surface reads the same pair.
+ *
+ * In this module rather than in `hub/` for the reason the active grade is:
+ * match day may import nothing from the hub and already reads the grade next
+ * door to decide how many a side a new squad starts on.
+ */
+const LIST_KEY = "equalplay_age_groups";
+
 export const PLAYERS_A_SIDE: Record<string, number> = {
   u7: 4,
   u8: 6,
@@ -45,6 +59,31 @@ export function storeAgeGroup(age: string): void {
     localStorage.setItem(KEY, age);
   } catch {
     // Nothing to do. The picker simply reappears next time.
+  }
+}
+
+/**
+ * Every grade this browser says it coaches, in the order they were added.
+ *
+ * Hand-editable like everything else in storage, so anything that is not a
+ * list of strings reads as nothing rather than taking a screen down.
+ */
+export function storedAgeGroups(): string[] {
+  try {
+    const raw = localStorage.getItem(LIST_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((age) => typeof age === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function storeAgeGroups(ages: string[]): void {
+  try {
+    localStorage.setItem(LIST_KEY, JSON.stringify(ages));
+  } catch {
+    // Same as above. The list falls back to whichever grade is active.
   }
 }
 

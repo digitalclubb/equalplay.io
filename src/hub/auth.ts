@@ -1,7 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase.js";
 import { isAgeGroup, type AgeGroup } from "./content/types.js";
-import { chooseAge } from "./ageChoice.js";
+import { chooseAge, mergeCoachedAges, setCoachedAges } from "./ageChoice.js";
 import { currentRoute } from "./router.js";
 
 /**
@@ -13,7 +13,16 @@ import { currentRoute } from "./router.js";
 export interface Profile {
   name: string;
   club: string;
+  /** The grade the app is set to. One of `ageGroups`. */
   ageGroup: AgeGroup;
+  /**
+   * Every grade this coach takes. A volunteer with two children often has two
+   * teams. Kept in user metadata beside the rest of the profile rather than in
+   * a table, the same as everything else here, so it needs no migration: an
+   * account registered before this reads back as a list of the one grade it
+   * has.
+   */
+  ageGroups: AgeGroup[];
 }
 
 const PROFILE_CACHE_KEY = "equalplay_hub_profile";
@@ -60,10 +69,18 @@ export function profileFromUser(user: User | null): Profile | null {
   if (!user) return null;
   const meta = user.user_metadata ?? {};
   if (!isAgeGroup(meta.age_group)) return null;
+  // The list is what a coach has told us since. Anything that is not one of the
+  // six is dropped rather than trusted: this is user-writable metadata.
+  const listed: AgeGroup[] = Array.isArray(meta.age_groups)
+    ? meta.age_groups.filter(isAgeGroup)
+    : [];
+  const ageGroups = listed.length > 0 ? [...new Set(listed)] : [meta.age_group];
   return {
     name: typeof meta.name === "string" ? meta.name : "",
     club: typeof meta.club === "string" ? meta.club : "",
-    ageGroup: meta.age_group,
+    // The registered grade, unless the coach has since stopped taking it.
+    ageGroup: ageGroups.includes(meta.age_group) ? meta.age_group : ageGroups[0],
+    ageGroups,
   };
 }
 
@@ -96,7 +113,25 @@ export function cacheProfile(userId: string, profile: Profile): void {
   // This is the one funnel every signed-in grade goes through, so it is where
   // the local answer is kept in step. Without it a coach who registered as U10
   // without ever meeting the age picker gets match day's bare default.
-  chooseAge(profile.ageGroup);
+  //
+  // A coach this device has already seen keeps what they have added to it: the
+  // switcher writes locally so it works at a pitch, so the metadata has not
+  // heard about it yet and replacing would undo the switch the moment the tab
+  // reloaded.
+  //
+  // Anybody else and the account decides, outright. Storage holds a grade from
+  // whoever used this browser last, or from the `?age=` a static page handed
+  // it. Merging let that outrank the one the coach actually registered:
+  // landing from a U12 page then signing in as a U8 coach kept the app on U12
+  // and put ruck drills in front of them. The age gate is a safety feature, so
+  // the only thing allowed to answer for a coach we have not met is their own
+  // account.
+  if (cachedProfile()?.userId === userId) {
+    mergeCoachedAges(profile.ageGroups);
+  } else {
+    setCoachedAges(profile.ageGroups);
+    chooseAge(profile.ageGroup);
+  }
   try {
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ userId, profile }));
   } catch {
@@ -125,7 +160,11 @@ export function onAuthChange(fn: (session: Session | null) => void): void {
 
 // ---- Actions ----
 
-export interface SignUpFields extends Profile {
+/**
+ * Registering asks for one grade, not the set. A coach adds the second one
+ * from the switcher later, if they take one, so the form stays four fields.
+ */
+export interface SignUpFields extends Omit<Profile, "ageGroups"> {
   email: string;
   password: string;
 }
@@ -187,6 +226,7 @@ export async function signUp(
         name: fields.name.trim(),
         club: fields.club.trim(),
         age_group: fields.ageGroup,
+        age_groups: [fields.ageGroup],
       },
       // Exactly what `supabase/README.md` has on the allow list, nothing added.
       // Where the coach was headed is in storage instead. See `rememberGate`.
@@ -228,10 +268,15 @@ export async function updateProfile(profile: Profile): Promise<void> {
       name: profile.name.trim(),
       club: profile.club.trim(),
       age_group: profile.ageGroup,
+      age_groups: profile.ageGroups,
     },
   });
   if (error) throw error;
   if (data.user) cacheProfile(data.user.id, profile);
+  // After the cache, which merges. A save is the coach saying this is the set,
+  // so a grade they have just unticked has to go rather than being folded back
+  // in off this device's own list.
+  setCoachedAges(profile.ageGroups);
 }
 
 /**

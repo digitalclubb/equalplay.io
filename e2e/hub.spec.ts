@@ -387,11 +387,151 @@ test("an account with no age grade lands on the setup form", async ({ page }) =>
   await seedSession(page, "nonsense", false);
   await page.goto("/hub/");
   await expect(page.locator("#hub-view h2").first()).toHaveText("Finish setting up");
-  await expect(page.locator("#acc-age")).toHaveValue("");
+  // Ticks rather than one choice, because a coach may take two teams. Nothing
+  // ticked on the setup form: the grade is the one thing the app cannot guess,
+  // and there is no drill it can safely show until it has been told.
+  await expect(page.locator("#acc-age input[name=ageGroups]")).toHaveCount(6);
+  await expect(page.locator("#acc-age input[name=ageGroups]:checked")).toHaveCount(0);
   // The nav is the same six tabs whatever state you are in, because it is one
   // product. What changes is where a tab lands you, not whether it exists.
   await expect(page.locator(".hub-tab")).toHaveCount(6);
   await expect(page.locator("#sign-out")).toBeVisible();
+});
+
+test("the age grade switches the whole app, not one tab", async ({ page }) => {
+  // The failure this replaces: the drill list held a grade in a filter that
+  // was never written down. A coach with a U7 and a U10 switched on Drills,
+  // walked to Sessions and was offered the other grade's sessions, with match
+  // day starting a squad for a third. Nothing on any screen said why.
+  await seedSession(page, "u10", true);
+  await page.goto("/hub/#/catalogue");
+  await expect(page.locator(".hub-count")).toContainText("U10");
+
+  await page.locator("#f-age").selectOption("u7");
+  await settled(page);
+  await expect(page.locator(".hub-count")).toContainText("U7");
+
+  await page.goto("/hub/#/plans");
+  await expect(page.locator(".hub-lede").first()).toContainText("U7");
+  await expect(page.locator("#plans-age")).toHaveValue("u7");
+
+  // Match day is the other entry and reads the same answer to decide how many
+  // a side a new squad starts on. U7 is four.
+  await page.goto("/planner");
+  await expect(page.locator("#players-per-team")).toHaveValue("4");
+});
+
+test("switching on one tab is still switched on the other", async ({ page }) => {
+  // The drill list kept a note of the grade it was last seeded with rather
+  // than reading the one the app is on. Switching on Sessions left the note
+  // matching while the drills underneath it stayed on the grade before last,
+  // so walking back here showed the wrong grade with the right label on it.
+  //
+  // Walked by tapping the tabs rather than by `goto`, which is the whole point
+  // of the test: the catalogue's filters are module state, and a `goto` reloads
+  // the document and wipes exactly the state this is about. The first go at
+  // this test used `goto` and passed with the bug still in.
+  await seedSession(page, "u10", true);
+  await page.goto("/hub/#/catalogue");
+  await page.locator('.hub-tab[data-route="plans"]').click();
+  await settled(page);
+
+  await page.locator("#plans-age").selectOption("u9");
+  await settled(page);
+  await expect(page.locator(".hub-lede").first()).toContainText("U9");
+
+  await page.locator('.hub-tab[data-route="catalogue"]').click();
+  await settled(page);
+  await expect(page.locator("#f-age")).toHaveValue("u9");
+  await expect(page.locator(".hub-count")).toContainText("U9");
+});
+
+test("a grade added at a pitch survives the tab being reloaded", async ({ page }) => {
+  // The switch is local first, so it works with no signal. The profile's own
+  // list lands a moment later and used to replace it, which put a coach back
+  // on the grade they registered with the first time anything reloaded. It
+  // merges now. Replacing is what a save on the account page does.
+  await seedSession(page, "u10", true);
+  await page.goto("/hub/#/catalogue");
+  await page.locator("#f-age").selectOption("u7");
+  await settled(page);
+
+  await page.reload();
+  await expect(page.locator(".hub-count")).toContainText("U7");
+
+  // Both grades are the coach's now, so the switcher offers them together
+  // rather than making them hunt through the six again.
+  const groups = await page.locator("#f-age optgroup").evaluateAll((all) =>
+    all.map((group) => ({
+      label: group.getAttribute("label"),
+      ages: [...group.children].map((option) => option.textContent),
+    })),
+  );
+  expect(groups).toEqual([
+    { label: "You coach", ages: ["U7", "U10"] },
+    { label: "Add another grade", ages: ["U8", "U9", "U11", "U12"] },
+  ]);
+});
+
+test("a grade left in storage cannot outrank the account's own", async ({ page }) => {
+  // The age gate is a safety feature, so the only thing allowed to answer for a
+  // coach this device has not met is their own account. A static page hands the
+  // app a grade through `?age=`, and the coach before last leaves theirs in the
+  // same key. Folding those in with the profile let a U12 seed survive a U8
+  // coach signing in, which put ruck and scrum drills in front of them.
+  await page.addInitScript(() => {
+    if (localStorage.getItem("__seeded")) return;
+    localStorage.clear();
+    localStorage.setItem("__seeded", "1");
+    localStorage.setItem("equalplay_hub_welcomed", "1");
+    // What `takeUrlIntent` writes for a coach arriving from a U12 drills page.
+    localStorage.setItem("equalplay_age_group", "u12");
+    localStorage.setItem("equalplay_age_groups", JSON.stringify(["u12"]));
+    localStorage.setItem(
+      "sb-example-auth-token",
+      JSON.stringify({
+        access_token: "stub",
+        token_type: "bearer",
+        expires_in: 360_000,
+        expires_at: Math.floor(Date.now() / 1000) + 360_000,
+        refresh_token: "stub",
+        user: {
+          id: "00000000-0000-4000-8000-000000000042",
+          aud: "authenticated",
+          role: "authenticated",
+          email: "u8@example.com",
+          created_at: "2026-08-17T00:00:00Z",
+          app_metadata: {},
+          user_metadata: { name: "Coach", club: "A club", age_group: "u8", age_groups: ["u8"] },
+        },
+      }),
+    );
+  });
+
+  await page.goto("/hub/#/catalogue");
+  await expect(page.locator("body[data-signed-in=true]")).toBeAttached();
+  await expect(page.locator(".hub-count")).toContainText("U8");
+  await expect(page.locator("#f-age")).toHaveValue("u8");
+  // Nothing the grade may not do, by the drill rather than by the word: the
+  // theme chips name every theme at every grade on purpose.
+  await expect(page.locator(".drill-card-title", { hasText: "Two second ruck" })).toHaveCount(0);
+  await expect(page.locator(".drill-card-title", { hasText: "Front on tackle" })).toHaveCount(0);
+});
+
+test("a coach with no account can change grade too", async ({ page }) => {
+  // Signed out there was no way at all. The picker ran once and the only other
+  // control wrote nothing down, so a coach who tapped U10 in September was
+  // stuck with it on Sessions for good.
+  await signedOut(page, "u10");
+  await page.goto("/hub/#/plans");
+  await expect(page.locator(".hub-lede").first()).toContainText("U10");
+
+  await page.locator("#plans-age").selectOption("u8");
+  await settled(page);
+  await expect(page.locator(".hub-lede").first()).toContainText("U8");
+
+  await page.goto("/hub/#/catalogue");
+  await expect(page.locator(".hub-count")).toContainText("U8");
 });
 
 test("the first-run panel appears once then stays gone", async ({ page }) => {

@@ -4,7 +4,7 @@ import { DRILLS, drillPath } from "../hub/content/drills.js";
 import { presetsForAge } from "../hub/content/presets.js";
 import { renderPresetList } from "../hub/views/planner.js";
 import { readFileSync } from "node:fs";
-import { chooseAge, chosenAge } from "../hub/ageChoice.js";
+import { chooseAge, chosenAge, coachedAges } from "../hub/ageChoice.js";
 
 const USER = "00000000-0000-4000-8000-000000000001";
 
@@ -43,18 +43,41 @@ describe("catalogue filter state", () => {
     expect(titles()).not.toContain("Two second ruck");
   });
 
-  it("keeps a deliberate filter change while the profile is unchanged", () => {
+  it("switches the whole app rather than this list", () => {
+    // The grade is not the catalogue's to keep. It used to set the filter here
+    // and nothing else, so a coach could leave Drills showing U8 while
+    // Sessions offered U12 and match day started a twelve a side squad, with
+    // nothing on any screen saying why.
+    localStorage.clear();
+    chooseAge("u12");
     renderCatalogue(container, "u12", USER);
-    const select = container.querySelector<HTMLSelectElement>("#f-age");
-    if (!select) throw new Error("age filter missing");
 
+    const select = container.querySelector<HTMLSelectElement>("#f-age");
+    if (!select) throw new Error("age switcher missing");
     select.value = "u8";
     select.dispatchEvent(new Event("change"));
-    expect(shownAge()).toBe("u8");
 
-    // Re-render on the same profile. The browsing choice must survive
-    renderCatalogue(container, "u12", USER);
     expect(shownAge()).toBe("u8");
+    // The one value every other tab reads when it next renders.
+    expect(chosenAge()).toBe("u8");
+    // And the grade switched to is now one of the coach's, so the switcher
+    // offers it next time without them having to find it again.
+    expect(coachedAges()).toEqual(["u8", "u12"]);
+  });
+
+  it("takes the grade from outside on every render", () => {
+    // Switching on the sessions page and walking back here has to land on the
+    // grade that was switched to. It did not: the list kept a note of what it
+    // was last seeded with, the note matched, and the drills underneath it
+    // were still filtered to the grade before last.
+    localStorage.clear();
+    chooseAge("u12");
+    renderCatalogue(container, "u12", USER);
+
+    chooseAge("u8");
+    renderCatalogue(container, "u8", USER);
+    expect(shownAge()).toBe("u8");
+    expect(titles()).not.toContain("Two second ruck");
   });
 
   it("never lists a contact drill after re-seeding down to a tag age grade", () => {

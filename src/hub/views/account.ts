@@ -10,6 +10,7 @@ import {
   type Profile,
 } from "../auth.js";
 import { AGE_GROUPS, AGE_GROUP_LABELS, RULES_OF_PLAY, isAgeGroup } from "../content/types.js";
+import { activeAge, coachedAges } from "../ageChoice.js";
 import { ageRulesLink } from "../../lib/rulesLink.js";
 import { canInstall, isInstalled, promptInstall, savedForOffline } from "../install.js";
 
@@ -24,9 +25,24 @@ export function renderAccount(
   profile: Profile | null,
   email: string,
 ): void {
+  // Ticks rather than a single choice. A volunteer with two children often
+  // takes two teams. Until this the app could only hold one: the second
+  // grade lived in a filter on the drill list that nothing else could see.
+  // The list this device holds, not the one in the metadata. They differ by
+  // design: the switcher writes locally so it works at a pitch, so the
+  // account metadata catches up on the next save. Reading the metadata here
+  // would show a coach only the grade they registered with and then drop the
+  // one they added, the moment they saved anything at all.
+  // Nothing ticked on the setup form. `coachedAges` falls back to the active
+  // grade, which is the one key sign-out deliberately leaves alone, so on a
+  // club tablet this arrived with the last coach's grade already ticked and
+  // savable without a glance.
+  const taken = profile ? coachedAges() : [];
   const options = AGE_GROUPS.map(
     (g) =>
-      `<option value="${g}"${g === profile?.ageGroup ? " selected" : ""}>${AGE_GROUP_LABELS[g]}</option>`,
+      `<label class="age-set-option"><input type="checkbox" name="ageGroups" value="${g}"${
+        taken.includes(g) ? " checked" : ""
+      } /> ${esc(AGE_GROUP_LABELS[g])}</label>`,
   ).join("");
 
   container.innerHTML = `
@@ -53,21 +69,24 @@ export function renderAccount(
           <input id="acc-club" name="club" type="text" autocomplete="organization" maxlength="120" aria-describedby="acc-club-error" value="${esc(profile?.club ?? "")}" />
           <p class="hub-error" id="acc-club-error" role="alert" hidden></p>
         </div>
-        <div class="hub-field">
-          <label for="acc-age">Age group you coach</label>
-          <select id="acc-age" name="ageGroup" aria-describedby="acc-age-error">
-            ${profile ? "" : '<option value="">Choose…</option>'}${options}
-          </select>
+        <fieldset class="age-set" id="acc-age" aria-describedby="acc-age-error">
+          <legend>Age groups you coach</legend>
+          <p class="hub-fineprint">
+            Tick every team you take. You pick which one you are looking at on Drills
+            and on Sessions.
+          </p>
+          <div class="age-set-options">${options}</div>
           <p class="hub-error" id="acc-age-error" role="alert" hidden></p>
-          ${
-            profile
-              ? `<p class="hub-fineprint">${ageRulesLink(
-                  AGE_GROUP_LABELS[profile.ageGroup],
-                  RULES_OF_PLAY[profile.ageGroup],
-                )}</p>`
-              : ""
-          }
-        </div>
+          ${taken
+            .map(
+              (age) =>
+                `<p class="hub-fineprint">${ageRulesLink(
+                  AGE_GROUP_LABELS[age],
+                  RULES_OF_PLAY[age],
+                )}</p>`,
+            )
+            .join("")}
+        </fieldset>
         <button type="submit" class="hub-btn hub-btn-primary">
           ${profile ? "Save changes" : "Save and continue"}
         </button>
@@ -130,10 +149,14 @@ export function renderAccount(
   accountForm?.addEventListener("submit", (event) => {
     event.preventDefault();
     const data = new FormData(accountForm);
+    const ageGroups = data.getAll("ageGroups").map(String).filter(isAgeGroup);
+    const current = activeAge();
     const fields = {
       name: String(data.get("name") ?? ""),
       club: String(data.get("club") ?? ""),
-      ageGroup: String(data.get("ageGroup") ?? ""),
+      // The grade the app stays on where it is still one they take, so saving
+      // the form does not move a coach off the team they were working on.
+      ageGroup: current && ageGroups.includes(current) ? current : (ageGroups[0] ?? ""),
     };
     const errors = validateProfile(fields);
     showFieldErrors(accountForm, {
@@ -147,7 +170,7 @@ export function renderAccount(
 
     void (async () => {
       try {
-        await updateProfile({ name: fields.name, club: fields.club, ageGroup });
+        await updateProfile({ name: fields.name, club: fields.club, ageGroup, ageGroups });
         showToast("Saved.");
       } catch (error) {
         showToast(message(error));

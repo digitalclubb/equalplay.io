@@ -82,8 +82,8 @@ a game advanced was only caught by `"joined player stays on field after game adv
 
 ### Tests worth knowing about
 
-884 unit and integration tests across 26 files, 204 Playwright tests. Most are ordinary.
-These thirteen are load bearing and a failure means the code is wrong, not the test:
+897 unit and integration tests across 27 files, 211 Playwright tests. Most are ordinary.
+These fourteen are load bearing and a failure means the code is wrong, not the test:
 
 | File | What it protects |
 | --- | --- |
@@ -99,6 +99,7 @@ These thirteen are load bearing and a failure means the code is wrong, not the t
 | `playingTime.test.ts` | The Half Game Rule check, which is the only verdict the product gives against an RFU regulation. A late arrival measured against the rugby they were there for rather than the whole day, an absent player left out of it, a squad too big for any rotation to clear the floor |
 | `drill-pages.test.ts` | The age gate on the one surface nobody signs in for. No theme page below the grade Reg 15 allows it at, no drill on a grade's page the grade cannot do, no lineout claim. Plus the sitemap against what the build emits in both directions, with every generated page reachable by a link rather than only by the sitemap |
 | `questions.test.ts` | The one content in the hub with no age gate in front of it. Every answer names the grades it holds for, in the data, in the app and on the page. A themed topic held to `THEME_MIN_AGE`, tag answers held to U8, no lineout claim, plus the FAQ structured data matching the visible answer word for word |
+| `ageChoice.test.ts` | The grade the app is set to, plus the grades a coach takes. Everything filters on the answer, so two answers at once is the failure it exists to stop. A list of one migrating out of the old single key, a grade dropped landing somewhere real, storage edited by hand |
 | `diagram.test.ts` | A drill diagram agrees with the drill. Cone counts against the kit list, dimensions against `space`, nothing outside the pitch, no fixed colour but the primary, no contest claimed that the drill has not got |
 
 `rotation.test.ts`, `matchday-scenarios.test.ts` and `algorithm-audit.test.ts` cover the
@@ -106,7 +107,7 @@ rotation planner and predate the hub.
 
 ### End to end
 
-`pnpm test:e2e` is 204 tests across four files: `matchday` (16), `home` (11), `hub` (145)
+`pnpm test:e2e` is 211 tests across four files: `matchday` (16), `home` (11), `hub` (152)
 and `contrast` (32). `contrast.spec.ts` is the load-bearing one of those. It measures
 text and control contrast in both colour schemes, plus a hovered nav tab at both nav
 widths, because fixed brand colours sitting next to tokens that flip is a mistake that
@@ -269,6 +270,7 @@ src/
                           # gamesense, tackle, breakdown, setpiece, kicking
     views/
       agePicker.ts        # First run, before any account. Seeds the age grade
+      ageSwitcher.ts      # The grade control, worn by Drills and by Sessions
       authView.ts         # Sign in, register, reset, gate reasons, password reveal
       account.ts          # Details, password, sign out, delete. Also the setup form
       catalogue.ts        # Drill list, filters, favourites, drill page
@@ -322,6 +324,59 @@ Each team has independent state (players, plan, events, currentGame). Teams are 
 **Drill content is static data in `src/hub/content/`, not a database.** The service
 worker then makes the whole catalogue readable at a wet pitch with no signal, which is
 the only place it gets used. Content changes ship as a deploy and get reviewed as a diff.
+
+**The age grade is context, not a filter, so there is one of it.** Which grade
+the app is on decides what is safe to show, which ready-made sessions exist,
+which theme the term plan opens on, which RFU appendix gets linked plus how
+many a side match day starts a new squad on. It lived in two places: a filter
+the catalogue kept to itself, plus the profile every other tab read. Switching
+on Drills left Sessions offering another grade and match day starting a squad
+for a third, with nothing on any screen saying why. Signed out the stored grade
+could never be changed at all, because the picker runs once and the catalogue's
+control wrote nothing down.
+
+`activeAge()` in `hub/ageChoice.ts` is the one answer now, off the same key in
+`lib/squadSize.ts` that match day already read. The catalogue takes it from
+outside on every render and drops its other filters when it has moved, compared
+against what the list is actually filtered to rather than against a note of
+what it was last seeded with. A note is one more thing to keep in step. It
+was already out of step.
+
+**A coach takes grades, plural.** A volunteer with two children often has two
+teams, which is the case the single grade could not hold. `coachedAges()` is
+the list, the switcher offers those first then the rest under a heading saying
+what picking one does. Picking from either adds it. Offering only the
+grades already claimed would be the tidier list and the wrong one: a coach
+going up in September needs a grade that is not on it yet, so the other place
+to add one is the account page, which a signed-out coach cannot reach.
+
+Nothing that persists had to change for it. A saved session already carries the
+grade it was written for and prints it only when it differs from the one being
+browsed, favourites are age gated on read, so a coach working across two grades
+already had a coherent list. Only the switch was missing.
+
+**The switch is local first, like everything else here.** It writes storage and
+the profile catches up on the next account save, because it gets tapped at a
+pitch. So a profile landing merges its list in rather than replacing it: a
+refresh runs on every load and replacing put a coach back on the grade they
+registered with the moment anything reloaded. A save on the account page
+replaces, because that is the one place a coach says they have stopped taking a
+grade, where a merge would fold it straight back in.
+
+What that costs is a grade dropped on one device coming back from another: the
+merge unions, so a phone still holding U7 locally re-adds it on the next save.
+Tombstones are what `plans.ts` uses against exactly this and they are not worth
+a list of six on a screen a coach opens twice a season. A grade added from the
+switcher also reaches the metadata only on the next account save, so a brand
+new browser starts from the registered one. Both are one tap to put right.
+
+**It is not in the chrome.** A control that governs every screen belongs in the
+chrome, which is where the colour switch went for the same reason. This one
+does not fit: there are 14px between the logo and that switch at 320px, so a
+second control needs a second row on the phone bar on every screen forever, for
+a tap most coaches make twice a season. It sits where the grade is already
+printed in words instead, on Drills beside the search where it has always been
+and on Sessions at the end of the section head. Both write the one value.
 
 **Age gating is a safety feature, not a filter.** `THEME_MIN_AGE` in
 `src/hub/content/types.ts` records the earliest RFU age grade at which each theme is

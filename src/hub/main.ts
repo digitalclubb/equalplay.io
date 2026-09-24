@@ -36,7 +36,7 @@ import { transition } from "../lib/motion.js";
 import { navHtml } from "../lib/nav.js";
 import { wireScheme } from "../lib/theme.js";
 import { manageServiceWorker } from "../lib/sw.js";
-import { chooseAge, chosenAge } from "./ageChoice.js";
+import { activeAge, chooseAge, chosenAge, clearCoachedAges } from "./ageChoice.js";
 import { isAgeGroup } from "./content/types.js";
 import { renderAgePicker } from "./views/agePicker.js";
 /*
@@ -228,7 +228,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // session is.
     if (route.name === "guide" || route.name === "answers") {
       clearPrintable();
-      const reading = profile?.ageGroup ?? chosenAge() ?? undefined;
+      const reading = activeAge() ?? undefined;
       // Both modules are lazy, so this paints a tick later than the rest of the
       // switch. `stillOn` for the same reason every other async path here has
       // it. Every view renders into the same node. On a wet pitch the coach can
@@ -254,7 +254,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // Ahead of the setup form for the same reason it is ahead of the age picker
     // signed out: being asked which grade you coach is no answer to a link.
     if (route.name === "shared" && route.param) {
-      renderSharedPlan(view, route.param, profile?.ageGroup);
+      renderSharedPlan(view, route.param, activeAge() ?? profile?.ageGroup);
       return;
     }
     if (!profile) {
@@ -264,7 +264,11 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       return;
     }
 
-    const ctx: PlannerContext = { userId: userId ?? "", ageGroup: profile.ageGroup };
+    // The grade the app is on rather than the one on the profile. A coach who
+    // takes two teams switches between them all evening. The switch is
+    // local first because it has to work at a pitch. `activeAge` falls back to
+    // the profile when storage has nothing usable in it.
+    const ctx: PlannerContext = { userId: userId ?? "", ageGroup: activeAge() ?? profile.ageGroup };
 
     // The print sheet only belongs to the plan editor; leave it behind and a
     // Ctrl+P anywhere else would print the last session instead of the page
@@ -318,7 +322,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         go("plans");
         break;
       default:
-        renderCatalogue(view, profile.ageGroup, userId ?? "", route.param, route.rest);
+        renderCatalogue(view, activeAge() ?? profile.ageGroup, userId ?? "", route.param, route.rest);
     }
   }
 
@@ -339,7 +343,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
     // picker, because being asked which grade you coach is no answer to a link,
     // and the session says which grade it was written for anyway.
     if (route.name === "shared" && route.param) {
-      renderSharedPlan(view, route.param, chosenAge() ?? undefined);
+      renderSharedPlan(view, route.param, activeAge() ?? undefined);
       return;
     }
     // The list of starred drills needs an account to exist. A drill under it
@@ -348,7 +352,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       renderAuth(view, "signup", GATE_REASON.favourites);
       return;
     }
-    const chosen = chosenAge();
+    const chosen = activeAge();
     // Reading a ready-made session is not something that has to persist, so it
     // is not something the account gates. Keeping one is, which is what the
     // button at the foot of it asks for. Both still need the grade, because a
@@ -420,6 +424,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
       clearLocalPlans();
       clearLocalFavourites();
       clearLocalRuns();
+      clearCoachedAges();
       resetPlanner();
       resetCatalogue();
       resetQuestions();
@@ -430,6 +435,7 @@ function start(view: HTMLElement, nav: HTMLElement): void {
         clearLocalPlans();
         clearLocalFavourites();
         clearLocalRuns();
+        clearCoachedAges();
         resetPlanner();
         resetCatalogue();
         resetQuestions();

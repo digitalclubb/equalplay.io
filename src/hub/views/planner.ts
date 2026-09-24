@@ -6,6 +6,8 @@ import { currentRoute, go, stillOn } from "../router.js";
 import { DRILLS, filterDrills, findDrill, isAvailableAt } from "../content/drills.js";
 import { listFrame, renderDiagram, renderSequence } from "../content/diagram.js";
 import { PRESETS, presetsForAge } from "../content/presets.js";
+import { ageSwitcher, wireAgeSwitcher } from "./ageSwitcher.js";
+import { activeAge } from "../ageChoice.js";
 import {
   AGE_GROUP_LABELS,
   THEMES,
@@ -185,6 +187,12 @@ export const SEARCH_DEBOUNCE_MS = 140;
 
 export function renderPlanList(container: HTMLElement, ctx: PlannerContext): void {
   const draw = (plans: StoredPlan[], state: "loading" | "synced" | "offline"): void => {
+    // The grade as well as the route. Both syncs on this page resolve into a
+    // `draw` that closed over the grade the page was opened at. Switching
+    // grade does not change the route, so `stillOn` waves a stale one through.
+    // A sync landing after the switch would repaint the sessions, the lede plus
+    // the switcher itself at the grade the coach has just left.
+    if (activeAge() !== ctx.ageGroup) return;
     const presets = presetsForAge(ctx.ageGroup);
     const age = AGE_GROUP_LABELS[ctx.ageGroup];
     const view = planView();
@@ -198,6 +206,7 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
       <section class="hub-section">
         <div class="section-head">
           <h2>Start a session</h2>
+          ${ageSwitcher(ctx.ageGroup, "plans-age", "shown")}
         </div>
         <p class="hub-lede">
           Take a ready-made ${esc(age)} session and change whatever you like, or start from an
@@ -276,6 +285,16 @@ export function renderPlanList(container: HTMLElement, ctx: PlannerContext): voi
         transition("filter", () => draw(plans, state));
       });
     }
+
+    // The whole page again rather than a redraw, because the grade decides
+    // which ready-made sessions exist, which theme the term plan opens on and
+    // what a new session is born as. The coach's own sessions are not filtered
+    // by it: a plan keeps the grade it was written for and says so when it
+    // differs, which is what makes two teams work on one list.
+    wireAgeSwitcher(container, "plans-age", () => {
+      const age = activeAge();
+      if (age) transition("filter", () => renderPlanList(container, { ...ctx, ageGroup: age }));
+    });
   };
 
   // Paint from the local mirror first so an offline coach sees their plans at once
@@ -1644,11 +1663,16 @@ export function renderPresetView(
 export function renderPresetList(container: HTMLElement, ageGroup: AgeGroup): void {
   const presets = presetsForAge(ageGroup);
   const age = AGE_GROUP_LABELS[ageGroup];
+  const redraw = (): void => {
+    const next = activeAge();
+    if (next) transition("filter", () => renderPresetList(container, next));
+  };
 
   container.innerHTML = `
     <section class="hub-section">
       <div class="section-head">
         <h2>Start a session</h2>
+        ${ageSwitcher(ageGroup, "plans-age", "shown")}
       </div>
       <p class="hub-lede">
         Ready-made ${esc(age)} sessions, laid out in the order they run. Open
@@ -1670,6 +1694,8 @@ export function renderPresetList(container: HTMLElement, ageGroup: AgeGroup): vo
       </p>
       <a class="hub-btn hub-btn-primary" href="#/join/plans">Set up an account</a>
     </section>`;
+
+  wireAgeSwitcher(container, "plans-age", redraw);
 }
 
 function wireRanIt(container: HTMLElement, ctx: PlannerContext, planId: string): void {

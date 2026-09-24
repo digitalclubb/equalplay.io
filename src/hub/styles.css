@@ -498,6 +498,81 @@ body {
    48 to match the chip row it sits beside. It never grows: a select holding
    four characters stretched across a phone was telling a coach to expect
    something much longer, which is the same rule `.hub-input-short` exists for. */
+/* The grade switcher. On the drill list it is the second thing in the filter
+   row, beside the search box, where it has always been and where it costs no
+   line of its own. On the sessions page there is no search box to pair with,
+   so it takes its label visibly and sits at the end of the section head.
+
+   `margin-inline-start: auto` pushes it to the far end of that head on a row
+   wide enough to hold both. The head already wraps, so on a phone it drops
+   under the heading and the margin does nothing. */
+.age-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2xs);
+}
+
+.section-head .age-switch {
+  margin-inline-start: auto;
+}
+
+.age-switch > label {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  /* It reads as one control with the select, so it does not take the weight a
+     form label carries. */
+  font-weight: var(--weight-normal);
+  white-space: nowrap;
+}
+
+/* The grades a coach takes, on the account page. Ticks rather than one choice,
+   because two children often means two teams. Wide enough for a thumb, wrapping
+   rather than scrolling, the same as the theme chips.
+
+   Deliberately not a `.hub-field`. That class is written for one text input, so
+   on a fieldset it handed every tick `width: 100%`, a 48px floor, a border and
+   a fill. `.hub-field label` also beat `.age-set-option` on specificity, which
+   laid the words out under their own box. The spacing `.hub-field` was wanted for is
+   three lines, which is cheaper than fighting the rest of it. */
+.age-set {
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--sp-md);
+}
+
+.age-set > legend {
+  padding: 0;
+  margin-bottom: var(--sp-3xs);
+  font-weight: var(--weight-semi);
+}
+
+.age-set-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2xs) var(--sp-sm);
+  margin: var(--sp-xs) 0;
+}
+
+.age-set-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2xs);
+  /* The row wraps between the six, never inside one of them. Six of these
+     across a 390px phone leaves about 50px each, which was enough to put "U7"
+     on a line under its own tick. */
+  white-space: nowrap;
+  /* The 44px the rest of the app holds a target to, so a tick is as easy to
+     hit as a button. */
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.age-set-option input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+
 .age-select {
   flex: 0 0 auto;
   /* px, because what this number is holding is the box rather than the words

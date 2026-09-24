@@ -109,7 +109,11 @@ describe("the account page says which state the device is in", () => {
   });
 
   const draw = (): void =>
-    renderAccount(container, { name: "Coach", club: "A club", ageGroup: "u10" }, "c@example.com");
+    renderAccount(
+      container,
+      { name: "Coach", club: "A club", ageGroup: "u10", ageGroups: ["u10"] },
+      "c@example.com",
+    );
 
   it("does not promise offline before it is true", () => {
     draw();

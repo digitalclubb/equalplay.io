@@ -480,9 +480,11 @@ describe("a shared session is the exception, and says so", () => {
 
   it("gives the reader's own grade to the view on both routes", () => {
     const main = readFileSync("src/hub/main.ts", "utf8");
-    // Signed in it comes off the profile, signed out off the age they picked.
-    expect(main).toContain("renderSharedPlan(view, route.param, profile?.ageGroup)");
-    expect(main).toContain("renderSharedPlan(view, route.param, chosenAge() ?? undefined)");
+    // The grade the app is on either way, which is the switcher's answer where
+    // there is one. Signed in it falls back to the profile, signed out there is
+    // nothing behind it to fall back to.
+    expect(main).toContain("renderSharedPlan(view, route.param, activeAge() ?? profile?.ageGroup)");
+    expect(main).toContain("renderSharedPlan(view, route.param, activeAge() ?? undefined)");
   });
 });
 

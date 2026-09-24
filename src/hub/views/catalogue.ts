@@ -18,6 +18,8 @@ import {
   type DrillFilter,
 } from "../content/drills.js";
 import { localPlans, syncPlans } from "../plans.js";
+import { ageSwitcher, wireAgeSwitcher } from "./ageSwitcher.js";
+import { activeAge } from "../ageChoice.js";
 import { addDrillToPlan, newPlanWithDrill, SEARCH_DEBOUNCE_MS } from "./planner.js";
 import { showToast } from "../../components/toast.js";
 import { listFrame, renderDiagram, renderSequence } from "../content/diagram.js";
@@ -77,14 +79,23 @@ function listRoute(): string {
  * and back out. A coach browsing U10 rucking should not lose that when they tap
  * a drill to read it.
  *
- * `seededFor` is what keeps the age gate honest across a profile change. Without
- * it, a coach who signs up as U12 by mistake and corrects it to U8 on the Account
- * page would come back to a catalogue still listing rucks and scrums. The very
- * thing content-age-gate.test.ts exists to prevent, defeated one layer above the
- * function it tests. Same story for a second coach signing in on a shared device.
+ * The grade is the exception. It is not this list's to keep: it is the one the
+ * whole app is set to, so it is taken from outside on every render and the rest
+ * of the filters are dropped whenever it has moved. Without that, a coach who
+ * signs up as U12 by mistake and corrects it to U8 on the account page comes
+ * back to a catalogue still listing rucks and scrums, which is the very thing
+ * content-age-gate.test.ts exists to prevent, defeated one layer above the
+ * function it tests. Same story for a second coach signing in on a shared
+ * device, plus for the switcher being used on the sessions page rather than
+ * this one.
+ *
+ * Compared against what the list is actually filtered to rather than against a
+ * note of what it was last seeded with. A separate note is one more thing to
+ * keep in step. It was already out of step: switching grade on Sessions
+ * and walking back here left the note matching while the list underneath it
+ * still held the grade before last.
  */
 let filters: DrillFilter | null = null;
-let seededFor: AgeGroup | null = null;
 let favourites: Set<string> = new Set();
 let currentUserId = "";
 let pulledFor: string | null = null;
@@ -126,7 +137,6 @@ export function resetCatalogue(): void {
   clearTimeout(searchTimer);
   searchTimer = undefined;
   filters = null;
-  seededFor = null;
   favourites = new Set();
   currentUserId = "";
   pulledFor = null;
@@ -199,9 +209,8 @@ export function renderCatalogue(
   /** ["from", "<planId>"] when the drill was opened out of a session. */
   origin: string[] = [],
 ): void {
-  if (!filters || seededFor !== defaultAge) {
+  if (!filters || filters.ageGroup !== defaultAge) {
     filters = { ageGroup: defaultAge };
-    seededFor = defaultAge;
   }
   currentUserId = userId;
   favourites = localFavourites(userId);
@@ -260,13 +269,7 @@ function renderList(container: HTMLElement): void {
           <label for="f-search" class="visually-hidden">Search drills</label>
           <input id="f-search" type="search" value="${esc(active.search ?? "")}" placeholder="Search ruck, passing, tag…" />
         </div>
-        <label for="f-age" class="visually-hidden">Age group</label>
-        <select id="f-age" class="age-select">
-          ${AGE_GROUPS.map(
-            (g) =>
-              `<option value="${g}"${g === active.ageGroup ? " selected" : ""}>${AGE_GROUP_LABELS[g]}</option>`,
-          ).join("")}
-        </select>
+        ${ageSwitcher(active.ageGroup, "f-age", "hidden")}
       </div>
 
       <!-- What the drill is: the kind it is, then what it is about. One axis,
@@ -320,9 +323,14 @@ function renderList(container: HTMLElement): void {
         : `<div class="drill-list">${results.map((drill) => card(drill, base)).join("")}</div>`
     }`;
 
-  container.querySelector<HTMLSelectElement>("#f-age")?.addEventListener("change", (e) => {
-    const value = (e.target as HTMLSelectElement).value;
-    if (isAgeGroup(value)) update({ ageGroup: value }, undefined, true);
+  // The grade is the app's, not this list's. It used to set `filters` and
+  // nothing else, so switching here left Sessions, the term plan and match day
+  // on the grade the coach registered with while the drill list quietly showed
+  // another. The switcher writes the one value every tab reads, then this
+  // redraws the list it is standing on.
+  wireAgeSwitcher(container, "f-age", () => {
+    const age = activeAge();
+    if (age) update({ ageGroup: age }, undefined, true);
   });
 
   for (const chip of container.querySelectorAll<HTMLButtonElement>("[data-theme]")) {
