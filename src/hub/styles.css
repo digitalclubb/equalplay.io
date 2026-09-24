@@ -484,7 +484,10 @@ body {
    something much longer, which is the same rule `.hub-input-short` exists for. */
 .age-select {
   flex: 0 0 auto;
-  width: 5.75rem;
+  /* px, because what this number is holding is the box rather than the words
+     in it: four characters and a chevron. As 5.75rem it doubled to 184px at a
+     200% font setting and took the filter row past the phone on its own. */
+  width: 92px;
   min-height: 44px;
   font-weight: var(--weight-bold);
 }
@@ -701,7 +704,12 @@ body {
 
 .drill-card-figure {
   display: block;
-  flex: 0 0 4.75rem;
+  /* px, because this is a picture slot rather than a line of type. It was
+     4.75rem, which is the same 76px until somebody turns their font size up:
+     at 200% the thumbnail took 152px of a 366px card, left the text column
+     124px. That crushed the title to nothing. A drill nobody can read the name
+     of is worse than a smaller picture. */
+  flex: 0 0 76px;
   background: var(--color-bg);
   border-radius: var(--radius-sm);
   padding: 0.15rem;
@@ -721,6 +729,13 @@ body {
 
 .drill-card-head {
   display: flex;
+  /* The badge and the star are both nowrap and neither shrinks, so on a row
+     too narrow to hold all three the title is the only thing that gives and it
+     gives all the way to zero. It wraps instead: at a large font size the
+     badge and the star take a line under the title rather than pushing the
+     star off the side of the screen. Nothing moves at the sizes the three
+     already fit on one line, which is every width at the default. */
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-xs);
   margin-bottom: var(--sp-2xs);
@@ -729,7 +744,18 @@ body {
 .drill-card-head .drill-card-title,
 .drill-card-head h2 {
   flex: 1;
-  min-width: 0;
+  /* The floor that makes the wrap above happen. At `min-width: 0` the title is
+     the only item on the row that gives, so it gave the lot: a 200% font size
+     left "Two hand relay" 16px wide, which is one letter a line, with the star
+     pushed off the side of the screen.
+
+     2.5rem rather than a rounder number. The tightest the title is ever asked
+     to be at the default size is 48px, on a 320px phone, so a 40px floor is
+     under every default layout and none of them moves. It is in rem because it
+     is a floor for words: turn the text up and it rises past the room the
+     badge and the star have left, the row wraps so the title gets a line to
+     itself instead of a column one letter wide. */
+  min-width: 2.5rem;
 }
 
 .drill-card-title {
@@ -2108,7 +2134,8 @@ body {
 
 @media (max-width: 360px) {
   .age-select {
-    width: 5.25rem;
+    /* px for the reason the wider one above is. */
+    width: 84px;
   }
 
   .hub-panel,
@@ -2245,7 +2272,7 @@ body {
 @media (min-width: 40rem) {
   .drill-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
     gap: var(--sp-sm);
     align-items: start;
   }
@@ -2294,7 +2321,7 @@ body {
     /* The same track as `.drill-list`, so the ready-made sessions and the
        coach's own line up on one set of columns rather than four against
        three. */
-    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
     gap: var(--sp-sm);
   }
 
@@ -2483,7 +2510,7 @@ body {
 @media (min-width: 75rem) {
   .drill-list,
   .preset-grid {
-    grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
   }
 
   .plan-layout {
@@ -2935,7 +2962,7 @@ body {
 .guide-grid {
   display: grid;
   gap: var(--sp-md);
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
   margin-bottom: var(--sp-lg);
 }
 

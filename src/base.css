@@ -614,7 +614,13 @@ html[data-vt="tabs"]::view-transition-new(root) {
 
 .hub-nav {
   display: flex;
-  gap: var(--sp-2xs);
+  /* px, like the type and the padding in here. Everything that decides whether
+     six tabs fit across the bar is measured against the bar rather than
+     against the reader's font size. Left in rem, the gap and the tab padding
+     alone still overflowed 481px to about 560px at a 200% setting, after the
+     labels had been pinned: that range is past the phone rule's even columns
+     and short of the rail. */
+  gap: 4px;
   justify-content: center;
 }
 
@@ -629,10 +635,17 @@ html[data-vt="tabs"]::view-transition-new(root) {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 0 var(--sp-xs);
+  padding: 0 8px;
   border-radius: var(--radius);
   color: #b9bacb;
-  font-size: var(--text-xs);
+  /* 12px rather than --text-xs, which is the same size and the same reason the
+     labels under 480px are pinned: this bar holds six tabs across whatever
+     width it is given, so what decides the type is the viewport rather than
+     the reader's font setting. Pinning only the phone rule left 481px up to
+     the rail at 900 still sized in rem, where a 200% setting put 24px labels
+     in a bar with no fluid rule and no wrap. At 500px that hung Drills off the
+     left at x=-143 with no way to scroll back to it. */
+  font-size: 12px;
   font-weight: var(--weight-semi);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -698,8 +711,19 @@ html[data-vt="tabs"]::view-transition-new(root) {
   .hub-tab-label {
     max-width: 100%;
     /* 4.5px + 1.875vw is the line through 10.5px at 320 and 12px at 400. The
-       floor and the ceiling are what stop it past either end. */
-    font-size: clamp(0.656rem, 4.5px + 1.875vw, var(--text-xs));
+       floor and the ceiling are what stop it past either end.
+
+       All three in px, deliberately, where the rest of the app sizes type in
+       rem. What this clamp is solving is how many labels fit across a phone,
+       which is a question about the viewport rather than about how big the
+       reader wants their words. The bounds were 0.656rem and --text-xs, so an
+       Android font size setting of 200% took the ceiling to 24px inside a
+       column holding 65. The six labels ran into each other with Account off
+       the right hand edge. Losing a tab is worse than a label that stays
+       12px. The icon plus aria-current say which tab it is either way.
+       Everything a coach actually reads is below the chrome and still scales.
+       `hub.spec.ts` sweeps the widths and holds the bar at 200% as well. */
+    font-size: clamp(10.5px, 4.5px + 1.875vw, 12px);
     white-space: normal;
     text-align: center;
     line-height: 1.15;
@@ -736,7 +760,15 @@ html[data-vt="tabs"]::view-transition-new(root) {
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 100dvh;
   /* Gutters and rhythm grow with the viewport rather than jumping at a breakpoint */
-  --gutter: clamp(var(--sp-sm), 3vw, var(--sp-lg));
+  /* The gutter's bounds are px where the rest of the app measures in rem, for
+     the reason the tab labels are: what it is answering is how much room is
+     left across a phone, which the reader's text size does not change. As
+     0.75rem to 1.5rem it doubled at a 200% font setting, taking 24px a side
+     off a 320px bar. That is what finally put the logo underneath the colour
+     switch, after the type in the chrome had already been pinned. Vertical
+     rhythm is left alone below, because bigger text wants more space above
+     and beneath it. */
+  --gutter: clamp(12px, 3vw, 24px);
   --stack: clamp(var(--sp-md), 2.5vw, var(--sp-lg));
 }
 
@@ -775,7 +807,11 @@ html[data-vt="tabs"]::view-transition-new(root) {
 }
 
 .app-chrome .logo-text {
-  font-size: 1.6rem;
+  /* px for the same reason the tab labels are. It is the same bar. The
+     scheme toggle is absolutely positioned in this chrome's top right corner,
+     so nothing pushes back against a logo that grows: at 200% text this was
+     51px of "Equal Play" sitting under the colour switch. */
+  font-size: 25.6px;
 }
 
 /* ---- 900px: a tool with a rail, not a phone in a window ---- */

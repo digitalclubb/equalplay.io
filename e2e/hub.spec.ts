@@ -1561,12 +1561,25 @@ test("the bar fits the phone at every phone width, tabs and switch", async ({ pa
             cut: label.scrollWidth > label.clientWidth + 0.5,
           };
         });
-        return { scroll: el.scrollWidth, client: el.clientWidth, tabs };
+        const all = [...el.querySelectorAll(".hub-tab")];
+        return {
+          scroll: el.scrollWidth,
+          client: el.clientWidth,
+          tabs,
+          firstLeft: all[0].getBoundingClientRect().left,
+          lastRight: all[all.length - 1].getBoundingClientRect().right,
+        };
       });
 
       const where = `${path} at ${width}px`;
       expect(bar.scroll, `${where}: the nav overflows its bar`).toBeLessThanOrEqual(bar.client);
       expect(bar.tabs, `${where}: tab count`).toHaveLength(6);
+      // Both edges. A centred row that does not fit spills to the left as
+      // well, and a tab off that side cannot even be scrolled to.
+      expect(bar.firstLeft, `${where}: the first tab is off the left`).toBeGreaterThanOrEqual(-0.5);
+      expect(bar.lastRight, `${where}: the last tab is off the right`).toBeLessThanOrEqual(
+        width + 0.5,
+      );
       for (const tab of bar.tabs) {
         expect(tab.cut, `${where}: "${tab.text}" is truncated`).toBe(false);
         // Still a target a thumb can hit.
@@ -1589,6 +1602,81 @@ test("the bar fits the phone at every phone width, tabs and switch", async ({ pa
       expect(corner.right, `${where}: the switch runs off the screen`).toBeLessThanOrEqual(width);
       expect(corner.size, `${where}: the switch is too small to tap`).toBeGreaterThanOrEqual(44);
       expect(corner.clear, `${where}: the switch is sitting on the logo`).toBeGreaterThan(0);
+    }
+  }
+});
+
+test("the bar holds its shape at 200% text", async ({ page }) => {
+  // Not the same thing as zooming. Android Chrome's font size setting scales
+  // the root while the viewport stays the width it was, so every rem grows
+  // inside a bar that does not. The tab labels were bounded in rem, which took
+  // the ceiling to 24px at 200% inside a column holding 65: the six labels ran
+  // into one another and Account went off the right hand edge. A tab a coach
+  // cannot reach is lost functionality rather than a tight layout, so the
+  // chrome's own type is in px. Everything a coach reads sits below the chrome
+  // and still scales.
+  await signedOut(page, "u10");
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.documentElement.style.fontSize = "32px";
+    });
+  });
+
+  // Past 480 as well as under it. The first go at this swept 320, 390 and 480,
+  // which is the one range the phone rule's even columns already cover: 481 up
+  // to the rail at 900 kept its rem label, its rem padding and its rem gap, so
+  // at 500px Drills hung off the left at x=-143 with no way to scroll back to
+  // it. A sweep that stops where the fix stops proves nothing.
+  for (const path of ["/hub/#/catalogue", "/planner"]) {
+    for (const width of [320, 360, 390, 480, 481, 500, 560, 600, 700, 899, 900, 1100, 1440]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(path);
+      await expect(page.locator(".hub-tab").first()).toBeVisible();
+
+      const where = `${path} at ${width}px, 200% text`;
+
+      const bar = await page.locator(".hub-nav").evaluate((el) => {
+        const tabs = [...el.querySelectorAll(".hub-tab")].map((tab) => {
+          const label = tab.querySelector(".hub-tab-label") as HTMLElement;
+          return {
+            text: label.textContent,
+            // Inside its own column, which is what says the six are not
+            // sitting on top of each other. Overlap is the failure this
+            // shipped with, and it does not widen the bar to show itself.
+            spills:
+              label.getBoundingClientRect().right > tab.getBoundingClientRect().right + 0.5 ||
+              label.getBoundingClientRect().left < tab.getBoundingClientRect().left - 0.5,
+            cut: label.scrollWidth > label.clientWidth + 0.5,
+          };
+        });
+        return { scroll: el.scrollWidth, client: el.clientWidth, tabs };
+      });
+
+      expect(bar.scroll, `${where}: the nav overflows its bar`).toBeLessThanOrEqual(bar.client);
+      expect(bar.tabs, `${where}: tab count`).toHaveLength(6);
+      for (const tab of bar.tabs) {
+        expect(tab.spills, `${where}: "${tab.text}" is outside its own tab`).toBe(false);
+        expect(tab.cut, `${where}: "${tab.text}" is truncated`).toBe(false);
+      }
+
+      // The logo grows with the root as well, and nothing pushes back against
+      // an absolutely positioned switch. At 200% this was 51px of "Equal Play"
+      // sitting underneath the colour switch.
+      //
+      // Only below 900px. From there the same markup is a rail and the switch
+      // drops into its flow under Account, so there is no top right corner for
+      // it to be in and nothing for the logo to run into.
+      if (width < 900) {
+        const corner = await page.locator(".app-chrome").evaluate((el) => {
+          const toggle = (
+            el.querySelector(".scheme-toggle") as HTMLElement
+          ).getBoundingClientRect();
+          const logo = (el.querySelector(".logo-link") as HTMLElement).getBoundingClientRect();
+          return { right: toggle.right, clear: toggle.left - logo.right };
+        });
+        expect(corner.right, `${where}: the switch runs off the screen`).toBeLessThanOrEqual(width);
+        expect(corner.clear, `${where}: the switch is sitting on the logo`).toBeGreaterThan(0);
+      }
     }
   }
 });
