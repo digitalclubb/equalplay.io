@@ -3,7 +3,12 @@
  * Used across section labels, buttons and action sheet options.
  */
 
-const ATTRS = 'width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+// `aria-hidden` on every one of them, the way `lib/nav.ts` does it. Each icon
+// here sits next to the word it illustrates, so a screen reader reading the
+// graphic as well says everything twice. This list was written without it while
+// the nav's was written with it, which left two unnamed graphics on match day.
+const ATTRS =
+  'width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 
 /** Player on field. Running figure */
 export const iconField = `<svg ${ATTRS}><circle cx="12" cy="5" r="2"/><path d="M7 21l3-7 2 2 4-6"/><path d="M17 21l-2-6"/></svg>`;
