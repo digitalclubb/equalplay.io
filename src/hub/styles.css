@@ -247,6 +247,8 @@ body {
 }
 
 .hub-link {
+  /* Relative for the hit area below, which needs a corner to work from. */
+  position: relative;
   padding: 0;
   font-family: inherit;
   font-size: inherit;
@@ -256,6 +258,20 @@ body {
   border: none;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* A line of underlined text is 17px tall, which is a real button under the 24px
+   WCAG 2.2 asks of one. "Forgotten your password?" and "Back to sign in" each
+   stand alone in a paragraph of their own, so the exception made for a link
+   inside a sentence does not cover them. Grown with a pseudo-element the way
+   `.drill-card-link` does it, rather than with padding, because this class is
+   also worn mid-sentence by "Create an account" and padding there would push
+   the line it sits in about. Nothing moves and the target clears 24px. Same
+   idiom, same reason, one rule for both. */
+.hub-link::after {
+  content: "";
+  position: absolute;
+  inset: -0.25rem -0.125rem;
 }
 
 /* ---- Auth layout ---- */
